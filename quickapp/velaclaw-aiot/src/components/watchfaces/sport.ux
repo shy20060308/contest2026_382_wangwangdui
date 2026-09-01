@@ -20,7 +20,7 @@
       <image class="heart-icon" src="/common/heart.png"></image>
       <div class="heart-chart-wrapper">
         <div class="heart-chart">
-          <div class="heart-bar" for="{{ heartRateData }}" style="height: {{ $item.barHeight }}px;"></div>
+          <div class="heart-bar" for="{{ heartRateData }}" style="height: {{ heartBarHeight($idx) }}px;"></div>
         </div>
         <text class="heart-rate-text">{{ currentHeartRate }} bpm</text>
       </div>
@@ -37,6 +37,7 @@
 
 <script>
 import router from '@system.router'
+import healthMetrics from '../../common/health_metrics'
 
 export default {
   // Props are passed in by clock.ux so the face has no timer of its own.
@@ -54,6 +55,10 @@ export default {
     'stepsText',
     'stepsGoalText'
   ],
+
+  heartBarHeight(index) {
+    return healthMetrics.sampleBarHeight(this.heartRateData, index, 4, 28, 8)
+  },
 
   goToHeartRate() {
     router.push({
