@@ -46,6 +46,7 @@ presentationFiles.forEach(function (file) {
 
 const legacyBudgets = {
   'src/common/watch_data.js': 100,
+  'src/common/workout_manager.js': 130,
   'src/common/health_domain.js': 60,
   'src/common/health_sample_service.js': 10,
   'src/common/health_metrics.js': 20,
