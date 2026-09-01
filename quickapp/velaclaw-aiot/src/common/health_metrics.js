@@ -69,6 +69,22 @@ function barHeights(values, minHeight, maxHeight, minSpan) {
   return result
 }
 
+// Presentation helper for semantic samples. Data/domain modules keep samples as
+// { value }; each component supplies its own geometry (for example 28px tall or
+// 18px compact charts). This keeps screen/layout knowledge out of watch_data.
+function sampleBarHeight(samples, index, minHeight, maxHeight, minSpan) {
+  if (!samples || !samples.length || index < 0 || index >= samples.length) {
+    return Math.max(1, Math.round(toNumber(minHeight, 1)))
+  }
+  var values = []
+  for (var i = 0; i < samples.length; i++) {
+    var sample = samples[i]
+    values.push(sample && typeof sample === 'object' ? sample.value : sample)
+  }
+  var heights = barHeights(values, minHeight, maxHeight, minSpan)
+  return heights[index]
+}
+
 function formatValue(value, type) {
   if (value === undefined || value === null || value === '') return '--'
   var number = Math.round(toNumber(value, 0))
@@ -89,6 +105,7 @@ module.exports = {
   stats: stats,
   adaptiveRange: adaptiveRange,
   barHeights: barHeights,
+  sampleBarHeight: sampleBarHeight,
   formatValue: formatValue,
   codeMessage: codeMessage
 }
