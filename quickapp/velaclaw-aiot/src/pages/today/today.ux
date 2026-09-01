@@ -18,7 +18,7 @@
       <div class="goal-track"><div class="goal-fill" style="width: {{ goalWidth }}"></div></div>
 
       <div class="metric-grid">
-        <div class="metric-card blue-card"><text class="metric-label">步数</text><text class="metric-value">{{ stepsText }}</text><text class="metric-unit">步</text></div>
+        <div class="metric-card blue-card"><text class="metric-label">步数</text><text class="metric-value steps-metric-value">{{ stepsText }}</text><text class="metric-unit steps-metric-unit">步</text></div>
         <div class="metric-card orange-card"><text class="metric-label">热量</text><text class="metric-value">{{ caloriesText }}</text><text class="metric-unit">千卡</text></div>
         <div class="metric-card red-card"><text class="metric-label">心率</text><text class="metric-value">{{ heartText }}</text><text class="metric-unit">次/分</text></div>
         <div class="metric-card green-card"><text class="metric-label">站立</text><text class="metric-value">{{ standText }}</text><text class="metric-unit">小时</text></div>
@@ -262,6 +262,8 @@ export default {
   .metric-label { position: absolute; left: 7px; top: 8px; width: 24px; font-size: 5px; }
   .metric-value { position: absolute; left: 24px; top: 5px; width: 26px; font-size: 11px; margin-top: 0px; text-align: right; }
   .metric-unit { position: absolute; left: 52px; top: 10px; width: 12px; font-size: 4px; }
+  .steps-metric-value { left: 18px; width: 37px; }
+  .steps-metric-unit { left: 56px; width: 8px; }
   .today-tip { display: none; }
   .circle-page-tip { display: none; }
   .circle-pager { display: flex; width: 136px; height: 4px; flex-direction: row; justify-content: center; align-items: center; margin-top: 3px; }
