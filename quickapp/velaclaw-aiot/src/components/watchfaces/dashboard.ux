@@ -20,7 +20,7 @@
         <text class="dash-value" style="color: #FF375F">{{ currentHeartRate }}</text>
       </div>
       <div class="dash-heart-chart">
-        <div class="dash-heart-bar" for="{{ heartRateData }}" style="height: {{ $item.barHeight }}px;"></div>
+        <div class="dash-heart-bar" for="{{ heartRateData }}" style="height: {{ heartBarHeight($idx) }}px;"></div>
       </div>
       <text class="dash-small">bpm</text>
     </div>
@@ -36,6 +36,7 @@
 
 <script>
 import router from '@system.router'
+import healthMetrics from '../../common/health_metrics'
 
 export default {
   // Dashboard face is display-only except for existing detail-page shortcuts.
@@ -55,6 +56,10 @@ export default {
     'batteryWidth',
     'batteryColor'
   ],
+
+  heartBarHeight(index) {
+    return healthMetrics.sampleBarHeight(this.heartRateData, index, 4, 28, 8)
+  },
 
   goToHeartRate() {
     router.push({
