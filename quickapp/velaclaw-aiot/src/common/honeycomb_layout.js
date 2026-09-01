@@ -1,17 +1,14 @@
 /**
- * 圆屏蜂巢晶格几何
+ * 圆屏蜂巢晶格几何与运动投影
  *
- * 从 applist.ux 抽出的纯计算层：坐标生成、每帧尺寸/位置推导、方向选格。
- * 抽出来的目的不是复用（只有一个调用方），而是可验证——
- * 「图标永不重叠」原本靠每帧 O(n²) 斥力循环兜底，现在是晶格的几何性质，
- * 可以用 Node.js 穷举 pan × offset 全空间来证明（见 test/honeycomb_layout.test.js）。
+ * 页面只负责触摸事件、状态、路由和动画调度；所有与蜂巢有关的坐标、尺寸、
+ * 聚焦判定、图标淡出、方向选格和吸附缓动都收敛在这里。
  *
- * 不依赖 Quick App 运行时。
+ * 不依赖 Quick App 运行时，可直接用 Node.js 穷举验证。
  */
 
-// 晶格间距。六邻居与中心、以及相邻外环之间，距离恒为该值。
+// 正六边形晶格。
 var SPACING = 46
-// 行距 = 间距 × √3/2，这是正六边形晶格的定义。
 var ROW_HEIGHT = Math.round(SPACING * Math.sqrt(3) / 2)
 var HALF_STEP = Math.round(SPACING / 2)
 
@@ -19,21 +16,50 @@ var HALF_STEP = Math.round(SPACING / 2)
 var FOCUS_X = 96
 var FOCUS_Y = 90
 
+// 图标尺寸与聚焦衰减。
 var ICON_BASE = 34
 var ICON_GROW = 16
-// 放大衰减半径。
 var EMPHASIS_FALLOFF = 60
-// 弹性跟随：近处跟手多、远处少，形成纵深。
-// 差值必须 ≤ 0.10——0.14 时 132px 拖拽极值会把相邻图标压到重叠。
+var CENTER_RADIUS = 27
+var ACTIVE_ICON_RADIUS = 30
+
+// 拖拽与吸附参数。
 var ELASTIC_BASE = 0.9
 var ELASTIC_RANGE = 0.1
 var DRAG_LIMIT = 132
+var DRAG_DAMPING = 0.58
+var MAX_FRAME_DELTA = 18
+var SNAP_DISTANCE = 20
+var SNAP_DURATION = 280
+var FRAME_MS = 16
+var SNAP_BACK = 0.34
 
-function clamp01(value) {
-  return value < 0 ? 0 : value > 1 ? 1 : value
+// 名称条几何，与 applist.ux 的 .center-label-glass 保持一致。
+var LABEL_CENTER_Y = 162
+var LABEL_HALF_HEIGHT = 10
+var LABEL_HALF_WIDTH = 48
+
+var DIRECTIONS = {
+  up: { x: 0, y: -1 },
+  down: { x: 0, y: 1 },
+  left: { x: -1, y: 0 },
+  right: { x: 1, y: 0 },
+  upLeft: { x: -0.7071, y: -0.7071 },
+  upRight: { x: 0.7071, y: -0.7071 },
+  downLeft: { x: -0.7071, y: 0.7071 },
+  downRight: { x: 0.7071, y: 0.7071 }
 }
 
-function smoothStep(t) {
+function clamp(value, min, max) {
+  return value < min ? min : value > max ? max : value
+}
+
+function clamp01(value) {
+  return clamp(value, 0, 1)
+}
+
+function smoothStep(value) {
+  var t = clamp01(value)
   return t * t * (3 - 2 * t)
 }
 
@@ -55,31 +81,120 @@ function buildCoords() {
 }
 
 /**
- * 推导一帧里每个格子的圆心与直径，与 applist.ux 的每帧算法保持一致。
+ * 把 launcher app 数据挂到固定晶格上。这里不改变业务字段，只增加表现层槽位字段。
+ */
+function buildSlots(apps) {
+  var source = apps || []
+  var coords = buildCoords()
+  var slots = []
+  for (var index = 0; index < source.length; index++) {
+    var app = source[index]
+    var coordinate = coords[index % coords.length]
+    slots.push({
+      slotKey: app.id + '-' + index,
+      id: app.id,
+      label: app.label,
+      icon: app.softIcon,
+      normalIcon: app.icon,
+      softIcon: app.softIcon,
+      route: app.route,
+      sourceIndex: index,
+      isCenter: false,
+      gridX: coordinate.x,
+      gridY: coordinate.y,
+      left: coordinate.x - ICON_BASE / 2,
+      top: coordinate.y - ICON_BASE / 2,
+      size: ICON_BASE,
+      radius: ICON_BASE / 2,
+      opacity: 0.5
+    })
+  }
+  return slots
+}
+
+function projectPoint(x, y, panX, panY, offsetX, offsetY) {
+  var baseX = x + panX
+  var baseY = y + panY
+  var baseDx = baseX - FOCUS_X
+  var baseDy = baseY - FOCUS_Y
+  var baseDistance = Math.sqrt(baseDx * baseDx + baseDy * baseDy)
+  var elasticFollow = ELASTIC_BASE + clamp01(1 - baseDistance / 90) * ELASTIC_RANGE
+  var centerX = baseX + offsetX * elasticFollow
+  var centerY = baseY + offsetY * elasticFollow
+  var dx = centerX - FOCUS_X
+  var dy = centerY - FOCUS_Y
+  var distance = Math.sqrt(dx * dx + dy * dy)
+  var emphasis = smoothStep(1 - distance / EMPHASIS_FALLOFF)
+  return {
+    centerX: centerX,
+    centerY: centerY,
+    distance: distance,
+    size: Math.round(ICON_BASE + emphasis * ICON_GROW),
+    emphasis: emphasis
+  }
+}
+
+/**
+ * 推导一帧里每个格子的圆心与直径。
  * @returns {Array<{centerX:number, centerY:number, size:number, emphasis:number}>}
  */
 function layoutFrame(coords, panX, panY, offsetX, offsetY) {
   var result = []
   for (var index = 0; index < coords.length; index++) {
-    var baseX = coords[index].x + panX
-    var baseY = coords[index].y + panY
-    var baseDx = baseX - FOCUS_X
-    var baseDy = baseY - FOCUS_Y
-    var baseDistance = Math.sqrt(baseDx * baseDx + baseDy * baseDy)
-    var elasticFollow = ELASTIC_BASE + clamp01(1 - baseDistance / 90) * ELASTIC_RANGE
-    var centerX = baseX + offsetX * elasticFollow
-    var centerY = baseY + offsetY * elasticFollow
-    var dx = centerX - FOCUS_X
-    var dy = centerY - FOCUS_Y
-    var emphasis = smoothStep(clamp01(1 - Math.sqrt(dx * dx + dy * dy) / EMPHASIS_FALLOFF))
-    result.push({
-      centerX: centerX,
-      centerY: centerY,
-      size: Math.round(ICON_BASE + emphasis * ICON_GROW),
-      emphasis: emphasis
-    })
+    result.push(projectPoint(coords[index].x, coords[index].y, panX, panY, offsetX, offsetY))
   }
   return result
+}
+
+/**
+ * 将纯几何投影成 applist 可直接渲染的槽位。
+ * 返回最近槽位下标，页面只负责把它同步为当前 focusedLabel/pageIndex。
+ */
+function layoutSlots(slots, panX, panY, offsetX, offsetY) {
+  var source = slots || []
+  var nextSlots = []
+  var nearestIndex = -1
+  var nearestDistance = Infinity
+
+  for (var index = 0; index < source.length; index++) {
+    var slot = source[index]
+    var point = projectPoint(slot.gridX, slot.gridY, panX, panY, offsetX, offsetY)
+    if (point.distance < nearestDistance) {
+      nearestDistance = point.distance
+      nearestIndex = index
+    }
+
+    var bandFadeY = clamp01(1 -
+      Math.abs(point.centerY - LABEL_CENTER_Y) / (LABEL_HALF_HEIGHT + point.size / 2))
+    var bandFadeX = clamp01(1 -
+      Math.abs(point.centerX - FOCUS_X) / (LABEL_HALF_WIDTH + point.size / 2))
+    var avoidanceProgress = smoothStep(bandFadeY * bandFadeX)
+    var opacity = (0.5 + point.emphasis * 0.5) * (1 - avoidanceProgress * 0.8)
+
+    nextSlots.push({
+      slotKey: slot.slotKey,
+      id: slot.id,
+      label: slot.label,
+      normalIcon: slot.normalIcon,
+      softIcon: slot.softIcon,
+      route: slot.route,
+      sourceIndex: slot.sourceIndex,
+      gridX: slot.gridX,
+      gridY: slot.gridY,
+      isCenter: point.distance < CENTER_RADIUS,
+      size: point.size,
+      radius: Math.round(point.size / 2),
+      opacity: opacity,
+      icon: point.distance < ACTIVE_ICON_RADIUS ? slot.normalIcon : slot.softIcon,
+      left: Math.round(point.centerX - point.size / 2),
+      top: Math.round(point.centerY - point.size / 2)
+    })
+  }
+
+  return {
+    slots: nextSlots,
+    nearestIndex: nearestIndex
+  }
 }
 
 /** 一帧内任意两图标的最小边缘间隙；> 0 表示无重叠。 */
@@ -122,6 +237,38 @@ function pickByDirection(coords, currentIndex, direction) {
   return bestIndex
 }
 
+function pickSlotByDirection(slots, currentIndex, direction) {
+  var source = slots || []
+  var coords = []
+  for (var index = 0; index < source.length; index++) {
+    coords.push({ x: source[index].gridX, y: source[index].gridY })
+  }
+  return pickByDirection(coords, currentIndex, direction)
+}
+
+/** 生成把指定槽位吸附到聚焦点的 pan；focusY 可保留页面首次进入的视觉偏移。 */
+function panForSlot(slot, focusY) {
+  if (!slot) return null
+  return {
+    x: FOCUS_X - slot.gridX,
+    y: (focusY === undefined ? FOCUS_Y : focusY) - slot.gridY
+  }
+}
+
+/** 限制单帧位移并累计拖拽偏移。 */
+function nextDragOffset(current, delta) {
+  var frameDelta = clamp(delta || 0, -MAX_FRAME_DELTA, MAX_FRAME_DELTA)
+  return clamp((current || 0) + frameDelta * DRAG_DAMPING, -DRAG_LIMIT, DRAG_LIMIT)
+}
+
+/** 与页面旧实现完全一致的轻微 back-out 吸附缓动。 */
+function backOut(progress, strength) {
+  var t = clamp01(progress)
+  var backStrength = strength === undefined ? SNAP_BACK : strength
+  var offset = t - 1
+  return 1 + (backStrength + 1) * Math.pow(offset, 3) + backStrength * Math.pow(offset, 2)
+}
+
 module.exports = {
   SPACING: SPACING,
   ROW_HEIGHT: ROW_HEIGHT,
@@ -131,11 +278,29 @@ module.exports = {
   ICON_BASE: ICON_BASE,
   ICON_GROW: ICON_GROW,
   EMPHASIS_FALLOFF: EMPHASIS_FALLOFF,
+  CENTER_RADIUS: CENTER_RADIUS,
+  ACTIVE_ICON_RADIUS: ACTIVE_ICON_RADIUS,
   ELASTIC_BASE: ELASTIC_BASE,
   ELASTIC_RANGE: ELASTIC_RANGE,
   DRAG_LIMIT: DRAG_LIMIT,
+  DRAG_DAMPING: DRAG_DAMPING,
+  MAX_FRAME_DELTA: MAX_FRAME_DELTA,
+  SNAP_DISTANCE: SNAP_DISTANCE,
+  SNAP_DURATION: SNAP_DURATION,
+  FRAME_MS: FRAME_MS,
+  SNAP_BACK: SNAP_BACK,
+  LABEL_CENTER_Y: LABEL_CENTER_Y,
+  LABEL_HALF_HEIGHT: LABEL_HALF_HEIGHT,
+  LABEL_HALF_WIDTH: LABEL_HALF_WIDTH,
+  DIRECTIONS: DIRECTIONS,
   buildCoords: buildCoords,
+  buildSlots: buildSlots,
   layoutFrame: layoutFrame,
+  layoutSlots: layoutSlots,
   minimumEdgeGap: minimumEdgeGap,
-  pickByDirection: pickByDirection
+  pickByDirection: pickByDirection,
+  pickSlotByDirection: pickSlotByDirection,
+  panForSlot: panForSlot,
+  nextDragOffset: nextDragOffset,
+  backOut: backOut
 }
