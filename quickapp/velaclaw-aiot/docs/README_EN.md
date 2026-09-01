@@ -192,7 +192,7 @@ Contributions are welcome. Read [CONTRIBUTING.md](../CONTRIBUTING.md), then ensu
 
 ## License
 
-Repository source code is licensed under the [MIT License](../LICENSE). Direct development dependencies and external platform notes are listed in [NOTICE](../NOTICE).
+Repository source code is licensed under the [Apache License 2.0](../LICENSE). Direct development dependencies and external platform notes are listed in [NOTICE](../NOTICE).
 
 ## References
 
