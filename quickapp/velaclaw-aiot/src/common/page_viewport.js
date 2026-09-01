@@ -6,7 +6,7 @@
  * 赋值以前在 20 个页面里逐字重复，新增一个字段就要改 20 处——`safeArea` 和
  * `logicalHeight` 就是这样漏掉的。
  *
- * 这里把「解析屏幕档案 → 写回页面视口字段」收敛成一处：
+ * 这里把「解析屏幕档案 → 页面级兼容策略 → 写回页面视口字段」收敛成一处：
  *
  *   pageViewport.bind(this, function (profile) {
  *     // 只写本页面独有的逻辑
@@ -16,6 +16,7 @@
  * 框架据此建立响应式绑定），本模块只负责运行时写回。
  */
 import screenProfile from './screen_profile'
+import pageViewportPolicy from './page_viewport_policy'
 
 // 页面 private 中必须声明的视口字段及其初值。
 // 保持为普通对象而不是直接展开进 private，是因为快应用需要 private 字面量。
@@ -29,22 +30,23 @@ var DEFAULTS = {
 }
 
 /**
- * 把屏幕档案的视口定位写回页面。
+ * 把屏幕档案经过页面兼容策略后的视口定位写回页面。
  * @param {object} page 页面 this
  * @param {object} profile screen_profile 解析结果
  */
 function apply(page, profile) {
   if (!page || !profile) return
-  page.viewportClass = profile.viewportClass
-  page.viewportPosition = profile.viewportPosition
-  page.viewportLeft = profile.viewportLeft
-  page.viewportTop = profile.viewportTop
-  page.viewportWidth = profile.viewportWidth
-  page.viewportHeight = profile.viewportHeight
+  var viewport = pageViewportPolicy.resolve(profile, page)
+  page.viewportClass = viewport.viewportClass
+  page.viewportPosition = viewport.viewportPosition
+  page.viewportLeft = viewport.viewportLeft
+  page.viewportTop = viewport.viewportTop
+  page.viewportWidth = viewport.viewportWidth
+  page.viewportHeight = viewport.viewportHeight
 }
 
 /**
- * 解析屏幕档案并完成视口绑定，再把档案交给页面做形态相关的初始化。
+ * 解析屏幕档案并完成视口绑定，再把原始档案交给页面做形态相关的初始化。
  *
  * @param {object} page 页面 this
  * @param {function} [callback] 拿到档案后的页面自有逻辑，参数为 profile
