@@ -43,6 +43,20 @@ test('自适应柱高保持起伏', function () {
   assert.ok(Math.max.apply(null, heights) - Math.min.apply(null, heights) >= 10)
 })
 
+test('语义样本在组件侧保持原柱高映射', function () {
+  const samples = [65, 82, 71, 95, 78, 88].map(function (value) {
+    return { value: value }
+  })
+  const tall = samples.map(function (_, index) {
+    return metrics.sampleBarHeight(samples, index, 4, 28, 8)
+  })
+  const compact = samples.map(function (_, index) {
+    return metrics.sampleBarHeight(samples, index, 4, 18, 8)
+  })
+  assert.deepStrictEqual(tall, [4, 18, 9, 28, 14, 22])
+  assert.deepStrictEqual(compact, [4, 12, 7, 18, 10, 15])
+})
+
 test('格式化和错误码', function () {
   assert.strictEqual(metrics.formatValue(97.6, 'SPO2'), '98%')
   assert.strictEqual(metrics.formatValue(null, 'SPO2'), '--')
