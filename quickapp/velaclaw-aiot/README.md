@@ -243,7 +243,7 @@ vela_band/
 
 ## 许可证
 
-项目源代码采用 [MIT License](LICENSE)。直接开发依赖及外部平台说明见 [NOTICE](NOTICE)。
+项目源代码采用 [Apache License 2.0](LICENSE)。直接开发依赖及外部平台说明见 [NOTICE](NOTICE)。
 
 ## 参考资料
 
