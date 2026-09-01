@@ -27,6 +27,7 @@
     "docs:check": "node scripts/check-docs.js",
     "multiscreen:check": "node scripts/check-multiscreen.js",
     "safearea:check": "node scripts/check-safe-area.js",
+    "pill-safearea:logic": "node test/pill_safe_area.test.js",
     "honeycomb:logic": "node test/honeycomb_layout.test.js",
     "safearea:logic": "node test/safe_area.test.js",
     "health:check": "node scripts/check-health-ui.js",
@@ -43,7 +44,7 @@
     "health:visual": "node scripts/check-health-visual.js",
     "icons:render": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-icons.ps1 && python scripts/render-soft-icons.py",
     "backgrounds:render": "python scripts/fade-watchface-background.py --input assets/watchfaces/alpine_night_source.jpg --output src/common/watchfaces/alpine_night.jpg",
-    "check": "npm run lint && npm run multiscreen:check && npm run safearea:check && npm run health:check && npm run haptic:check && npm run health:logic && npm run pager:logic && npm run motion:logic && npm run calendar:logic && npm run analog:logic && npm run face:logic && npm run navigation:logic && npm run viewport:logic && npm run safearea:logic && npm run honeycomb:logic && npm run haptic:logic && npm run docs:check"
+    "check": "npm run lint && npm run multiscreen:check && npm run safearea:check && npm run pill-safearea:logic && npm run health:check && npm run haptic:check && npm run health:logic && npm run pager:logic && npm run motion:logic && npm run calendar:logic && npm run analog:logic && npm run face:logic && npm run navigation:logic && npm run viewport:logic && npm run safearea:logic && npm run honeycomb:logic && npm run haptic:logic && npm run docs:check"
   },
   "lint-staged": {
     "*.{ux,js}": [
