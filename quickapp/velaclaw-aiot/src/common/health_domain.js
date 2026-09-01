@@ -5,21 +5,23 @@ import watchData from './watch_data'
  * 健康领域协调层
  *
  * 职责：
- * 1. 作为页面唯一的 health_sample_service 消费入口，按页面订阅数量启停底层健康流；
- * 2. 每个新的心率 sample 只同步一次 watch_data；
- * 3. 在领域层统一判断 heartRate / spo2 / stress 是否为新 sample，页面不再各自维护
- *    lastXxxUpdatedAt。
+ * 1. 作为页面唯一的 health_sample_service 消费入口，按消费者数量启停底层健康流；
+ * 2. 在领域层统一判断 heartRate / spo2 / stress 是否为新 sample；
+ * 3. 默认把新心率同步到 watch_data，但允许低功耗消费者只观察 sample，按自己的
+ *    刷新节奏显式调用 syncHeartRate()。这样 clock 的 DIM 模式不会因为底层仍以
+ *    1Hz 到样而偷偷恢复 1Hz 的业务写入。
  *
  * 不生成 UI 文案、不计算卡片布局，也不感知 circle/pill/rect。
  */
 var listeners = []
 var active = false
 var latestState = null
-var lastUpdatedAt = {
+var lastObservedAt = {
   heartRate: 0,
   spo2: 0,
   stress: 0
 }
+var lastSyncedHeartRateAt = 0
 
 function copySample(sample) {
   var source = sample || {}
@@ -46,9 +48,16 @@ function copySample(sample) {
 
 function didMetricChange(name, updatedAt) {
   var next = Number(updatedAt) || 0
-  if (next <= 0 || next === lastUpdatedAt[name]) return false
-  lastUpdatedAt[name] = next
+  if (next <= 0 || next === lastObservedAt[name]) return false
+  lastObservedAt[name] = next
   return true
+}
+
+function hasAutoSyncConsumer() {
+  for (var i = 0; i < listeners.length; i++) {
+    if (listeners[i].syncWatchData !== false) return true
+  }
+  return false
 }
 
 function buildState(sample, changes) {
@@ -61,11 +70,23 @@ function buildState(sample, changes) {
   return state
 }
 
+function syncHeartRate(sample) {
+  var source = sample || latestState || healthSampleService.getSnapshot()
+  var updatedAt = Number(source && source.heartRateUpdatedAt) || 0
+  if (updatedAt <= 0 || updatedAt === lastSyncedHeartRateAt) {
+    return watchData.getSnapshot()
+  }
+  lastSyncedHeartRateAt = updatedAt
+  var snapshot = watchData.applyHeartRate(source.heartRate)
+  if (latestState) latestState.watchSnapshot = snapshot
+  return snapshot
+}
+
 function emit(state) {
   latestState = state
   var snapshot = listeners.slice()
   for (var i = 0; i < snapshot.length; i++) {
-    snapshot[i](state)
+    snapshot[i].listener(state)
   }
 }
 
@@ -76,7 +97,9 @@ function handleSample(sample) {
     stress: didMetricChange('stress', sample && sample.stressUpdatedAt)
   }
 
-  if (changes.heartRate) watchData.applyHeartRate(sample.heartRate)
+  // 普通健康页需要最新统一快照；表盘在 DIM 时会通过 syncHeartRate()
+  // 按 power_manager 的 heartInterval 节奏显式同步。
+  if (hasAutoSyncConsumer()) syncHeartRate(sample)
   emit(buildState(sample, changes))
 }
 
@@ -92,15 +115,28 @@ function stopService() {
   active = false
 }
 
-function addListener(listener) {
-  if (typeof listener !== 'function') return
-  if (listeners.indexOf(listener) >= 0) return
-  listeners.push(listener)
+function findListener(listener) {
+  for (var i = 0; i < listeners.length; i++) {
+    if (listeners[i].listener === listener) return listeners[i]
+  }
+  return null
+}
 
-  // 后加入的页面先收到当前快照；首次 listener 则由 health_sample_service.start()
-  // 的同步 emit 初始化，避免同一页面 onShow 时收到两份完全相同的数据。
+function addListener(listener, options) {
+  if (typeof listener !== 'function') return
+  if (findListener(listener)) return
+  var entry = {
+    listener: listener,
+    syncWatchData: !(options && options.syncWatchData === false)
+  }
+  listeners.push(entry)
+
+  // 后加入的普通页面如果接手了一个仅观察但尚未同步的 sample，先补一次同步；
+  // dirty flag 仍由 observed timestamp 决定，因此不会伪造一条新的趋势点。
   if (active) {
-    listener(latestState || buildState(healthSampleService.getSnapshot()))
+    var source = latestState || healthSampleService.getSnapshot()
+    if (entry.syncWatchData) syncHeartRate(source)
+    listener(buildState(source))
     return
   }
   startService()
@@ -109,7 +145,7 @@ function addListener(listener) {
 function removeListener(listener) {
   var next = []
   for (var i = 0; i < listeners.length; i++) {
-    if (listeners[i] !== listener) next.push(listeners[i])
+    if (listeners[i].listener !== listener) next.push(listeners[i])
   }
   listeners = next
   if (listeners.length === 0) stopService()
@@ -118,6 +154,7 @@ function removeListener(listener) {
 export default {
   start: addListener,
   stop: removeListener,
+  syncHeartRate: syncHeartRate,
 
   getSnapshot: function () {
     return latestState || buildState(healthSampleService.getSnapshot())
