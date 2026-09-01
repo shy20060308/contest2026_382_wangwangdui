@@ -9,8 +9,10 @@ const todaySource = read('src/pages/today/today.ux')
 const clockSource = read('src/pages/clock/clock.ux')
 const platformSource = read('src/platform/vela/health.js')
 const domainSource = read('src/domain/health/store.js')
+const metricDomainSource = read('src/domain/health/metrics.js')
+const chartSource = read('src/presentation/mappers/health_chart.js')
+const textSource = read('src/presentation/mappers/health_text.js')
 const watchDataSource = read('src/common/watch_data.js')
-const metricsSource = read('src/common/health_metrics.js')
 const metricsTestSource = read('test/health_metrics.test.js')
 const errors = []
 
@@ -40,6 +42,11 @@ requireCondition(domainSource.includes('heartRateChanged'), 'health domain must 
 requireCondition(domainSource.includes('spo2Changed'), 'health domain must own SpO2 dirty tracking')
 requireCondition(domainSource.includes('stressChanged'), 'health domain must own stress dirty tracking')
 requireCondition(!domainSource.includes('watch_data'), 'health domain must not depend on watch_data')
+requireCondition(metricDomainSource.includes('function pushWindow'), 'health domain metrics must provide a sliding window')
+requireCondition(metricDomainSource.includes('function stats'), 'health domain metrics must provide statistics')
+requireCondition(chartSource.includes('function barHeights'), 'presentation chart mapper must own bar geometry')
+requireCondition(chartSource.includes('function sampleBarHeight'), 'presentation chart mapper must project semantic samples')
+requireCondition(textSource.includes('function codeMessage'), 'presentation text mapper must normalize service errors')
 
 ;['心率', '血氧', '压力'].forEach(function (label) {
   requireCondition(pageSource.includes(label), 'health card is missing: ' + label)
@@ -61,7 +68,6 @@ requireCondition(todaySource.includes('healthDomain.start(this.healthListener)')
 requireCondition(todaySource.includes('healthDomain.stop(this.healthListener)'), 'today page must release the health domain subscription')
 requireCondition(!todaySource.includes('watchData.applyHeartRate'), 'today page must not synchronize samples itself')
 
-// clock is the last legacy low-power consumer; its lifecycle remains the golden reference until power migration.
 requireCondition(clockSource.includes('healthSampleService.start(this.watchFaceHealthListener)'), 'watch face must subscribe while ACTIVE/DIM')
 requireCondition(clockSource.includes('healthSampleService.stop(this.watchFaceHealthListener)'), 'watch face must unsubscribe in SLEEP/hide')
 requireCondition(clockSource.includes('watchData.applyHeartRate(data.heartRate)'), 'watch face must still update the shared recent-heart state')
@@ -70,14 +76,11 @@ requireCondition(!clockSource.includes('watchData.tickHeartRate()'), 'watch face
 requireCondition(watchDataSource.includes("../domain/health/recent"), 'watch_data compatibility layer must delegate recent heart state')
 requireCondition(watchDataSource.includes("../presentation/mappers/watch_snapshot"), 'watch_data compatibility layer must delegate display mapping')
 requireCondition(!watchDataSource.includes('barHeight:'), 'watch_data must not own chart geometry')
-requireCondition(metricsSource.includes('function pushWindow'), 'health metrics must provide a sliding window')
-requireCondition(metricsSource.includes('function stats'), 'health metrics must provide window statistics')
-requireCondition(metricsSource.includes('function codeMessage'), 'health metrics must normalize service errors')
 requireCondition(metricsTestSource.includes('自适应柱高保持起伏'), 'health metrics tests must cover visible bar fluctuation')
 
 if (errors.length > 0) {
   errors.forEach(function (error) { console.error('health UI error: ' + error) })
   process.exitCode = 1
 } else {
-  console.log('Checked health platform/domain boundary, foreground lifecycle, metric UI, and viewport integration')
+  console.log('Checked health platform/domain/presentation boundaries and wearable UI integration')
 }
