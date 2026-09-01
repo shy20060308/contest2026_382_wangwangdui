@@ -1,11 +1,11 @@
-import healthSampleService from './health_sample_service'
+import healthTransport from './health_transport'
 import watchData from './watch_data'
 
 /**
  * 健康领域协调层
  *
  * 职责：
- * 1. 作为页面唯一的 health_sample_service 消费入口，按消费者数量启停底层健康流；
+ * 1. 作为页面唯一的系统健康消费入口，按消费者数量启停底层健康流；
  * 2. 在领域层统一判断 heartRate / spo2 / stress 是否为新 sample；
  * 3. 默认把新心率同步到 watch_data，但允许低功耗消费者只观察 sample，按自己的
  *    刷新节奏显式调用 syncHeartRate()。这样 clock 的 DIM 模式不会因为底层仍以
@@ -71,7 +71,7 @@ function buildState(sample, changes) {
 }
 
 function syncHeartRate(sample) {
-  var source = sample || latestState || healthSampleService.getSnapshot()
+  var source = sample || latestState || healthTransport.getSnapshot()
   var updatedAt = Number(source && source.heartRateUpdatedAt) || 0
   if (updatedAt <= 0 || updatedAt === lastSyncedHeartRateAt) {
     return watchData.getSnapshot()
@@ -97,8 +97,6 @@ function handleSample(sample) {
     stress: didMetricChange('stress', sample && sample.stressUpdatedAt)
   }
 
-  // 普通健康页需要最新统一快照；表盘在 DIM 时会通过 syncHeartRate()
-  // 按 power_manager 的 heartInterval 节奏显式同步。
   if (hasAutoSyncConsumer()) syncHeartRate(sample)
   emit(buildState(sample, changes))
 }
@@ -106,12 +104,12 @@ function handleSample(sample) {
 function startService() {
   if (active) return
   active = true
-  healthSampleService.start(handleSample)
+  healthTransport.start(handleSample)
 }
 
 function stopService() {
   if (!active) return
-  healthSampleService.stop(handleSample)
+  healthTransport.stop(handleSample)
   active = false
 }
 
@@ -131,10 +129,8 @@ function addListener(listener, options) {
   }
   listeners.push(entry)
 
-  // 后加入的普通页面如果接手了一个仅观察但尚未同步的 sample，先补一次同步；
-  // dirty flag 仍由 observed timestamp 决定，因此不会伪造一条新的趋势点。
   if (active) {
-    var source = latestState || healthSampleService.getSnapshot()
+    var source = latestState || healthTransport.getSnapshot()
     if (entry.syncWatchData) syncHeartRate(source)
     listener(buildState(source))
     return
@@ -157,6 +153,6 @@ export default {
   syncHeartRate: syncHeartRate,
 
   getSnapshot: function () {
-    return latestState || buildState(healthSampleService.getSnapshot())
+    return latestState || buildState(healthTransport.getSnapshot())
   }
 }
