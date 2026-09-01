@@ -14,7 +14,7 @@
         <text class="dashboard-circle-label">心率</text>
         <text class="dashboard-circle-value heart-color">{{ currentHeartRate }}</text>
         <div class="dashboard-circle-bars">
-          <div class="dashboard-circle-bar" for="{{ heartRateData }}" style="height: {{ $item.circleBarHeight }}px;"></div>
+          <div class="dashboard-circle-bar" for="{{ heartRateData }}" style="height: {{ heartBarHeight($idx) }}px;"></div>
         </div>
       </div>
     </div>
@@ -30,6 +30,7 @@
 
 <script>
 import router from '@system.router'
+import healthMetrics from '../../common/health_metrics'
 
 export default {
   props: [
@@ -47,6 +48,10 @@ export default {
     'batteryWidth',
     'batteryColor'
   ],
+
+  heartBarHeight(index) {
+    return healthMetrics.sampleBarHeight(this.heartRateData, index, 4, 18, 8)
+  },
 
   goToHeartRate() {
     router.push({ uri: '/pages/heartrate', params: {} })
