@@ -92,7 +92,7 @@ import pageMotion from '../../common/page_motion'
 import swipeBack from '../../common/swipe_back'
 import watchData from '../../common/watch_data'
 import pageViewport from '../../common/page_viewport'
-import healthSampleService from '../../common/health_sample_service'
+import healthDomain from '../../common/health_domain'
 import healthMetrics from '../../common/health_metrics'
 
 function calcHourlyRange(hourlyData) {
@@ -163,10 +163,7 @@ export default {
     viewportLeft: '0px',
     viewportWidth: '100%',
     viewportHeight: '100%',
-    viewportTop: '0px',
-    lastHeartRateUpdatedAt: 0,
-    lastSpo2UpdatedAt: 0,
-    lastStressUpdatedAt: 0
+    viewportTop: '0px'
   },
 
   onInit() {
@@ -184,18 +181,18 @@ export default {
 
   onShow() {
     this.loadDailyRange()
-    healthSampleService.start(this.healthListener)
+    healthDomain.start(this.healthListener)
     pageMotion.enter(this)
   },
 
   onHide() {
     pageMotion.clear(this)
-    healthSampleService.stop(this.healthListener)
+    healthDomain.stop(this.healthListener)
   },
 
   onDestroy() {
     pageMotion.clear(this)
-    healthSampleService.stop(this.healthListener)
+    healthDomain.stop(this.healthListener)
     this.heartTrend = []
     this.spo2Trend = []
     this.stressTrend = []
@@ -238,18 +235,9 @@ export default {
     var firstError = data.heartRateErrorCode || data.spo2ErrorCode || data.stressErrorCode
     this.summaryText = data.anyLive ? '设备健康流已连接' : (firstError ? healthMetrics.codeMessage(firstError) + '，使用演示数据' : '当前环境使用兼容演示数据')
     this.updateStatuses()
-    if (data.heartRateUpdatedAt && data.heartRateUpdatedAt !== this.lastHeartRateUpdatedAt) {
-      this.lastHeartRateUpdatedAt = data.heartRateUpdatedAt
-      this.appendHeartTrend(data.heartRate)
-    }
-    if (data.spo2UpdatedAt && data.spo2UpdatedAt !== this.lastSpo2UpdatedAt) {
-      this.lastSpo2UpdatedAt = data.spo2UpdatedAt
-      this.appendSpo2Trend(data.spo2)
-    }
-    if (data.stressUpdatedAt && data.stressUpdatedAt !== this.lastStressUpdatedAt) {
-      this.lastStressUpdatedAt = data.stressUpdatedAt
-      this.appendStressTrend(data.stress)
-    }
+    if (data.heartRateChanged) this.appendHeartTrend(data.heartRate)
+    if (data.spo2Changed) this.appendSpo2Trend(data.spo2)
+    if (data.stressChanged) this.appendStressTrend(data.stress)
   },
 
   updateStatuses() {
