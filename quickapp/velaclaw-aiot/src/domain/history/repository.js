@@ -46,7 +46,7 @@ function makeDemoHistory() {
   var calories = [146, 205, 242, 178, 288, 220]
   var stand = [6, 8, 9, 7, 10, 8]
   var heart = [78, 81, 84, 79, 86, 82]
-  var goals = [62, 78, 90, 69, 100, 82]
+  var goals = [54, 74, 85, 64, 93, 78]
   for (var i = HISTORY_DAYS - 1; i > 0; i--) {
     var date = new Date()
     date.setDate(date.getDate() - i)
