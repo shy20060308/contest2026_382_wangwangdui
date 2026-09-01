@@ -106,8 +106,8 @@ function calcHourlyRange(hourlyData) {
   return { min: min, max: max }
 }
 
-function makeMetricBars(values, minSpan, inactiveColor, activeColor) {
-  var heights = healthMetrics.barHeights(values, 7, 29, minSpan)
+function makeMetricBars(values, minSpan, inactiveColor, activeColor, maxHeight) {
+  var heights = healthMetrics.barHeights(values, 7, maxHeight || 29, minSpan)
   var result = []
   for (var i = 0; i < heights.length; i++) {
     result.push({
@@ -302,9 +302,10 @@ export default {
   },
 
   refreshMetricTrends() {
-    this.heartTrend = makeMetricBars(this.heartTrendValues || [], 8, '#7A2436', '#FF375F')
-    this.spo2Trend = makeMetricBars(this.spo2TrendValues || [], 4, '#245566', '#5AC8FA')
-    this.stressTrend = makeMetricBars(this.stressTrendValues || [], 10, '#542966', '#BF5AF2')
+    this.heartTrend = makeMetricBars(this.heartTrendValues || [], 8, '#7A2436', '#FF375F', 29)
+    // 紧凑趋势容器高度是 24px，柱高也必须以 24px 为上限；否则最高点会被容器裁切。
+    this.spo2Trend = makeMetricBars(this.spo2TrendValues || [], 4, '#245566', '#5AC8FA', 24)
+    this.stressTrend = makeMetricBars(this.stressTrendValues || [], 10, '#542966', '#BF5AF2', 24)
     var stressSummary = healthMetrics.stats(this.stressTrendValues || [])
     this.stressMin = stressSummary.min
     this.stressAvg = stressSummary.avg
