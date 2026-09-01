@@ -66,7 +66,7 @@ import router from '@system.router'
 import pageMotion from '../../common/page_motion'
 import pageViewport from '../../common/page_viewport'
 import watchData from '../../common/watch_data'
-import healthSampleService from '../../common/health_sample_service'
+import healthDomain from '../../common/health_domain'
 import calendarUtils from '../../common/calendar_utils'
 
 var WEEKDAYS = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
@@ -91,7 +91,6 @@ export default {
     calendarMonth: 0,
     calendarTitle: '',
     calendarCells: [],
-    lastHeartRateUpdatedAt: 0,
     pageOpacity: 1,
     pageOffset: 0,
     viewportClass: '',
@@ -117,17 +116,17 @@ export default {
   onShow() {
     pageMotion.enter(this)
     this.refreshToday()
-    healthSampleService.start(this.healthListener)
+    healthDomain.start(this.healthListener)
   },
 
   onHide() {
     pageMotion.clear(this)
-    healthSampleService.stop(this.healthListener)
+    healthDomain.stop(this.healthListener)
   },
 
   onDestroy() {
     pageMotion.clear(this)
-    healthSampleService.stop(this.healthListener)
+    healthDomain.stop(this.healthListener)
     this.calendarCells = []
   },
 
@@ -151,11 +150,8 @@ export default {
   },
 
   applyHealthData(data) {
-    if (!data || data.heartRate === undefined || data.heartRate === null) return
-    if (!data.heartRateUpdatedAt || data.heartRateUpdatedAt === this.lastHeartRateUpdatedAt) return
-    this.lastHeartRateUpdatedAt = data.heartRateUpdatedAt
-    var snapshot = watchData.applyHeartRate(data.heartRate)
-    this.heartText = snapshot.currentHeartRate.toString()
+    if (!data || !data.watchSnapshot) return
+    this.heartText = data.watchSnapshot.currentHeartRate.toString()
   },
 
   refreshCalendar() {
@@ -264,7 +260,6 @@ export default {
   .metric-grid { width: 136px; height: 48px; margin-top: 4px; }
   .metric-card { width: 66px; height: 22px; padding: 0px 7px; border-radius: 11px; margin-bottom: 4px; justify-content: center; }
   .metric-label { position: absolute; left: 7px; top: 8px; width: 24px; font-size: 5px; }
-  /* 数值右对齐、单位紧随其后，圆屏窄卡里仍保留完整语义。 */
   .metric-value { position: absolute; left: 24px; top: 5px; width: 26px; font-size: 11px; margin-top: 0px; text-align: right; }
   .metric-unit { position: absolute; left: 52px; top: 10px; width: 12px; font-size: 4px; }
   .today-tip { display: none; }
