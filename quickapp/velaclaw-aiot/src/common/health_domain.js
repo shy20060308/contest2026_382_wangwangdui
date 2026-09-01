@@ -4,18 +4,22 @@ import watchData from './watch_data'
 /**
  * 健康领域协调层
  *
- * 职责只有两件：
- * 1. 作为页面唯一的 health_sample_service 消费者，按页面订阅数量启停底层健康流；
- * 2. 每个新的心率 sample 只同步一次 watch_data，避免 clock/today/heartrate 各自
- *    维护 lastHeartRateUpdatedAt 并重复 applyHeartRate。
+ * 职责：
+ * 1. 作为页面唯一的 health_sample_service 消费入口，按页面订阅数量启停底层健康流；
+ * 2. 每个新的心率 sample 只同步一次 watch_data；
+ * 3. 在领域层统一判断 heartRate / spo2 / stress 是否为新 sample，页面不再各自维护
+ *    lastXxxUpdatedAt。
  *
- * 这里不生成 UI 文案、不计算卡片布局，也不感知 circle/pill/rect。
- * 页面 onShow subscribe、onHide unsubscribe；最后一个页面离开后底层服务停止。
+ * 不生成 UI 文案、不计算卡片布局，也不感知 circle/pill/rect。
  */
 var listeners = []
 var active = false
-var lastHeartRateUpdatedAt = 0
 var latestState = null
+var lastUpdatedAt = {
+  heartRate: 0,
+  spo2: 0,
+  stress: 0
+}
 
 function copySample(sample) {
   var source = sample || {}
@@ -40,9 +44,19 @@ function copySample(sample) {
   }
 }
 
-function buildState(sample, heartRateChanged) {
+function didMetricChange(name, updatedAt) {
+  var next = Number(updatedAt) || 0
+  if (next <= 0 || next === lastUpdatedAt[name]) return false
+  lastUpdatedAt[name] = next
+  return true
+}
+
+function buildState(sample, changes) {
   var state = copySample(sample)
-  state.heartRateChanged = heartRateChanged === true
+  var dirty = changes || {}
+  state.heartRateChanged = dirty.heartRate === true
+  state.spo2Changed = dirty.spo2 === true
+  state.stressChanged = dirty.stress === true
   state.watchSnapshot = watchData.getSnapshot()
   return state
 }
@@ -56,14 +70,14 @@ function emit(state) {
 }
 
 function handleSample(sample) {
-  var heartRateChanged = false
-  var updatedAt = sample && Number(sample.heartRateUpdatedAt)
-  if (updatedAt > 0 && updatedAt !== lastHeartRateUpdatedAt) {
-    lastHeartRateUpdatedAt = updatedAt
-    watchData.applyHeartRate(sample.heartRate)
-    heartRateChanged = true
+  var changes = {
+    heartRate: didMetricChange('heartRate', sample && sample.heartRateUpdatedAt),
+    spo2: didMetricChange('spo2', sample && sample.spo2UpdatedAt),
+    stress: didMetricChange('stress', sample && sample.stressUpdatedAt)
   }
-  emit(buildState(sample, heartRateChanged))
+
+  if (changes.heartRate) watchData.applyHeartRate(sample.heartRate)
+  emit(buildState(sample, changes))
 }
 
 function startService() {
@@ -86,7 +100,7 @@ function addListener(listener) {
   // 后加入的页面先收到当前快照；首次 listener 则由 health_sample_service.start()
   // 的同步 emit 初始化，避免同一页面 onShow 时收到两份完全相同的数据。
   if (active) {
-    listener(latestState || buildState(healthSampleService.getSnapshot(), false))
+    listener(latestState || buildState(healthSampleService.getSnapshot()))
     return
   }
   startService()
@@ -106,6 +120,6 @@ export default {
   stop: removeListener,
 
   getSnapshot: function () {
-    return latestState || buildState(healthSampleService.getSnapshot(), false)
+    return latestState || buildState(healthSampleService.getSnapshot())
   }
 }
