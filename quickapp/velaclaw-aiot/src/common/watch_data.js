@@ -120,30 +120,19 @@ function saveSelectedFaceId(id, callback) {
 
 function cloneHeartRateData() {
   var result = []
-  var values = []
   for (var i = 0; i < state.heartRateData.length; i++) {
-    values.push(state.heartRateData[i].value)
-  }
-  var pillHeights = healthMetrics.barHeights(values, 4, 28, 8)
-  var circleHeights = healthMetrics.barHeights(values, 4, 18, 8)
-  for (var index = 0; index < state.heartRateData.length; index++) {
-    var item = state.heartRateData[index]
-    result.push({
-      value: item.value,
-      barHeight: pillHeights[index],
-      circleBarHeight: circleHeights[index]
-    })
+    result.push({ value: state.heartRateData[i].value })
   }
   return result
 }
 
 function getAverageHeartRate() {
   // Use the recent samples shared by the system health service and watch faces.
-  var total = 0
+  var values = []
   for (var i = 0; i < state.heartRateData.length; i++) {
-    total += state.heartRateData[i].value
+    values.push(state.heartRateData[i].value)
   }
-  return Math.round(total / state.heartRateData.length)
+  return healthMetrics.stats(values).avg
 }
 
 function getMinHeartRate() {
