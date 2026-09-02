@@ -8,7 +8,19 @@ function formatDay(dateText) {
   return dateText.slice(5).replace('-', '/')
 }
 
-function buildBars(history) {
+function formatCompactDay(dateText) {
+  return dateText.slice(8)
+}
+
+function formatCompactSteps(value) {
+  var steps = Math.max(0, Number(value) || 0)
+  if (steps < 1000) return Math.round(steps).toString()
+  var compact = (steps / 1000).toFixed(1)
+  if (compact.slice(-2) === '.0') compact = compact.slice(0, -2)
+  return compact + 'k'
+}
+
+function buildBars(history, compact) {
   var maxSteps = 1
   for (var i = 0; i < history.length; i++) {
     if (history[i].steps > maxSteps) maxSteps = history[i].steps
@@ -18,17 +30,18 @@ function buildBars(history) {
     var item = history[j]
     var height = Math.max(6, Math.round((item.steps / maxSteps) * CHART_MAX_HEIGHT))
     bars.push({
-      label: formatDay(item.date),
+      label: compact ? formatCompactDay(item.date) : formatDay(item.date),
       height: height,
       color: j === history.length - 1 ? '#FFD60A' : '#3A7DFF',
       stepsText: formatNumber(item.steps),
-      shortSteps: Math.round(item.steps / 1000) + 'k'
+      shortSteps: formatCompactSteps(item.steps)
     })
   }
   return bars
 }
 
-export function mapHistory(history) {
+export function mapHistory(history, options) {
+  var compact = !!(options && options.compact)
   if (!history || !history.length) {
     return {
       todayStepsText: '0',
@@ -72,7 +85,9 @@ export function mapHistory(history) {
     avgHeartText: Math.round(totalHeart / history.length) + ' bpm',
     totalCaloriesText: formatNumber(totalCalories),
     goalText: today.goalPercent + '%',
-    stepBars: buildBars(history),
+    stepBars: buildBars(history, compact),
     records: records
   }
 }
+
+export { formatCompactSteps }
