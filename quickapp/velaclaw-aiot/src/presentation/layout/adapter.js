@@ -41,6 +41,15 @@ function regionLeft(region) {
 }
 
 function stackStart(profile, regions, gap, spec) {
+  if (!regions.length) return 0
+
+  // Start-aligned stacks should use the first region's own safe band rather
+  // than the widest region in the page. This is what lets a narrow wearable
+  // header live safely in the circle cap while a wider card/list starts lower.
+  if (!spec.verticalAlign || spec.verticalAlign === 'start' || spec.verticalAlign === 'top') {
+    return constraints.intervalFor(profile, regions[0].width, spec.comfort).top
+  }
+
   var maxWidth = 0
   var totalHeight = 0
   for (var i = 0; i < regions.length; i++) {
