@@ -25,6 +25,19 @@ function merge(base, override) {
   return result
 }
 
+function normalizeFreedomLevel(value) {
+  var level = Math.round(Number(value) || 1)
+  if (level < 1) return 1
+  if (level > 3) return 3
+  return level
+}
+
+function defaultStrategy(level) {
+  if (level === 3) return 'free'
+  if (level === 2) return 'assisted'
+  return 'auto'
+}
+
 function select(spec, profile) {
   var source = spec || {}
   var shape = profile && profile.formFactor ? profile.formFactor : 'rect'
@@ -34,7 +47,10 @@ function select(spec, profile) {
   var overrides = source.compositions || {}
   var override = overrides[shape]
   var selected = merge(base || {}, override || {})
+  var freedomLevel = normalizeFreedomLevel(source.freedomLevel || selected.freedomLevel)
   selected.id = source.id || selected.id || 'anonymous-layout'
+  selected.freedomLevel = freedomLevel
+  selected.strategy = source.strategy || selected.strategy || defaultStrategy(freedomLevel)
   selected.shape = shape
   selected.composition = override ? shape : 'default'
   selected.hasOverride = !!override
@@ -43,5 +59,6 @@ function select(spec, profile) {
 
 module.exports = {
   select: select,
-  merge: merge
+  merge: merge,
+  normalizeFreedomLevel: normalizeFreedomLevel
 }
