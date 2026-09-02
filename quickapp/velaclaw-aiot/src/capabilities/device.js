@@ -40,9 +40,12 @@ function read(callback, forceRefresh) {
   flush(cached)
 }
 
-export default {
+var gateway = {
   get: read,
+  getInfo: function (success) { read(success) },
   getCached: function () { return cached || {} },
   refresh: function (callback) { read(callback, true) },
   clearCache: function () { cached = null }
 }
+
+export default gateway
