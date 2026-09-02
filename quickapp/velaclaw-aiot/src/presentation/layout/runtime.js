@@ -1,4 +1,5 @@
 import screenProfile from '../viewport/profile'
+import viewportRuntime from '../viewport/runtime'
 var adapter = require('./adapter')
 
 function regionStyle(region) {
@@ -17,6 +18,7 @@ function apply(page, plan) {
 
 function bind(page, spec, callback) {
   screenProfile.resolve(page, function (profile) {
+    viewportRuntime.apply(page, profile)
     var plan = adapter.resolve(profile, spec)
     apply(page, plan)
     if (typeof callback === 'function') callback(plan, profile)
