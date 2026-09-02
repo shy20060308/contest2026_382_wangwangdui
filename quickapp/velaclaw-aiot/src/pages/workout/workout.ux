@@ -1,38 +1,36 @@
 <template>
   <div class="workout-page {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px;">
-    <div class="workout-header">
+    <div class="workout-header" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;">
       <text class="mode-name" style="color: {{ accentColor }}">{{ modeName }}</text>
       <text class="status-text">{{ statusText }}</text>
     </div>
 
-    <text class="duration">{{ durationText }}</text>
-    <text class="duration-label" static>运动时长</text>
-    <text class="gps-status" style="color: {{ gpsColor }}">{{ gpsText }}</text>
+    <div class="hero-region" style="left: {{ heroLeft }}px; top: {{ heroTop }}px; width: {{ heroWidth }}px; height: {{ heroHeight }}px;">
+      <text class="duration">{{ durationText }}</text>
+      <text class="duration-label" static>运动时长</text>
+      <text class="gps-status" style="color: {{ gpsColor }}">{{ gpsText }}</text>
+    </div>
 
-    <div class="metric-grid">
-      <div class="metric-row">
-        <div class="metric-item">
-          <text class="metric-value step-color">{{ stepsText }}</text>
-          <text class="metric-label" static>步数</text>
-        </div>
-        <div class="metric-item">
-          <text class="metric-value calorie-color">{{ caloriesText }}</text>
-          <text class="metric-label" static>千卡</text>
-        </div>
+    <div class="metric-grid" style="left: {{ metricsLeft }}px; top: {{ metricsTop }}px; width: {{ metricsWidth }}px; height: {{ metricsHeight }}px;">
+      <div class="metric-item">
+        <text class="metric-value step-color">{{ stepsText }}</text>
+        <text class="metric-label" static>步数</text>
       </div>
-      <div class="metric-row">
-        <div class="metric-item">
-          <text class="metric-value distance-color">{{ distanceText }}</text>
-          <text class="metric-label" static>距离</text>
-        </div>
-        <div class="metric-item">
-          <text class="metric-value heart-color">{{ heartRateText }}</text>
-          <text class="metric-label" static>心率 bpm</text>
-        </div>
+      <div class="metric-item">
+        <text class="metric-value calorie-color">{{ caloriesText }}</text>
+        <text class="metric-label" static>千卡</text>
+      </div>
+      <div class="metric-item">
+        <text class="metric-value distance-color">{{ distanceText }}</text>
+        <text class="metric-label" static>距离</text>
+      </div>
+      <div class="metric-item">
+        <text class="metric-value heart-color">{{ heartRateText }}</text>
+        <text class="metric-label" static>心率 bpm</text>
       </div>
     </div>
 
-    <div class="action-row">
+    <div class="action-row" style="left: {{ actionsLeft }}px; top: {{ actionsTop }}px; width: {{ actionsWidth }}px; height: {{ actionsHeight }}px;">
       <text class="action-button pause-button" @click="togglePause">{{ pauseButtonText }}</text>
       <text class="action-button finish-button" @click="finishWorkout">结束</text>
     </div>
@@ -55,8 +53,56 @@ import router from '@system.router'
 import workoutManager from '../../common/workout_manager'
 import gpsTracker from '../../common/gps_tracker'
 import pageMotion from '../../common/page_motion'
-import pageViewport from '../../common/page_viewport'
+import layoutRuntime from '../../presentation/layout/runtime'
 import { createContext } from '../../common/lifecycle_manager'
+
+var WORKOUT_LAYOUT = {
+  id: 'workout-l2-assisted',
+  default: {
+    mode: 'auto-stack',
+    verticalAlign: 'center',
+    minScale: 0.82,
+    maxScale: 1,
+    gap: 14,
+    comfort: 2,
+    regions: [
+      { id: 'header', role: 'workout-header', width: 128, height: 28 },
+      { id: 'hero', role: 'duration-hero', width: 164, height: 100 },
+      { id: 'metrics', role: 'metric-grid', width: 164, height: 154 },
+      { id: 'actions', role: 'workout-actions', width: 164, height: 46 }
+    ]
+  },
+  compositions: {
+    circle: {
+      mode: 'fixed-composition',
+      comfort: 2,
+      regions: [
+        { id: 'header', role: 'workout-header', left: 37, top: 23, width: 118, height: 16, variant: 'compact' },
+        { id: 'hero', role: 'duration-hero', left: 41, top: 40, width: 110, height: 44, variant: 'compact' },
+        { id: 'metrics', role: 'metric-grid', left: 22, top: 86, width: 148, height: 60, variant: 'compact' },
+        { id: 'actions', role: 'workout-actions', left: 36, top: 148, width: 120, height: 20, variant: 'compact' }
+      ]
+    },
+    rect: {
+      mode: 'fixed-composition',
+      comfort: 2,
+      regions: [
+        { id: 'header', role: 'workout-header', left: 24, top: 12, width: 144, height: 22, variant: 'wide' },
+        { id: 'hero', role: 'duration-hero', left: 16, top: 38, width: 160, height: 56, variant: 'wide' },
+        { id: 'metrics', role: 'metric-grid', left: 8, top: 104, width: 176, height: 52, variant: 'wide' },
+        { id: 'actions', role: 'workout-actions', left: 24, top: 174, width: 144, height: 36, variant: 'wide' }
+      ]
+    }
+  }
+}
+
+function applyRegion(page, prefix, region) {
+  if (!region) return
+  page[prefix + 'Left'] = region.left
+  page[prefix + 'Top'] = region.top
+  page[prefix + 'Width'] = region.width
+  page[prefix + 'Height'] = region.height
+}
 
 export default {
   private: {
@@ -72,6 +118,23 @@ export default {
     gpsColor: '#8E8E93',
     pauseButtonText: '暂停',
     confirmVisible: false,
+    headerLeft: 32,
+    headerTop: 20,
+    headerWidth: 128,
+    headerHeight: 28,
+    heroLeft: 14,
+    heroTop: 62,
+    heroWidth: 164,
+    heroHeight: 100,
+    metricsLeft: 14,
+    metricsTop: 176,
+    metricsWidth: 164,
+    metricsHeight: 154,
+    actionsLeft: 14,
+    actionsTop: 344,
+    actionsWidth: 164,
+    actionsHeight: 46,
+    layoutReady: false,
     pageOpacity: 1,
     pageOffset: 0,
     viewportClass: '',
@@ -83,9 +146,19 @@ export default {
   },
 
   onInit() {
-    pageViewport.bind(this)
+    var self = this
     this.lifecycle = createContext()
     this.running = true
+    layoutRuntime.bind(this, WORKOUT_LAYOUT, function (plan) {
+      var regions = plan && plan.regions ? plan.regions : []
+      for (var i = 0; i < regions.length; i++) {
+        if (regions[i].id === 'header') applyRegion(self, 'header', regions[i])
+        else if (regions[i].id === 'hero') applyRegion(self, 'hero', regions[i])
+        else if (regions[i].id === 'metrics') applyRegion(self, 'metrics', regions[i])
+        else if (regions[i].id === 'actions') applyRegion(self, 'actions', regions[i])
+      }
+      self.layoutReady = !plan.needsOverride
+    })
   },
 
   onShow() {
@@ -210,22 +283,23 @@ export default {
 
 <style>
 .workout-page {
-  flex-direction: column;
-  align-items: center;
   width: 100%;
   height: 100%;
-  padding: 18px 14px;
   background-color: #000000;
   position: relative;
+}
+
+.workout-header,
+.hero-region,
+.metric-grid,
+.action-row {
+  position: absolute;
 }
 
 .workout-header {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  width: 128px;
-  height: 28px;
-  margin-top: 8px;
 }
 
 .mode-name {
@@ -241,11 +315,19 @@ export default {
   text-align: right;
 }
 
+.hero-region {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
 .duration {
+  width: 100%;
+  height: 58px;
   font-size: 50px;
   font-weight: bold;
   color: #FFFFFF;
-  margin-top: 26px;
+  text-align: center;
 }
 
 .duration-label {
@@ -260,17 +342,10 @@ export default {
 }
 
 .metric-grid {
-  flex-direction: column;
-  justify-content: space-between;
-  width: 164px;
-  height: 154px;
-  margin-top: 20px;
-}
-
-.metric-row {
   flex-direction: row;
+  flex-wrap: wrap;
   justify-content: space-between;
-  width: 164px;
+  align-content: space-between;
 }
 
 .metric-item {
@@ -281,7 +356,6 @@ export default {
   height: 70px;
   background-color: #111317;
   border-radius: 8px;
-  margin-bottom: 10px;
 }
 
 .metric-value {
@@ -305,9 +379,7 @@ export default {
 .action-row {
   flex-direction: row;
   justify-content: space-between;
-  width: 164px;
-  height: 46px;
-  margin-top: 34px;
+  align-items: center;
 }
 
 .action-button {
@@ -384,58 +456,30 @@ export default {
 
 .confirm-finish { background-color: #C83245; }
 
-/*
- * 圆屏安全栈：21px 是 118px 宽 header 在 192px 逻辑圆中的几何安全上边界。
- * 时长保持 30px 行盒 / 25px 字体，避免 Vela/LVGL 字形底部被裁切。
- */
+/* L2 Assisted: Adapter owns region geometry; media rules only style component variants. */
 @media (shape: circle) {
-  .workout-page {
-    padding: 21px 20px 0px 20px;
-  }
-
-  .workout-header {
-    width: 118px;
-    height: 16px;
-    margin-top: 0px;
-  }
-
-  .mode-name {
-    width: 54px;
-    font-size: 11px;
-  }
-
+  .mode-name { width: 54px; font-size: 11px; }
   .status-text { font-size: 7px; }
 
   .duration {
     width: 110px;
     height: 30px;
     font-size: 25px;
-    text-align: center;
-    margin-top: 0px;
   }
 
   .duration-label,
   .gps-status {
     width: 110px;
-    height: 9px;
+    height: 7px;
     font-size: 7px;
     text-align: center;
     margin-top: 0px;
   }
 
-  .metric-grid {
-    width: 148px;
-    height: 60px;
-    margin-top: 1px;
-  }
-
-  .metric-row { width: 148px; }
-
   .metric-item {
     width: 71px;
     height: 28px;
     border-radius: 14px;
-    margin-bottom: 4px;
   }
 
   .metric-value {
@@ -448,17 +492,11 @@ export default {
     margin-top: 1px;
   }
 
-  .action-row {
-    width: 120px;
-    height: 22px;
-    margin-top: 1px;
-  }
-
   .action-button {
     width: 56px;
-    height: 22px;
+    height: 20px;
     font-size: 9px;
-    border-radius: 11px;
+    border-radius: 10px;
   }
 
   .confirm-box {
@@ -485,6 +523,47 @@ export default {
     height: 27px;
     font-size: 8px;
     border-radius: 14px;
+  }
+}
+
+@media (shape: rect) {
+  .mode-name { width: 70px; font-size: 14px; }
+  .status-text { width: 62px; font-size: 8px; }
+
+  .duration {
+    height: 34px;
+    font-size: 30px;
+  }
+
+  .duration-label { font-size: 8px; margin-top: 0px; }
+  .gps-status { font-size: 7px; margin-top: 2px; }
+
+  .metric-grid {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .metric-item {
+    width: 41px;
+    height: 48px;
+    border-radius: 12px;
+  }
+
+  .metric-value {
+    width: 39px;
+    font-size: 11px;
+  }
+
+  .metric-label {
+    font-size: 6px;
+    margin-top: 2px;
+  }
+
+  .action-button {
+    width: 68px;
+    height: 34px;
+    font-size: 11px;
+    border-radius: 17px;
   }
 }
 </style>
