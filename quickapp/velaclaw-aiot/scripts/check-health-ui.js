@@ -7,6 +7,7 @@ const manifest = JSON.parse(read('src/manifest.json'))
 const pageSource = read('src/pages/heartrate/heartrate.ux')
 const todaySource = read('src/pages/today/today.ux')
 const clockSource = read('src/pages/clock/clock.ux')
+const powerRuntimeSource = read('src/runtime/power/controller.js')
 const healthChannelSource = read('src/capabilities/internal/health_channel.js')
 const heartCapabilitySource = read('src/capabilities/heart_rate.js')
 const spo2CapabilitySource = read('src/capabilities/blood_oxygen.js')
@@ -76,8 +77,17 @@ requireCondition(todaySource.includes("import activityStore from '../../domain/a
 requireCondition(todaySource.includes('activityStore.hydrate'), 'today page must hydrate cross-page activity state on show')
 requireCondition(!todaySource.includes('watch_data'), 'today page must not regress to watch_data')
 
-requireCondition(clockSource.includes('healthSampleService.start(this.watchFaceHealthListener)'), 'watch face must subscribe while ACTIVE/DIM until clock capability migration completes')
-requireCondition(clockSource.includes('healthSampleService.stop(this.watchFaceHealthListener)'), 'watch face must unsubscribe in SLEEP/hide')
+requireCondition(clockSource.includes("../../runtime/power/controller"), 'clock must delegate health/power cadence to Power Runtime')
+requireCondition(clockSource.includes('applyRuntimeHeartRate'), 'clock must only consume semantic HR events from runtime')
+requireCondition(!clockSource.includes('healthSampleService'), 'clock must not own the legacy health sampling service')
+requireCondition(!clockSource.includes('startWatchFaceHealth'), 'clock must not own health subscription lifecycle')
+requireCondition(!clockSource.includes('stopWatchFaceHealth'), 'clock must not own health release lifecycle')
+requireCondition(!clockSource.includes('setInterval('), 'clock must not own power/health cadence timers')
+requireCondition(powerRuntimeSource.includes("../../capabilities/heart_rate"), 'Power Runtime must consume heart-rate capability directly')
+requireCondition(powerRuntimeSource.includes("currentMode === stateMachine.MODE_ACTIVE) onHeartRate(sample, 'live')"), 'ACTIVE must still apply fresh HR immediately')
+requireCondition(powerRuntimeSource.includes("onHeartRate(latestHeartSample, 'cadence')"), 'DIM must still publish buffered HR on its lower cadence')
+requireCondition(powerRuntimeSource.includes('if (policy.healthEnabled) startHealth()'), 'Power Runtime must keep HR on in ACTIVE/DIM')
+requireCondition(powerRuntimeSource.includes('else stopHealth()'), 'Power Runtime must stop HR in SLEEP')
 requireCondition(!clockSource.includes('watchData.tickHeartRate()'), 'watch face must not generate a second random heart rate')
 
 requireCondition(watchDataSource.includes("../domain/health/recent"), 'watch_data compatibility layer must delegate recent heart state')
@@ -89,5 +99,5 @@ if (errors.length > 0) {
   errors.forEach(function (error) { console.error('health UI error: ' + error) })
   process.exitCode = 1
 } else {
-  console.log('Checked health capability/domain/presentation boundaries and wearable UI integration')
+  console.log('Checked health capability/domain/runtime/presentation boundaries and wearable UI integration')
 }
