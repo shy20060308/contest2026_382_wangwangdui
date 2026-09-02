@@ -1,32 +1,22 @@
 /**
  * 圆屏 / 胶囊屏安全区回归校验
  *
- * 快应用在 192 设计画布上排版，但圆屏和胶囊屏的四角会被物理外形切掉。以前只能靠
- * 模拟器截图肉眼发现遮挡，改一处布局就要重截一轮。本脚本按页面的纵向流式布局累加
- * 每个子元素的 margin-top / height / margin-bottom，算出它在 192 画布中的真实位置，
- * 再交给 src/common/safe_area.js 的几何模型判断四角是否落在内切圆内。
- *
- * 不依赖模拟器，`npm run check` 就能拦住越界改动。
- *
- * 只描述纵向排布的顶层子元素；行内元素由父容器约束，重复校验会产生噪声。
+ * 旧页面仍按 CSS 流式盒模型检查；已经迁入 Design Engine 的页面直接执行 Layout Spec，
+ * 以 Adapter 产出的真实 region plan 为准。后者不再反向解析 CSS magic number。
  */
 const fs = require('fs')
 const path = require('path')
 const safeArea = require('../src/common/safe_area')
+const layoutAdapter = require('../src/presentation/layout/adapter')
+const workoutLayout = require('../src/presentation/layout/specs/workout')
 
 const root = path.resolve(__dirname, '..')
 const errors = []
 
-/**
- * 去掉 CSS 注释。
- * 规则解析按“上一个右花括号之后的内容即选择器”切分，注释会被并入选择器文本，
- * 导致 `.calendar-page` 这类紧跟在注释后的规则匹配不上而静默退回默认值。
- */
 function stripComments(source) {
   return source.replace(/\/\*[\s\S]*?\*\//g, '')
 }
 
-/** 取出 .ux 文件里 @media (shape: circle) 区块的内容。 */
 function extractCircleBlock(source) {
   const marker = source.indexOf('@media (shape: circle)')
   if (marker < 0) return ''
@@ -45,14 +35,6 @@ function extractCircleBlock(source) {
   return source.slice(marker)
 }
 
-/**
- * 读取某个选择器上的一条数值属性，找不到返回 null。
- *
- * 逐条扫描 `选择器列表 { 声明 }`，因为工程里普遍用逗号分组书写
- * （如 `.device-card, .capability-list { width: 148px }`），
- * 只按单选择器匹配会漏读并静默退回基础样式，得到偏大的错误尺寸。
- * 后出现的规则覆盖先出现的，与层叠顺序一致。
- */
 function readNumeric(block, selector, property) {
   const rulePattern = /([^{}]+)\{([^{}]*)\}/g
   const valuePattern = new RegExp('(?:^|;)\\s*' + property + '\\s*:\\s*(-?\\d+(?:\\.\\d+)?)px')
@@ -69,14 +51,12 @@ function readNumeric(block, selector, property) {
   return result
 }
 
-/** 圆屏样式优先，回退到基础样式（只在圆屏渲染的容器无需 @media 覆盖）。 */
 function readEffective(circleBlock, baseSource, selector, property) {
   const scoped = readNumeric(circleBlock, selector, property)
   if (scoped !== null) return scoped
   return readNumeric(baseSource, selector, property)
 }
 
-/** 读取页面根节点的顶部内边距，兼容 padding 简写。 */
 function readPaddingTop(circleBlock, baseSource, selector) {
   const explicit = readEffective(circleBlock, baseSource, selector, 'padding-top')
   if (explicit !== null) return explicit
@@ -94,17 +74,7 @@ function readPaddingTop(circleBlock, baseSource, selector) {
   return result === null ? 0 : result
 }
 
-/**
- * 各圆屏页面的纵向内容流。
- *
- * children 按模板中的出现顺序排列；只列出参与纵向排布、且声明了高度的顶层元素。
- * 同一时刻只显示其一的分支页（如 settings 的列表与 diagnostics 的两种卡片）
- * 拆成独立条目分别校验。
- *
- * 不包含 applist 的 `.circle-honeycomb`：那是一块铺满画布的拖拽舞台，图标坐标在
- * 运行时按手指位置计算，本来就允许滑出可视圆之外。它的约束是“聚焦态图标与名称板
- * 必须在圆内”，属于运行时不变量，不适合静态盒模型校验。
- */
+// Legacy CSS-flow pages. As each page moves to Design Engine it should leave this list.
 const CIRCLE_PAGES = [
   {
     page: 'src/pages/today/today.ux',
@@ -127,13 +97,6 @@ const CIRCLE_PAGES = [
     flows: [
       { name: '屏幕档案页', children: ['.top-row', '.device-card', '.pager-row'] },
       { name: '能力列表页', children: ['.top-row', '.capability-list', '.pager-row'] }
-    ]
-  },
-  {
-    page: 'src/pages/workout/workout.ux',
-    root: '.workout-page',
-    flows: [
-      { name: '运动中', children: ['.workout-header', '.metric-grid', '.action-row'] }
     ]
   },
   {
@@ -184,7 +147,17 @@ CIRCLE_PAGES.forEach(function (target) {
   })
 })
 
-// 安全区模型本身的不变量，防止有人调参后破坏几何前提。
+const DESIGN_ENGINE_LAYOUTS = [
+  { name: 'Workout L2', spec: workoutLayout }
+]
+
+DESIGN_ENGINE_LAYOUTS.forEach(function (target) {
+  const plan = layoutAdapter.resolve({ formFactor: 'circle', logicalHeight: 192 }, target.spec)
+  if (plan.needsOverride || plan.violations.length) {
+    errors.push(target.name + ' Layout Plan 未通过圆屏安全几何：' + JSON.stringify(plan.violations))
+  }
+})
+
 if (safeArea.capsuleCapInset(192, 168) !== 50) {
   errors.push('胶囊端帽推导偏离真机校准值 50px，请同步复核 test/safe_area.test.js')
 }
@@ -198,8 +171,8 @@ if (errors.length > 0) {
   })
   process.exitCode = 1
 } else {
-  const flowCount = CIRCLE_PAGES.reduce(function (total, item) {
+  const legacyFlowCount = CIRCLE_PAGES.reduce(function (total, item) {
     return total + item.flows.length
   }, 0)
-  console.log('Checked circle safe-area geometry for ' + flowCount + ' content flows')
+  console.log('Checked circle safe-area geometry for ' + legacyFlowCount + ' legacy flows + ' + DESIGN_ENGINE_LAYOUTS.length + ' Design Engine plans')
 }
