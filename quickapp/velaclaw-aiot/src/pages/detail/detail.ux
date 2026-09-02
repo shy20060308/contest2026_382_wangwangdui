@@ -7,18 +7,7 @@
 <script>
 import pageMotion from '../../common/page_motion'
 import layoutRuntime from '../../presentation/layout/runtime'
-
-var DETAIL_LAYOUT = {
-  id: 'detail-l1-auto',
-  default: {
-    mode: 'auto-stack',
-    verticalAlign: 'center',
-    minScale: 0.78,
-    regions: [
-      { id: 'title', width: 148, height: 32 }
-    ]
-  }
-}
+import detailLayout from '../../presentation/layout/specs/detail'
 
 export default {
   private: {
@@ -40,7 +29,7 @@ export default {
 
   onInit() {
     var self = this
-    layoutRuntime.bind(this, DETAIL_LAYOUT, function (plan) {
+    layoutRuntime.bind(this, detailLayout, function (plan) {
       var title = plan && plan.regions && plan.regions[0]
       if (!title) return
       self.titleLeft = title.left
