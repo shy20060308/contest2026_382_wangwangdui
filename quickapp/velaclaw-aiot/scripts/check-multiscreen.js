@@ -26,7 +26,8 @@ const runtimeSource = read('src/presentation/viewport/runtime.js')
 const designRuntimeSource = read('src/presentation/layout/runtime.js')
 const compatibilitySource = read('docs/COMPATIBILITY.md')
 const launcherSource = read('src/pages/applist/applist.ux')
-const honeycombSource = read('src/common/honeycomb_layout.js')
+const honeycombBridgeSource = read('src/common/honeycomb_layout.js')
+const honeycombSource = read('src/presentation/engines/honeycomb.js')
 
 requireCondition(manifest.minAPILevel <= 2, 'minAPILevel must remain compatible with target watch images')
 requireCondition(typeof manifest.config.designWidth === 'number', 'config.designWidth must remain numeric')
@@ -67,6 +68,7 @@ targetSkins.forEach(function (skin) {
   'src/presentation/viewport/safe_area.js',
   'src/presentation/viewport/runtime.js',
   'src/presentation/layout/runtime.js',
+  'src/presentation/engines/honeycomb.js',
   'src/common/page_viewport.js',
   'src/common/launcher_apps.js',
   'src/common/honeycomb_layout.js',
@@ -110,7 +112,7 @@ Object.keys(manifest.router.pages || {}).forEach(function (route) {
   )
 })
 
-requireCondition(launcherSource.includes("import honeycombLayout from '../../common/honeycomb_layout'"), 'applist must consume the honeycomb engine')
+requireCondition(launcherSource.includes("import honeycombLayout from '../../common/honeycomb_layout'"), 'applist compatibility path must still resolve the honeycomb engine until L3 page migration completes')
 requireCondition(launcherSource.includes('honeycombLayout.buildSlots'), 'applist must delegate slot construction')
 requireCondition(launcherSource.includes('honeycombLayout.layoutSlots'), 'applist must delegate frame projection')
 requireCondition(launcherSource.includes('honeycombLayout.pickSlotByDirection'), 'applist must delegate directional focus')
@@ -119,13 +121,15 @@ requireCondition(launcherSource.includes('honeycombLayout.backOut'), 'applist mu
 ;['CIRCLE_SPACING', 'CIRCLE_EMPHASIS_FALLOFF', 'CIRCLE_ELASTIC_RANGE', 'CIRCLE_GRID_COORDS'].forEach(function (token) {
   requireCondition(!launcherSource.includes(token), 'applist duplicated honeycomb geometry: ' + token)
 })
-requireCondition(honeycombSource.includes('SPACING = 46'), 'honeycomb engine must retain golden-reference spacing')
-requireCondition(honeycombSource.includes('FOCUS_Y = 90'), 'honeycomb engine must retain golden-reference focus point')
-requireCondition(honeycombSource.includes('ICON_BASE = 34'), 'honeycomb engine must retain golden-reference icon size')
+requireCondition(honeycombBridgeSource.includes("../presentation/engines/honeycomb"), 'common honeycomb path must remain a thin compatibility bridge')
+requireCondition(honeycombBridgeSource.split(/\r?\n/).filter(Boolean).length <= 2, 'common honeycomb bridge must not regain visual-engine implementation')
+requireCondition(honeycombSource.includes('SPACING = 46'), 'L3 honeycomb engine must retain golden-reference spacing')
+requireCondition(honeycombSource.includes('FOCUS_Y = 90'), 'L3 honeycomb engine must retain golden-reference focus point')
+requireCondition(honeycombSource.includes('ICON_BASE = 34'), 'L3 honeycomb engine must retain golden-reference icon size')
 
 if (errors.length) {
   errors.forEach(function (error) { console.error('multiscreen error: ' + error) })
   process.exitCode = 1
 } else {
-  console.log('Checked capability-backed viewport and design-engine entry paths, routed pages, target skins, and honeycomb delegation')
+  console.log('Checked capability viewport, Design Engine entry paths, target skins, and L3 honeycomb delegation')
 }
