@@ -51,7 +51,7 @@ requireCondition(textSource.includes('function codeMessage'), 'presentation text
 ;['心率', '血氧', '压力'].forEach(function (label) {
   requireCondition(pageSource.includes(label), 'health card is missing: ' + label)
 })
-requireCondition(pageSource.includes('healthDomain.start(this.healthListener)'), 'health page must subscribe through the health domain')
+requireCondition(pageSource.includes('healthDomain.start(this.healthListener)'), 'health page must subscribe through the health domain compatibility entry')
 requireCondition(pageSource.includes('healthDomain.stop(this.healthListener)'), 'health page must release the health domain subscription')
 requireCondition(pageSource.includes('scroll-y="true"'), 'health cards must remain vertically scrollable')
 requireCondition(pageSource.includes('{{ viewportClass }}'), 'health page must use the shared viewport')
@@ -64,9 +64,12 @@ requireCondition(!pageSource.includes('lastHeartRateUpdatedAt'), 'health page mu
 requireCondition(!pageSource.includes('lastSpo2UpdatedAt'), 'health page must not own SpO2 dirty tracking')
 requireCondition(!pageSource.includes('lastStressUpdatedAt'), 'health page must not own stress dirty tracking')
 
-requireCondition(todaySource.includes('healthDomain.start(this.healthListener)'), 'today page must subscribe through the health domain')
-requireCondition(todaySource.includes('healthDomain.stop(this.healthListener)'), 'today page must release the health domain subscription')
-requireCondition(!todaySource.includes('watchData.applyHeartRate'), 'today page must not synchronize samples itself')
+requireCondition(todaySource.includes("import healthStore from '../../domain/health/store'"), 'today page must consume health domain directly')
+requireCondition(todaySource.includes('healthStore.subscribe(this.healthListener)'), 'today page must subscribe through health store')
+requireCondition(todaySource.includes('healthStore.unsubscribe(this.healthListener)'), 'today page must release health store subscription')
+requireCondition(todaySource.includes("import activityStore from '../../domain/activity/store'"), 'today page must consume persisted activity domain directly')
+requireCondition(todaySource.includes('activityStore.hydrate'), 'today page must hydrate cross-page activity state on show')
+requireCondition(!todaySource.includes('watch_data'), 'today page must not regress to watch_data')
 
 requireCondition(clockSource.includes('healthSampleService.start(this.watchFaceHealthListener)'), 'watch face must subscribe while ACTIVE/DIM')
 requireCondition(clockSource.includes('healthSampleService.stop(this.watchFaceHealthListener)'), 'watch face must unsubscribe in SLEEP/hide')
