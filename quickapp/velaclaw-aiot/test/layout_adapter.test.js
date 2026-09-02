@@ -72,7 +72,7 @@ const override = {
     circle: {
       mode: 'fixed-composition',
       regions: [
-        { id: 'chart', left: 22, top: 35, width: 148, height: 82, variant: 'compact' },
+        { id: 'chart', left: 22, top: 37, width: 148, height: 78, variant: 'compact' },
         { id: 'insights', left: 36, top: 121, width: 120, height: 34, variant: 'compact' }
       ]
     }
