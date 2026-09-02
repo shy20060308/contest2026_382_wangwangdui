@@ -30,7 +30,8 @@
 
 <script>
 import router from '@system.router'
-import watchData from '../../common/watch_data'
+import activityStore from '../../domain/activity/store'
+import { mapActivity } from '../../presentation/mappers/activity'
 import pageMotion from '../../common/page_motion'
 import pageViewport from '../../common/page_viewport'
 import swipeBack from '../../common/swipe_back'
@@ -44,33 +45,16 @@ function makeBars(vals, color) {
   for (var i = 1; i < vals.length; i++) {
     if (vals[i] > maxVal) maxVal = vals[i]
   }
-  if (maxVal <= 0) {
-    maxVal = 1
-  }
-  for (var i = 0; i < vals.length; i++) {
-    var h = Math.round((vals[i] / maxVal) * chartH)
+  if (maxVal <= 0) maxVal = 1
+  for (var j = 0; j < vals.length; j++) {
+    var h = Math.round((vals[j] / maxVal) * chartH)
     if (h < 3) h = 3
-    bars.push({ t: labels[i], h: h, color: color })
+    bars.push({ t: labels[j], h: h, color: color })
   }
   return bars
 }
 
-var stepBars = makeBars([200, 500, 900, 1200, 1100, 850, 600, 250], '#FFD60A')
-var calBars = makeBars([8, 20, 36, 50, 48, 40, 28, 10], '#FF9F0A')
-var standBars = makeBars([0.5, 1.0, 1.5, 2.5, 2.0, 1.5, 1.0, 0.5], '#0A84FF')
-
-var metricList = [
-  { name: '步数', current: '4,567', goal: '6,000', unit: '步', color: '#FFD60A', bars: stepBars },
-  { name: '卡路里', current: '180', goal: '300', unit: 'kcal', color: '#FF9F0A', bars: calBars },
-  { name: '站立', current: '8', goal: '12', unit: 'h', color: '#0A84FF', bars: standBars }
-]
-
-function formatNumber(value) {
-  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-}
-
 function makeTrendValues(total) {
-  // Small hourly bars are derived from today's total so this page follows the data adapter.
   var ratios = [0.05, 0.11, 0.18, 0.26, 0.22, 0.14, 0.09, 0.04]
   var result = []
   for (var i = 0; i < ratios.length; i++) {
@@ -80,27 +64,28 @@ function makeTrendValues(total) {
 }
 
 function makeMetrics(snapshot) {
+  var view = mapActivity(snapshot)
   return [
     {
       name: '步数',
-      current: snapshot.stepsText,
-      goal: snapshot.stepsGoalText,
+      current: view.stepsText,
+      goal: view.stepsGoalText,
       unit: '步',
       color: '#FFD60A',
       bars: makeBars(makeTrendValues(snapshot.steps), '#FFD60A')
     },
     {
       name: '卡路里',
-      current: formatNumber(snapshot.calories),
-      goal: formatNumber(snapshot.caloriesGoal),
+      current: view.caloriesText,
+      goal: view.caloriesGoalText,
       unit: 'kcal',
       color: '#FF9F0A',
       bars: makeBars(makeTrendValues(snapshot.calories), '#FF9F0A')
     },
     {
       name: '站立',
-      current: formatNumber(snapshot.standHours),
-      goal: formatNumber(snapshot.standGoal),
+      current: view.standText,
+      goal: view.standGoalText,
       unit: 'h',
       color: '#0A84FF',
       bars: makeBars(makeTrendValues(snapshot.standHours), '#0A84FF')
@@ -110,7 +95,7 @@ function makeMetrics(snapshot) {
 
 export default {
   private: {
-    metrics: metricList,
+    metrics: [],
     pageOpacity: 1,
     pageOffset: 0,
     viewportClass: '',
@@ -124,9 +109,6 @@ export default {
   onInit() {
     var self = this
     pageViewport.bind(this, function (profile) {
-      // 圆屏可视高度更小，柱状图相应压低。屏幕档案是异步解析的，可能晚于
-      // onShow，因此拿到形态后必须按新柱高重建一次指标，否则圆屏首帧会沿用
-      // 胶囊屏的 60px 柱高而超出安全区。
       chartH = profile.isCircle ? 48 : 60
       self.loadCurrentData()
     })
@@ -148,12 +130,14 @@ export default {
   },
 
   loadCurrentData() {
-    // The sport page reads the same snapshot as watch faces and history storage.
-    this.metrics = makeMetrics(watchData.getSnapshot())
+    var self = this
+    this.metrics = makeMetrics(activityStore.getSnapshot())
+    activityStore.hydrate(function (snapshot) {
+      self.metrics = makeMetrics(snapshot)
+    })
   },
 
   releaseMetrics() {
-    // Metrics contain nested bar arrays; rebuild them from the latest snapshot on next show.
     this.metrics = []
   },
 
