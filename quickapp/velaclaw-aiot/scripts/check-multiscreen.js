@@ -23,6 +23,7 @@ const profileSource = read('src/presentation/viewport/profile.js')
 const deviceCapabilitySource = read('src/capabilities/device.js')
 const safeAreaSource = read('src/presentation/viewport/safe_area.js')
 const runtimeSource = read('src/presentation/viewport/runtime.js')
+const designRuntimeSource = read('src/presentation/layout/runtime.js')
 const compatibilitySource = read('docs/COMPATIBILITY.md')
 const launcherSource = read('src/pages/applist/applist.ux')
 const honeycombSource = read('src/common/honeycomb_layout.js')
@@ -49,6 +50,7 @@ requireCondition(profileSource.includes('safeArea.resolve(profile)'), 'profile m
 requireCondition(safeAreaSource.includes('circleBandForWidth'), 'safe-area layer must model circle chords')
 requireCondition(safeAreaSource.includes('capsuleCapInset'), 'safe-area layer must model pill caps')
 requireCondition(runtimeSource.includes('screenProfile.resolve'), 'page viewport runtime must resolve one shared profile')
+requireCondition(designRuntimeSource.includes('viewportRuntime.apply(page, profile)'), 'design engine runtime must project the shared viewport before layout')
 
 const targetSkins = [
   'redmi_watch', 'xiaomi_band', 'xiaomi_band_10', 'xiaomi_band_pro',
@@ -64,6 +66,7 @@ targetSkins.forEach(function (skin) {
   'src/presentation/viewport/geometry.js',
   'src/presentation/viewport/safe_area.js',
   'src/presentation/viewport/runtime.js',
+  'src/presentation/layout/runtime.js',
   'src/common/page_viewport.js',
   'src/common/launcher_apps.js',
   'src/common/honeycomb_layout.js',
@@ -101,7 +104,10 @@ Object.keys(manifest.router.pages || {}).forEach(function (route) {
     requireCondition(source.includes(token), relativePath + ' is missing viewport binding: ' + token)
   })
   requireCondition(source.includes("viewportPosition: 'relative'"), relativePath + ' must initialize viewport position')
-  requireCondition(source.includes('pageViewport.bind(') || source.includes('screenProfile.resolve'), relativePath + ' must resolve the shared viewport')
+  requireCondition(
+    source.includes('pageViewport.bind(') || source.includes('screenProfile.resolve') || source.includes('layoutRuntime.bind('),
+    relativePath + ' must resolve viewport directly or through the design engine'
+  )
 })
 
 requireCondition(launcherSource.includes("import honeycombLayout from '../../common/honeycomb_layout'"), 'applist must consume the honeycomb engine')
@@ -121,5 +127,5 @@ if (errors.length) {
   errors.forEach(function (error) { console.error('multiscreen error: ' + error) })
   process.exitCode = 1
 } else {
-  console.log('Checked capability-backed viewport architecture, routed pages, target skins, and honeycomb delegation')
+  console.log('Checked capability-backed viewport and design-engine entry paths, routed pages, target skins, and honeycomb delegation')
 }
