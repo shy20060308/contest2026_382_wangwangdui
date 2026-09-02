@@ -1,4 +1,5 @@
 var CHART_MAX_HEIGHT = 84
+var COMPACT_CHART_MAX_HEIGHT = 58
 
 function formatNumber(value) {
   return Number(value || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -22,13 +23,14 @@ function formatCompactSteps(value) {
 
 function buildBars(history, compact) {
   var maxSteps = 1
+  var maxHeight = compact ? COMPACT_CHART_MAX_HEIGHT : CHART_MAX_HEIGHT
   for (var i = 0; i < history.length; i++) {
     if (history[i].steps > maxSteps) maxSteps = history[i].steps
   }
   var bars = []
   for (var j = 0; j < history.length; j++) {
     var item = history[j]
-    var height = Math.max(6, Math.round((item.steps / maxSteps) * CHART_MAX_HEIGHT))
+    var height = Math.max(6, Math.round((item.steps / maxSteps) * maxHeight))
     bars.push({
       label: compact ? formatCompactDay(item.date) : formatDay(item.date),
       height: height,
