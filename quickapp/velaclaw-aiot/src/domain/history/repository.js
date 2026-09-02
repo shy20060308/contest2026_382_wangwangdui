@@ -1,4 +1,4 @@
-import storage from '../../platform/vela/storage'
+import storage from '../../capabilities/storage'
 import activityStore from '../activity/store'
 import recentHealth from '../health/recent'
 
@@ -100,10 +100,6 @@ function loadHistory(callback) {
   }, [])
 }
 
-/**
- * Commit today's already-mutated Activity snapshot without re-hydrating from the older
- * persisted record. This is the transaction path used after a workout finishes.
- */
 function saveToday(activitySnapshot, callback) {
   var snapshot = activitySnapshot || activityStore.getSnapshot()
   storage.getJSON(HEALTH_HISTORY_KEY, function (stored) {
