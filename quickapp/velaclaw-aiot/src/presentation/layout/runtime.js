@@ -13,6 +13,8 @@ function apply(page, plan) {
   page.layoutScale = plan.scale
   page.layoutNeedsOverride = plan.needsOverride
   page.layoutComposition = plan.composition
+  page.designFreedomLevel = plan.freedomLevel
+  page.designStrategy = plan.strategy
   page.layoutRegions = adapter.regionMap(plan)
 }
 
