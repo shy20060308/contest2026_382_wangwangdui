@@ -1,5 +1,5 @@
 import screenProfile from '../viewport/profile'
-import viewportRuntime from '../viewport/runtime'
+var viewportRuntime = require('../viewport/runtime')
 var adapter = require('./adapter')
 
 function regionStyle(region) {
