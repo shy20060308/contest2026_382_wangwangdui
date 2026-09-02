@@ -1,6 +1,6 @@
 <template>
   <div class="demo-page {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px;">
-    <text class="title" style="{{ titleStyle }}">{{ text }}</text>
+    <text class="title" style="position: absolute; left: {{ titleLeft }}px; top: {{ titleTop }}px; width: {{ titleWidth }}px; height: {{ titleHeight }}px; font-size: {{ titleFontSize }}px;">{{ text }}</text>
   </div>
 </template>
 
@@ -23,7 +23,11 @@ var DETAIL_LAYOUT = {
 export default {
   private: {
     text: '欢迎打开详情页',
-    titleStyle: '',
+    titleLeft: 22,
+    titleTop: 80,
+    titleWidth: 148,
+    titleHeight: 32,
+    titleFontSize: 20,
     pageOpacity: 1,
     pageOffset: 0,
     viewportClass: '',
@@ -38,8 +42,12 @@ export default {
     var self = this
     layoutRuntime.bind(this, DETAIL_LAYOUT, function (plan) {
       var title = plan && plan.regions && plan.regions[0]
-      var fontSize = Math.max(15, Math.round(20 * (plan ? plan.scale : 1)))
-      self.titleStyle = layoutRuntime.regionStyle(title) + 'font-size: ' + fontSize + 'px; text-align: center;'
+      if (!title) return
+      self.titleLeft = title.left
+      self.titleTop = title.top
+      self.titleWidth = title.width
+      self.titleHeight = title.height
+      self.titleFontSize = Math.max(15, Math.round(20 * plan.scale))
     })
   },
 
