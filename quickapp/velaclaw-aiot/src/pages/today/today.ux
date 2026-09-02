@@ -24,7 +24,7 @@
         <div class="metric-card green-card"><text class="metric-label">站立</text><text class="metric-value">{{ standText }}</text><text class="metric-unit">小时</text></div>
       </div>
 
-      <text class="today-tip">数据与表盘、健康趋势使用同一份本地快照</text>
+      <text class="today-tip">数据来自统一活动与健康状态</text>
       <div class="circle-pager" if="{{ isCircle }}">
         <div class="circle-pager-dot is-active"></div>
         <div class="circle-pager-dot"></div>
@@ -65,9 +65,10 @@
 import router from '@system.router'
 import pageMotion from '../../common/page_motion'
 import pageViewport from '../../common/page_viewport'
-import watchData from '../../common/watch_data'
-import healthDomain from '../../common/health_domain'
 import calendarUtils from '../../common/calendar_utils'
+import activityStore from '../../domain/activity/store'
+import healthStore from '../../domain/health/store'
+import { mapActivity } from '../../presentation/mappers/activity'
 
 var WEEKDAYS = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
 
@@ -116,42 +117,54 @@ export default {
   onShow() {
     pageMotion.enter(this)
     this.refreshToday()
-    healthDomain.start(this.healthListener)
+    healthStore.subscribe(this.healthListener)
   },
 
   onHide() {
     pageMotion.clear(this)
-    healthDomain.stop(this.healthListener)
+    healthStore.unsubscribe(this.healthListener)
   },
 
   onDestroy() {
     pageMotion.clear(this)
-    healthDomain.stop(this.healthListener)
+    healthStore.unsubscribe(this.healthListener)
     this.calendarCells = []
   },
 
   refreshToday() {
+    var self = this
     var now = new Date()
-    var snapshot = watchData.getSnapshot()
     this.yearText = now.getFullYear() + ' 年'
     this.monthText = now.getMonth() + 1 + '月'
     this.dayText = now.getDate().toString()
     this.weekdayText = WEEKDAYS[now.getDay()]
     this.lunarText = calendarUtils.formatLunar(now)
-    this.stepsText = snapshot.stepsText
-    this.caloriesText = snapshot.calories.toString()
-    this.heartText = snapshot.currentHeartRate.toString()
-    this.standText = snapshot.standHours.toString()
-    this.goalPercent = snapshot.goalPercent
-    this.goalWidth = snapshot.goalProgressWidth
     this.calendarYear = now.getFullYear()
     this.calendarMonth = now.getMonth()
     this.refreshCalendar()
+
+    activityStore.hydrate(function (snapshot) {
+      self.applyActivity(snapshot)
+    })
+
+    var health = healthStore.getSnapshot()
+    if (health && health.heartRate !== undefined && health.heartRate !== null) {
+      this.heartText = health.heartRate.toString()
+    }
+  },
+
+  applyActivity(snapshot) {
+    var view = mapActivity(snapshot)
+    this.stepsText = view.stepsText
+    this.caloriesText = view.caloriesText
+    this.standText = view.standText
+    this.goalPercent = view.goalPercent
+    this.goalWidth = view.goalWidth
   },
 
   applyHealthData(data) {
-    if (!data || !data.watchSnapshot) return
-    this.heartText = data.watchSnapshot.currentHeartRate.toString()
+    if (!data || data.heartRate === undefined || data.heartRate === null) return
+    this.heartText = data.heartRate.toString()
   },
 
   refreshCalendar() {
