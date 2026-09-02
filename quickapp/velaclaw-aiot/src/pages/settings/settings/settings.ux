@@ -6,7 +6,7 @@
     </div>
 
     <div class="settings-list" style="position: absolute; left: {{ listLeft }}px; top: {{ listTop }}px; width: {{ listWidth }}px; height: {{ listHeight }}px;">
-      <div class="settings-item" for="{{ pageItems }}" tid="id" @click="openSetting($item)" style="width: {{ itemWidth }}px; height: {{ itemHeight }}px; margin-bottom: {{ itemGap }}px; padding: {{ itemPadding }}px; border-radius: {{ itemRadius }}px;">
+      <div class="settings-item" for="{{ pageItems }}" tid="id" @click="openSetting($item)" style="width: {{ itemWidth }}px; height: {{ itemHeight }}px; padding: {{ itemPadding }}px; border-radius: {{ itemRadius }}px;">
         <image class="item-icon" src="{{ $item.icon }}" style="width: {{ iconSize }}px; height: {{ iconSize }}px; border-radius: {{ iconRadius }}px; margin-right: {{ iconMargin }}px;"></image>
         <div class="item-copy" style="width: {{ itemCopyWidth }}px;">
           <text class="item-name" style="font-size: {{ itemNameFontSize }}px;">{{ $item.name }}</text>
@@ -72,7 +72,6 @@ export default {
     footerHeight: 14,
     itemWidth: 148,
     itemHeight: 50,
-    itemGap: 6,
     itemPadding: 7,
     itemRadius: 18,
     iconSize: 30,
@@ -142,26 +141,27 @@ export default {
     this.footerWidth = footer.width
     this.footerHeight = footer.height
 
-    var scale = plan.scale || 1
+    var geometryScale = plan.scale || 1
+    var visualScale = plan.visualScale || geometryScale
+    var iconScale = Math.min(1.2, visualScale)
     this.itemWidth = plan.itemWidth
     this.itemHeight = plan.itemHeight
-    this.itemGap = plan.itemGap
-    this.itemPadding = Math.round(7 * scale)
-    this.itemRadius = Math.round(18 * scale)
-    this.iconSize = Math.round(30 * scale)
+    this.itemPadding = Math.round(7 * geometryScale)
+    this.itemRadius = Math.round(18 * visualScale)
+    this.iconSize = Math.round(30 * iconScale)
     this.iconRadius = Math.round(this.iconSize / 2)
-    this.iconMargin = Math.round(7 * scale)
-    this.arrowWidth = Math.round(12 * scale)
+    this.iconMargin = Math.round(7 * geometryScale)
+    this.arrowWidth = Math.round(12 * geometryScale)
     this.itemCopyWidth = Math.max(48, Math.round(this.itemWidth - this.itemPadding * 2 - this.iconSize - this.iconMargin - this.arrowWidth))
-    this.titleFontSize = Math.max(10, Math.round(12 * scale))
-    this.pageNumberFontSize = Math.max(6, Math.round(7 * scale))
-    this.itemNameFontSize = Math.max(9, Math.round(10 * scale))
-    this.itemSubFontSize = Math.max(6, Math.round(6 * scale))
-    this.itemSubLineHeight = Math.max(8, Math.round(8 * scale))
-    this.itemSubMargin = Math.max(1, Math.round(2 * scale))
-    this.arrowFontSize = Math.max(11, Math.round(12 * scale))
-    this.pagerFontSize = Math.max(13, Math.round(14 * scale))
-    this.pagerButtonWidth = Math.max(24, Math.round(26 * scale))
+    this.titleFontSize = Math.max(10, Math.round(12 * visualScale))
+    this.pageNumberFontSize = Math.max(6, Math.round(7 * visualScale))
+    this.itemNameFontSize = Math.max(9, Math.round(10 * visualScale))
+    this.itemSubFontSize = Math.max(6, Math.round(6 * visualScale))
+    this.itemSubLineHeight = Math.max(8, Math.round(8 * visualScale))
+    this.itemSubMargin = Math.max(1, Math.round(2 * visualScale))
+    this.arrowFontSize = Math.max(11, Math.round(12 * visualScale))
+    this.pagerFontSize = Math.max(13, Math.round(14 * visualScale))
+    this.pagerButtonWidth = Math.max(24, Math.round(26 * geometryScale))
   },
 
   refreshPage() {
@@ -241,6 +241,10 @@ export default {
 .settings-list,
 .item-copy {
   flex-direction: column;
+}
+
+.settings-list {
+  justify-content: space-between;
 }
 
 .settings-item {
