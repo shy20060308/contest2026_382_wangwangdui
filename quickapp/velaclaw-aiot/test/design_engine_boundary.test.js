@@ -8,10 +8,13 @@ const read = function (name) { return fs.readFileSync(path.join(root, name), 'ut
 const detail = read('src/pages/detail/detail.ux')
 const settings = read('src/pages/settings/settings/settings.ux')
 const workout = read('src/pages/workout/workout.ux')
+const history = read('src/pages/history/history.ux')
 const detailSpec = read('src/presentation/layout/specs/detail.js')
 const settingsSpec = read('src/presentation/layout/specs/settings.js')
 const workoutSpec = read('src/presentation/layout/specs/workout.js')
+const historySpec = read('src/presentation/layout/specs/history.js')
 const pagedStack = read('src/presentation/layout/paged_stack.js')
+const scrollFlow = read('src/presentation/layout/scroll_flow.js')
 
 assert.ok(detail.includes("../../presentation/layout/runtime"), 'L1 detail must enter through Design Engine runtime')
 assert.ok(detail.includes("../../presentation/layout/specs/detail"), 'L1 detail must keep layout intent outside the page')
@@ -25,6 +28,8 @@ assert.ok(!settings.includes('profile.isCircle'), 'L1 settings must not hardcode
 assert.ok(!settings.includes('@media (shape:'), 'L1 settings must not regain shape-specific geometry CSS')
 assert.ok(settingsSpec.includes('freedomLevel: 1'), 'settings spec must declare L1')
 assert.ok(pagedStack.includes('for (var count = maxItems; count >= minItems; count--)'), 'paged stack must derive the largest safe page capacity')
+assert.ok(pagedStack.includes('expandComfort'), 'paged stack must use spare tall-screen space instead of freezing at circle density')
+assert.ok(pagedStack.includes('visualScale'), 'paged stack must expose presentation comfort scale separately from geometry scale')
 assert.ok(pagedStack.includes('capacityReduced'), 'paged stack must expose automatic capacity decisions')
 
 assert.ok(workout.includes("../../presentation/layout/runtime"), 'L2 workout must use Design Engine runtime')
@@ -33,4 +38,12 @@ assert.ok(workoutSpec.includes('freedomLevel: 2'), 'workout spec must declare L2
 assert.ok(workoutSpec.includes("strategy: 'assisted'"), 'workout must remain an assisted design')
 assert.ok(workoutSpec.includes('fixed-composition'), 'L2 workout may art-direct a shape-specific composition')
 
-console.log('Design freedom boundary verified: L1 automates shape boilerplate while L2 preserves art direction')
+assert.ok(history.includes("../../presentation/layout/scroll_flow"), 'L2 history must distinguish composed viewport content from scrolling flow')
+assert.ok(history.includes("../../presentation/layout/specs/history"), 'history art direction must live outside the page')
+assert.ok(!history.includes('@media (shape:'), 'history top-level geometry must come from composition rather than shape CSS')
+assert.ok(historySpec.includes('freedomLevel: 2'), 'history spec must declare L2')
+assert.ok(historySpec.includes("insightVariant: 'column'"), 'rect history may use a distinct dashboard composition')
+assert.ok(scrollFlow.includes("flowMode = 'composed-header-scroll'"), 'scroll flow must explicitly separate fixed composition from stream semantics')
+assert.ok(scrollFlow.includes('heroHeight'), 'scroll flow must expose normal-flow handoff after composed header')
+
+console.log('Design freedom boundary verified: L1 automates capacity/comfort while L2 preserves composed and scrolling art direction')
