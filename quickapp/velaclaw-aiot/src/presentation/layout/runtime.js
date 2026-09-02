@@ -1,4 +1,4 @@
-var screenProfile = require('../viewport/profile').default || require('../viewport/profile')
+import screenProfile from '../viewport/profile'
 var adapter = require('./adapter')
 
 function regionStyle(region) {
