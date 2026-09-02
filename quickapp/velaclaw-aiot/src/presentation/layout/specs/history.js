@@ -25,7 +25,9 @@ module.exports = {
       summaryVisible: true,
       chartMaxHeight: 88,
       compactLabels: false,
-      insightVariant: 'row'
+      insightVariant: 'row',
+      insightDetailVisible: true,
+      visualScale: 1
     }
   },
   compositions: {
@@ -47,7 +49,9 @@ module.exports = {
         summaryVisible: false,
         chartMaxHeight: 52,
         compactLabels: true,
-        insightVariant: 'row'
+        insightVariant: 'row',
+        insightDetailVisible: false,
+        visualScale: 0.78
       }
     },
     rect: {
@@ -69,7 +73,9 @@ module.exports = {
         summaryVisible: true,
         chartMaxHeight: 54,
         compactLabels: true,
-        insightVariant: 'column'
+        insightVariant: 'column',
+        insightDetailVisible: true,
+        visualScale: 0.9
       }
     }
   }
