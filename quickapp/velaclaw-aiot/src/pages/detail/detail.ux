@@ -1,16 +1,29 @@
 <template>
   <div class="demo-page {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px;">
-    <text class="title">{{ text }}</text>
+    <text class="title" style="{{ titleStyle }}">{{ text }}</text>
   </div>
 </template>
 
 <script>
-import pageMotion from "../../common/page_motion"
-import pageViewport from '../../common/page_viewport'
+import pageMotion from '../../common/page_motion'
+import layoutRuntime from '../../presentation/layout/runtime'
+
+var DETAIL_LAYOUT = {
+  id: 'detail-l1-auto',
+  default: {
+    mode: 'auto-stack',
+    verticalAlign: 'center',
+    minScale: 0.78,
+    regions: [
+      { id: 'title', width: 148, height: 32 }
+    ]
+  }
+}
 
 export default {
   private: {
-    text: "欢迎打开详情页",
+    text: '欢迎打开详情页',
+    titleStyle: '',
     pageOpacity: 1,
     pageOffset: 0,
     viewportClass: '',
@@ -22,7 +35,12 @@ export default {
   },
 
   onInit() {
-    pageViewport.bind(this)
+    var self = this
+    layoutRuntime.bind(this, DETAIL_LAYOUT, function (plan) {
+      var title = plan && plan.regions && plan.regions[0]
+      var fontSize = Math.max(15, Math.round(20 * (plan ? plan.scale : 1)))
+      self.titleStyle = layoutRuntime.regionStyle(title) + 'font-size: ' + fontSize + 'px; text-align: center;'
+    })
   },
 
   onShow() {
@@ -41,13 +59,11 @@ export default {
 
 <style>
 .demo-page {
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  background-color: #000000;
 }
 
 .title {
-  font-size: 20px;
+  color: #FFFFFF;
   text-align: center;
 }
 </style>
