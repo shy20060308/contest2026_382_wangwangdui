@@ -1,4 +1,4 @@
-import storage from '../../platform/vela/storage'
+import storage from '../../capabilities/storage'
 
 var SELECTED_FACE_KEY = 'selected_face_id'
 var RIGHT_FACE_TRANSITION_KEY = 'right_face_transition'
