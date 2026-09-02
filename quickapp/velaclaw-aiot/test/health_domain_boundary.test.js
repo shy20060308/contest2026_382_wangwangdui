@@ -31,15 +31,17 @@ expect(domain.includes('stressChanged'), 'health domain must expose stress dirty
 expect(legacy.includes("../domain/health/store"), 'legacy health entry must delegate to the new domain store')
 expect(!platform.includes('watch_data'), 'platform adapter must not depend on application state')
 
-;[
-  ['today', today],
-  ['heartrate', healthPage]
-].forEach(function (entry) {
-  const name = entry[0]
-  const source = entry[1]
-  expect(source.includes("import healthDomain from '../../common/health_domain'"), name + ' must remain on the compatibility entry until page migration')
-  expect(!source.includes("import healthSampleService from '../../common/health_sample_service'"), name + ' must not import low-level health directly')
-})
+// Today has been fully migrated and must consume the domain directly.
+expect(today.includes("import healthStore from '../../domain/health/store'"), 'today must consume health store directly')
+expect(today.includes('healthStore.subscribe(this.healthListener)'), 'today must subscribe through health store')
+expect(today.includes('healthStore.unsubscribe(this.healthListener)'), 'today must release health store subscription')
+expect(!today.includes("../../common/health_domain"), 'today must not regress to the legacy health bridge')
+expect(!today.includes('watch_data'), 'today must not depend on watch_data')
+
+// The dedicated health page is still on the compatibility bridge until its presentation
+// status/text logic is migrated in the next page-thinning pass.
+expect(healthPage.includes("import healthDomain from '../../common/health_domain'"), 'health page must remain on compatibility entry until migrated')
+expect(!healthPage.includes("import healthSampleService from '../../common/health_sample_service'"), 'health page must not import low-level health directly')
 
 expect(!today.includes('lastHeartRateUpdatedAt'), 'today page must not own dirty tracking')
 expect(!healthPage.includes('lastHeartRateUpdatedAt'), 'health page must not own heart-rate dirty tracking')
