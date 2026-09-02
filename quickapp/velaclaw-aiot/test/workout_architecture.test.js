@@ -8,7 +8,9 @@ const read = function (name) { return fs.readFileSync(path.join(root, name), 'ut
 const manager = read('src/common/workout_manager.js')
 const state = read('src/domain/workout/state_machine.js')
 const repository = read('src/domain/workout/repository.js')
+const history = read('src/domain/history/repository.js')
 const mapper = read('src/presentation/mappers/workout.js')
+const page = read('src/pages/workout/workout.ux')
 
 assert.ok(manager.includes("../domain/workout/state_machine"), 'manager must delegate workout state')
 assert.ok(manager.includes("../domain/workout/repository"), 'manager must delegate workout persistence')
@@ -16,6 +18,9 @@ assert.ok(manager.includes("../domain/activity/store"), 'finish must update acti
 assert.ok(manager.includes("../domain/history/repository"), 'finish must persist today history directly')
 assert.ok(!manager.includes("./watch_data"), 'workout must no longer depend on watch_data')
 assert.ok(!manager.includes('MODE_CONFIG'), 'manager must not own workout rules')
+assert.ok(manager.includes('var activitySnapshot = activityStore.add(record.steps, record.calories)'), 'finish must capture the exact post-workout activity snapshot')
+assert.ok(manager.includes('historyRepository.saveToday(activitySnapshot'), 'history must persist that exact activity snapshot')
+assert.ok(manager.includes('afterBoth('), 'navigation callback must wait for both history and workout-record commits')
 
 assert.ok(state.includes("status: 'running'"), 'state machine must own running state')
 assert.ok(state.includes("activeSession.status = 'paused'"), 'state machine must own pause transition')
@@ -26,9 +31,18 @@ assert.ok(!state.includes('distanceText'), 'domain state must not own formatted 
 assert.ok(!state.includes('typeName'), 'domain state must not own display names')
 
 assert.ok(repository.includes("../../platform/vela/storage"), 'workout repository must use platform storage')
+assert.ok(history.includes('function saveToday(activitySnapshot, callback)'), 'history repository must accept an explicit activity snapshot')
+assert.ok(history.includes('upsertToday(normalizeHistory(stored), snapshot, false)'), 'explicit save must not restore stale persisted totals first')
 assert.ok(mapper.includes("name: '步行'"), 'presentation mapper must own walk label')
 assert.ok(mapper.includes("color: '#30D158'"), 'presentation mapper must own workout color')
 assert.ok(mapper.includes('formatDuration'), 'presentation mapper must own duration formatting')
 assert.ok(mapper.includes('formatDistance'), 'presentation mapper must own distance formatting')
 
-console.log('Workout architecture verified: state, persistence and presentation are separated')
+const durationRule = page.match(/@media\s*\(shape:\s*circle\)[\s\S]*?\.duration\s*\{([\s\S]*?)\}/)
+assert.ok(durationRule, 'circle workout must define a duration layout override')
+const height = Number((durationRule[1].match(/height:\s*(\d+)px/) || [])[1])
+const fontSize = Number((durationRule[1].match(/font-size:\s*(\d+)px/) || [])[1])
+assert.ok(height > fontSize, 'circle timer line box must be taller than its font to prevent glyph clipping')
+assert.ok(height - fontSize >= 4, 'circle timer should reserve at least 4px vertical glyph breathing room')
+
+console.log('Workout architecture verified: state, persistence, transaction and presentation are separated')
