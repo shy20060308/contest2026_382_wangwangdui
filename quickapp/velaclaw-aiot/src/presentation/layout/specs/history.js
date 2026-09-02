@@ -74,7 +74,7 @@ module.exports = {
         chartMaxHeight: 54,
         compactLabels: true,
         insightVariant: 'column',
-        insightDetailVisible: true,
+        insightDetailVisible: false,
         visualScale: 0.9
       }
     }
