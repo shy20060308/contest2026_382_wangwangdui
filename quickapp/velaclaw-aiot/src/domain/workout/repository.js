@@ -1,4 +1,4 @@
-import storage from '../../platform/vela/storage'
+import storage from '../../capabilities/storage'
 
 var ACTIVE_KEY = 'active_workout_v1'
 var RECORDS_KEY = 'workout_records_v1'
