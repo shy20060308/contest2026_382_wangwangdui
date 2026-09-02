@@ -40,6 +40,17 @@ domainFiles.forEach(function (file) {
   })
 })
 
+const runtimeFiles = walk(path.join(root, 'src', 'runtime'))
+runtimeFiles.forEach(function (file) {
+  const source = fs.readFileSync(file, 'utf8')
+  const name = relative(file)
+  assertNoRawApi(name, source, 'runtime')
+  if (source.includes('platform/vela')) fail(name + ' must orchestrate capabilities, not legacy platform adapters')
+  ;['@media', 'isCircle', 'isPill', 'isRect', '#30D158', '#FFD60A', '#8E8E93'].forEach(function (token) {
+    if (source.includes(token)) fail(name + ' leaks presentation concerns into runtime: ' + token)
+  })
+})
+
 const presentationFiles = walk(path.join(root, 'src', 'presentation'))
 presentationFiles.forEach(function (file) {
   const source = fs.readFileSync(file, 'utf8')
@@ -92,4 +103,4 @@ Object.keys(legacyBudgets).forEach(function (name) {
   }
 })
 
-console.log('Architecture guard passed: capabilities own device APIs; domain/presentation stay clean')
+console.log('Architecture guard passed: capabilities own device APIs; domain/runtime/presentation boundaries stay clean')
