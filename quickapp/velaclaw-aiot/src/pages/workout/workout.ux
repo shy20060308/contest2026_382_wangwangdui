@@ -405,16 +405,16 @@ export default {
 
 /*
  * 圆屏安全栈（几何推导见 scripts/check-safe-area.js）：
- *   22 → 头部 118×16 → 时长 110×26 → 标签 110×9 → GPS 110×9
- *      → 指标网格 148×60(+3) → 操作行 120×22(+3)，结束于 y=170
+ *   20 → 头部 118×16 → 时长 110×30 → 标签 110×9 → GPS 110×9
+ *      → 指标网格 148×60(+1) → 操作行 120×22(+1)，结束于 y=168。
  *
- * 窄元素（时长、GPS）放在上下两端，最宽的 148px 指标网格压在中段——
- * 148px 在内切圆里只有 y=35..157 可用。文字元素显式给出高度，避免行高在
- * 不同镜像上浮动，导致整摞下移被圆弧切掉。
+ * 时长文字的行盒必须明显高于字号。Vela/LVGL 在不同字体栅格下，26px 字体塞进
+ * 26px 高容器会切掉字形底部；30px 行盒 + 25px 字体保留视觉重量，同时留出字形下降区。
+ * 最宽的 148px 指标网格仍位于圆屏中央安全带内。
  */
 @media (shape: circle) {
   .workout-page {
-    padding: 22px 20px 0px 20px;
+    padding: 20px 20px 0px 20px;
   }
 
   .workout-header {
@@ -434,8 +434,8 @@ export default {
 
   .duration {
     width: 110px;
-    height: 26px;
-    font-size: 26px;
+    height: 30px;
+    font-size: 25px;
     text-align: center;
     margin-top: 0px;
   }
@@ -452,7 +452,7 @@ export default {
   .metric-grid {
     width: 148px;
     height: 60px;
-    margin-top: 3px;
+    margin-top: 1px;
   }
 
   .metric-row {
@@ -480,7 +480,7 @@ export default {
   .action-row {
     width: 120px;
     height: 22px;
-    margin-top: 3px;
+    margin-top: 1px;
   }
 
   .action-button {
