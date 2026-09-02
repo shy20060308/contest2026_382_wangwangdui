@@ -40,16 +40,35 @@ function regionLeft(region) {
   return (safeArea.DESIGN_WIDTH - region.width) / 2
 }
 
+function stackStart(profile, regions, gap, spec) {
+  var maxWidth = 0
+  var totalHeight = 0
+  for (var i = 0; i < regions.length; i++) {
+    maxWidth = Math.max(maxWidth, regions[i].width)
+    totalHeight += regions[i].height
+  }
+  if (regions.length > 1) totalHeight += gap * (regions.length - 1)
+  var bounds = safeArea.resolve(profile, maxWidth || 136, spec.comfort)
+  if (spec.verticalAlign === 'center') return Math.max(bounds.top, bounds.top + (bounds.height - totalHeight) / 2)
+  if (spec.verticalAlign === 'end' || spec.verticalAlign === 'bottom') return Math.max(bounds.top, bounds.bottom - totalHeight)
+  return bounds.top
+}
+
 function tryAutoStack(profile, spec, scale) {
-  var regions = []
   var source = spec.regions || []
   var gap = number(spec.gap, 0) * scale
-  var cursor = 0
+  var scaled = []
+  for (var s = 0; s < source.length; s++) {
+    var candidate = scaledRegion(source[s], scale)
+    if (candidate.visible) scaled.push(candidate)
+  }
+
+  var regions = []
+  var cursor = stackStart(profile, scaled, gap, spec)
   var violations = []
 
-  for (var i = 0; i < source.length; i++) {
-    var region = scaledRegion(source[i], scale)
-    if (!region.visible) continue
+  for (var i = 0; i < scaled.length; i++) {
+    var region = scaled[i]
     var allowed = constraints.intervalFor(profile, region.width, spec.comfort)
     var top = Math.max(cursor, allowed.top)
     var left = regionLeft(region)
@@ -66,9 +85,7 @@ function tryAutoStack(profile, spec, scale) {
       scale: scale
     }
     var result = constraints.validateRegion(profile, placed, spec.comfort)
-    if (!result.valid) {
-      violations.push({ id: region.id, errors: result.errors, interval: result.interval })
-    }
+    if (!result.valid) violations.push({ id: region.id, errors: result.errors, interval: result.interval })
     regions.push(placed)
     cursor = placed.bottom + gap
   }
@@ -161,14 +178,7 @@ function resolve(profile, layoutSpec) {
   var plan
 
   if (mode === MODE_EXTERNAL) {
-    plan = {
-      mode: MODE_EXTERNAL,
-      scale: 1,
-      regions: [],
-      violations: [],
-      needsOverride: false,
-      reason: ''
-    }
+    plan = { mode: MODE_EXTERNAL, scale: 1, regions: [], violations: [], needsOverride: false, reason: '' }
   } else if (mode === MODE_FIXED) {
     plan = resolveFixed(profile, selected)
   } else {
