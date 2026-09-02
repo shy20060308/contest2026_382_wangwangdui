@@ -1,6 +1,8 @@
 const fs = require('fs')
 const path = require('path')
 const assert = require('assert')
+const layoutAdapter = require('../src/presentation/layout/adapter')
+const workoutLayout = require('../src/presentation/layout/specs/workout')
 
 const root = path.resolve(__dirname, '..')
 const read = function (name) { return fs.readFileSync(path.join(root, name), 'utf8') }
@@ -40,12 +42,34 @@ assert.ok(mapper.includes("color: '#30D158'"), 'presentation mapper must own wor
 assert.ok(mapper.includes('formatDuration'), 'presentation mapper must own duration formatting')
 assert.ok(mapper.includes('formatDistance'), 'presentation mapper must own distance formatting')
 
+assert.strictEqual(workoutLayout.freedomLevel, 2, 'workout must declare L2 Assisted design freedom')
+assert.strictEqual(workoutLayout.strategy, 'assisted')
+assert.strictEqual(workoutLayout.default.mode, 'auto-stack', 'pill/default workout should use automatic stack assistance')
+assert.strictEqual(workoutLayout.compositions.circle.mode, 'fixed-composition', 'circle keeps an art-directed composition')
+assert.strictEqual(workoutLayout.compositions.rect.mode, 'fixed-composition', 'rect keeps a wide art-directed composition')
+
+const circlePlan = layoutAdapter.resolve({ formFactor: 'circle', logicalHeight: 192 }, workoutLayout)
+const rectPlan = layoutAdapter.resolve({ formFactor: 'rect', logicalHeight: 228 }, workoutLayout)
+const pillPlan = layoutAdapter.resolve({ formFactor: 'pill', logicalHeight: 471 }, workoutLayout)
+assert.strictEqual(circlePlan.needsOverride, false, 'circle workout composition must satisfy safe geometry')
+assert.strictEqual(rectPlan.needsOverride, false, 'rect workout composition must satisfy viewport geometry')
+assert.strictEqual(pillPlan.needsOverride, false, 'pill workout auto-stack must fit Band10-class logical height')
+assert.strictEqual(pillPlan.scale, 1, 'pill workout should preserve full design scale when there is room')
+assert.strictEqual(circlePlan.regions[0].top, 23, 'circle header location must come from the layout spec, not page padding')
+assert.strictEqual(rectPlan.regions[2].variant, 'wide', 'rect metrics should use the wide component variant')
+
+assert.ok(page.includes("../../presentation/layout/runtime"), 'workout page must bind through the Design Engine runtime')
+assert.ok(page.includes("../../presentation/layout/specs/workout"), 'workout page must consume the shared layout spec')
+assert.ok(page.includes('layoutRuntime.bind(this, workoutLayout'), 'workout page must resolve its semantic regions through the adapter')
+assert.ok(!page.includes('pageViewport.bind(this)'), 'L2 layout runtime already owns viewport binding')
+assert.ok(!/\.workout-page\s*\{[^}]*padding:\s*21px/m.test(page), 'page must not return to hand-written circle safe-area padding')
+
 const durationRule = page.match(/@media\s*\(shape:\s*circle\)[\s\S]*?\.duration\s*\{([\s\S]*?)\}/)
-assert.ok(durationRule, 'circle workout must define a duration layout override')
+assert.ok(durationRule, 'circle component variant must retain timer typography')
 const height = Number((durationRule[1].match(/height:\s*(\d+)px/) || [])[1])
 const fontSize = Number((durationRule[1].match(/font-size:\s*(\d+)px/) || [])[1])
 assert.ok(height > fontSize, 'circle timer line box must be taller than its font to prevent glyph clipping')
 assert.ok(height - fontSize >= 4, 'circle timer should reserve at least 4px vertical glyph breathing room')
-assert.ok(/\.workout-page\s*\{[^}]*padding:\s*21px 20px 0px 20px/m.test(page), 'circle workout top padding must respect the 118px header safe-band top')
+assert.ok(page.includes('@media (shape: rect)'), 'rect may keep a component-level visual variant under L2')
 
-console.log('Workout architecture verified: state, persistence, transaction and presentation are separated')
+console.log('Workout architecture verified: transaction/domain separation plus L2 Design Engine composition hold')
