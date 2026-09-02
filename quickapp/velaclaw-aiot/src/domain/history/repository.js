@@ -25,8 +25,8 @@ function sortHistory(history) {
   history.sort(function (a, b) { return a.date > b.date ? 1 : -1 })
 }
 
-function todayRecord() {
-  var activity = activityStore.getSnapshot()
+function todayRecord(activitySnapshot) {
+  var activity = activitySnapshot || activityStore.getSnapshot()
   var heart = recentHealth.getStats()
   return {
     date: dateKey(new Date()),
@@ -66,19 +66,26 @@ function makeDemoHistory() {
   return result
 }
 
-function mergeToday(history) {
+function normalizeHistory(stored) {
+  return Array.isArray(stored) && stored.length ? stored : makeDemoHistory()
+}
+
+function upsertToday(history, activitySnapshot, restorePersistedTotals) {
   var key = dateKey(new Date())
-  for (var i = 0; i < history.length; i++) {
-    if (history[i].date === key) {
-      activityStore.restoreTotals(history[i])
-      break
+  if (restorePersistedTotals) {
+    for (var i = 0; i < history.length; i++) {
+      if (history[i].date === key) {
+        activityStore.restoreTotals(history[i])
+        break
+      }
     }
   }
+
   var merged = []
   for (var j = 0; j < history.length; j++) {
     if (history[j].date !== key) merged.push(history[j])
   }
-  merged.push(todayRecord())
+  merged.push(todayRecord(activitySnapshot))
   sortHistory(merged)
   while (merged.length > HISTORY_DAYS) merged.shift()
   return merged
@@ -86,10 +93,24 @@ function mergeToday(history) {
 
 function loadHistory(callback) {
   storage.getJSON(HEALTH_HISTORY_KEY, function (stored) {
-    var history = Array.isArray(stored) && stored.length ? stored : makeDemoHistory()
-    history = mergeToday(history)
-    storage.set(HEALTH_HISTORY_KEY, history)
-    if (callback) callback(clone(history))
+    var history = upsertToday(normalizeHistory(stored), null, true)
+    storage.set(HEALTH_HISTORY_KEY, history, function () {
+      if (callback) callback(clone(history))
+    })
+  }, [])
+}
+
+/**
+ * Commit today's already-mutated Activity snapshot without re-hydrating from the older
+ * persisted record. This is the transaction path used after a workout finishes.
+ */
+function saveToday(activitySnapshot, callback) {
+  var snapshot = activitySnapshot || activityStore.getSnapshot()
+  storage.getJSON(HEALTH_HISTORY_KEY, function (stored) {
+    var history = upsertToday(normalizeHistory(stored), snapshot, false)
+    storage.set(HEALTH_HISTORY_KEY, history, function (result) {
+      if (callback) callback(clone(history), result)
+    })
   }, [])
 }
 
@@ -113,7 +134,7 @@ function makeDemoHourly() {
 
 export default {
   ensure: function () { loadHistory(function () {}) },
-  saveToday: function () { loadHistory(function () {}) },
+  saveToday: saveToday,
   getHistory: loadHistory,
 
   getHourlyHeartRate: function () {
