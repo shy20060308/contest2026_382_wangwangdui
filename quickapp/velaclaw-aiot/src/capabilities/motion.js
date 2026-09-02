@@ -92,7 +92,11 @@ export default {
   subscribe: function (listener, options) {
     if (typeof listener !== 'function') return false
     for (var i = 0; i < consumers.length; i++) {
-      if (consumers[i].listener === listener) return active
+      if (consumers[i].listener === listener) {
+        consumers[i].interval = options && options.interval ? options.interval : consumers[i].interval
+        consumers[i].fail = options && options.fail ? options.fail : consumers[i].fail
+        return reconcile()
+      }
     }
     consumers.push({
       listener: listener,
