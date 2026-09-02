@@ -28,6 +28,7 @@
     "architecture:check": "node test/architecture_guard.test.js",
     "capabilities:check": "node test/capability_runtime.test.js",
     "power:logic": "node test/power_state_machine.test.js",
+    "power:runtime": "node test/power_runtime.test.js",
     "clock:runtime": "node test/clock_runtime_boundary.test.js",
     "layout:logic": "node test/layout_adapter.test.js",
     "multiscreen:check": "node scripts/check-multiscreen.js",
@@ -55,7 +56,7 @@
     "health:visual": "node scripts/check-health-visual.js",
     "icons:render": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-icons.ps1 && python scripts/render-soft-icons.py",
     "backgrounds:render": "python scripts/fade-watchface-background.py --input assets/watchfaces/alpine_night_source.jpg --output src/common/watchfaces/alpine_night.jpg",
-    "check": "npm run lint && npm run architecture:check && npm run capabilities:check && npm run power:logic && npm run clock:runtime && npm run layout:logic && npm run multiscreen:check && npm run safearea:check && npm run health:check && npm run haptic:check && npm run health:logic && npm run health:boundary && npm run health:layout && npm run activity:persistence && npm run history:layout && npm run watchdata:boundary && npm run workout:architecture && npm run pager:logic && npm run motion:logic && npm run calendar:logic && npm run analog:logic && npm run face:logic && npm run navigation:logic && npm run viewport:logic && npm run safearea:logic && npm run honeycomb:logic && npm run honeycomb:boundary && npm run haptic:logic && npm run docs:check"
+    "check": "npm run lint && npm run architecture:check && npm run capabilities:check && npm run power:logic && npm run power:runtime && npm run clock:runtime && npm run layout:logic && npm run multiscreen:check && npm run safearea:check && npm run health:check && npm run haptic:check && npm run health:logic && npm run health:boundary && npm run health:layout && npm run activity:persistence && npm run history:layout && npm run watchdata:boundary && npm run workout:architecture && npm run pager:logic && npm run motion:logic && npm run calendar:logic && npm run analog:logic && npm run face:logic && npm run navigation:logic && npm run viewport:logic && npm run safearea:logic && npm run honeycomb:logic && npm run honeycomb:boundary && npm run haptic:logic && npm run docs:check"
   },
   "lint-staged": {
     "*.{ux,js}": [
