@@ -20,7 +20,7 @@ function collectUxFiles(directory, result) {
 
 const features = new Set((manifest.features || []).map(function (item) { return item.name }))
 const profileSource = read('src/presentation/viewport/profile.js')
-const deviceSource = read('src/platform/vela/device.js')
+const deviceCapabilitySource = read('src/capabilities/device.js')
 const safeAreaSource = read('src/presentation/viewport/safe_area.js')
 const runtimeSource = read('src/presentation/viewport/runtime.js')
 const compatibilitySource = read('docs/COMPATIBILITY.md')
@@ -34,8 +34,9 @@ requireCondition(manifest.display && manifest.display.titleBar === false, 'weara
 requireCondition(manifest.router && manifest.router.entry === 'pages/clock_guard', 'clock_guard must remain the entry page')
 requireCondition(features.has('system.device'), 'system.device feature is required for viewport detection')
 
-requireCondition(deviceSource.includes("from '@system.device'"), 'Vela device API must stay inside platform/vela/device')
-requireCondition(profileSource.includes("../../platform/vela/device"), 'viewport profile must consume the platform device adapter')
+requireCondition(deviceCapabilitySource.includes("from '@system.device'"), 'Vela device API must stay inside capabilities/device')
+requireCondition(profileSource.includes("../../capabilities/device"), 'viewport profile must consume the device capability gateway')
+requireCondition(!profileSource.includes('../../platform/vela/device'), 'viewport profile must not regress to the legacy platform device adapter')
 requireCondition(profileSource.includes('pendingCallbacks'), 'viewport profile must share concurrent device requests')
 requireCondition(profileSource.includes('screenWidth'), 'viewport profile must expose screen width')
 requireCondition(profileSource.includes('screenHeight'), 'viewport profile must expose screen height')
@@ -58,7 +59,7 @@ targetSkins.forEach(function (skin) {
 })
 
 ;[
-  'src/platform/vela/device.js',
+  'src/capabilities/device.js',
   'src/presentation/viewport/profile.js',
   'src/presentation/viewport/geometry.js',
   'src/presentation/viewport/safe_area.js',
@@ -120,5 +121,5 @@ if (errors.length) {
   errors.forEach(function (error) { console.error('multiscreen error: ' + error) })
   process.exitCode = 1
 } else {
-  console.log('Checked viewport architecture, routed pages, target skins, and honeycomb delegation')
+  console.log('Checked capability-backed viewport architecture, routed pages, target skins, and honeycomb delegation')
 }
