@@ -18,7 +18,7 @@ function formatTime(timestamp) {
 }
 
 function normalizeMetrics(metrics) {
-  var source = metrics && metrics.length ? metrics : ['heartRate', 'spo2', 'stress']
+  var source = metrics && metrics.length ? metrics : ['heartRate']
   var result = []
   for (var i = 0; i < source.length; i++) {
     var name = source[i]
@@ -126,6 +126,7 @@ export default {
   subscribeHeartRate: function (listener) { subscribe(listener, ['heartRate']) },
   subscribeBloodOxygen: function (listener) { subscribe(listener, ['spo2']) },
   subscribeStress: function (listener) { subscribe(listener, ['stress']) },
+  subscribeAll: function (listener) { subscribe(listener, ['heartRate', 'spo2', 'stress']) },
   unsubscribe: unsubscribe,
   start: subscribe,
   stop: unsubscribe,
