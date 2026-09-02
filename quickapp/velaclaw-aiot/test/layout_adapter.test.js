@@ -1,5 +1,7 @@
 const assert = require('assert')
 const adapter = require('../src/presentation/layout/adapter')
+const detailLayout = require('../src/presentation/layout/specs/detail')
+const workoutLayout = require('../src/presentation/layout/specs/workout')
 
 function circle() {
   return { formFactor: 'circle', logicalHeight: 192 }
@@ -29,6 +31,8 @@ const simple = {
 }
 
 const circlePlan = adapter.resolve(circle(), simple)
+assert.strictEqual(circlePlan.freedomLevel, 1, 'unspecified simple layouts default to L1 Auto')
+assert.strictEqual(circlePlan.strategy, 'auto')
 assert.strictEqual(circlePlan.needsOverride, false, 'simple stack should auto-fit circle')
 assert.ok(circlePlan.scale > 0.7, 'auto-fit should keep readable scale')
 assert.strictEqual(circlePlan.regions.length, 3)
@@ -39,21 +43,19 @@ const pillPlan = adapter.resolve(pill(), simple)
 assert.strictEqual(pillPlan.needsOverride, false, 'simple stack should auto-fit pill')
 assert.strictEqual(pillPlan.scale, 1, 'pill should preserve the golden-reference scale when room exists')
 
-const centered = {
-  id: 'detail-l1-auto',
-  default: {
-    mode: 'auto-stack',
-    verticalAlign: 'center',
-    minScale: 0.78,
-    regions: [{ id: 'title', width: 148, height: 32 }]
-  }
-}
-const centeredCircle = adapter.resolve(circle(), centered)
+const centeredCircle = adapter.resolve(circle(), detailLayout)
+assert.strictEqual(centeredCircle.freedomLevel, 1, 'detail is the L1 Auto reference page')
+assert.strictEqual(centeredCircle.strategy, 'auto')
 assert.strictEqual(centeredCircle.needsOverride, false, 'simple centered design should auto-fit circle')
 assert.ok(Math.abs((centeredCircle.regions[0].top + centeredCircle.regions[0].height / 2) - 96) <= 1, 'L1 centered region should center inside the circle safe band')
-const centeredPill = adapter.resolve(pill(), centered)
+const centeredPill = adapter.resolve(pill(), detailLayout)
 assert.strictEqual(centeredPill.needsOverride, false, 'simple centered design should auto-fit pill')
 assert.ok(centeredPill.regions[0].top > centeredPill.safeBounds.top, 'pill center alignment should use available safe height instead of pinning to the cap')
+
+const workoutCircle = adapter.resolve(circle(), workoutLayout)
+assert.strictEqual(workoutCircle.freedomLevel, 2, 'workout is the L2 Assisted reference page')
+assert.strictEqual(workoutCircle.strategy, 'assisted')
+assert.strictEqual(workoutCircle.hasOverride, true, 'L2 may choose art-directed shape composition')
 
 const impossible = {
   id: 'too-dense',
@@ -75,6 +77,7 @@ assert.strictEqual(impossiblePlan.reason, 'auto-stack-cannot-fit-within-min-scal
 
 const override = {
   id: 'history',
+  freedomLevel: 2,
   default: {
     mode: 'auto-stack',
     minScale: 0.8,
@@ -95,6 +98,8 @@ const override = {
   }
 }
 const historyCircle = adapter.resolve(circle(), override)
+assert.strictEqual(historyCircle.freedomLevel, 2)
+assert.strictEqual(historyCircle.strategy, 'assisted')
 assert.strictEqual(historyCircle.composition, 'circle')
 assert.strictEqual(historyCircle.hasOverride, true)
 assert.strictEqual(historyCircle.mode, 'fixed-composition')
@@ -103,9 +108,12 @@ assert.strictEqual(historyCircle.regions[0].variant, 'compact')
 
 const external = {
   id: 'honeycomb',
+  freedomLevel: 3,
   default: { mode: 'external-engine', safeWidth: 136 }
 }
 const enginePlan = adapter.resolve(circle(), external)
+assert.strictEqual(enginePlan.freedomLevel, 3)
+assert.strictEqual(enginePlan.strategy, 'free')
 assert.strictEqual(enginePlan.mode, 'external-engine')
 assert.strictEqual(enginePlan.regions.length, 0)
 assert.ok(enginePlan.safeBounds.height > 0)
@@ -124,4 +132,4 @@ assert.ok(unsafePlan.violations.length > 0)
 const rectPlan = adapter.resolve(rect(), simple)
 assert.strictEqual(rectPlan.needsOverride, false)
 
-console.log('Adaptive layout adapter verified: auto-fit, safe alignment, override, external-engine and refusal boundaries work')
+console.log('Design Engine adapter verified: L1/L2/L3 metadata, auto-fit, composition override and refusal boundaries work')
