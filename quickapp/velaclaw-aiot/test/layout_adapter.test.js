@@ -1,7 +1,9 @@
 const assert = require('assert')
 const adapter = require('../src/presentation/layout/adapter')
+const pagedStack = require('../src/presentation/layout/paged_stack')
 const detailLayout = require('../src/presentation/layout/specs/detail')
 const workoutLayout = require('../src/presentation/layout/specs/workout')
+const settingsLayout = require('../src/presentation/layout/specs/settings')
 
 function circle() {
   return { formFactor: 'circle', logicalHeight: 192 }
@@ -51,6 +53,23 @@ assert.ok(Math.abs((centeredCircle.regions[0].top + centeredCircle.regions[0].he
 const centeredPill = adapter.resolve(pill(), detailLayout)
 assert.strictEqual(centeredPill.needsOverride, false, 'simple centered design should auto-fit pill')
 assert.ok(centeredPill.regions[0].top > centeredPill.safeBounds.top, 'pill center alignment should use available safe height instead of pinning to the cap')
+
+const settingsCircle = pagedStack.resolve(circle(), settingsLayout)
+assert.strictEqual(settingsCircle.freedomLevel, 1, 'settings paged stack is an L1 automatic design')
+assert.strictEqual(settingsCircle.needsOverride, false, 'settings must auto-fit without an art-directed override')
+assert.strictEqual(settingsCircle.pageSize, 2, 'circle capacity must be derived as two cards per page')
+assert.strictEqual(settingsCircle.capacityReduced, true, 'circle should report that automatic capacity was reduced')
+assert.ok(settingsCircle.regions[0].top < settingsCircle.regions[1].top, 'narrow header should exploit the circle cap above the wider list')
+assert.ok(settingsCircle.regions[2].bottom <= 174, 'circle pager must remain inside its own safe band')
+
+const settingsPill = pagedStack.resolve(pill(), settingsLayout)
+assert.strictEqual(settingsPill.pageSize, 3, 'pill should keep three cards when vertical space is available')
+assert.strictEqual(settingsPill.capacityReduced, false)
+assert.strictEqual(settingsPill.needsOverride, false)
+
+const settingsRect = pagedStack.resolve(rect(), settingsLayout)
+assert.strictEqual(settingsRect.pageSize, 3, 'rect should keep three cards when they fit at readable scale')
+assert.strictEqual(settingsRect.needsOverride, false)
 
 const workoutCircle = adapter.resolve(circle(), workoutLayout)
 assert.strictEqual(workoutCircle.freedomLevel, 2, 'workout is the L2 Assisted reference page')
@@ -132,4 +151,4 @@ assert.ok(unsafePlan.violations.length > 0)
 const rectPlan = adapter.resolve(rect(), simple)
 assert.strictEqual(rectPlan.needsOverride, false)
 
-console.log('Design Engine adapter verified: L1/L2/L3 metadata, auto-fit, composition override and refusal boundaries work')
+console.log('Design Engine verified: L1 auto capacity, L2 composition, L3 free mode and refusal boundaries work')
