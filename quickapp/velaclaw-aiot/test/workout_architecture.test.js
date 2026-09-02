@@ -30,7 +30,9 @@ assert.ok(!state.includes('durationText'), 'domain state must not own formatted 
 assert.ok(!state.includes('distanceText'), 'domain state must not own formatted distance')
 assert.ok(!state.includes('typeName'), 'domain state must not own display names')
 
-assert.ok(repository.includes("../../platform/vela/storage"), 'workout repository must use platform storage')
+assert.ok(repository.includes("../../capabilities/storage"), 'workout repository must use capability storage')
+assert.ok(!repository.includes('platform/vela'), 'workout domain must not depend on legacy platform adapters')
+assert.ok(history.includes("../../capabilities/storage"), 'history repository must use capability storage')
 assert.ok(history.includes('function saveToday(activitySnapshot, callback)'), 'history repository must accept an explicit activity snapshot')
 assert.ok(history.includes('upsertToday(normalizeHistory(stored), snapshot, false)'), 'explicit save must not restore stale persisted totals first')
 assert.ok(mapper.includes("name: '步行'"), 'presentation mapper must own walk label')
