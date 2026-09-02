@@ -1,35 +1,37 @@
-import healthPlatform from '../../platform/vela/health'
+import heartRateCapability from '../../capabilities/heart_rate'
+import bloodOxygenCapability from '../../capabilities/blood_oxygen'
+import stressCapability from '../../capabilities/stress'
 
 var listeners = []
-var active = false
+var active = { heartRate: false, spo2: false, stress: false }
+var lastObservedAt = { heartRate: 0, spo2: 0, stress: 0 }
 var latestState = null
-var lastObservedAt = {
-  heartRate: 0,
-  spo2: 0,
-  stress: 0
+
+function pad2(value) {
+  return value < 10 ? '0' + value : '' + value
 }
 
-function copySample(sample) {
-  var source = sample || {}
-  return {
-    heartRate: source.heartRate,
-    spo2: source.spo2,
-    stress: source.stress,
-    heartRateLive: source.heartRateLive,
-    spo2Live: source.spo2Live,
-    stressLive: source.stressLive,
-    heartRateErrorCode: source.heartRateErrorCode,
-    spo2ErrorCode: source.spo2ErrorCode,
-    stressErrorCode: source.stressErrorCode,
-    anyLive: source.anyLive,
-    serviceAvailable: source.serviceAvailable,
-    sourceText: source.sourceText,
-    heartRateUpdatedAt: source.heartRateUpdatedAt || 0,
-    spo2UpdatedAt: source.spo2UpdatedAt || 0,
-    stressUpdatedAt: source.stressUpdatedAt || 0,
-    updatedAt: source.updatedAt || 0,
-    updatedAtText: source.updatedAtText || '--:--'
+function formatTime(timestamp) {
+  if (!timestamp) return '--:--'
+  var date = new Date(timestamp)
+  return pad2(date.getHours()) + ':' + pad2(date.getMinutes())
+}
+
+function normalizeMetrics(metrics) {
+  var source = metrics && metrics.length ? metrics : ['heartRate', 'spo2', 'stress']
+  var result = []
+  for (var i = 0; i < source.length; i++) {
+    var name = source[i]
+    if ((name === 'heartRate' || name === 'spo2' || name === 'stress') && result.indexOf(name) < 0) result.push(name)
   }
+  return result
+}
+
+function needsMetric(name) {
+  for (var i = 0; i < listeners.length; i++) {
+    if (listeners[i].metrics.indexOf(name) >= 0) return true
+  }
+  return false
 }
 
 function didChange(name, updatedAt) {
@@ -39,61 +41,93 @@ function didChange(name, updatedAt) {
   return true
 }
 
-function buildState(sample) {
-  var state = copySample(sample)
-  state.heartRateChanged = didChange('heartRate', state.heartRateUpdatedAt)
-  state.spo2Changed = didChange('spo2', state.spo2UpdatedAt)
-  state.stressChanged = didChange('stress', state.stressUpdatedAt)
+function buildState(changedMetric) {
+  var heart = heartRateCapability.getSnapshot()
+  var spo2 = bloodOxygenCapability.getSnapshot()
+  var stress = stressCapability.getSnapshot()
+  var updatedAt = Math.max(heart.updatedAt || 0, spo2.updatedAt || 0, stress.updatedAt || 0)
+  var state = {
+    heartRate: heart.value,
+    spo2: spo2.value,
+    stress: stress.value,
+    heartRateLive: heart.live,
+    spo2Live: spo2.live,
+    stressLive: stress.live,
+    heartRateErrorCode: heart.errorCode || 0,
+    spo2ErrorCode: spo2.errorCode || 0,
+    stressErrorCode: stress.errorCode || 0,
+    anyLive: heart.live || spo2.live || stress.live,
+    serviceAvailable: heart.available || spo2.available || stress.available,
+    sourceText: heart.live || spo2.live || stress.live ? '系统实时数据' : '兼容演示数据',
+    heartRateUpdatedAt: heart.updatedAt || 0,
+    spo2UpdatedAt: spo2.updatedAt || 0,
+    stressUpdatedAt: stress.updatedAt || 0,
+    updatedAt: updatedAt,
+    updatedAtText: formatTime(updatedAt),
+    heartRateChanged: false,
+    spo2Changed: false,
+    stressChanged: false
+  }
+  if (changedMetric) state[changedMetric + 'Changed'] = didChange(changedMetric, state[changedMetric + 'UpdatedAt'])
+  latestState = state
   return state
 }
 
-function emit(state) {
-  latestState = state
+function emit(changedMetric) {
+  var state = buildState(changedMetric)
   var current = listeners.slice()
-  for (var i = 0; i < current.length; i++) current[i](state)
-}
-
-function handlePlatformSample(sample) {
-  emit(buildState(sample))
-}
-
-function startPlatform() {
-  if (active) return
-  active = true
-  healthPlatform.start(handlePlatformSample)
-}
-
-function stopPlatform() {
-  if (!active) return
-  healthPlatform.stop(handlePlatformSample)
-  active = false
-}
-
-function subscribe(listener) {
-  if (typeof listener !== 'function' || listeners.indexOf(listener) >= 0) return
-  listeners.push(listener)
-  if (active) {
-    listener(latestState || buildState(healthPlatform.getSnapshot()))
-    return
+  for (var i = 0; i < current.length; i++) {
+    if (!changedMetric || current[i].metrics.indexOf(changedMetric) >= 0) current[i].listener(state)
   }
-  startPlatform()
+}
+
+function onHeartRate() { emit('heartRate') }
+function onSpo2() { emit('spo2') }
+function onStress() { emit('stress') }
+
+function reconcileMetric(name, capability, handler) {
+  var needed = needsMetric(name)
+  if (needed && !active[name]) {
+    active[name] = true
+    capability.subscribe(handler)
+  } else if (!needed && active[name]) {
+    capability.unsubscribe(handler)
+    active[name] = false
+  }
+}
+
+function reconcile() {
+  reconcileMetric('heartRate', heartRateCapability, onHeartRate)
+  reconcileMetric('spo2', bloodOxygenCapability, onSpo2)
+  reconcileMetric('stress', stressCapability, onStress)
+}
+
+function subscribe(listener, metrics) {
+  if (typeof listener !== 'function') return
+  for (var i = 0; i < listeners.length; i++) {
+    if (listeners[i].listener === listener) return
+  }
+  listeners.push({ listener: listener, metrics: normalizeMetrics(metrics) })
+  reconcile()
+  listener(latestState || buildState())
 }
 
 function unsubscribe(listener) {
   var next = []
   for (var i = 0; i < listeners.length; i++) {
-    if (listeners[i] !== listener) next.push(listeners[i])
+    if (listeners[i].listener !== listener) next.push(listeners[i])
   }
   listeners = next
-  if (listeners.length === 0) stopPlatform()
+  reconcile()
 }
 
 export default {
   subscribe: subscribe,
+  subscribeHeartRate: function (listener) { subscribe(listener, ['heartRate']) },
+  subscribeBloodOxygen: function (listener) { subscribe(listener, ['spo2']) },
+  subscribeStress: function (listener) { subscribe(listener, ['stress']) },
   unsubscribe: unsubscribe,
   start: subscribe,
   stop: unsubscribe,
-  getSnapshot: function () {
-    return latestState || buildState(healthPlatform.getSnapshot())
-  }
+  getSnapshot: function () { return latestState || buildState() }
 }
