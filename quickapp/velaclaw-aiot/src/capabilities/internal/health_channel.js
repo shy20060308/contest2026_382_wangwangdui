@@ -5,6 +5,11 @@ function safeNumber(value, fallback) {
   return isFinite(number) ? Math.round(number) : fallback
 }
 
+function safeTimestamp(value) {
+  var number = Number(value)
+  return isFinite(number) && number > 0 ? Math.round(number) : Date.now()
+}
+
 function clone(snapshot) {
   return {
     value: snapshot.value,
@@ -54,9 +59,7 @@ export default function createHealthChannel(options) {
 
   function fallbackValue() {
     fallbackTick++
-    if (typeof config.fallbackValue === 'function') {
-      return safeNumber(config.fallbackValue(fallbackTick, state.value), state.value)
-    }
+    if (typeof config.fallbackValue === 'function') return safeNumber(config.fallbackValue(fallbackTick, state.value), state.value)
     return state.value
   }
 
@@ -85,7 +88,7 @@ export default function createHealthChannel(options) {
     state.live = true
     state.available = true
     state.errorCode = 0
-    state.updatedAt = safeNumber(sample.timeStamp, Date.now())
+    state.updatedAt = safeTimestamp(sample.timeStamp)
     state.source = 'live'
     stopFallback()
     emit()
