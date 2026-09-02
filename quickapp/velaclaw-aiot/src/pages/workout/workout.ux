@@ -85,7 +85,6 @@ export default {
   onInit() {
     pageViewport.bind(this)
     this.lifecycle = createContext()
-    // Non-UI runtime flag; kept off the reactive viewModel (derived from session status).
     this.running = true
   },
 
@@ -118,18 +117,14 @@ export default {
         return
       }
       self.applySession(session)
-      if (session.status === 'running') {
-        self.startGps()
-      } else {
-        self.gpsText = 'GPS 已暂停'
-      }
+      if (session.status === 'running') self.startGps()
+      else self.gpsText = 'GPS 已暂停'
     })
   },
 
   startUiTimer() {
     var self = this
     this.stopUiTimer()
-    // The manager uses timestamps; this timer only refreshes the visible values.
     this.uiTimer = this.lifecycle.addInterval('ui', setInterval(function () {
       var session = workoutManager.tick()
       if (session) self.applySession(session)
@@ -185,9 +180,8 @@ export default {
     var session = this.running ? workoutManager.pause() : workoutManager.resume()
     if (session) {
       this.applySession(session)
-      if (session.status === 'running') {
-        this.startGps()
-      } else {
+      if (session.status === 'running') this.startGps()
+      else {
         gpsTracker.stop()
         this.gpsText = 'GPS 已暂停'
       }
@@ -303,21 +297,10 @@ export default {
   margin-top: 5px;
 }
 
-.step-color {
-  color: #FFD60A;
-}
-
-.calorie-color {
-  color: #FF9F0A;
-}
-
-.distance-color {
-  color: #30D158;
-}
-
-.heart-color {
-  color: #FF375F;
-}
+.step-color { color: #FFD60A; }
+.calorie-color { color: #FF9F0A; }
+.distance-color { color: #30D158; }
+.heart-color { color: #FF375F; }
 
 .action-row {
   flex-direction: row;
@@ -399,22 +382,15 @@ export default {
   border-radius: 8px;
 }
 
-.confirm-finish {
-  background-color: #C83245;
-}
+.confirm-finish { background-color: #C83245; }
 
 /*
- * 圆屏安全栈（几何推导见 scripts/check-safe-area.js）：
- *   20 → 头部 118×16 → 时长 110×30 → 标签 110×9 → GPS 110×9
- *      → 指标网格 148×60(+1) → 操作行 120×22(+1)，结束于 y=168。
- *
- * 时长文字的行盒必须明显高于字号。Vela/LVGL 在不同字体栅格下，26px 字体塞进
- * 26px 高容器会切掉字形底部；30px 行盒 + 25px 字体保留视觉重量，同时留出字形下降区。
- * 最宽的 148px 指标网格仍位于圆屏中央安全带内。
+ * 圆屏安全栈：21px 是 118px 宽 header 在 192px 逻辑圆中的几何安全上边界。
+ * 时长保持 30px 行盒 / 25px 字体，避免 Vela/LVGL 字形底部被裁切。
  */
 @media (shape: circle) {
   .workout-page {
-    padding: 20px 20px 0px 20px;
+    padding: 21px 20px 0px 20px;
   }
 
   .workout-header {
@@ -428,9 +404,7 @@ export default {
     font-size: 11px;
   }
 
-  .status-text {
-    font-size: 7px;
-  }
+  .status-text { font-size: 7px; }
 
   .duration {
     width: 110px;
@@ -455,11 +429,8 @@ export default {
     margin-top: 1px;
   }
 
-  .metric-row {
-    width: 148px;
-  }
+  .metric-row { width: 148px; }
 
-  /* 两行 28px 卡片 + 4px 间距 = 60px，正好填满网格。 */
   .metric-item {
     width: 71px;
     height: 28px;
@@ -496,9 +467,7 @@ export default {
     border-radius: 24px;
   }
 
-  .confirm-title {
-    font-size: 12px;
-  }
+  .confirm-title { font-size: 12px; }
 
   .confirm-sub {
     width: 116px;
