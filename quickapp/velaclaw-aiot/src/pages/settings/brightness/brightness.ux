@@ -55,7 +55,7 @@
 
 <script>
 import router from '@system.router'
-import brightness from '@system.brightness'
+import displayPower from '../../../capabilities/display_power'
 import deviceSettings from '../../../common/device_settings'
 import pageMotion from '../../../common/page_motion'
 import swipeBack from '../../../common/swipe_back'
@@ -128,35 +128,16 @@ export default {
   },
 
   applyBrightness(value) {
-    try {
-      if (brightness && brightness.setValue) {
-        brightness.setValue({
-          value: value,
-          fail: function () {
-            console.log('brightness setting uses UI simulation')
-          }
-        })
-      }
-    } catch (e) {
-      console.log('brightness API unavailable, keep UI setting')
-    }
+    displayPower.setBrightness(value)
   },
 
   onBrightnessChange(e) {
-    if (this.autoBrightness) {
-      return
-    }
-    // Different simulator versions may expose progress directly or under detail.
+    if (this.autoBrightness) return
     var value = this.brightnessValue
-    if (e && e.progress !== undefined) {
-      value = Number(e.progress)
-    } else if (e && e.value !== undefined) {
-      value = Number(e.value)
-    } else if (e && e.detail && e.detail.progress !== undefined) {
-      value = Number(e.detail.progress)
-    } else if (e && e.detail && e.detail.value !== undefined) {
-      value = Number(e.detail.value)
-    }
+    if (e && e.progress !== undefined) value = Number(e.progress)
+    else if (e && e.value !== undefined) value = Number(e.value)
+    else if (e && e.detail && e.detail.progress !== undefined) value = Number(e.detail.progress)
+    else if (e && e.detail && e.detail.value !== undefined) value = Number(e.detail.value)
     this.setBrightness(value)
   },
 
@@ -174,21 +155,8 @@ export default {
     this.autoBrightness = !this.autoBrightness
     this.refreshView()
     deviceSettings.update('autoBrightness', this.autoBrightness)
-    try {
-      if (brightness && brightness.setMode) {
-        brightness.setMode({
-          mode: this.autoBrightness ? 1 : 0,
-          fail: function () {
-            console.log('brightness mode uses UI simulation')
-          }
-        })
-      }
-    } catch (e) {
-      console.log('brightness setMode unavailable, keep UI setting')
-    }
-    if (!this.autoBrightness) {
-      this.applyBrightness(this.brightnessValue)
-    }
+    displayPower.setMode(this.autoBrightness)
+    if (!this.autoBrightness) this.applyBrightness(this.brightnessValue)
   },
 
   toggleRaiseWake() {
@@ -306,13 +274,8 @@ export default {
   color: #666666;
 }
 
-.center {
-  text-align: center;
-}
-
-.right {
-  text-align: right;
-}
+.center { text-align: center; }
+.right { text-align: right; }
 
 .setting-card {
   flex-direction: row;
@@ -384,9 +347,7 @@ export default {
     font-size: 7px;
   }
 
-  .status-value {
-    font-size: 19px;
-  }
+  .status-value { font-size: 19px; }
 
   .slider-card {
     height: 67px;
@@ -395,30 +356,19 @@ export default {
 
   .slider-label-row,
   .brightness-slider,
-  .slider-scale {
-    width: 130px;
-  }
+  .slider-scale { width: 130px; }
 
-  .slider-label {
-    font-size: 9px;
-  }
-
-  .scale-text {
-    font-size: 6px;
-  }
+  .slider-label { font-size: 9px; }
+  .scale-text { font-size: 6px; }
 
   .setting-card {
     height: 48px;
     margin-top: 7px;
   }
 
-  .setting-copy {
-    width: 103px;
-  }
+  .setting-copy { width: 103px; }
 
   .setting-title,
-  .switch-text {
-    font-size: 10px;
-  }
+  .switch-text { font-size: 10px; }
 }
 </style>
