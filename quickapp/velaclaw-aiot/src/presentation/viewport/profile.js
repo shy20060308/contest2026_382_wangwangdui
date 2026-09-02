@@ -1,4 +1,4 @@
-import devicePlatform from '../../platform/vela/device'
+import deviceCapability from '../../capabilities/device'
 import geometry from './geometry'
 import safeArea from './safe_area'
 
@@ -153,9 +153,8 @@ function resolve(context, callback) {
   pendingCallbacks.push(callback)
   if (requestInFlight) return
   requestInFlight = true
-  devicePlatform.getInfo(
-    function (info) { finish(info, context, 'system.device') },
-    function () { finish(getContextDevice(context), context, 'fallback') }
+  deviceCapability.get(
+    function (info) { finish(info, context, 'capability.device') }
   )
 }
 
