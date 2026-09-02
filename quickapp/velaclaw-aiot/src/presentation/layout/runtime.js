@@ -18,10 +18,16 @@ function apply(page, plan) {
   page.layoutRegions = adapter.regionMap(plan)
 }
 
-function bind(page, spec, callback) {
+function resolvePlan(profile, specOrResolver) {
+  if (typeof specOrResolver === 'function') return specOrResolver(profile)
+  if (specOrResolver && typeof specOrResolver.resolve === 'function') return specOrResolver.resolve(profile)
+  return adapter.resolve(profile, specOrResolver)
+}
+
+function bind(page, specOrResolver, callback) {
   screenProfile.resolve(page, function (profile) {
     viewportRuntime.apply(page, profile)
-    var plan = adapter.resolve(profile, spec)
+    var plan = resolvePlan(profile, specOrResolver)
     apply(page, plan)
     if (typeof callback === 'function') callback(plan, profile)
   })
@@ -30,5 +36,6 @@ function bind(page, spec, callback) {
 module.exports = {
   bind: bind,
   apply: apply,
+  resolvePlan: resolvePlan,
   regionStyle: regionStyle
 }
