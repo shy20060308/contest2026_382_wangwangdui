@@ -20,6 +20,8 @@ const powerManager = read('src/common/power_manager.js')
 const gpsTracker = read('src/common/gps_tracker.js')
 const haptic = read('src/common/haptic_feedback.js')
 const profile = read('src/presentation/viewport/profile.js')
+const brightnessPage = read('src/pages/settings/brightness/brightness.ux')
+const motionPage = read('src/pages/settings/motion/motion.ux')
 
 assert.ok(healthChannel.includes("from '@service.health'"), 'health raw API must be isolated in capability runtime')
 assert.ok(healthChannel.includes('listeners.length === 1'), 'health channel must start lazily for first consumer')
@@ -29,8 +31,10 @@ assert.ok(spo2.includes("dataTypeName: 'SPO2'"), 'SpO2 must be independently tri
 assert.ok(stress.includes("dataTypeName: 'STRESS'"), 'stress must be independently triggerable')
 
 assert.ok(motion.includes("from '@system.sensor'"), 'motion gateway must own accelerometer API')
-assert.ok(motion.includes('listeners.length === 1'), 'motion must start on first consumer')
-assert.ok(motion.includes('listeners.length === 0'), 'motion must stop after last consumer')
+assert.ok(motion.includes('consumers.length === 0'), 'motion must release native sampling after last consumer')
+assert.ok(motion.includes("interval === 'game'"), 'motion gateway must preserve high-rate diagnostics')
+assert.ok(motion.includes('desiredInterval()'), 'motion gateway must reconcile consumer sampling needs')
+assert.ok(motion.includes('if (active) stopNative()'), 'motion gateway must restart when required sampling cadence changes')
 assert.ok(location.includes("from '@system.geolocation'"), 'location gateway must own geolocation API')
 assert.ok(location.includes('listeners.length === 1'), 'location must start on first consumer')
 assert.ok(location.includes('listeners.length === 0'), 'location must stop after last consumer')
@@ -38,6 +42,7 @@ assert.ok(location.includes('listeners.length === 0'), 'location must stop after
 assert.ok(device.includes("from '@system.device'"), 'device gateway must own device API')
 assert.ok(battery.includes("from '@system.battery'"), 'battery gateway must own battery API')
 assert.ok(displayPower.includes("from '@system.brightness'"), 'display gateway must own brightness API')
+assert.ok(displayPower.includes('setMode:'), 'display gateway must own automatic/manual brightness mode')
 assert.ok(vibration.includes("from '@system.vibrator'"), 'vibration gateway must own vibrator API')
 assert.ok(storage.includes("from '@system.storage'"), 'storage gateway must own storage API')
 
@@ -50,5 +55,11 @@ assert.ok(haptic.includes("../capabilities/vibration"), 'haptic logic must use v
 assert.ok(!haptic.includes('@system.vibrator'), 'haptic logic must not own vibrator API')
 assert.ok(profile.includes("../../capabilities/device"), 'viewport must consume device capability')
 assert.ok(!profile.includes('platform/vela'), 'viewport must not use retired platform layer')
+
+assert.ok(brightnessPage.includes("../../../capabilities/display_power"), 'brightness settings must use display capability')
+assert.ok(!brightnessPage.includes("from '@system.brightness'"), 'brightness settings must not access the raw brightness API')
+assert.ok(motionPage.includes("../../../capabilities/motion"), 'motion diagnostics must use motion capability')
+assert.ok(motionPage.includes("interval: 'game'"), 'motion diagnostics must request its sampling intent through the gateway')
+assert.ok(!motionPage.includes("from '@system.sensor'"), 'motion diagnostics must not access the raw sensor API')
 
 console.log('Capability Runtime verified: device APIs are isolated, lazy and independently triggerable')
