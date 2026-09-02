@@ -186,6 +186,8 @@ function resolve(profile, layoutSpec) {
   }
 
   plan.id = selected.id
+  plan.freedomLevel = selected.freedomLevel
+  plan.strategy = selected.strategy
   plan.shape = selected.shape
   plan.composition = selected.composition
   plan.hasOverride = selected.hasOverride
