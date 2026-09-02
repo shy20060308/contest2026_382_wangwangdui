@@ -1,4 +1,4 @@
-import storage from '../../platform/vela/storage'
+import storage from '../../capabilities/storage'
 
 var ACTIVITY_KEY = 'activity_today_v2'
 
