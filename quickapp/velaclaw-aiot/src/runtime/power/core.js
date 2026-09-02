@@ -1,5 +1,6 @@
 var stateMachine = require('../../domain/power/state_machine')
 var powerPolicy = require('../../domain/power/policy')
+var raiseWake = require('../../domain/power/raise_wake')
 
 function noop() {}
 
@@ -15,6 +16,7 @@ function create(dependencies, options) {
   var cancel = typeof deps.clearInterval === 'function' ? deps.clearInterval : clearInterval
 
   var machine = stateMachine.create(now())
+  var raiseDetector = raiseWake.create()
   var started = false
   var idleTimer = null
   var mainTimer = null
@@ -101,9 +103,7 @@ function create(dependencies, options) {
 
   function applyMode(mode, reason) {
     if (!started) return currentMode
-    if (mode !== stateMachine.MODE_ACTIVE && mode !== stateMachine.MODE_DIM && mode !== stateMachine.MODE_SLEEP) {
-      mode = stateMachine.MODE_ACTIVE
-    }
+    if (mode !== stateMachine.MODE_ACTIVE && mode !== stateMachine.MODE_DIM && mode !== stateMachine.MODE_SLEEP) mode = stateMachine.MODE_ACTIVE
     var changed = mode !== currentMode
     currentMode = mode
     applyDisplay(mode)
@@ -126,8 +126,9 @@ function create(dependencies, options) {
     return currentMode
   }
 
-  function handleRaiseWake() {
-    if (!started) return
+  function handleMotionSample(sample) {
+    if (!started || !raiseWakeEnabled || !lowPowerEnabled) return
+    if (!raiseDetector.push(sample, now())) return
     markActive('raise-wake')
     onWake('raise-wake')
   }
@@ -135,15 +136,17 @@ function create(dependencies, options) {
   function reconcileRaiseWake() {
     var shouldRegister = started && lowPowerEnabled && raiseWakeEnabled
     if (!shouldRegister) {
-      if (raiseWakeRegistered && motion && motion.unsubscribe) motion.unsubscribe(handleRaiseWake)
+      if (raiseWakeRegistered && motion && motion.unsubscribe) motion.unsubscribe(handleMotionSample)
       raiseWakeRegistered = false
+      raiseDetector.reset()
       return
     }
     if (!raiseWakeRegistered && motion && motion.subscribe) {
-      // Registration ownership is independent of whether the native sensor was
-      // immediately available. This guarantees stop() can always unsubscribe.
-      motion.subscribe(handleRaiseWake, { interval: 'normal' })
+      // Motion capability emits raw acceleration. The semantic detector decides
+      // whether a sample sequence is actually a raise-to-wake gesture.
+      motion.subscribe(handleMotionSample, { interval: 'normal' })
       raiseWakeRegistered = true
+      raiseDetector.reset()
     }
   }
 
@@ -156,6 +159,7 @@ function create(dependencies, options) {
     if (started) return
     started = true
     machine = stateMachine.create(now())
+    raiseDetector.reset()
     currentMode = stateMachine.MODE_ACTIVE
     latestHeartSample = heartRate && heartRate.getSnapshot ? heartRate.getSnapshot() : null
     applyMode(stateMachine.MODE_ACTIVE, 'start')
@@ -171,8 +175,9 @@ function create(dependencies, options) {
     idleTimer = clearTimer(idleTimer)
     mainTimer = clearTimer(mainTimer)
     heartTimer = clearTimer(heartTimer)
-    if (raiseWakeRegistered && motion && motion.unsubscribe) motion.unsubscribe(handleRaiseWake)
+    if (raiseWakeRegistered && motion && motion.unsubscribe) motion.unsubscribe(handleMotionSample)
     raiseWakeRegistered = false
+    raiseDetector.reset()
     stopHealth()
     if (displayPower && displayPower.setBrightness) displayPower.setBrightness(activeBrightnessValue)
     if (displayPower && displayPower.setKeepScreenOn) displayPower.setKeepScreenOn(true)
