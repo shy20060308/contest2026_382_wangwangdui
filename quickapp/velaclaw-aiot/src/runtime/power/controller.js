@@ -183,9 +183,13 @@ function create(options) {
 
   function configure(next) {
     var value = next || {}
+    var brightnessChanged = false
     if (value.lowPowerEnabled !== undefined) lowPowerEnabled = value.lowPowerEnabled !== false
     if (value.raiseWakeEnabled !== undefined) raiseWakeEnabled = value.raiseWakeEnabled !== false
-    if (typeof value.activeBrightnessValue === 'number') activeBrightnessValue = value.activeBrightnessValue
+    if (typeof value.activeBrightnessValue === 'number' && value.activeBrightnessValue !== activeBrightnessValue) {
+      activeBrightnessValue = value.activeBrightnessValue
+      brightnessChanged = true
+    }
 
     if (!started) return
     reconcileRaiseWake()
@@ -195,6 +199,7 @@ function create(options) {
       applyMode(stateMachine.MODE_ACTIVE, 'low-power-disabled')
     } else {
       evaluateIdle()
+      if (brightnessChanged && currentMode === stateMachine.MODE_ACTIVE) applyDisplay(stateMachine.MODE_ACTIVE)
     }
   }
 
