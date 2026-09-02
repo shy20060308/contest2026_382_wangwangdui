@@ -22,7 +22,7 @@ function start(listener) {
     listener(data)
   }
   listenerMap.push({ listener: listener, wrapped: wrapped })
-  healthStore.subscribe(wrapped)
+  healthStore.subscribeAll(wrapped)
 }
 
 function stop(listener) {
