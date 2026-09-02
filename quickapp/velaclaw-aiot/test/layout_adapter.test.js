@@ -39,6 +39,22 @@ const pillPlan = adapter.resolve(pill(), simple)
 assert.strictEqual(pillPlan.needsOverride, false, 'simple stack should auto-fit pill')
 assert.strictEqual(pillPlan.scale, 1, 'pill should preserve the golden-reference scale when room exists')
 
+const centered = {
+  id: 'detail-l1-auto',
+  default: {
+    mode: 'auto-stack',
+    verticalAlign: 'center',
+    minScale: 0.78,
+    regions: [{ id: 'title', width: 148, height: 32 }]
+  }
+}
+const centeredCircle = adapter.resolve(circle(), centered)
+assert.strictEqual(centeredCircle.needsOverride, false, 'simple centered design should auto-fit circle')
+assert.ok(Math.abs((centeredCircle.regions[0].top + centeredCircle.regions[0].height / 2) - 96) <= 1, 'L1 centered region should center inside the circle safe band')
+const centeredPill = adapter.resolve(pill(), centered)
+assert.strictEqual(centeredPill.needsOverride, false, 'simple centered design should auto-fit pill')
+assert.ok(centeredPill.regions[0].top > centeredPill.safeBounds.top, 'pill center alignment should use available safe height instead of pinning to the cap')
+
 const impossible = {
   id: 'too-dense',
   default: {
@@ -108,4 +124,4 @@ assert.ok(unsafePlan.violations.length > 0)
 const rectPlan = adapter.resolve(rect(), simple)
 assert.strictEqual(rectPlan.needsOverride, false)
 
-console.log('Adaptive layout adapter verified: auto-fit, override, external-engine and refusal boundaries work')
+console.log('Adaptive layout adapter verified: auto-fit, safe alignment, override, external-engine and refusal boundaries work')
