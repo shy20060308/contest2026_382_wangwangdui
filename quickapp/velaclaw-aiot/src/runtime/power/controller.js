@@ -15,7 +15,7 @@ function create(options) {
   var mainTimer = null
   var heartTimer = null
   var healthActive = false
-  var raiseWakeActive = false
+  var raiseWakeRegistered = false
   var latestHeartSample = null
   var currentMode = stateMachine.MODE_ACTIVE
   var lowPowerEnabled = config.lowPowerEnabled !== false
@@ -78,7 +78,7 @@ function create(options) {
     mainTimer = clearTimer(mainTimer)
     heartTimer = clearTimer(heartTimer)
     var policy = powerPolicy.get(mode)
-    var lastBatteryAt = 0
+    var lastBatteryAt = Date.now()
 
     if (policy.timeInterval > 0) {
       mainTimer = setInterval(function () {
@@ -118,6 +118,14 @@ function create(options) {
     if (snapshot.mode !== currentMode) applyMode(snapshot.mode, snapshot.reason)
   }
 
+  function reconcileIdleTimer() {
+    if (!started || !lowPowerEnabled) {
+      idleTimer = clearTimer(idleTimer)
+      return
+    }
+    if (!idleTimer) idleTimer = setInterval(evaluateIdle, 1000)
+  }
+
   function handleRaiseWake() {
     if (!started) return
     markActive('raise-wake')
@@ -125,13 +133,15 @@ function create(options) {
   }
 
   function reconcileRaiseWake() {
-    if (!started || !raiseWakeEnabled || !lowPowerEnabled) {
-      if (raiseWakeActive) motion.unsubscribe(handleRaiseWake)
-      raiseWakeActive = false
+    var shouldRegister = started && raiseWakeEnabled && lowPowerEnabled
+    if (!shouldRegister) {
+      if (raiseWakeRegistered) motion.unsubscribe(handleRaiseWake)
+      raiseWakeRegistered = false
       return
     }
-    if (!raiseWakeActive) {
-      raiseWakeActive = motion.subscribe(handleRaiseWake, { interval: 'normal' })
+    if (!raiseWakeRegistered) {
+      motion.subscribe(handleRaiseWake, { interval: 'normal' })
+      raiseWakeRegistered = true
     }
   }
 
@@ -152,7 +162,7 @@ function create(options) {
     onTime(Date.now())
     readBattery()
     reconcileRaiseWake()
-    idleTimer = setInterval(evaluateIdle, 1000)
+    reconcileIdleTimer()
   }
 
   function stop() {
@@ -161,8 +171,8 @@ function create(options) {
     idleTimer = clearTimer(idleTimer)
     mainTimer = clearTimer(mainTimer)
     heartTimer = clearTimer(heartTimer)
-    if (raiseWakeActive) motion.unsubscribe(handleRaiseWake)
-    raiseWakeActive = false
+    if (raiseWakeRegistered) motion.unsubscribe(handleRaiseWake)
+    raiseWakeRegistered = false
     stopHealth()
     // Leaving the watchface restores the user-selected active brightness and
     // releases keep-screen-on exactly like the previous clock behavior.
@@ -179,6 +189,7 @@ function create(options) {
 
     if (!started) return
     reconcileRaiseWake()
+    reconcileIdleTimer()
     if (!lowPowerEnabled) {
       machine.markActive('low-power-disabled', Date.now())
       applyMode(stateMachine.MODE_ACTIVE, 'low-power-disabled')
@@ -205,7 +216,7 @@ function create(options) {
         lowPowerEnabled: lowPowerEnabled,
         raiseWakeEnabled: raiseWakeEnabled,
         healthActive: healthActive,
-        raiseWakeActive: raiseWakeActive
+        raiseWakeActive: raiseWakeRegistered && motion.isActive()
       }
     }
   }
