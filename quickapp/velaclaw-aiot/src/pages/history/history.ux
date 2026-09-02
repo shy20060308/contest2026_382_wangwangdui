@@ -54,7 +54,7 @@
         <text class="record-date">{{ $item.date }}</text>
         <div class="record-values">
           <text class="record-main">{{ $item.stepsText }} 步</text>
-          <text class="record-sub">{{ $item.caloriesText }} kcal  {{ $item.heartText }}</text>
+          <text class="record-sub">{{ $item.caloriesText }} kcal · {{ $item.heartText }}</text>
         </div>
         <text class="record-goal">{{ $item.goalText }}</text>
       </div>
@@ -64,13 +64,15 @@
 
 <script>
 import router from '@system.router'
-import watchData from '../../common/watch_data'
+import historyRepository from '../../domain/history/repository'
+import { mapHistory } from '../../presentation/mappers/history'
 import pageMotion from '../../common/page_motion'
 import pageViewport from '../../common/page_viewport'
 
 export default {
   private: {
     loading: true,
+    isCircle: false,
     todayStepsText: '0',
     avgStepsText: '0',
     bestStepsText: '0',
@@ -91,7 +93,11 @@ export default {
   },
 
   onInit() {
-    pageViewport.bind(this)
+    var self = this
+    pageViewport.bind(this, function (profile) {
+      self.isCircle = profile.isCircle
+      if (self.pageVisible) self.loadHistory()
+    })
   },
 
   onShow() {
@@ -114,26 +120,24 @@ export default {
   },
 
   loadHistory() {
-    // Data is refreshed in onShow so the page always reflects the latest saved day.
-    watchData.getHistorySummary((summary) => {
-      if (!this.pageVisible) {
-        return
-      }
-      this.todayStepsText = summary.todayStepsText
-      this.avgStepsText = summary.avgStepsText
-      this.bestStepsText = summary.bestStepsText
-      this.bestDayText = summary.bestDayText
-      this.avgHeartText = summary.avgHeartText
-      this.totalCaloriesText = summary.totalCaloriesText
-      this.goalText = summary.goalText
-      this.stepBars = summary.stepBars
-      this.records = summary.records
-      this.loading = false
+    var self = this
+    historyRepository.getHistory(function (history) {
+      if (!self.pageVisible) return
+      var summary = mapHistory(history, { compact: self.isCircle })
+      self.todayStepsText = summary.todayStepsText
+      self.avgStepsText = summary.avgStepsText
+      self.bestStepsText = summary.bestStepsText
+      self.bestDayText = summary.bestDayText
+      self.avgHeartText = summary.avgHeartText
+      self.totalCaloriesText = summary.totalCaloriesText
+      self.goalText = summary.goalText
+      self.stepBars = summary.stepBars
+      self.records = summary.records
+      self.loading = false
     })
   },
 
   releaseHistoryData() {
-    // Free chart/list references while the page is cached in the navigation stack.
     this.stepBars = []
     this.records = []
   },
@@ -259,12 +263,6 @@ export default {
   margin-top: 2px;
 }
 
-.chart-label-row {
-  flex-direction: row;
-  width: 140px;
-  height: 16px;
-}
-
 .bar-label {
   width: 20px;
   font-size: 8px;
@@ -310,8 +308,10 @@ export default {
 }
 
 .record-scroll {
+  flex-direction: column;
+  align-items: center;
   width: 156px;
-  height: 144px;
+  height: 310px;
   margin-top: 8px;
 }
 
@@ -345,7 +345,7 @@ export default {
 }
 
 .record-sub {
-  font-size: 9px;
+  font-size: 8px;
   color: #8E8E93;
   margin-top: 2px;
 }
@@ -379,14 +379,14 @@ export default {
 
 @media (shape: circle) {
   .history-page {
-    padding-top: 18px;
+    padding-top: 21px;
     padding-bottom: 28px;
   }
 
   .top-row {
     width: 118px;
     height: 22px;
-    margin-top: 8px;
+    margin-top: 0px;
   }
 
   .page-title {
@@ -406,13 +406,13 @@ export default {
   }
 
   .summary-row {
-    height: 46px;
-    margin-top: 5px;
+    height: 44px;
+    margin-top: 4px;
   }
 
   .summary-item {
     width: 71px;
-    height: 44px;
+    height: 42px;
     border-radius: 12px;
   }
 
@@ -425,8 +425,9 @@ export default {
   }
 
   .chart-card {
-    height: 116px;
+    height: 112px;
     border-radius: 13px;
+    padding: 7px 8px;
   }
 
   .section-title {
@@ -435,7 +436,8 @@ export default {
 
   .chart-row {
     width: 132px;
-    height: 86px;
+    height: 84px;
+    margin-top: 2px;
   }
 
   .bar-cell,
@@ -446,26 +448,29 @@ export default {
   }
 
   .bar-space {
-    height: 61px;
+    height: 58px;
   }
 
   .step-bar {
     width: 9px;
   }
 
-  .bar-steps,
-  .bar-label {
+  .bar-steps {
     font-size: 6px;
   }
 
+  .bar-label {
+    font-size: 7px;
+  }
+
   .insight-row {
-    height: 47px;
-    margin-top: 6px;
+    height: 45px;
+    margin-top: 5px;
   }
 
   .insight-item {
     width: 46px;
-    height: 45px;
+    height: 43px;
     border-radius: 12px;
   }
 
@@ -479,27 +484,40 @@ export default {
   }
 
   .record-scroll {
-    height: 350px;
+    flex-direction: column;
+    height: 280px;
     margin-top: 6px;
   }
 
   .record-item {
-    height: 42px;
+    flex-direction: row;
+    height: 36px;
     border-radius: 12px;
+    padding-left: 7px;
+    padding-right: 7px;
+    margin-bottom: 5px;
+  }
+
+  .record-date {
+    width: 30px;
   }
 
   .record-values {
-    width: 75px;
+    width: 82px;
   }
 
   .record-main {
-    font-size: 10px;
+    font-size: 9px;
   }
 
   .record-date,
   .record-sub,
   .record-goal {
     font-size: 7px;
+  }
+
+  .record-goal {
+    width: 22px;
   }
 }
 </style>
