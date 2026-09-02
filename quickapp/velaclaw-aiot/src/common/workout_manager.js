@@ -101,29 +101,28 @@ export default {
       return
     }
 
-    // Commit one coherent domain transaction before the page navigates away:
-    // 1) mutate today's in-memory Activity state exactly once;
-    // 2) persist that exact snapshot into 7-day history (no stale re-hydration);
-    // 3) persist the workout record;
-    // 4) clear resumable session state.
-    var activitySnapshot = activityStore.add(record.steps, record.calories)
     workoutRepository.clearActive()
 
-    afterBoth(
-      function (done) {
-        historyRepository.saveToday(activitySnapshot, function (history) {
-          done(history)
-        })
-      },
-      function (done) {
-        workoutRepository.saveRecord(record, function (saved) {
-          done(saved)
-        })
-      },
-      function (history, saved) {
-        if (callback) callback(mapRecord(saved || record), { activity: activitySnapshot, history: history })
-      }
-    )
+    // Persist Activity first. Pages may run in separate JS contexts, so an in-memory
+    // mutation alone is not a valid cross-page contract on Vela. The committed snapshot
+    // becomes the single source used by Today and 7-day history.
+    activityStore.addAndPersist(record.steps, record.calories, function (activitySnapshot) {
+      afterBoth(
+        function (done) {
+          historyRepository.saveToday(activitySnapshot, function (history) {
+            done(history)
+          })
+        },
+        function (done) {
+          workoutRepository.saveRecord(record, function (saved) {
+            done(saved)
+          })
+        },
+        function (history, saved) {
+          if (callback) callback(mapRecord(saved || record), { activity: activitySnapshot, history: history })
+        }
+      )
+    })
   },
 
   cancel: function () {
