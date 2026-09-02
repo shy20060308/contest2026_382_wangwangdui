@@ -50,7 +50,7 @@
 
 <script>
 import router from '@system.router'
-import sensor from '@system.sensor'
+import motion from '../../../capabilities/motion'
 import hapticFeedback from '../../../common/haptic_feedback'
 import motionMetrics from '../../../common/motion_metrics'
 import pageMotion from '../../../common/page_motion'
@@ -96,7 +96,9 @@ export default {
   },
 
   onInit() {
+    var self = this
     this.metricState = motionMetrics.createState()
+    this.motionListener = function (sample) { self.handleSample(sample) }
     pageViewport.bind(this)
   },
 
@@ -125,32 +127,24 @@ export default {
 
   startSensor() {
     if (this.sensorActive) return true
-    if (!sensor || !sensor.subscribeAccelerometer) {
+    var self = this
+    var started = motion.subscribe(this.motionListener, {
+      interval: 'game',
+      fail: function (code) {
+        self.sensorActive = false
+        self.setSensorError(code === 'unavailable' ? '接口不可用' : '失败 ' + code)
+      }
+    })
+    if (!started) {
       this.setSensorError('接口不可用')
       return false
     }
-    var self = this
-    try {
-      sensor.subscribeAccelerometer({
-        interval: 'game',
-        callback: function (sample) {
-          self.handleSample(sample)
-        },
-        fail: function (data, code) {
-          self.sensorActive = false
-          self.setSensorError('失败 ' + code)
-        }
-      })
-      this.sensorActive = true
-      this.sensorStatus = '等待样本'
-      this.sensorColor = '#64D2FF'
-      this.sensorBackground = '#12303A'
-      this.sensorButtonText = '停止诊断'
-      return true
-    } catch (error) {
-      this.setSensorError('订阅异常')
-      return false
-    }
+    this.sensorActive = true
+    this.sensorStatus = '等待样本'
+    this.sensorColor = '#64D2FF'
+    this.sensorBackground = '#12303A'
+    this.sensorButtonText = '停止诊断'
+    return true
   },
 
   setSensorError(text) {
@@ -161,13 +155,7 @@ export default {
   },
 
   stopSensor() {
-    if (this.sensorActive) {
-      try {
-        if (sensor && sensor.unsubscribeAccelerometer) sensor.unsubscribeAccelerometer()
-      } catch (error) {
-        console.log('accelerometer unsubscribe unavailable')
-      }
-    }
+    motion.unsubscribe(this.motionListener)
     this.sensorActive = false
     this.sensorStatus = '已停止'
     this.sensorColor = '#8E8E93'
