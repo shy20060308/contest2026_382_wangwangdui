@@ -8,7 +8,9 @@ const fs = require('fs')
 const path = require('path')
 const safeArea = require('../src/common/safe_area')
 const layoutAdapter = require('../src/presentation/layout/adapter')
+const pagedStack = require('../src/presentation/layout/paged_stack')
 const workoutLayout = require('../src/presentation/layout/specs/workout')
+const settingsLayout = require('../src/presentation/layout/specs/settings')
 
 const root = path.resolve(__dirname, '..')
 const errors = []
@@ -85,13 +87,6 @@ const CIRCLE_PAGES = [
     ]
   },
   {
-    page: 'src/pages/settings/settings/settings.ux',
-    root: '.settings-page',
-    flows: [
-      { name: '设置列表', children: ['.top-row', '.settings-list', '.pager-row'] }
-    ]
-  },
-  {
     page: 'src/pages/settings/diagnostics/diagnostics.ux',
     root: '.diagnostics-page',
     flows: [
@@ -147,16 +142,19 @@ CIRCLE_PAGES.forEach(function (target) {
   })
 })
 
-const DESIGN_ENGINE_LAYOUTS = [
-  { name: 'Workout L2', spec: workoutLayout }
-]
+const circleProfile = { formFactor: 'circle', logicalHeight: 192 }
+const workoutPlan = layoutAdapter.resolve(circleProfile, workoutLayout)
+if (workoutPlan.needsOverride || workoutPlan.violations.length) {
+  errors.push('Workout L2 Layout Plan 未通过圆屏安全几何：' + JSON.stringify(workoutPlan.violations))
+}
 
-DESIGN_ENGINE_LAYOUTS.forEach(function (target) {
-  const plan = layoutAdapter.resolve({ formFactor: 'circle', logicalHeight: 192 }, target.spec)
-  if (plan.needsOverride || plan.violations.length) {
-    errors.push(target.name + ' Layout Plan 未通过圆屏安全几何：' + JSON.stringify(plan.violations))
-  }
-})
+const settingsPlan = pagedStack.resolve(circleProfile, settingsLayout)
+if (settingsPlan.needsOverride || settingsPlan.violations.length) {
+  errors.push('Settings L1 Paged Layout Plan 未通过圆屏安全几何：' + JSON.stringify(settingsPlan.violations))
+}
+if (settingsPlan.pageSize !== 2) {
+  errors.push('Settings L1 圆屏应由 Design Engine 自动收敛为 2 项/页，实际=' + settingsPlan.pageSize)
+}
 
 if (safeArea.capsuleCapInset(192, 168) !== 50) {
   errors.push('胶囊端帽推导偏离真机校准值 50px，请同步复核 test/safe_area.test.js')
@@ -174,5 +172,5 @@ if (errors.length > 0) {
   const legacyFlowCount = CIRCLE_PAGES.reduce(function (total, item) {
     return total + item.flows.length
   }, 0)
-  console.log('Checked circle safe-area geometry for ' + legacyFlowCount + ' legacy flows + ' + DESIGN_ENGINE_LAYOUTS.length + ' Design Engine plans')
+  console.log('Checked circle safe-area geometry for ' + legacyFlowCount + ' legacy flows + 2 Design Engine plans')
 }
