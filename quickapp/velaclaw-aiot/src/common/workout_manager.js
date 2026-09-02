@@ -18,6 +18,22 @@ function gpsStatusFromLegacyText(text) {
   return 'locating'
 }
 
+function afterBoth(first, second, done) {
+  var pending = 2
+  var firstResult = null
+  var secondResult = null
+  first(function (value) {
+    firstResult = value
+    pending--
+    if (pending === 0) done(firstResult, secondResult)
+  })
+  second(function (value) {
+    secondResult = value
+    pending--
+    if (pending === 0) done(firstResult, secondResult)
+  })
+}
+
 export default {
   getModes: getModes,
 
@@ -84,12 +100,30 @@ export default {
       if (callback) callback(null)
       return
     }
+
+    // Commit one coherent domain transaction before the page navigates away:
+    // 1) mutate today's in-memory Activity state exactly once;
+    // 2) persist that exact snapshot into 7-day history (no stale re-hydration);
+    // 3) persist the workout record;
+    // 4) clear resumable session state.
+    var activitySnapshot = activityStore.add(record.steps, record.calories)
     workoutRepository.clearActive()
-    activityStore.add(record.steps, record.calories)
-    historyRepository.saveToday()
-    workoutRepository.saveRecord(record, function (saved, result) {
-      if (callback) callback(mapRecord(saved), result)
-    })
+
+    afterBoth(
+      function (done) {
+        historyRepository.saveToday(activitySnapshot, function (history) {
+          done(history)
+        })
+      },
+      function (done) {
+        workoutRepository.saveRecord(record, function (saved) {
+          done(saved)
+        })
+      },
+      function (history, saved) {
+        if (callback) callback(mapRecord(saved || record), { activity: activitySnapshot, history: history })
+      }
+    )
   },
 
   cancel: function () {
