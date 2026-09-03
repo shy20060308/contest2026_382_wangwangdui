@@ -14,7 +14,7 @@ function normalize(payload) {
 
 function demo(type) {
   if (type === 'call') return normalize({ type: 'call', contact: '演示来电', phone: '未知号码' })
-  if (type === 'message') return normalize({ type: 'app', appName: '消息', content: '这是一条演示通知。' })
+  if (type === 'sms') return normalize({ type: 'app', appName: '短信', content: '这是一条短信演示通知。' })
   return normalize({ type: 'app', appName: 'VelaClaw', content: '设备通知通路已连接。' })
 }
 
