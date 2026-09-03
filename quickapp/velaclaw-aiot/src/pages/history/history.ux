@@ -32,26 +32,31 @@
 import pageRuntime from '../../v2/app/page_runtime'
 import navigation from '../../v2/app/navigation'
 import { createHistoryController } from '../../v2/features/history/controller'
+import historyDesign from '../../v2/design/specs/history'
+import historyView from '../../v2/design/views/history'
 
 export default {
   private: {
-    ready: false, isCircle: false, isPill: false, isRect: false, contentWidth: 148,
+    ready: false, isCircle: false, isPill: false, isRect: false, contentWidth: 148, designPlan: null, historyModel: null,
     sceneWidth: 192, sceneHeight: 192, sceneSafeLeft: 22, sceneSafeTop: 35, sceneSafeHeight: 120,
     viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%',
     todayStepsText: '0', avgStepsText: '0', bestStepsText: '0', bestDayText: '--', avgHeartText: '--', goalText: '0%', bars: [], records: []
   },
   onInit() {
     var self = this
-    this.controller = createHistoryController(function (model) { self.applyModel(model) })
-    pageRuntime.bind(this, { contentWidth: function (profile) { return profile.formFactor === 'circle' ? 148 : (profile.formFactor === 'rect' ? 164 : 168) } }, function (profile, scene, safe) {
-      self.contentWidth = safe.width; self.isCircle = profile.formFactor === 'circle'; self.isPill = profile.formFactor === 'pill'; self.isRect = profile.formFactor === 'rect'; self.ready = true
-      self.controller.load(profile.formFactor === 'pill' ? 88 : (profile.formFactor === 'rect' ? 64 : 52))
+    this.controller = createHistoryController(function (model) { self.acceptModel(model) })
+    pageRuntime.bind(this, { contentWidth: function (profile) { return historyDesign.contentWidth(profile) } }, function (profile, scene, safe) {
+      var plan = historyDesign.resolve(profile, scene, safe)
+      self.designPlan = plan; self.contentWidth = safe.width
+      self.isCircle = plan.shape === 'circle'; self.isPill = plan.shape === 'pill'; self.isRect = plan.shape === 'rect'; self.ready = true
+      self.controller.load()
     })
   },
-  onShow() { if (this.ready && this.controller) this.controller.load(this.isPill ? 88 : (this.isRect ? 64 : 52)) },
+  onShow() { if (this.ready && this.controller) this.controller.load() },
   onHide() { this.bars = []; this.records = [] },
-  onDestroy() { this.bars = []; this.records = [] },
+  onDestroy() { this.historyModel = null; this.bars = []; this.records = [] },
   onBackPress() { navigation.back(); return true },
+  acceptModel(model) { this.historyModel = model; if (this.designPlan) this.applyModel(historyView.project(model, this.designPlan)) },
   applyModel(model) { this.todayStepsText = model.todayStepsText; this.avgStepsText = model.avgStepsText; this.bestStepsText = model.bestStepsText; this.bestDayText = model.bestDayText; this.avgHeartText = model.avgHeartText; this.goalText = model.goalText; this.bars = model.bars; this.records = model.records }
 }
 </script>
