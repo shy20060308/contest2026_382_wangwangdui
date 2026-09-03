@@ -6,37 +6,35 @@ import settingsStore from '../../../domain/settings/store'
 import transport from './mock_transport'
 var protocol = require('./protocol')
 
-function formatNumber(value) { return Number(value || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') }
-
 export function createSyncController(onChange) {
-  var connected = false
-  var syncing = false
-  var progress = 0
-  var message = '连接上位机后同步手环数据'
-  var packetText = '等待打包'
-  var lastSyncText = '未同步'
-  var preview = { todayStepsText: '--', historyCount: '0', workoutCount: '0' }
+  var capability = transport.capability()
+  var state = {
+    connected: false,
+    syncing: false,
+    progress: 0,
+    phase: 'idle',
+    lastSyncAt: 0,
+    transportMode: capability.mode,
+    realBleAvailable: !!capability.realBleAvailable,
+    packetCount: 0,
+    payloadChars: 0,
+    ackSent: 0,
+    ackTotal: 0,
+    todaySteps: null,
+    historyCount: 0,
+    workoutCount: 0
+  }
+
+  function snapshot() {
+    var value = {}
+    for (var key in state) value[key] = state[key]
+    return value
+  }
 
   function emit() {
-    var capability = transport.capability()
-    var view = {
-      connected: connected,
-      syncing: syncing,
-      statusText: connected ? '已连接' : '未连接',
-      statusColor: connected ? '#30D158' : '#8E8E93',
-      connectButtonText: connected ? '断开' : '连接',
-      transportText: capability.name,
-      lastSyncText: lastSyncText,
-      syncPercent: progress,
-      syncWidth: progress + '%',
-      syncMessage: message,
-      packetText: packetText,
-      todayStepsText: preview.todayStepsText,
-      historyCount: preview.historyCount,
-      workoutCount: preview.workoutCount
-    }
-    if (typeof onChange === 'function') onChange(view)
-    return view
+    var value = snapshot()
+    if (typeof onChange === 'function') onChange(value)
+    return value
   }
 
   function collect(callback) {
@@ -48,7 +46,9 @@ export function createSyncController(onChange) {
     function done() {
       pending--
       if (pending > 0) return
-      preview = { todayStepsText: formatNumber(activity.steps) + ' 步', historyCount: history.length.toString(), workoutCount: workouts.length.toString() }
+      state.todaySteps = Number(activity.steps) || 0
+      state.historyCount = history.length
+      state.workoutCount = workouts.length
       var payload = {
         version: protocol.VERSION,
         deviceId: 'vela-band-demo',
@@ -65,47 +65,103 @@ export function createSyncController(onChange) {
   }
 
   function loadSettings() {
-    settingsStore.load(function (settings) { lastSyncText = settings.lastSyncText; connected = false; syncing = false; progress = 0; emit(); collect() })
+    settingsStore.load(function (settings) {
+      state.lastSyncAt = Number(settings.lastSyncAt) || 0
+      state.connected = false
+      state.syncing = false
+      state.progress = 0
+      state.phase = 'idle'
+      state.packetCount = 0
+      state.payloadChars = 0
+      state.ackSent = 0
+      state.ackTotal = 0
+      emit()
+      collect()
+    })
   }
 
   return {
     load: loadSettings,
     refreshPreview: function () { collect() },
     toggleConnection: function () {
-      if (syncing) { message = '同步中不能断开'; return emit() }
-      if (connected) {
-        transport.disconnect(); connected = false; progress = 0; message = '已断开上位机'; packetText = '等待连接'; settingsStore.update('bluetoothConnected', false); return emit()
+      if (state.syncing) { state.phase = 'disconnect-blocked'; return emit() }
+      if (state.connected) {
+        transport.disconnect()
+        state.connected = false
+        state.progress = 0
+        state.phase = 'disconnected'
+        state.packetCount = 0
+        state.payloadChars = 0
+        settingsStore.update('bluetoothConnected', false)
+        return emit()
       }
-      message = '正在建立同步链路'; emit()
+      state.phase = 'connecting'
+      emit()
       transport.connect({
-        success: function () { connected = true; message = '模拟器链路已连接'; packetText = '可开始同步'; settingsStore.update('bluetoothConnected', true); emit() },
-        fail: function () { connected = false; message = '连接失败，请重试'; emit() }
+        success: function () {
+          state.connected = true
+          state.phase = 'connected'
+          settingsStore.update('bluetoothConnected', true)
+          emit()
+        },
+        fail: function () {
+          state.connected = false
+          state.phase = 'connect-failed'
+          emit()
+        }
       })
       return emit()
     },
     sync: function () {
-      if (!connected) { message = '请先连接上位机'; return emit() }
-      if (syncing) return emit()
-      syncing = true; progress = 0; message = '正在收集健康与运动数据'; packetText = '正在打包'; emit()
+      if (!state.connected) { state.phase = 'connect-required'; return emit() }
+      if (state.syncing) return emit()
+      state.syncing = true
+      state.progress = 0
+      state.packetCount = 0
+      state.payloadChars = 0
+      state.ackSent = 0
+      state.ackTotal = 0
+      state.phase = 'collecting'
+      emit()
       collect(function (payload) {
         var transfer = protocol.encode(payload, 96)
-        packetText = transfer.packets.length + ' 包 · ' + transfer.bytesText + ' 字符'
-        message = '等待分包 ACK'
+        state.packetCount = transfer.packets.length
+        state.payloadChars = Number(transfer.bytesText) || 0
+        state.ackTotal = transfer.packets.length
+        state.phase = 'waiting-ack'
         emit()
         transport.send(transfer.packets, {
-          progress: function (state) { progress = state.percent; message = '已确认 ' + state.sent + '/' + state.total + ' 包'; emit() },
+          progress: function (progressState) {
+            state.progress = progressState.percent
+            state.ackSent = progressState.sent
+            state.ackTotal = progressState.total
+            state.phase = 'sending'
+            emit()
+          },
           success: function () {
-            syncing = false; progress = 100; message = '同步完成，对端已确认'; lastSyncText = settingsStore.syncTimeText()
-            settingsStore.updateMany({ lastSyncText: lastSyncText, bluetoothConnected: true })
+            state.syncing = false
+            state.progress = 100
+            state.phase = 'completed'
+            state.lastSyncAt = Date.now()
+            settingsStore.updateMany({ lastSyncAt: state.lastSyncAt, bluetoothConnected: true })
             workoutRepository.markAllSynced(function () { collect() })
             emit()
           },
-          fail: function () { syncing = false; message = '同步失败，可重新尝试'; emit() }
+          fail: function () {
+            state.syncing = false
+            state.phase = 'failed'
+            emit()
+          }
         })
       })
       return emit()
     },
-    stop: function () { transport.disconnect(); connected = false; syncing = false; settingsStore.update('bluetoothConnected', false) },
+    stop: function () {
+      transport.disconnect()
+      state.connected = false
+      state.syncing = false
+      settingsStore.update('bluetoothConnected', false)
+    },
     refresh: emit
   }
 }
