@@ -60,6 +60,14 @@ fs.readdirSync(specsDir).filter(name => name.endsWith('.js')).forEach(name => {
       const expected = level === 1 ? 'auto' : level === 2 ? 'assisted' : 'free'
       assert.strictEqual(plan.strategy, expected, name + ' strategy must match its Design Freedom level')
     }
+    if (name === 'today.js') {
+      assert.strictEqual(plan.interaction, 'explicit-buttons', 'Today must use explicit month controls on ' + profile.name)
+      assert.strictEqual(plan.overflow, 'fixed', 'Today must remain a fixed non-scroll surface on ' + profile.name)
+      assert.ok(!plan.needsOverride, 'Today fixed composition must fit the safe band on ' + profile.name)
+      Object.keys(plan.requiredHeights || {}).forEach(surface => {
+        assert.ok(plan.requiredHeights[surface] <= safe.height, 'Today ' + surface + ' must fit safe height on ' + profile.name)
+      })
+    }
     walkPlan(plan, host, name + ':' + profile.name, [])
   })
 })
@@ -94,4 +102,7 @@ assert.ok(clock.includes('<div class="circle-stage" if="{{ isCircle }}">'), 'Cir
 assert.ok(clock.includes('<sportrect') && clock.includes('<simplerect') && clock.includes('<dashboardrect'), 'Rect Clock must render dedicated Rect watchfaces')
 assert.ok(!clock.includes('rectangular-stage" if="{{ !isCircle }}'), 'Rect must never fall back to a shared Pill/Rect composition')
 
-console.log('V2 visual contracts verified: Host Scene bounds, Design Freedom and three independent Clock compositions')
+const today = fs.readFileSync(path.join(root, 'src/pages/today/today.ux'), 'utf8')
+assert.ok(today.includes('.circle-calendar-grid { height: 78px; }') && today.includes('.circle-cell { width: 19px; height: 13px;'), 'Circle calendar grid must stay within its 130px safe band')
+
+console.log('V2 visual contracts verified: Host Scene bounds, fixed-surface fit, Design Freedom and independent compositions')
