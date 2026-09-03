@@ -1,574 +1,83 @@
 <template>
-  <scroll class="health-page {{ viewportClass }}" scroll-y="true" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px;" @touchstart="onTouchStart" @touchend="onTouchEnd">
-    <div class="health-header">
-      <div class="health-title-wrap">
-        <text class="health-title">健康状态</text>
-        <text class="health-subtitle">心率 · 血氧 · 压力</text>
-      </div>
-      <text class="source-badge" style="color: {{ sourceColor }}; background-color: {{ sourceBackground }};">{{ sourceText }}</text>
-    </div>
+  <stack class="health-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
+    <stack class="health-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
+      <scroll class="circle-health" if="{{ ready && isCircle }}" scroll-y="true" style="left: {{ sceneSafeLeft }}px; top: {{ sceneSafeTop }}px; width: {{ contentWidth }}px; height: {{ sceneSafeHeight }}px;">
+        <text class="circle-title">健康</text>
+        <div class="circle-hero"><div class="hero-head"><text class="hero-label">心率</text><text class="hero-source">{{ heartSource }}</text></div><div class="hero-value-row"><text class="hero-value">{{ heartRate }}</text><text class="hero-unit">bpm</text><text class="hero-status" style="color: {{ heartStatusColor }};">{{ heartStatus }}</text></div><div class="trend-row circle-trend"><div class="trend-bar" for="{{ heartBars }}" tid="index" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div><text class="hero-footer">今日 {{ dailyMin }}–{{ dailyMax }} bpm</text></div>
+        <div class="circle-mini-row"><div class="circle-mini"><text class="mini-label">血氧</text><text class="mini-value">{{ spo2 }}%</text><text class="mini-status" style="color: {{ spo2StatusColor }};">{{ spo2Status }}</text></div><div class="circle-mini"><text class="mini-label">压力</text><text class="mini-value">{{ stress }}</text><text class="mini-status" style="color: {{ stressStatusColor }};">{{ stressStatus }}</text></div></div>
+        <div class="circle-detail"><text class="detail-title">血氧趋势 · {{ spo2Source }}</text><div class="trend-row compact-trend"><div class="trend-bar" for="{{ spo2Bars }}" tid="index" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div></div>
+        <div class="circle-detail"><text class="detail-title">压力趋势 · {{ stressSource }}</text><div class="trend-row compact-trend"><div class="trend-bar" for="{{ stressBars }}" tid="index" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div><text class="detail-foot">{{ stressMin }} / {{ stressAvg }} / {{ stressMax }}</text></div>
+      </scroll>
 
-    <text class="health-summary">{{ summaryText }}</text>
+      <scroll class="pill-health" if="{{ ready && isPill }}" scroll-y="true" style="left: {{ sceneSafeLeft }}px; top: {{ sceneSafeTop }}px; width: {{ contentWidth }}px; height: {{ sceneSafeHeight }}px;">
+        <div class="pill-head"><div><text class="pill-title">健康状态</text><text class="pill-subtitle">心率 · 血氧 · 压力</text></div><text class="pill-source">{{ sourceText }}</text></div>
+        <div class="pill-card heart-card"><div class="card-head"><text class="card-title">心率</text><text class="card-source">{{ heartSource }}</text></div><div class="card-value-row"><text class="card-value heart-color">{{ heartRate }}</text><text class="card-unit">bpm</text><text class="card-status" style="color: {{ heartStatusColor }};">{{ heartStatus }}</text></div><div class="trend-row pill-trend"><div class="trend-bar wide" for="{{ heartBars }}" tid="index" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div><text class="card-foot">今日范围 {{ dailyMin }}–{{ dailyMax }} bpm</text></div>
+        <div class="pill-card spo2-card"><div class="card-head"><text class="card-title">血氧</text><text class="card-source">{{ spo2Source }}</text></div><div class="card-value-row"><text class="card-value spo2-color">{{ spo2 }}</text><text class="card-unit">%</text><text class="card-status" style="color: {{ spo2StatusColor }};">{{ spo2Status }}</text></div><div class="trend-row pill-trend"><div class="trend-bar wide" for="{{ spo2Bars }}" tid="index" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div><text class="card-foot">参考区间 95–100%</text></div>
+        <div class="pill-card stress-card"><div class="card-head"><text class="card-title">压力</text><text class="card-source">{{ stressSource }}</text></div><div class="card-value-row"><text class="card-value stress-color">{{ stress }}</text><text class="card-unit">/100</text><text class="card-status" style="color: {{ stressStatusColor }};">{{ stressStatus }}</text></div><div class="trend-row pill-trend"><div class="trend-bar wide" for="{{ stressBars }}" tid="index" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div><text class="card-foot">低 / 均 / 高  {{ stressMin }} / {{ stressAvg }} / {{ stressMax }}</text></div>
+        <text class="updated">更新于 {{ updatedAtText }}</text>
+      </scroll>
 
-    <div class="health-card heart-card">
-      <div class="card-header">
-        <div class="card-heading">
-          <div class="metric-dot heart-dot"></div>
-          <text class="card-title">心率</text>
-        </div>
-        <text class="card-source" style="color: {{ heartSourceColor }};">{{ heartSourceText }}</text>
+      <div class="rect-health" if="{{ ready && isRect }}" style="left: {{ sceneSafeLeft }}px; top: {{ sceneSafeTop }}px; width: {{ contentWidth }}px; height: {{ sceneSafeHeight }}px;">
+        <div class="rect-head"><div><text class="rect-title">健康</text><text class="rect-sub">{{ sourceText }}</text></div><text class="rect-updated">{{ updatedAtText }}</text></div>
+        <div class="rect-heart"><div class="rect-heart-left"><text class="rect-label">心率</text><div class="rect-heart-value-row"><text class="rect-heart-value">{{ heartRate }}</text><text class="rect-unit">bpm</text></div><text class="rect-status" style="color: {{ heartStatusColor }};">{{ heartStatus }} · {{ dailyMin }}–{{ dailyMax }}</text></div><div class="trend-row rect-heart-trend"><div class="trend-bar" for="{{ heartBars }}" tid="index" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div></div>
+        <div class="rect-mini-row"><div class="rect-mini spo2-card"><text class="rect-label">血氧 · {{ spo2Source }}</text><text class="rect-mini-value spo2-color">{{ spo2 }}%</text><text class="rect-status" style="color: {{ spo2StatusColor }};">{{ spo2Status }}</text><div class="trend-row rect-mini-trend"><div class="trend-bar" for="{{ spo2Bars }}" tid="index" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div></div><div class="rect-mini stress-card"><text class="rect-label">压力 · {{ stressSource }}</text><text class="rect-mini-value stress-color">{{ stress }}</text><text class="rect-status" style="color: {{ stressStatusColor }};">{{ stressStatus }}</text><div class="trend-row rect-mini-trend"><div class="trend-bar" for="{{ stressBars }}" tid="index" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div></div></div>
       </div>
-      <div class="metric-row">
-        <text class="metric-value heart-value">{{ currentHR }}</text>
-        <div class="metric-meta">
-          <text class="metric-unit">bpm</text>
-          <text class="metric-status" style="color: {{ heartStatusColor }};">{{ heartStatus }}</text>
-        </div>
-      </div>
-      <div class="metric-trend heart-trend">
-        <div class="metric-trend-bar" for="{{ heartTrend }}" tid="index" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div>
-      </div>
-      <div class="card-footer">
-        <text class="footer-label">今日范围</text>
-        <text class="footer-value">{{ dailyMin }}–{{ dailyMax }} bpm</text>
-      </div>
-    </div>
-
-    <div class="health-card spo2-card">
-      <div class="card-header">
-        <div class="card-heading">
-          <div class="metric-dot spo2-dot"></div>
-          <text class="card-title">血氧</text>
-        </div>
-        <text class="card-source" style="color: {{ spo2SourceColor }};">{{ spo2SourceText }}</text>
-      </div>
-      <div class="metric-row compact-metric-row">
-        <text class="metric-value spo2-value">{{ spo2 }}</text>
-        <div class="metric-meta">
-          <text class="metric-unit">%</text>
-          <text class="metric-status" style="color: {{ spo2StatusColor }};">{{ spo2Status }}</text>
-        </div>
-      </div>
-      <div class="metric-trend compact-trend">
-        <div class="metric-trend-bar" for="{{ spo2Trend }}" tid="index" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div>
-      </div>
-      <div class="card-footer">
-        <text class="footer-label">参考区间</text>
-        <text class="footer-value">95–100%</text>
-      </div>
-    </div>
-
-    <div class="health-card stress-card">
-      <div class="card-header">
-        <div class="card-heading">
-          <div class="metric-dot stress-dot"></div>
-          <text class="card-title">压力</text>
-        </div>
-        <text class="card-source" style="color: {{ stressSourceColor }};">{{ stressSourceText }}</text>
-      </div>
-      <div class="metric-row compact-metric-row">
-        <text class="metric-value stress-value">{{ stress }}</text>
-        <div class="metric-meta">
-          <text class="metric-unit">/ 100</text>
-          <text class="metric-status" style="color: {{ stressStatusColor }};">{{ stressStatus }}</text>
-        </div>
-      </div>
-      <div class="metric-trend compact-trend">
-        <div class="metric-trend-bar" for="{{ stressTrend }}" tid="index" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div>
-      </div>
-      <div class="card-footer">
-        <text class="footer-label">低 / 均 / 高</text>
-        <text class="footer-value">{{ stressMin }} / {{ stressAvg }} / {{ stressMax }}</text>
-      </div>
-    </div>
-
-    <text class="update-hint">更新于 {{ updatedAtText }} · 右滑返回</text>
-  </scroll>
+    </stack>
+  </stack>
 </template>
 
 <script>
-import router from '@system.router'
-import pageMotion from '../../common/page_motion'
-import swipeBack from '../../common/swipe_back'
-import watchData from '../../common/watch_data'
-import pageViewport from '../../common/page_viewport'
-import healthDomain from '../../common/health_domain'
-import healthMetrics from '../../common/health_metrics'
-
-function calcHourlyRange(hourlyData) {
-  if (!hourlyData || hourlyData.length === 0) return { min: 0, max: 0 }
-  var min = hourlyData[0].min
-  var max = hourlyData[0].max
-  for (var i = 1; i < hourlyData.length; i++) {
-    if (hourlyData[i].min < min) min = hourlyData[i].min
-    if (hourlyData[i].max > max) max = hourlyData[i].max
-  }
-  return { min: min, max: max }
-}
-
-function makeMetricBars(values, minSpan, inactiveColor, activeColor, maxHeight) {
-  var heights = healthMetrics.barHeights(values, 7, maxHeight || 29, minSpan)
-  var result = []
-  for (var i = 0; i < heights.length; i++) {
-    result.push({
-      height: heights[i],
-      color: i === heights.length - 1 ? activeColor : inactiveColor
-    })
-  }
-  return result
-}
-
-function metricSourceText(live, errorCode) {
-  if (live) return '实时'
-  if (errorCode === 203) return '不支持'
-  if (errorCode) return '异常'
-  return '演示'
-}
+import pageRuntime from '../../v2/app/page_runtime'
+import navigation from '../../v2/app/navigation'
+import { createHealthController } from '../../v2/features/health/controller'
 
 export default {
   private: {
-    currentHR: 88,
-    spo2: 97,
-    stress: 28,
-    dailyMin: 48,
-    dailyMax: 95,
-    heartTrend: [],
-    spo2Trend: [],
-    stressTrend: [],
-    heartStatus: '正常',
-    heartStatusColor: '#30D158',
-    spo2Status: '良好',
-    spo2StatusColor: '#30D158',
-    stressStatus: '放松',
-    stressStatusColor: '#30D158',
-    stressAdvice: '保持当前节奏',
-    stressMin: 18,
-    stressAvg: 25,
-    stressMax: 31,
-    sourceText: '正在连接',
-    sourceColor: '#8E8E93',
-    sourceBackground: '#1C1C1E',
-    heartSourceText: '演示',
-    heartSourceColor: '#8E8E93',
-    spo2SourceText: '演示',
-    spo2SourceColor: '#8E8E93',
-    stressSourceText: '演示',
-    stressSourceColor: '#8E8E93',
-    summaryText: '正在读取健康数据',
-    updatedAtText: '--:--',
-    pageOpacity: 1,
-    pageOffset: 0,
-    viewportClass: '',
-    viewportPosition: 'relative',
-    viewportLeft: '0px',
-    viewportWidth: '100%',
-    viewportHeight: '100%',
-    viewportTop: '0px'
+    ready: false, isCircle: false, isPill: false, isRect: false, contentWidth: 148,
+    sceneWidth: 192, sceneHeight: 192, sceneSafeLeft: 22, sceneSafeTop: 35, sceneSafeHeight: 120,
+    viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%',
+    heartRate: 88, spo2: 97, stress: 28, dailyMin: 48, dailyMax: 95,
+    heartStatus: '正常', heartStatusColor: '#30D158', spo2Status: '良好', spo2StatusColor: '#30D158', stressStatus: '放松', stressStatusColor: '#30D158',
+    heartSource: '演示', spo2Source: '演示', stressSource: '演示', sourceText: '兼容演示数据', updatedAtText: '--:--',
+    stressMin: 18, stressAvg: 25, stressMax: 31, heartBars: [], spo2Bars: [], stressBars: []
   },
-
   onInit() {
     var self = this
-    this.heartTrendValues = [72, 78, 75, 84, 81, 88, 85, 88]
-    this.spo2TrendValues = [97, 98, 97, 96, 98, 99, 97, 98]
-    this.stressTrendValues = [18, 22, 28, 25, 31, 27, 24, 28]
-    this.refreshMetricTrends()
-    this.healthListener = function (data) {
-      self.applyHealthData(data)
-    }
-    pageViewport.bind(this)
-    this.loadDailyRange()
-  },
-
-  onShow() {
-    this.loadDailyRange()
-    healthDomain.start(this.healthListener)
-    pageMotion.enter(this)
-  },
-
-  onHide() {
-    pageMotion.clear(this)
-    healthDomain.stop(this.healthListener)
-  },
-
-  onDestroy() {
-    pageMotion.clear(this)
-    healthDomain.stop(this.healthListener)
-    this.heartTrend = []
-    this.spo2Trend = []
-    this.stressTrend = []
-    this.heartTrendValues = []
-    this.spo2TrendValues = []
-    this.stressTrendValues = []
-  },
-
-  loadDailyRange() {
-    var self = this
-    watchData.loadHourlyHeartRate(function (hourlyData) {
-      var range = calcHourlyRange(hourlyData)
-      self.dailyMin = range.min
-      self.dailyMax = range.max
-      if (hourlyData && hourlyData.length) {
-        self.heartTrendValues = []
-        for (var i = 0; i < hourlyData.length; i++) {
-          self.heartTrendValues.push(hourlyData[i].avg)
-        }
-        self.refreshMetricTrends()
-      }
+    this.controller = createHealthController(function (model) { self.applyModel(model) })
+    pageRuntime.bind(this, { contentWidth: function (profile) { return profile.formFactor === 'circle' ? 148 : (profile.formFactor === 'rect' ? 164 : 168) } }, function (profile, scene, safe) {
+      self.contentWidth = safe.width; self.isCircle = profile.formFactor === 'circle'; self.isPill = profile.formFactor === 'pill'; self.isRect = profile.formFactor === 'rect'; self.ready = true
+      self.controller.start(profile.formFactor === 'pill' ? 42 : (profile.formFactor === 'rect' ? 30 : 24))
     })
   },
-
-  applyHealthData(data) {
-    if (!data) return
-    this.currentHR = data.heartRate
-    this.spo2 = data.spo2
-    this.stress = data.stress
-    this.updatedAtText = data.updatedAtText
-    this.sourceText = data.sourceText
-    this.sourceColor = data.anyLive ? '#30D158' : '#FFD60A'
-    this.sourceBackground = data.anyLive ? '#102A19' : '#2A2310'
-    this.heartSourceText = metricSourceText(data.heartRateLive, data.heartRateErrorCode)
-    this.spo2SourceText = metricSourceText(data.spo2Live, data.spo2ErrorCode)
-    this.stressSourceText = metricSourceText(data.stressLive, data.stressErrorCode)
-    this.heartSourceColor = data.heartRateLive ? '#30D158' : '#8E8E93'
-    this.spo2SourceColor = data.spo2Live ? '#30D158' : '#8E8E93'
-    this.stressSourceColor = data.stressLive ? '#30D158' : '#8E8E93'
-    var firstError = data.heartRateErrorCode || data.spo2ErrorCode || data.stressErrorCode
-    this.summaryText = data.anyLive ? '设备健康流已连接' : (firstError ? healthMetrics.codeMessage(firstError) + '，使用演示数据' : '当前环境使用兼容演示数据')
-    this.updateStatuses()
-    if (data.heartRateChanged) this.appendHeartTrend(data.heartRate)
-    if (data.spo2Changed) this.appendSpo2Trend(data.spo2)
-    if (data.stressChanged) this.appendStressTrend(data.stress)
-  },
-
-  updateStatuses() {
-    var heartZone = healthMetrics.classifyHeartRate(this.currentHR)
-    if (heartZone === 'rest') {
-      this.heartStatus = '偏低'
-      this.heartStatusColor = '#5AC8FA'
-    } else if (heartZone === 'elevated') {
-      this.heartStatus = '偏高'
-      this.heartStatusColor = '#FF9F0A'
-    } else if (heartZone === 'peak') {
-      this.heartStatus = '峰值'
-      this.heartStatusColor = '#FF453A'
-    } else {
-      this.heartStatus = '正常'
-      this.heartStatusColor = '#30D158'
-    }
-
-    if (this.spo2 < 95) {
-      this.spo2Status = '请关注'
-      this.spo2StatusColor = '#FF9F0A'
-    } else {
-      this.spo2Status = '良好'
-      this.spo2StatusColor = '#30D158'
-    }
-
-    var stressZone = healthMetrics.classifyStress(this.stress)
-    if (stressZone === 'relaxed') {
-      this.stressStatus = '放松'
-      this.stressStatusColor = '#30D158'
-      this.stressAdvice = '保持当前节奏'
-    } else if (stressZone === 'normal') {
-      this.stressStatus = '正常'
-      this.stressStatusColor = '#64D2FF'
-      this.stressAdvice = '适时活动一下'
-    } else if (stressZone === 'elevated') {
-      this.stressStatus = '偏高'
-      this.stressStatusColor = '#FFD60A'
-      this.stressAdvice = '建议短暂休息'
-    } else {
-      this.stressStatus = '较高'
-      this.stressStatusColor = '#FF453A'
-      this.stressAdvice = '尝试呼吸放松'
-    }
-  },
-
-  appendHeartTrend(value) {
-    this.heartTrendValues = healthMetrics.pushWindow(this.heartTrendValues, value, 10)
-    this.refreshMetricTrends()
-    if (!this.dailyMin || value < this.dailyMin) this.dailyMin = value
-    if (value > this.dailyMax) this.dailyMax = value
-  },
-
-  appendSpo2Trend(value) {
-    this.spo2TrendValues = healthMetrics.pushWindow(this.spo2TrendValues, value, 10)
-    this.refreshMetricTrends()
-  },
-
-  appendStressTrend(value) {
-    this.stressTrendValues = healthMetrics.pushWindow(this.stressTrendValues, value, 10)
-    this.refreshMetricTrends()
-  },
-
-  refreshMetricTrends() {
-    this.heartTrend = makeMetricBars(this.heartTrendValues || [], 8, '#7A2436', '#FF375F', 29)
-    // 紧凑趋势容器高度是 24px，柱高也必须以 24px 为上限；否则最高点会被容器裁切。
-    this.spo2Trend = makeMetricBars(this.spo2TrendValues || [], 4, '#245566', '#5AC8FA', 24)
-    this.stressTrend = makeMetricBars(this.stressTrendValues || [], 10, '#542966', '#BF5AF2', 24)
-    var stressSummary = healthMetrics.stats(this.stressTrendValues || [])
-    this.stressMin = stressSummary.min
-    this.stressAvg = stressSummary.avg
-    this.stressMax = stressSummary.max
-  },
-
-  onTouchStart(e) {
-    swipeBack.start(this, e)
-  },
-
-  onTouchEnd(e) {
-    swipeBack.end(this, e, router)
+  onShow() { if (this.controller) this.controller.refresh() },
+  onHide() { if (this.controller) this.controller.stop() },
+  onDestroy() { if (this.controller) this.controller.stop(); this.heartBars = []; this.spo2Bars = []; this.stressBars = [] },
+  onBackPress() { navigation.back(); return true },
+  applyModel(model) {
+    this.heartRate = model.heartRate; this.spo2 = model.spo2; this.stress = model.stress; this.dailyMin = model.dailyMin; this.dailyMax = model.dailyMax
+    this.heartStatus = model.heartStatus; this.heartStatusColor = model.heartStatusColor; this.spo2Status = model.spo2Status; this.spo2StatusColor = model.spo2StatusColor; this.stressStatus = model.stressStatus; this.stressStatusColor = model.stressStatusColor
+    this.heartSource = model.heartSource; this.spo2Source = model.spo2Source; this.stressSource = model.stressSource; this.sourceText = model.sourceText; this.updatedAtText = model.updatedAtText
+    this.stressMin = model.stressMin; this.stressAvg = model.stressAvg; this.stressMax = model.stressMax; this.heartBars = model.heartBars; this.spo2Bars = model.spo2Bars; this.stressBars = model.stressBars
   }
 }
 </script>
 
 <style>
-.health-page {
-  flex-direction: column;
-  align-items: center;
-  background-color: #050609;
-  width: 100%;
-  height: 100%;
-  padding: 14px;
-}
-
-.health-header {
-  width: 164px;
-  height: 42px;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 8px;
-}
-
-.health-title-wrap {
-  flex-direction: column;
-}
-
-.health-title {
-  font-size: 20px;
-  font-weight: bold;
-  color: #FFFFFF;
-}
-
-.health-subtitle {
-  font-size: 8px;
-  color: #636366;
-  margin-top: 2px;
-}
-
-.source-badge {
-  width: 58px;
-  height: 20px;
-  border-radius: 10px;
-  font-size: 8px;
-  text-align: center;
-}
-
-.health-summary {
-  width: 164px;
-  height: 22px;
-  font-size: 9px;
-  color: #8E8E93;
-  text-align: left;
-}
-
-.health-card {
-  width: 164px;
-  flex-direction: column;
-  background-color: #111318;
-  border-radius: 18px;
-  padding: 12px;
-  margin-bottom: 9px;
-}
-
-.heart-card {
-  height: 145px;
-}
-
-.spo2-card,
-.stress-card {
-  height: 139px;
-}
-
-.card-header,
-.card-heading,
-.metric-row,
-.card-footer {
-  flex-direction: row;
-  align-items: center;
-}
-
-.card-header,
-.card-footer {
-  width: 140px;
-  justify-content: space-between;
-}
-
-.metric-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 4px;
-  margin-right: 7px;
-}
-
-.heart-dot {
-  background-color: #FF375F;
-}
-
-.spo2-dot {
-  background-color: #5AC8FA;
-}
-
-.stress-dot {
-  background-color: #BF5AF2;
-}
-
-.card-title {
-  font-size: 12px;
-  font-weight: bold;
-  color: #FFFFFF;
-}
-
-.card-source {
-  width: 32px;
-  font-size: 8px;
-  text-align: right;
-}
-
-.metric-row {
-  width: 140px;
-  align-items: flex-end;
-  margin-top: 6px;
-}
-
-.compact-metric-row {
-  margin-top: 5px;
-}
-
-.metric-value {
-  width: 78px;
-  height: 43px;
-  font-size: 38px;
-  font-weight: bold;
-}
-
-.heart-value {
-  color: #FF375F;
-}
-
-.spo2-value {
-  color: #5AC8FA;
-}
-
-.stress-value {
-  color: #BF5AF2;
-}
-
-.metric-meta {
-  height: 37px;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.metric-unit {
-  font-size: 8px;
-  color: #636366;
-}
-
-.metric-status {
-  font-size: 9px;
-  font-weight: bold;
-  margin-top: 2px;
-}
-
-.metric-trend {
-  width: 140px;
-  flex-direction: row;
-  align-items: flex-end;
-  justify-content: space-between;
-  margin-top: 2px;
-}
-
-.heart-trend {
-  height: 30px;
-}
-
-.compact-trend {
-  height: 24px;
-}
-
-.metric-trend-bar {
-  width: 8px;
-  border-radius: 4px;
-}
-
-.card-footer {
-  height: 18px;
-  margin-top: 6px;
-}
-
-.footer-label {
-  font-size: 8px;
-  color: #636366;
-}
-
-.footer-value {
-  width: 86px;
-  font-size: 8px;
-  color: #AEAEB2;
-  text-align: right;
-}
-
-.update-hint {
-  width: 164px;
-  height: 24px;
-  font-size: 8px;
-  color: #48484A;
-  text-align: center;
-  margin-bottom: 18px;
-}
-
-@media (shape: circle) {
-  .health-page {
-    padding-top: 24px;
-    padding-left: 22px;
-    padding-right: 22px;
-    padding-bottom: 30px;
-  }
-
-  .health-header,
-  .health-summary,
-  .health-card,
-  .update-hint {
-    width: 148px;
-  }
-
-  .health-header {
-    margin-top: 2px;
-  }
-
-  .health-title {
-    font-size: 16px;
-  }
-
-  .health-card {
-    border-radius: 16px;
-  }
-
-  .card-header,
-  .metric-row,
-  .card-footer,
-  .metric-trend {
-    width: 124px;
-  }
-
-  .metric-value {
-    width: 72px;
-  }
-
-  .metric-trend-bar {
-    width: 7px;
-  }
-}
+.health-root, .health-scene { background-color: #000000; } .health-scene { position: absolute; left: 0px; top: 0px; }
+.trend-row { flex-direction: row; align-items: flex-end; justify-content: space-between; } .trend-bar { width: 5px; border-radius: 3px; } .trend-bar.wide { width: 7px; }
+.circle-health { position: absolute; flex-direction: column; } .circle-title { width: 148px; height: 18px; font-size: 12px; color: #FFFFFF; font-weight: bold; text-align: center; }
+.circle-hero { width: 148px; height: 74px; border-radius: 20px; background-color: #211015; padding: 8px 10px; flex-direction: column; }
+.hero-head, .card-head { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; } .hero-label { font-size: 8px; color: #FF375F; font-weight: bold; } .hero-source { font-size: 6px; color: #8E8E93; }
+.hero-value-row { height: 27px; flex-direction: row; align-items: flex-end; } .hero-value { font-size: 23px; color: #FFFFFF; font-weight: bold; } .hero-unit { font-size: 6px; color: #8E8E93; margin-left: 3px; margin-bottom: 4px; } .hero-status { font-size: 6px; margin-left: 7px; margin-bottom: 4px; }
+.circle-trend { width: 128px; height: 24px; } .hero-footer { font-size: 5px; color: #8E8E93; }
+.circle-mini-row { width: 148px; height: 44px; margin-top: 6px; flex-direction: row; justify-content: space-between; } .circle-mini { width: 71px; height: 44px; border-radius: 15px; background-color: #15171B; padding: 6px; flex-direction: column; }
+.mini-label { font-size: 6px; color: #8E8E93; } .mini-value { font-size: 15px; color: #FFFFFF; font-weight: bold; margin-top: 2px; } .mini-status { font-size: 5px; }
+.circle-detail { width: 148px; height: 52px; margin-top: 6px; border-radius: 16px; background-color: #101215; padding: 7px 9px; flex-direction: column; } .detail-title { font-size: 6px; color: #D1D1D6; } .compact-trend { width: 130px; height: 24px; margin-top: 2px; } .detail-foot { font-size: 5px; color: #8E8E93; }
+.pill-health { position: absolute; flex-direction: column; } .pill-head { width: 168px; height: 48px; flex-direction: row; justify-content: space-between; align-items: center; } .pill-title { font-size: 18px; color: #FFFFFF; font-weight: bold; } .pill-subtitle { font-size: 8px; color: #636366; margin-top: 2px; } .pill-source { font-size: 8px; color: #30D158; }
+.pill-card { width: 168px; height: 116px; border-radius: 24px; padding: 12px; margin-bottom: 10px; flex-direction: column; } .heart-card { background-color: #211015; } .spo2-card { background-color: #102129; } .stress-card { background-color: #211226; }
+.card-title { font-size: 11px; color: #FFFFFF; font-weight: bold; } .card-source { font-size: 8px; color: #8E8E93; } .card-value-row { height: 36px; flex-direction: row; align-items: flex-end; } .card-value { font-size: 30px; font-weight: bold; } .heart-color { color: #FF375F; } .spo2-color { color: #5AC8FA; } .stress-color { color: #BF5AF2; } .card-unit { font-size: 8px; color: #8E8E93; margin-left: 4px; margin-bottom: 5px; } .card-status { font-size: 8px; margin-left: 8px; margin-bottom: 5px; }
+.pill-trend { width: 144px; height: 42px; } .card-foot { font-size: 7px; color: #8E8E93; margin-top: 2px; } .updated { width: 168px; font-size: 7px; color: #636366; text-align: center; margin-bottom: 8px; }
+.rect-health { position: absolute; flex-direction: column; } .rect-head { width: 164px; height: 34px; flex-direction: row; justify-content: space-between; align-items: center; } .rect-title { font-size: 16px; color: #FFFFFF; font-weight: bold; } .rect-sub, .rect-updated { font-size: 7px; color: #8E8E93; }
+.rect-heart { width: 164px; height: 72px; border-radius: 18px; background-color: #211015; padding: 9px; flex-direction: row; justify-content: space-between; } .rect-heart-left { width: 76px; flex-direction: column; } .rect-label { font-size: 7px; color: #8E8E93; } .rect-heart-value-row { height: 32px; flex-direction: row; align-items: flex-end; } .rect-heart-value { font-size: 27px; color: #FF375F; font-weight: bold; } .rect-unit { font-size: 6px; color: #8E8E93; margin-left: 3px; margin-bottom: 4px; } .rect-status { font-size: 6px; }
+.rect-heart-trend { width: 68px; height: 46px; align-self: flex-end; } .rect-mini-row { width: 164px; height: 94px; margin-top: 8px; flex-direction: row; justify-content: space-between; } .rect-mini { width: 78px; height: 94px; border-radius: 17px; padding: 8px; flex-direction: column; } .rect-mini-value { font-size: 23px; font-weight: bold; margin-top: 5px; } .rect-mini-trend { width: 62px; height: 30px; margin-top: 5px; }
 </style>
