@@ -1,6 +1,6 @@
 <template>
-  <stack class="today-page {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px;" @swipe="handleSwipe">
-    <div class="circle-summary-surface" if="{{ profileReady && isCircleSurface && surfacePageIndex === 0 }}">
+  <stack class="today-page {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px;">
+    <div class="circle-summary-surface" if="{{ profileReady && isCircleSurface && surfacePageIndex === 0 }}" @swipe="handleSwipe">
       <div class="circle-date-card">
         <div class="circle-month-badge"><text class="circle-month-text">{{ monthText }}</text></div>
         <text class="circle-day-value">{{ dayText }}</text>
@@ -21,7 +21,7 @@
       <div class="surface-pager"><div class="surface-dot active-dot"></div><div class="surface-dot"></div></div>
     </div>
 
-    <div class="circle-calendar-surface" if="{{ profileReady && isCircleSurface && surfacePageIndex === 1 }}">
+    <div class="circle-calendar-surface" if="{{ profileReady && isCircleSurface && surfacePageIndex === 1 }}" @swipe="handleSwipe">
       <text class="circle-calendar-title">{{ calendarTitle }}</text>
       <div class="circle-week-row">
         <text class="circle-week weekend">日</text><text class="circle-week">一</text><text class="circle-week">二</text><text class="circle-week">三</text><text class="circle-week">四</text><text class="circle-week">五</text><text class="circle-week weekend">六</text>
@@ -47,8 +47,6 @@
         <div class="pill-metric-card red-card"><text class="pill-metric-label">心率</text><text class="pill-metric-value">{{ heartText }}</text><text class="pill-metric-unit">bpm</text></div>
         <div class="pill-metric-card green-card"><text class="pill-metric-label">站立</text><text class="pill-metric-value">{{ standText }}</text><text class="pill-metric-unit">小时</text></div>
       </div>
-      <text class="pill-summary-hint">左滑进入月历</text>
-      <div class="pill-surface-pager"><div class="pill-dot active-pill-dot"></div><div class="pill-dot"></div></div>
     </div>
 
     <div class="pill-calendar-surface" if="{{ profileReady && isPillSurface && surfacePageIndex === 1 }}" @touchstart="handlePillTouchStart" @touchend="handlePillTouchEnd">
@@ -64,11 +62,9 @@
           <div class="pill-calendar-cell" for="{{ calendarCells }}" tid="key"><text class="pill-calendar-day" style="color: {{ $item.textColor }}; background-color: {{ $item.backgroundColor }};">{{ $item.day }}</text></div>
         </div>
       </div>
-      <div class="pill-calendar-footer"><text class="pill-calendar-today">TODAY {{ dayText }}</text><text class="pill-calendar-heart">心率 {{ heartText }}</text></div>
-      <div class="pill-surface-pager"><div class="pill-dot"></div><div class="pill-dot active-pill-dot"></div></div>
     </div>
 
-    <div class="rect-dashboard-surface" if="{{ profileReady && isRectSurface }}">
+    <div class="rect-dashboard-surface" if="{{ profileReady && isRectSurface }}" @swipe="handleSwipe">
       <div class="rect-date-header">
         <div class="rect-date-left"><text class="rect-date-number">{{ dayText }}</text><text class="rect-date-month">{{ monthText }}</text></div>
         <div class="rect-date-copy"><text class="rect-weekday">{{ weekdayText }}</text><text class="rect-lunar">{{ lunarText }}</text></div>
@@ -249,7 +245,7 @@ export default {
   },
 
   handleSwipe(event) {
-    if (!event || this.isPillSurface) return
+    if (!event) return
     if (this.surfacePageCount > 1) {
       if (this.surfacePageIndex === 0) {
         if (event.direction === 'left') this.surfacePageIndex = 1
@@ -330,10 +326,6 @@ export default {
 .pill-metric-value { width: 58px; font-size: 24px; color: #FFFFFF; font-weight: bold; margin-top: 5px; lines: 1; }
 .pill-steps-value { width: 58px; }
 .pill-metric-unit { font-size: 8px; color: #8E8E93; margin-top: 2px; }
-.pill-summary-hint { width: 168px; font-size: 8px; color: #666666; text-align: center; margin-top: 3px; }
-.pill-surface-pager { width: 80px; height: 8px; margin-top: 5px; flex-direction: row; justify-content: center; align-items: center; }
-.pill-dot { width: 6px; height: 6px; border-radius: 3px; background-color: #3A3A3C; margin-left: 3px; margin-right: 3px; }
-.active-pill-dot { width: 18px; background-color: #FF375F; }
 
 .pill-month-hero { width: 168px; height: 82px; margin-top: 36px; flex-direction: row; align-items: center; }
 .pill-month-number-block { width: 72px; height: 72px; flex-direction: column; justify-content: center; }
@@ -349,9 +341,6 @@ export default {
 .pill-calendar-grid { width: 154px; height: 186px; flex-direction: row; flex-wrap: wrap; }
 .pill-calendar-cell { width: 22px; height: 31px; justify-content: center; align-items: center; }
 .pill-calendar-day { width: 22px; height: 22px; border-radius: 11px; font-size: 10px; text-align: center; }
-.pill-calendar-footer { width: 154px; height: 28px; margin-top: 10px; flex-direction: row; justify-content: space-between; align-items: center; }
-.pill-calendar-today { font-size: 8px; color: #FF375F; font-weight: bold; letter-spacing: 1px; }
-.pill-calendar-heart { font-size: 8px; color: #8E8E93; }
 
 .rect-dashboard-surface { width: 192px; height: 100%; flex-direction: column; align-items: center; }
 .rect-date-header { width: 164px; height: 36px; margin-top: 8px; flex-direction: row; align-items: center; }
