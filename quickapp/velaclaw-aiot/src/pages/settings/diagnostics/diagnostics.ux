@@ -1,97 +1,82 @@
 <template>
   <div class="diagnostics-page {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px;" @swipe="handleSwipe">
-    <div class="top-row">
-      <text class="page-title">设备自检</text>
-      <text class="page-number">{{ pageText }}</text>
+    <div class="top-row" style="position: absolute; left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;">
+      <text class="page-title" style="font-size: {{ titleFontSize }}px;">设备自检</text>
+      <text class="page-number" style="font-size: {{ pageNumberFontSize }}px;">{{ pageText }}</text>
     </div>
 
-    <div class="device-card" if="{{ pageIndex === 0 }}">
-      <div class="device-head">
-        <div class="device-dot"></div>
-        <text class="device-title">运行时屏幕档案</text>
+    <div class="device-card" if="{{ pageIndex === 0 }}" style="position: absolute; left: {{ contentLeft }}px; top: {{ contentTop }}px; width: {{ contentWidth }}px; height: {{ contentHeight }}px; padding: {{ contentPadding }}px; border-radius: {{ contentRadius }}px;">
+      <div class="device-head" style="width: {{ innerWidth }}px; height: {{ deviceHeadHeight }}px;">
+        <div class="device-dot" style="width: {{ dotSize }}px; height: {{ dotSize }}px; border-radius: {{ dotRadius }}px; margin-right: {{ dotGap }}px;"></div>
+        <text class="device-title" style="font-size: {{ deviceTitleFontSize }}px;">运行时屏幕档案</text>
       </div>
-      <div class="info-row"><text class="info-label">设备族</text><text class="info-value">{{ deviceFamily }}</text></div>
-      <div class="info-row"><text class="info-label">视口</text><text class="info-value">{{ screenSize }}</text></div>
-      <div class="info-row"><text class="info-label">形态</text><text class="info-value">{{ formFactor }}</text></div>
-      <div class="info-row"><text class="info-label">平台</text><text class="info-value">{{ platformText }}</text></div>
-      <div class="info-row"><text class="info-label">适配</text><text class="info-value accent">{{ viewportMode }}</text></div>
-      <text class="device-tip">尺寸优先读取页面真实视口，身份字段来自 system.device。</text>
+      <div class="info-row" style="width: {{ innerWidth }}px; height: {{ infoRowHeight }}px;"><text class="info-label" style="font-size: {{ infoFontSize }}px;">设备族</text><text class="info-value" style="font-size: {{ infoFontSize }}px;">{{ deviceFamily }}</text></div>
+      <div class="info-row" style="width: {{ innerWidth }}px; height: {{ infoRowHeight }}px;"><text class="info-label" style="font-size: {{ infoFontSize }}px;">视口</text><text class="info-value" style="font-size: {{ infoFontSize }}px;">{{ screenSize }}</text></div>
+      <div class="info-row" style="width: {{ innerWidth }}px; height: {{ infoRowHeight }}px;"><text class="info-label" style="font-size: {{ infoFontSize }}px;">形态</text><text class="info-value" style="font-size: {{ infoFontSize }}px;">{{ formFactor }}</text></div>
+      <div class="info-row" style="width: {{ innerWidth }}px; height: {{ infoRowHeight }}px;"><text class="info-label" style="font-size: {{ infoFontSize }}px;">平台</text><text class="info-value" style="font-size: {{ infoFontSize }}px;">{{ platformText }}</text></div>
+      <div class="info-row" style="width: {{ innerWidth }}px; height: {{ infoRowHeight }}px;"><text class="info-label" style="font-size: {{ infoFontSize }}px;">适配</text><text class="info-value accent" style="font-size: {{ infoFontSize }}px;">{{ viewportMode }}</text></div>
+      <text class="device-tip" style="width: {{ innerWidth }}px; font-size: {{ tipFontSize }}px; line-height: {{ tipLineHeight }}px;">页面只消费统一 Viewport Profile；原生设备信息由 Capability Runtime 封装。</text>
     </div>
 
-    <div class="capability-list" if="{{ pageIndex > 0 }}">
-      <div class="capability-item" for="{{ capabilityPage }}" tid="id">
-        <div class="capability-copy">
-          <text class="capability-name">{{ $item.name }}</text>
-          <text class="capability-api">{{ $item.api }}</text>
+    <div class="capability-list" if="{{ pageIndex > 0 }}" style="position: absolute; left: {{ contentLeft }}px; top: {{ contentTop }}px; width: {{ contentWidth }}px; height: {{ contentHeight }}px;">
+      <div class="capability-item" for="{{ capabilityPage }}" tid="id" style="width: {{ contentWidth }}px; height: {{ capabilityItemHeight }}px; padding: {{ capabilityPadding }}px; margin-bottom: {{ capabilityGap }}px; border-radius: {{ capabilityRadius }}px;">
+        <div class="capability-copy" style="width: {{ capabilityCopyWidth }}px;">
+          <text class="capability-name" style="font-size: {{ capabilityNameFontSize }}px;">{{ $item.name }}</text>
+          <text class="capability-api" style="width: {{ capabilityCopyWidth }}px; font-size: {{ capabilityApiFontSize }}px;">{{ $item.api }}</text>
         </div>
-        <div class="status-pill" style="background-color: {{ $item.background }}">
-          <text class="status-text" style="color: {{ $item.color }}">{{ $item.status }}</text>
+        <div class="status-pill" style="width: {{ statusWidth }}px; height: {{ statusHeight }}px; border-radius: {{ statusRadius }}px; background-color: {{ $item.background }};">
+          <text class="status-text" style="width: {{ statusWidth }}px; font-size: {{ statusFontSize }}px; color: {{ $item.color }};">{{ $item.status }}</text>
         </div>
       </div>
-      <text class="capability-tip">“接口存在”表示可调用；传感器是否出数请到“动作与加速度”验证。</text>
+      <text class="capability-tip" style="width: {{ contentWidth }}px; font-size: {{ capabilityTipFontSize }}px;">这里检查的是应用自己的 Capability Gateway；传感器是否出数请到“动作与加速度”验证。</text>
     </div>
 
-    <div class="pager-row">
-      <text class="pager-button" style="color: {{ previousColor }}" @click="previousPage">‹</text>
-      <div class="pager-track"><div class="pager-fill" style="width: {{ pageProgress }}"></div></div>
-      <text class="pager-button" style="color: {{ nextColor }}" @click="nextPage">›</text>
+    <div class="pager-row" style="position: absolute; left: {{ footerLeft }}px; top: {{ footerTop }}px; width: {{ footerWidth }}px; height: {{ footerHeight }}px;">
+      <text class="pager-button" style="width: {{ pagerButtonWidth }}px; height: {{ footerHeight }}px; font-size: {{ pagerFontSize }}px; color: {{ previousColor }}" @click="previousPage">‹</text>
+      <div class="pager-track" style="width: {{ pagerTrackWidth }}px;"><div class="pager-fill" style="width: {{ pageProgress }}"></div></div>
+      <text class="pager-button" style="width: {{ pagerButtonWidth }}px; height: {{ footerHeight }}px; font-size: {{ pagerFontSize }}px; color: {{ nextColor }}" @click="nextPage">›</text>
     </div>
   </div>
 </template>
 
 <script>
 import router from '@system.router'
-import battery from '@system.battery'
-import brightness from '@system.brightness'
-import systemEvent from '@system.event'
-import interconnect from '@system.interconnect'
-import sensor from '@system.sensor'
-import storage from '@system.storage'
-import vibrator from '@system.vibrator'
-import health from '@service.health'
 import pageMotion from '../../../common/page_motion'
-import pageViewport from '../../../common/page_viewport'
+import capabilityIntrospection from '../../../capabilities/introspection'
+import capabilityStatus from '../../../presentation/mappers/capability_status'
+import layoutRuntime from '../../../presentation/layout/runtime'
+import diagnosticsLayout from '../../../presentation/layout/specs/diagnostics'
 
-function capability(id, name, api, available) {
-  return {
-    id: id,
-    name: name,
-    api: api,
-    status: available ? '接口存在' : '不可用',
-    color: available ? '#30D158' : '#FF453A',
-    background: available ? '#123422' : '#3A1517'
-  }
+function region(plan, id) {
+  var list = plan && plan.regions ? plan.regions : []
+  for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i]
+  return null
 }
 
 export default {
   private: {
-    deviceFamily: '检测中',
-    screenSize: '--',
-    formFactor: '--',
-    platformText: '--',
-    viewportMode: '--',
-    capabilities: [],
-    capabilityPage: [],
-    pageIndex: 0,
-    pageCount: 3,
-    pageText: '1 / 3',
-    pageProgress: '33%',
-    previousColor: '#3A3A3C',
-    nextColor: '#0A84FF',
-    pageOpacity: 1,
-    pageOffset: 0,
-    viewportClass: '',
-    viewportPosition: 'relative',
-    viewportLeft: '0px',
-    viewportWidth: '100%',
-    viewportHeight: '100%',
-    viewportTop: '0px'
+    deviceFamily: '检测中', screenSize: '--', formFactor: '--', platformText: '--', viewportMode: '--',
+    capabilities: [], capabilityPage: [], pageIndex: 0, pageCount: 3, pageText: '1 / 3', pageProgress: '33%',
+    previousColor: '#3A3A3C', nextColor: '#0A84FF',
+    headerLeft: 36, headerTop: 22, headerWidth: 120, headerHeight: 20,
+    contentLeft: 22, contentTop: 46, contentWidth: 148, contentHeight: 106,
+    footerLeft: 41, footerTop: 156, footerWidth: 110, footerHeight: 14,
+    titleFontSize: 12, pageNumberFontSize: 7,
+    contentPadding: 7, contentRadius: 20, innerWidth: 134, deviceHeadHeight: 15,
+    dotSize: 6, dotRadius: 3, dotGap: 5, deviceTitleFontSize: 9, infoRowHeight: 14, infoFontSize: 7, tipFontSize: 5, tipLineHeight: 7,
+    capabilityItemHeight: 22, capabilityPadding: 4, capabilityGap: 4, capabilityRadius: 11,
+    capabilityCopyWidth: 96, capabilityNameFontSize: 8, capabilityApiFontSize: 5,
+    statusWidth: 36, statusHeight: 14, statusRadius: 7, statusFontSize: 6, capabilityTipFontSize: 5,
+    pagerButtonWidth: 26, pagerTrackWidth: 46, pagerFontSize: 14,
+    pageOpacity: 1, pageOffset: 0,
+    viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportWidth: '100%', viewportHeight: '100%', viewportTop: '0px'
   },
 
   onInit() {
     this.buildCapabilities()
     var self = this
-    pageViewport.bind(this, function (profile) {
+    layoutRuntime.bind(this, diagnosticsLayout, function (plan, profile) {
+      self.applyLayout(plan)
       self.deviceFamily = profile.deviceFamily
       self.screenSize = profile.screenWidth + ' × ' + profile.screenHeight
       self.formFactor = profile.formFactor
@@ -107,25 +92,39 @@ export default {
     this.refreshPage()
   },
 
-  onHide() {
-    pageMotion.clear(this)
-  },
+  onHide() { pageMotion.clear(this) },
+  onDestroy() { pageMotion.clear(this) },
 
-  onDestroy() {
-    pageMotion.clear(this)
+  applyLayout(plan) {
+    var header = region(plan, 'header')
+    var content = region(plan, 'content')
+    var footer = region(plan, 'footer')
+    if (!header || !content || !footer) return
+    this.headerLeft = header.left; this.headerTop = header.top; this.headerWidth = header.width; this.headerHeight = header.height
+    this.contentLeft = content.left; this.contentTop = content.top; this.contentWidth = content.width; this.contentHeight = content.height
+    this.footerLeft = footer.left; this.footerTop = footer.top; this.footerWidth = footer.width; this.footerHeight = footer.height
+
+    var scale = plan.scale || 1
+    this.titleFontSize = Math.max(10, Math.round(12 * scale))
+    this.pageNumberFontSize = Math.max(6, Math.round(7 * scale))
+    this.contentPadding = Math.max(6, Math.round(7 * scale))
+    this.contentRadius = Math.max(14, Math.round(20 * scale))
+    this.innerWidth = Math.max(92, Math.round(content.width - this.contentPadding * 2))
+    this.deviceHeadHeight = Math.max(13, Math.round(15 * scale))
+    this.dotSize = Math.max(5, Math.round(6 * scale)); this.dotRadius = Math.round(this.dotSize / 2); this.dotGap = Math.max(4, Math.round(5 * scale))
+    this.deviceTitleFontSize = Math.max(8, Math.round(9 * scale))
+    this.infoRowHeight = Math.max(12, Math.round(14 * scale)); this.infoFontSize = Math.max(6, Math.round(7 * scale))
+    this.tipFontSize = Math.max(5, Math.round(5 * scale)); this.tipLineHeight = Math.max(7, Math.round(7 * scale))
+    this.capabilityItemHeight = Math.max(20, Math.round(22 * scale)); this.capabilityPadding = Math.max(3, Math.round(4 * scale)); this.capabilityGap = Math.max(3, Math.round(4 * scale)); this.capabilityRadius = Math.max(9, Math.round(11 * scale))
+    this.statusWidth = Math.max(34, Math.round(36 * scale)); this.statusHeight = Math.max(13, Math.round(14 * scale)); this.statusRadius = Math.round(this.statusHeight / 2); this.statusFontSize = Math.max(6, Math.round(6 * scale))
+    this.capabilityCopyWidth = Math.max(70, Math.round(content.width - this.statusWidth - this.capabilityPadding * 2 - 8 * scale))
+    this.capabilityNameFontSize = Math.max(7, Math.round(8 * scale)); this.capabilityApiFontSize = Math.max(5, Math.round(5 * scale)); this.capabilityTipFontSize = Math.max(5, Math.round(5 * scale))
+    this.pagerButtonWidth = Math.max(24, Math.round(26 * scale)); this.pagerTrackWidth = Math.max(44, Math.round(46 * scale)); this.pagerFontSize = Math.max(13, Math.round(14 * scale))
   },
 
   buildCapabilities() {
-    this.capabilities = [
-      capability('sensor', '加速度计', 'subscribeAccelerometer', !!(sensor && sensor.subscribeAccelerometer)),
-      capability('health', '健康服务', 'getRecentSamples', !!(health && health.getRecentSamples)),
-      capability('haptic', '自定义震动', 'vibrator.start / stop', !!(vibrator && vibrator.start && vibrator.stop)),
-      capability('battery', '电池状态', 'battery.getStatus', !!(battery && battery.getStatus)),
-      capability('brightness', '屏幕亮度', 'brightness.setValue', !!(brightness && brightness.setValue)),
-      capability('event', '公共事件', 'event.subscribe', !!(systemEvent && systemEvent.subscribe)),
-      capability('interconnect', '设备互联', 'interconnect.instance', !!(interconnect && interconnect.instance)),
-      capability('storage', '本地存储', 'storage.get / set', !!(storage && storage.get && storage.set))
-    ]
+    this.capabilities = capabilityStatus.mapCapabilityStatus(capabilityIntrospection.list())
+    this.pageCount = 1 + Math.ceil(this.capabilities.length / 4)
   },
 
   refreshPage() {
@@ -139,17 +138,8 @@ export default {
     this.nextColor = this.pageIndex < this.pageCount - 1 ? '#0A84FF' : '#3A3A3C'
   },
 
-  previousPage() {
-    if (this.pageIndex <= 0) return
-    this.pageIndex--
-    this.refreshPage()
-  },
-
-  nextPage() {
-    if (this.pageIndex >= this.pageCount - 1) return
-    this.pageIndex++
-    this.refreshPage()
-  },
+  previousPage() { if (this.pageIndex > 0) { this.pageIndex--; this.refreshPage() } },
+  nextPage() { if (this.pageIndex < this.pageCount - 1) { this.pageIndex++; this.refreshPage() } },
 
   handleSwipe(event) {
     if (!event) return
@@ -163,92 +153,34 @@ export default {
 </script>
 
 <style>
-.diagnostics-page {
-  width: 100%;
-  height: 100%;
-  flex-direction: column;
-  align-items: center;
-  padding: 17px 12px;
-  background-color: #000000;
-}
-
-.top-row {
-  width: 166px;
-  height: 38px;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.page-title { font-size: 22px; font-weight: bold; color: #64D2FF; }
-.page-number { font-size: 11px; color: #8E8E93; }
-
-.device-card {
-  width: 166px;
-  height: 275px;
-  flex-direction: column;
-  padding: 13px;
-  border-radius: 13px;
-  background-color: #111820;
-}
-
-.device-head { width: 140px; height: 30px; flex-direction: row; align-items: center; }
-.device-dot { width: 10px; height: 10px; border-radius: 5px; background-color: #64D2FF; margin-right: 7px; }
-.device-title { font-size: 14px; font-weight: bold; color: #FFFFFF; }
-.info-row { width: 140px; height: 34px; flex-direction: row; justify-content: space-between; align-items: center; }
-.info-label { width: 45px; font-size: 11px; color: #8E8E93; }
-.info-value { width: 94px; font-size: 11px; color: #FFFFFF; text-align: right; lines: 1; text-overflow: ellipsis; }
+.diagnostics-page { width: 100%; height: 100%; background-color: #000000; }
+.top-row,
+.pager-row,
+.device-head,
+.info-row,
+.capability-item { flex-direction: row; align-items: center; }
+.top-row,
+.pager-row,
+.info-row,
+.capability-item { justify-content: space-between; }
+.page-title { font-weight: bold; color: #64D2FF; }
+.page-number { color: #8E8E93; }
+.device-card { flex-direction: column; background-color: #111820; }
+.device-dot { background-color: #64D2FF; }
+.device-title { font-weight: bold; color: #FFFFFF; }
+.info-label { width: 32px; color: #8E8E93; }
+.info-value { flex: 1; color: #FFFFFF; text-align: right; lines: 1; text-overflow: ellipsis; }
 .accent { color: #64D2FF; }
-.device-tip { width: 140px; font-size: 9px; line-height: 13px; color: #6E7681; margin-top: 7px; }
-
-.capability-list { width: 166px; height: 275px; flex-direction: column; }
-.capability-item { width: 166px; height: 56px; flex-direction: row; align-items: center; justify-content: space-between; padding: 8px 9px; margin-bottom: 7px; border-radius: 10px; background-color: #11151B; }
-.capability-copy { width: 102px; flex-direction: column; }
-.capability-name { font-size: 13px; font-weight: bold; color: #FFFFFF; }
-.capability-api { width: 102px; font-size: 8px; color: #777D87; margin-top: 3px; lines: 1; text-overflow: ellipsis; }
-.status-pill { width: 46px; height: 23px; border-radius: 12px; justify-content: center; align-items: center; }
-.status-text { width: 42px; font-size: 8px; text-align: center; }
-.capability-tip { width: 160px; font-size: 8px; line-height: 11px; color: #6E7681; }
-
-.pager-row { width: 152px; height: 34px; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 8px; }
-.pager-button { width: 34px; height: 30px; font-size: 25px; font-weight: bold; text-align: center; }
-.pager-track { width: 70px; height: 4px; border-radius: 2px; background-color: #24262B; }
+.device-tip { color: #6E7681; margin-top: 2px; }
+.capability-list,
+.capability-copy { flex-direction: column; }
+.capability-item { background-color: #11151B; }
+.capability-name { font-weight: bold; color: #FFFFFF; }
+.capability-api { color: #777D87; margin-top: 1px; lines: 1; text-overflow: ellipsis; }
+.status-pill { justify-content: center; align-items: center; }
+.status-text { text-align: center; }
+.capability-tip { color: #6E7681; }
+.pager-button { font-weight: bold; text-align: center; }
+.pager-track { height: 4px; border-radius: 2px; background-color: #24262B; }
 .pager-fill { height: 4px; border-radius: 2px; background-color: #64D2FF; }
-
-/*
- * 圆屏三段式安全栈，与 settings.ux 保持同一套节奏：
- *   padding-top 26 → 标题 120×20 → 间距 4 → 内容 148×106 → 间距 3 → 分页 110×14
- * 148px 宽的卡片在内切圆里只有 y=35..157 可用，原布局排到 y=43..165 且分页行
- * 落在 y=190，上下都被圆弧切掉。
- */
-@media (shape: circle) {
-  .diagnostics-page { padding: 26px 22px 0px 22px; }
-  .top-row { width: 120px; height: 20px; margin-top: 0px; margin-bottom: 0px; }
-  .page-title { font-size: 12px; }
-  .page-number { font-size: 7px; }
-  .device-card, .capability-list { width: 148px; height: 106px; margin-top: 4px; }
-  .device-card { padding: 7px 12px; border-radius: 22px; }
-  .device-head, .info-row { width: 124px; }
-  .device-head { height: 15px; }
-  .device-title { font-size: 9px; }
-  .device-dot { width: 6px; height: 6px; border-radius: 3px; }
-  .info-row { height: 14px; }
-  .info-label, .info-value { font-size: 7px; }
-  .info-label { width: 30px; }
-  .info-value { width: 92px; }
-  .device-tip { width: 124px; font-size: 5px; line-height: 7px; margin-top: 2px; }
-  /* 四条 22px 卡片 + 4px 间距 = 104px，落在 106px 内容区内。 */
-  .capability-item { width: 148px; height: 22px; padding: 3px 8px; margin-bottom: 4px; border-radius: 11px; }
-  .capability-copy { width: 94px; }
-  .capability-name { font-size: 8px; }
-  .capability-api { width: 94px; font-size: 5px; margin-top: 1px; }
-  .status-pill { width: 38px; height: 14px; }
-  .status-text { width: 36px; font-size: 6px; }
-  /* 圆屏隐藏说明文案：此前压到 5px 已无法阅读，方屏/胶囊屏仍完整保留。 */
-  .capability-tip { display: none; }
-  .pager-row { width: 110px; height: 14px; margin-top: 3px; }
-  .pager-button { width: 26px; height: 14px; font-size: 14px; }
-  .pager-track { width: 46px; }
-}
 </style>
