@@ -23,7 +23,7 @@
       <div class="rect-stage" if="{{ isRect }}">
         <sportrect if="{{ faceId === 'sport' }}" onopen-health="openHealth" onopen-steps="openSteps" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-minutes="{{ displayMinutes }}" display-hours="{{ displayHours }}" face-accent="{{ faceAccent }}" battery-percent="{{ batteryPercent }}" battery-width="{{ batteryWidth }}" battery-color="{{ batteryColor }}" current-heart-rate="{{ currentHeartRate }}" steps-text="{{ stepsText }}" steps-goal-text="{{ stepsGoalText }}"></sportrect>
         <simplerect if="{{ faceId === 'simple' }}" onopen-health="openHealth" onopen-steps="openSteps" display-week="{{ displayWeek }}" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-hours="{{ displayHours }}" display-minutes="{{ displayMinutes }}" face-accent="{{ faceAccent }}" goal-percent="{{ goalPercent }}" steps-text="{{ stepsText }}" current-heart-rate="{{ currentHeartRate }}" battery-percent="{{ batteryPercent }}" battery-color="{{ batteryColor }}"></simplerect>
-        <dashboardrect if="{{ faceId === 'dashboard' }}" onopen-health="openHealth" onopen-steps="openSteps" display-week="{{ displayWeek }}" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-hours="{{ displayHours }}" display-minutes="{{ displayMinutes }}" face-accent="{{ faceAccent }}" steps-text="{{ stepsText }}" steps-goal-text="{{ stepsGoalText }}" steps-progress-width="{{ stepsProgressWidth }}" current-heart-rate="{{ currentHeartRate }}" heart-rate-data="{{ heartRateData }}" battery-percent="{{ batteryPercent }}" battery-color="{{ batteryColor }}"></dashboardrect>
+        <dashboardrect if="{{ faceId === 'dashboard' }}" onopen-health="openHealth" onopen-steps="openSteps" display-week="{{ displayWeek }}" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-hours="{{ displayHours }}" display-minutes="{{ displayMinutes }}" face-accent="{{ faceAccent }}" steps-text="{{ stepsText }}" steps-goal-text="{{ stepsGoalText }}" steps-progress-width="{{ stepsProgressWidth }}" current-heart-rate="{{ currentHeartRate }}" heart-rate-data="{{ heartRateData }}" battery-percent="{{ batteryPercent }}" battery-width="{{ batteryWidth }}" battery-color="{{ batteryColor }}"></dashboardrect>
       </div>
 
       <div class="circle-stage" if="{{ isCircle }}">
@@ -39,7 +39,7 @@
       <div class="notification-cover" if="{{ notificationVisible && notificationOverlay }}">
         <div class="notification-body" if="{{ notificationType !== 'call' }}"><div class="notification-app"><image class="notification-icon" src="{{ notificationAppIcon }}"></image><text class="notification-name">{{ notificationAppName }}</text></div><text class="notification-content">{{ notificationContent }}</text></div>
         <div class="notification-body" if="{{ notificationType === 'call' }}"><text class="call-contact">{{ notificationContact }}</text><text class="call-phone">{{ notificationPhone }}</text></div>
-        <div class="notification-actions"><text class="notification-button" @click="dismissNotification">忽略</text><text class="notification-button hangup" if="{{ notificationType === 'call' }}" @click="hangUpNotification" style="color: {{ notificationHangUp ? '#777777' : '#FFFFFF' }};">挂断</text></div>
+        <div class="notification-actions"><text class="notification-button" @click="dismissNotification">忽略</text><text class="notification-button hangup" if="{{ notificationType === 'call' }}" @click="hangUpNotification" style="color: {{ notificationHangUpColor }};">挂断</text></div>
       </div>
     </div>
   </stack>
@@ -51,6 +51,7 @@ import navigation from '../../v2/app/navigation'
 import { createClockController } from '../../v2/features/clock/controller'
 import clockDesign from '../../v2/design/specs/clock'
 import clockView from '../../v2/design/views/clock'
+import notificationView from '../../v2/design/views/notification'
 
 export default {
   private: {
@@ -60,7 +61,7 @@ export default {
     analogTicks: [], hourHandTransform: '', minuteHandTransform: '', secondHandTransform: '',
     batteryPercent: 75, batteryWidth: '75%', batteryColor: '#30D158', currentHeartRate: 88, heartRateData: [], stepsText: '0', stepsGoalText: '0', goalPercent: 0, stepsProgressWidth: '0%',
     powerModeText: '亮屏', powerRefreshText: '实时刷新', powerDimVisible: false, powerSleepVisible: false,
-    notificationVisible: false, notificationType: '', notificationAppName: '', notificationAppIcon: '', notificationContent: '', notificationContact: '', notificationPhone: '', notificationHangUp: false,
+    notificationVisible: false, notificationType: '', notificationAppName: '', notificationAppIcon: '/common/logo.png', notificationContent: '', notificationContact: '', notificationPhone: '', notificationHangUp: false, notificationHangUpColor: '#FFFFFF',
     alpineDataGlassTop: '319px', alpineDataRowTop: '327px', alpineBatteryRowTop: '401px',
     sceneWidth: 192, sceneHeight: 192, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
   },
@@ -101,7 +102,8 @@ export default {
   },
 
   applyNotification(state) {
-    this.notificationVisible = state.visible; this.notificationType = state.type; this.notificationAppName = state.appName; this.notificationAppIcon = state.appIcon; this.notificationContent = state.content; this.notificationContact = state.contact; this.notificationPhone = state.phone; this.notificationHangUp = state.hangUp
+    var view = notificationView.project(state)
+    this.notificationVisible = view.visible; this.notificationType = view.type; this.notificationAppName = view.appName; this.notificationAppIcon = view.appIcon; this.notificationContent = view.content; this.notificationContact = view.contact; this.notificationPhone = view.phone; this.notificationHangUp = view.hangUp; this.notificationHangUpColor = view.hangUpColor
   },
 
   handleSwipe(event) {
