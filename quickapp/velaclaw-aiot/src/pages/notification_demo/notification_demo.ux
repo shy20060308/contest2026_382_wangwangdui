@@ -3,7 +3,7 @@
     <div class="demo-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
       <text class="demo-title" style="left: {{ titleLeft }}px; top: {{ titleTop }}px; width: {{ titleWidth }}px; height: {{ titleHeight }}px; font-size: {{ titleSize }}px;">通知演示</text>
       <div class="button-stack" style="left: {{ buttonsLeft }}px; top: {{ buttonsTop }}px; width: {{ buttonsWidth }}px; height: {{ buttonsHeight }}px;">
-        <text class="demo-button" @click="demoMessage" style="width: {{ buttonsWidth }}px; height: {{ buttonHeight }}px; margin-bottom: {{ buttonGap }}px; border-radius: {{ buttonRadius }}px; font-size: {{ buttonSize }}px;">消息演示</text>
+        <text class="demo-button" @click="demoSms" style="width: {{ buttonsWidth }}px; height: {{ buttonHeight }}px; margin-bottom: {{ buttonGap }}px; border-radius: {{ buttonRadius }}px; font-size: {{ buttonSize }}px;">短信演示</text>
         <text class="demo-button" @click="demoCall" style="width: {{ buttonsWidth }}px; height: {{ buttonHeight }}px; margin-bottom: {{ buttonGap }}px; border-radius: {{ buttonRadius }}px; font-size: {{ buttonSize }}px;">电话演示</text>
         <text class="demo-button" @click="demoApp" style="width: {{ buttonsWidth }}px; height: {{ buttonHeight }}px; margin-bottom: {{ buttonGap }}px; border-radius: {{ buttonRadius }}px; font-size: {{ buttonSize }}px;">应用演示</text>
         <text class="demo-button back-button" @click="goBack" style="width: {{ buttonsWidth }}px; height: {{ buttonHeight }}px; border-radius: {{ buttonRadius }}px; font-size: {{ buttonSize }}px;">返回</text>
@@ -45,7 +45,7 @@ export default {
   onDestroy() { this.controller.stop() },
   onBackPress() { navigation.back(); return true },
   applyNotification(state) { this.notifyVisible = state.visible; this.notifyType = state.type; this.notifyAppName = state.appName; this.notifyAppIcon = state.appIcon; this.notifyContent = state.content; this.notifyContact = state.contact; this.notifyPhone = state.phone; this.notifyHangUp = state.hangUp },
-  demoMessage() { this.controller.showDemo('message') },
+  demoSms() { this.controller.showDemo('sms') },
   demoCall() { this.controller.showDemo('call') },
   demoApp() { this.controller.showDemo('app') },
   handleIgnore() { this.controller.dismiss() },
