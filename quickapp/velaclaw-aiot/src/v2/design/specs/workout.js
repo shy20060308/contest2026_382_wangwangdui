@@ -1,41 +1,50 @@
 var freedom = require('../freedom')
 
-function region(left, top, width, height) {
-  return { left: left, top: top, width: width, height: height }
+function region(left, top, width, height) { return { left: left, top: top, width: width, height: height } }
+
+function contentWidth(profile) {
+  var shape = profile && profile.formFactor ? profile.formFactor : 'rect'
+  if (shape === 'circle') return 148
+  if (shape === 'pill') return 168
+  return 164
 }
 
 function finalize(plan) {
-  var metricGap = plan.metricGap
-  var columns = plan.metricColumns
-  plan.metricItemWidth = Math.floor((plan.metrics.width - metricGap * (columns - 1)) / columns)
+  plan.metricItemWidth = Math.floor((plan.metrics.width - plan.metricGap * (plan.metricColumns - 1)) / plan.metricColumns)
   plan.actionWidth = Math.floor((plan.actions.width - plan.actionGap) / 2)
   return plan
 }
 
+function base(shape) {
+  return {
+    freedom: freedom.describe(freedom.ASSISTED),
+    freedomLevel: freedom.ASSISTED,
+    strategy: 'assisted',
+    shape: shape,
+    surface: 'rect-dashboard'
+  }
+}
+
 function resolve(profile, scene, safe) {
   var shape = profile && profile.formFactor ? profile.formFactor : 'rect'
-  var plan = {
-    freedom: freedom.describe(freedom.ASSISTED),
-    shape: shape,
-    surface: 'rect-dashboard',
-    header: region(safe.left, safe.top, safe.width, 24),
-    hero: region(safe.left, safe.top + 30, safe.width, 64),
-    metrics: region(safe.left, safe.top + 100, safe.width, 66),
-    actions: region(safe.left, Math.max(safe.top + 172, safe.bottom - 42), safe.width, 38),
-    metricColumns: 4,
-    metricGap: 4,
-    metricHeight: 60,
-    actionGap: 8,
-    titleSize: 14,
-    statusSize: 8,
-    durationSize: 31,
-    durationLabelSize: 8,
-    gpsSize: 7,
-    metricValueSize: 14,
-    metricLabelSize: 6,
-    actionSize: 11,
-    radius: 14
-  }
+  var plan = base(shape)
+  plan.header = region(safe.left, safe.top, safe.width, 24)
+  plan.hero = region(safe.left, safe.top + 30, safe.width, 64)
+  plan.metrics = region(safe.left, safe.top + 100, safe.width, 66)
+  plan.actions = region(safe.left, Math.max(safe.top + 172, safe.bottom - 42), safe.width, 38)
+  plan.metricColumns = 4
+  plan.metricGap = 4
+  plan.metricHeight = 60
+  plan.actionGap = 8
+  plan.titleSize = 14
+  plan.statusSize = 8
+  plan.durationSize = 31
+  plan.durationLabelSize = 8
+  plan.gpsSize = 7
+  plan.metricValueSize = 14
+  plan.metricLabelSize = 6
+  plan.actionSize = 11
+  plan.radius = 14
 
   if (shape === 'circle') {
     plan.surface = 'circle-focus'
@@ -85,7 +94,4 @@ function resolve(profile, scene, safe) {
   return finalize(plan)
 }
 
-module.exports = {
-  freedomLevel: freedom.ASSISTED,
-  resolve: resolve
-}
+module.exports = { freedomLevel: freedom.ASSISTED, contentWidth: contentWidth, resolve: resolve }
