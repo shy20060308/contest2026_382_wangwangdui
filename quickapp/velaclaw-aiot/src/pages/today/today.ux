@@ -33,7 +33,7 @@
       <div class="surface-pager"><div class="surface-dot"></div><div class="surface-dot active-dot"></div></div>
     </div>
 
-    <div class="pill-summary-surface" if="{{ profileReady && isPillSurface && surfacePageIndex === 0 }}" @touchstart="handlePillTouchStart" @touchend="handlePillTouchEnd">
+    <div class="pill-summary-surface" if="{{ profileReady && isPillSurface && surfacePageIndex === 0 }}" @swipe="handlePillSwipe">
       <div class="pill-date-hero">
         <div class="pill-month-badge"><text class="pill-month-text">{{ monthText }}</text></div>
         <text class="pill-day-value">{{ dayText }}</text>
@@ -49,7 +49,7 @@
       </div>
     </div>
 
-    <div class="pill-calendar-surface" if="{{ profileReady && isPillSurface && surfacePageIndex === 1 }}" @touchstart="handlePillTouchStart" @touchend="handlePillTouchEnd">
+    <div class="pill-calendar-surface" if="{{ profileReady && isPillSurface && surfacePageIndex === 1 }}" @swipe="handlePillSwipe">
       <div class="pill-month-hero">
         <div class="pill-month-number-block"><text class="pill-month-number">{{ monthNumberText }}</text><text class="pill-month-unit">MONTH</text></div>
         <div class="pill-month-copy"><text class="pill-calendar-title">{{ calendarTitle }}</text><text class="pill-calendar-lunar">今日 · {{ lunarText }}</text><text class="pill-calendar-nav">上下滑动切换月份</text></div>
@@ -127,9 +127,6 @@ export default {
     calendarMonth: 0,
     calendarTitle: '',
     calendarCells: [],
-    pillTouchStartX: 0,
-    pillTouchStartY: 0,
-    pillTouchTracking: false,
     pageOpacity: 1,
     pageOffset: 0,
     viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportWidth: '100%', viewportHeight: '100%', viewportTop: '0px'
@@ -160,13 +157,11 @@ export default {
   onHide() {
     pageMotion.clear(this)
     healthStore.unsubscribe(this.healthListener)
-    this.pillTouchTracking = false
   },
 
   onDestroy() {
     pageMotion.clear(this)
     healthStore.unsubscribe(this.healthListener)
-    this.pillTouchTracking = false
     this.calendarCells = []
   },
 
@@ -216,32 +211,16 @@ export default {
     this.refreshCalendar()
   },
 
-  handlePillTouchStart(event) {
-    if (!event || !event.touches || !event.touches[0]) return
-    var point = event.touches[0]
-    this.pillTouchStartX = point.pageX
-    this.pillTouchStartY = point.pageY
-    this.pillTouchTracking = true
-  },
-
-  handlePillTouchEnd(event) {
-    if (!this.pillTouchTracking || !event || !event.changedTouches || !event.changedTouches[0]) {
-      this.pillTouchTracking = false
+  handlePillSwipe(event) {
+    if (!event) return
+    if (this.surfacePageIndex === 0) {
+      if (event.direction === 'left') this.surfacePageIndex = 1
+      else if (event.direction === 'right') pageMotion.back(this, router)
       return
     }
-    var point = event.changedTouches[0]
-    var deltaX = point.pageX - this.pillTouchStartX
-    var deltaY = point.pageY - this.pillTouchStartY
-    this.pillTouchTracking = false
-
-    if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) >= 28) {
-      if (this.surfacePageIndex === 1) this.changeCalendarMonth(deltaY < 0 ? 1 : -1)
-      return
-    }
-    if (Math.abs(deltaX) < 30) return
-    if (deltaX < 0 && this.surfacePageIndex === 0) this.surfacePageIndex = 1
-    else if (deltaX > 0 && this.surfacePageIndex === 1) this.surfacePageIndex = 0
-    else if (deltaX > 0 && this.surfacePageIndex === 0) pageMotion.back(this, router)
+    if (event.direction === 'up') this.changeCalendarMonth(1)
+    else if (event.direction === 'down') this.changeCalendarMonth(-1)
+    else if (event.direction === 'right') this.surfacePageIndex = 0
   },
 
   handleSwipe(event) {
