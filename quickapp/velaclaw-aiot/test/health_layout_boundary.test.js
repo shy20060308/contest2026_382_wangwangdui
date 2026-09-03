@@ -22,10 +22,13 @@ expect(health.includes("makeMetricBars(this.spo2TrendValues || [], 4, '#245566',
 expect(health.includes("makeMetricBars(this.stressTrendValues || [], 10, '#542966', '#BF5AF2', 24)"), 'stress compact trend must cap bars at 24px')
 expect(hasCssRule(health, '.compact-trend', 'height', '24px'), 'compact trend container must stay 24px high')
 
-expect(today.includes('steps-metric-value'), 'circle summary needs a dedicated steps value class')
-expect(hasCssRule(today, '.steps-metric-value', 'width', '37px'), 'circle steps value must reserve enough width for formatted values such as 4,567')
-expect(hasCssRule(today, '.steps-metric-value', 'left', '18px'), 'circle steps value must keep its widened left offset')
-expect(hasCssRule(today, '.steps-metric-unit', 'left', '56px'), 'circle steps unit must remain outside the widened value box')
-expect(hasCssRule(today, '.steps-metric-unit', 'width', '8px'), 'circle steps unit must keep its dedicated width')
+// Today is now an L2 three-surface design. Long formatted activity values are handled
+// by the pill summary's dedicated value box + adaptive typography instead of the old
+// circle-only absolute-offset classes.
+expect(today.includes('pill-steps-value'), 'pill summary needs a dedicated steps value class')
+expect(hasCssRule(today, '.pill-steps-value', 'width', '58px'), 'pill steps value must reserve the full metric-card content width')
+expect(today.includes('pillStepsFontSize'), 'pill summary must expose adaptive steps typography')
+expect(today.includes('metricFontSize(view.stepsText)'), 'formatted step length must drive pill typography')
+expect(today.includes('lines: 1'), 'pill metric values must stay on one line')
 
 console.log('健康页面裁切边界检查通过')
