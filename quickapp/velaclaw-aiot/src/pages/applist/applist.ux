@@ -28,19 +28,11 @@
 <script>
 import pageRuntime from '../../v2/app/page_runtime'
 import navigation from '../../v2/app/navigation'
+import appRoutes from '../../v2/app/app_routes'
 import { createLauncherController } from '../../v2/features/launcher/controller'
 import launcherDesign from '../../v2/design/specs/launcher'
+import launcherView from '../../v2/design/views/launcher'
 import honeycomb from '../../presentation/engines/honeycomb'
-
-var ACCENTS = ['#3A7DFF','#30D158','#FF9F0A','#BF5AF2','#64D2FF','#FF375F']
-function decorateGrid(items, gap) {
-  var result = []
-  for (var i = 0; i < items.length; i++) {
-    var source = items[i]
-    result.push({ id: source.id, label: source.label, icon: source.icon, route: source.route, accent: ACCENTS[i % ACCENTS.length], marginRight: i % 2 === 0 ? gap : 0, marginBottom: i < 4 ? gap : 0 })
-  }
-  return result
-}
 
 export default {
   private: {
@@ -53,7 +45,7 @@ export default {
   onInit() {
     var self = this
     this.controller = createLauncherController(function (state) { self.applyState(state) })
-    pageRuntime.bind(this, { contentWidth: function (profile) { return profile.formFactor === 'circle' ? 148 : (profile.formFactor === 'rect' ? 164 : 168) } }, function (profile, scene, safe) {
+    pageRuntime.bind(this, { contentWidth: function (profile) { return launcherDesign.contentWidth(profile) } }, function (profile, scene, safe) {
       self.plan = launcherDesign.resolve(profile, scene, safe)
       self.applyPlan(self.plan)
       self.controller.configure(self.plan.appIds, self.plan.pageSize)
@@ -73,13 +65,14 @@ export default {
   },
 
   applyState(state) {
-    this.pageApps = state.items
-    this.gridApps = decorateGrid(state.items, this.gridGap)
-    this.pageText = state.pageText
-    this.pageProgress = state.progress
-    this.previousColor = state.hasPrevious ? '#0A84FF' : '#3A3A3C'
-    this.nextColor = state.hasNext ? '#0A84FF' : '#3A3A3C'
-    if (this.surface === 'honeycomb' && !this.circleSlots.length) this.initHoneycomb(state.all)
+    var view = launcherView.project(state, this.plan)
+    this.pageApps = view.pageApps
+    this.gridApps = view.gridApps
+    this.pageText = view.pageText
+    this.pageProgress = view.pageProgress
+    this.previousColor = view.previousColor
+    this.nextColor = view.nextColor
+    if (this.surface === 'honeycomb' && !this.circleSlots.length) this.initHoneycomb(view.allApps)
   },
 
   initHoneycomb(apps) {
@@ -127,7 +120,12 @@ export default {
 
   previousPage() { this.controller.previous() },
   nextPage() { this.controller.next() },
-  openApp(item) { if (!item) return; if (!item.route) navigation.back(); else navigation.push(item.route) }
+  openApp(item) {
+    if (!item) return
+    var route = appRoutes.routeFor(item.id)
+    if (!route) navigation.back()
+    else navigation.push(route)
+  }
 }
 </script>
 
