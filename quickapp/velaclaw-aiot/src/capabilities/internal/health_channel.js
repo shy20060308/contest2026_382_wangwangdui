@@ -181,6 +181,7 @@ export default function createHealthChannel(options) {
     getLatest: function () { return state.value },
     getSnapshot: function () { return clone(state) },
     isActive: function () { return listeners.length > 0 },
-    consumerCount: function () { return listeners.length }
+    consumerCount: function () { return listeners.length },
+    isAvailable: serviceAvailable
   }
 }
