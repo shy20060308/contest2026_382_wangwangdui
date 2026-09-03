@@ -1,192 +1,76 @@
 <template>
-  <div class="history-page {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px;" @touchstart="onTouchStart" @touchend="onTouchEnd">
-    <div class="top-row" style="position: absolute; left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;">
-      <text class="page-title" style="font-size: {{ titleFontSize }}px;" static>运动记录</text>
-      <text class="back-text" style="font-size: {{ backFontSize }}px;" @click="goBack">返回</text>
-    </div>
-
-    <div class="summary-row" style="position: absolute; left: {{ summaryLeft }}px; top: {{ summaryTop }}px; width: {{ summaryWidth }}px; height: {{ summaryHeight }}px;">
-      <div class="summary-item" style="width: {{ summaryItemWidth }}px; height: {{ summaryHeight }}px; border-radius: {{ summaryRadius }}px; padding-left: {{ summaryPadding }}px;">
-        <text class="summary-value" style="font-size: {{ summaryValueFontSize }}px;">{{ totalCount }}</text>
-        <text class="summary-label" style="font-size: {{ summaryLabelFontSize }}px;" static>运动次数</text>
+  <stack class="history-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
+    <div class="history-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
+      <div class="top-row" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;"><text class="page-title" style="font-size: {{ titleSize }}px;">运动记录</text><text class="back-text" style="font-size: {{ backSize }}px;" @click="goBack">返回</text></div>
+      <div class="summary-row" style="left: {{ summaryLeft }}px; top: {{ summaryTop }}px; width: {{ summaryWidth }}px; height: {{ summaryHeight }}px;">
+        <div class="summary-card" style="width: {{ summaryCardWidth }}px; height: {{ summaryHeight }}px; border-radius: {{ radius }}px;"><text class="summary-value" style="font-size: {{ summaryValueSize }}px;">{{ totalCount }}</text><text class="summary-label" style="font-size: {{ summaryLabelSize }}px;">运动次数</text></div>
+        <div class="summary-card" style="width: {{ summaryCardWidth }}px; height: {{ summaryHeight }}px; border-radius: {{ radius }}px;"><text class="summary-value step-color" style="font-size: {{ summaryValueSize }}px;">{{ totalSteps }}</text><text class="summary-label" style="font-size: {{ summaryLabelSize }}px;">累计步数</text></div>
       </div>
-      <div class="summary-item" style="width: {{ summaryItemWidth }}px; height: {{ summaryHeight }}px; border-radius: {{ summaryRadius }}px; padding-left: {{ summaryPadding }}px;">
-        <text class="summary-value step-color" style="font-size: {{ summaryValueFontSize }}px;">{{ totalSteps }}</text>
-        <text class="summary-label" style="font-size: {{ summaryLabelFontSize }}px;" static>累计步数</text>
-      </div>
+      <div class="empty-state" if="{{ emptyVisible }}" style="left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ streamWidth }}px; height: {{ streamHeight }}px;"><text class="empty-title">暂无运动记录</text><text class="empty-copy">完成一次步行或跑步后会显示在这里</text></div>
+      <list class="record-list" if="{{ !emptyVisible }}" style="left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ streamWidth }}px; height: {{ streamHeight }}px;">
+        <list-item type="record" class="record-card" for="{{ records }}" tid="id" style="width: {{ streamWidth }}px; height: {{ recordHeight }}px; margin-bottom: {{ recordGap }}px; border-radius: {{ radius }}px; padding: {{ padding }}px;">
+          <div class="record-head"><text class="record-title" style="font-size: {{ recordTitleSize }}px;">{{ $item.typeName }}</text><text class="sync-text" style="font-size: {{ recordMetaSize }}px;">{{ $item.syncText }}</text></div>
+          <text class="record-meta" style="font-size: {{ recordMetaSize }}px;">{{ $item.startText }} · {{ $item.durationText }}</text>
+          <div class="record-metrics"><text class="record-value" style="font-size: {{ recordMetaSize }}px;">{{ $item.stepsText }} 步</text><text class="record-value" style="font-size: {{ recordMetaSize }}px;">{{ $item.distanceText }}</text><text class="record-value" style="font-size: {{ recordMetaSize }}px;">{{ $item.caloriesText }} kcal</text></div>
+          <text class="record-source" style="font-size: {{ recordMetaSize }}px;">{{ $item.distanceSourceText }} · {{ $item.heartText }}</text>
+        </list-item>
+      </list>
     </div>
-
-    <div class="empty-state" if="{{ emptyVisible }}" style="position: absolute; left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ streamWidth }}px; height: {{ streamHeight }}px;">
-      <text class="empty-title" style="font-size: {{ emptyTitleFontSize }}px;" static>暂无运动记录</text>
-      <text class="empty-sub" style="width: {{ emptyCopyWidth }}px; font-size: {{ emptySubFontSize }}px;" static>完成一次步行或跑步后会显示在这里</text>
-    </div>
-
-    <list class="record-scroll" if="{{ !emptyVisible }}" style="position: absolute; left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ streamWidth }}px; height: {{ streamHeight }}px;">
-      <list-item type="record" class="record-item" for="{{ records }}" tid="id" style="width: {{ streamWidth }}px; height: {{ recordItemHeight }}px; padding: {{ recordPadding }}px; margin-bottom: {{ recordGap }}px; border-radius: {{ recordRadius }}px;">
-        <div class="record-head" style="width: {{ recordInnerWidth }}px;">
-          <text class="record-type" style="font-size: {{ recordTypeFontSize }}px;">{{ $item.typeName }}</text>
-          <text class="sync-state" style="font-size: {{ recordMetaFontSize }}px;">{{ $item.syncText }}</text>
-        </div>
-        <text class="record-time" style="font-size: {{ recordMetaFontSize }}px; margin-top: {{ recordMetaGap }}px;">{{ $item.startText }} · {{ $item.durationText }}</text>
-        <div class="record-metrics" style="width: {{ recordInnerWidth }}px; margin-top: {{ recordMetricsGap }}px;">
-          <text class="record-value" style="font-size: {{ recordMetaFontSize }}px;">{{ $item.steps }} 步</text>
-          <text class="record-value" style="font-size: {{ recordMetaFontSize }}px;">{{ $item.distanceText }}</text>
-          <text class="record-value" style="font-size: {{ recordMetaFontSize }}px;">{{ $item.calories }} kcal</text>
-        </div>
-        <text class="gps-source" style="font-size: {{ recordMetaFontSize }}px; margin-top: {{ recordMetaGap }}px;">{{ $item.distanceSourceText }}</text>
-      </list-item>
-    </list>
-  </div>
+  </stack>
 </template>
 
 <script>
-import router from '@system.router'
-import workoutManager from '../../common/workout_manager'
-import pageMotion from '../../common/page_motion'
-import swipeBack from '../../common/swipe_back'
-import layoutRuntime from '../../presentation/layout/runtime'
-import scrollFlow from '../../presentation/layout/scroll_flow'
-import workoutHistoryLayout from '../../presentation/layout/specs/workout_history'
-import workoutHistoryMapper from '../../presentation/mappers/workout_history'
+import pageRuntime from '../../v2/app/page_runtime'
+import navigation from '../../v2/app/navigation'
+import { createWorkoutHistoryController } from '../../v2/features/workout/history_controller'
+import workoutHistoryDesign from '../../v2/design/specs/workout_history'
 
-function region(plan, id) {
-  var list = plan && plan.regions ? plan.regions : []
-  for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i]
-  return null
+function applyRegion(page, prefix, value) {
+  page[prefix + 'Left'] = value.left; page[prefix + 'Top'] = value.top; page[prefix + 'Width'] = value.width; page[prefix + 'Height'] = value.height
 }
 
 export default {
   private: {
     totalCount: '0', totalSteps: '0', emptyVisible: true, records: [],
-    headerLeft: 36, headerTop: 24, headerWidth: 120, headerHeight: 18,
-    summaryLeft: 18, summaryTop: 46, summaryWidth: 156, summaryHeight: 38,
-    streamLeft: 18, streamTop: 88, streamWidth: 156, streamHeight: 78,
-    summaryItemWidth: 75, summaryRadius: 14, summaryPadding: 8,
-    titleFontSize: 12, backFontSize: 7, summaryValueFontSize: 13, summaryLabelFontSize: 7,
-    recordItemHeight: 72, recordGap: 7, recordPadding: 8, recordRadius: 16, recordInnerWidth: 140,
-    recordTypeFontSize: 11, recordMetaFontSize: 7, recordMetaGap: 4, recordMetricsGap: 7,
-    emptyTitleFontSize: 11, emptySubFontSize: 7, emptyCopyWidth: 120,
-    pageOpacity: 1, pageOffset: 0,
-    viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportWidth: '100%', viewportHeight: '100%', viewportTop: '0px'
+    headerLeft: 22, headerTop: 24, headerWidth: 148, headerHeight: 20, summaryLeft: 22, summaryTop: 49, summaryWidth: 148, summaryHeight: 38, streamLeft: 22, streamTop: 92, streamWidth: 148, streamHeight: 70,
+    summaryCardWidth: 71, recordHeight: 66, recordGap: 7, titleSize: 12, backSize: 7, summaryValueSize: 13, summaryLabelSize: 6, recordTitleSize: 10, recordMetaSize: 6, radius: 14, padding: 7,
+    sceneWidth: 192, sceneHeight: 192, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
   },
-
   onInit() {
     var self = this
-    layoutRuntime.bind(this, function (profile) {
-      return scrollFlow.resolve(profile, workoutHistoryLayout)
-    }, function (plan) {
-      self.applyLayout(plan)
-    })
+    this.controller = createWorkoutHistoryController(function (view) { self.applyView(view) })
+    pageRuntime.bind(this, { contentWidth: function (profile) { return profile.formFactor === 'circle' ? 148 : (profile.formFactor === 'rect' ? 164 : 168) } }, function (profile, scene, safe) { self.applyPlan(workoutHistoryDesign.resolve(profile, scene, safe)) })
   },
-
-  onShow() {
-    this.pageVisible = true
-    pageMotion.enter(this)
-    this.loadRecords()
+  onShow() { this.controller.refresh() },
+  onHide() { this.records = [] },
+  onDestroy() { this.records = [] },
+  onBackPress() { navigation.back(); return true },
+  applyPlan(plan) {
+    applyRegion(this, 'header', plan.header); applyRegion(this, 'summary', plan.summary)
+    this.streamLeft = plan.stream.left; this.streamTop = plan.stream.top; this.streamWidth = plan.stream.width; this.streamHeight = plan.stream.height; this.recordHeight = plan.stream.itemHeight; this.recordGap = plan.stream.gap
+    this.summaryCardWidth = Math.floor((plan.summary.width - 6) / 2)
+    this.titleSize = plan.titleSize; this.backSize = plan.backSize; this.summaryValueSize = plan.summaryValueSize; this.summaryLabelSize = plan.summaryLabelSize; this.recordTitleSize = plan.recordTitleSize; this.recordMetaSize = plan.recordMetaSize; this.radius = plan.radius; this.padding = plan.padding
   },
-
-  onHide() {
-    this.pageVisible = false
-    pageMotion.clear(this)
-    this.releaseRecords()
-  },
-
-  onDestroy() {
-    this.pageVisible = false
-    pageMotion.clear(this)
-    this.releaseRecords()
-  },
-
-  applyLayout(plan) {
-    var header = region(plan, 'header')
-    var summary = region(plan, 'summary')
-    var stream = plan && plan.stream
-    if (!header || !summary || !stream) return
-
-    this.headerLeft = header.left
-    this.headerTop = header.top
-    this.headerWidth = header.width
-    this.headerHeight = header.height
-    this.summaryLeft = summary.left
-    this.summaryTop = summary.top
-    this.summaryWidth = summary.width
-    this.summaryHeight = summary.height
-    this.streamLeft = stream.left
-    this.streamTop = stream.top
-    this.streamWidth = stream.width
-    this.streamHeight = stream.viewportHeight
-
-    var scale = plan.scale || 1
-    this.summaryItemWidth = Math.floor((summary.width - 6 * scale) / 2)
-    this.summaryRadius = Math.max(10, Math.round(14 * scale))
-    this.summaryPadding = Math.max(6, Math.round(8 * scale))
-    this.titleFontSize = Math.max(10, Math.round(12 * scale))
-    this.backFontSize = Math.max(6, Math.round(7 * scale))
-    this.summaryValueFontSize = Math.max(11, Math.round(14 * scale))
-    this.summaryLabelFontSize = Math.max(6, Math.round(7 * scale))
-    this.recordItemHeight = stream.itemHeight
-    this.recordGap = stream.gap
-    this.recordPadding = Math.max(7, Math.round(9 * scale))
-    this.recordRadius = Math.max(12, Math.round(17 * scale))
-    this.recordInnerWidth = Math.max(90, Math.round(stream.width - this.recordPadding * 2))
-    this.recordTypeFontSize = Math.max(10, Math.round(12 * scale))
-    this.recordMetaFontSize = Math.max(7, Math.round(8 * scale))
-    this.recordMetaGap = Math.max(3, Math.round(4 * scale))
-    this.recordMetricsGap = Math.max(5, Math.round(7 * scale))
-    this.emptyTitleFontSize = Math.max(10, Math.round(12 * scale))
-    this.emptySubFontSize = Math.max(7, Math.round(8 * scale))
-    this.emptyCopyWidth = Math.max(100, Math.round(stream.width - 24 * scale))
-  },
-
-  loadRecords() {
-    var self = this
-    workoutManager.getRecords(function (records) {
-      if (!self.pageVisible) return
-      var view = workoutHistoryMapper.mapWorkoutHistory(records)
-      self.records = view.records
-      self.totalCount = view.totalCount
-      self.totalSteps = view.totalSteps
-      self.emptyVisible = view.emptyVisible
-    })
-  },
-
-  releaseRecords() {
-    this.records = []
-  },
-
-  goBack() {
-    pageMotion.back(this, router)
-  },
-
-  onTouchStart(e) {
-    swipeBack.start(this, e)
-  },
-
-  onTouchEnd(e) {
-    swipeBack.end(this, e, router)
-  }
+  applyView(view) { this.totalCount = view.totalCount; this.totalSteps = view.totalSteps; this.emptyVisible = view.empty; this.records = view.records },
+  goBack() { navigation.back() }
 }
 </script>
 
 <style>
-.history-page { width: 100%; height: 100%; background-color: #000000; }
+.history-root, .history-scene { background-color: #000000; }
+.history-scene { position: absolute; left: 0px; top: 0px; }
+.top-row, .summary-row, .empty-state, .record-list { position: absolute; }
 .top-row { flex-direction: row; justify-content: space-between; align-items: center; }
-.page-title { color: #FFFFFF; font-weight: bold; }
-.back-text { color: #8E8E93; text-align: right; }
+.page-title { color: #FFFFFF; font-weight: bold; } .back-text { color: #8E8E93; text-align: right; }
 .summary-row { flex-direction: row; justify-content: space-between; }
-.summary-item { flex-direction: column; justify-content: center; background-color: #14181F; }
-.summary-value { color: #FFFFFF; font-weight: bold; }
-.step-color { color: #FFD60A; }
-.summary-label { color: #8E8E93; margin-top: 2px; }
-.record-item { flex-direction: column; background-color: #111317; }
-.record-head,
-.record-metrics { flex-direction: row; justify-content: space-between; }
-.record-type { font-weight: bold; color: #FFFFFF; }
-.sync-state { color: #0A84FF; }
-.record-time { color: #8E8E93; }
-.record-value { color: #D1D1D6; }
-.gps-source { color: #30D158; }
-.empty-state { flex-direction: column; align-items: center; justify-content: center; }
-.empty-title { color: #FFFFFF; font-weight: bold; }
-.empty-sub { color: #8E8E93; text-align: center; margin-top: 8px; }
+.summary-card { background-color: #14181F; flex-direction: column; justify-content: center; padding-left: 10px; }
+.summary-value { color: #FFFFFF; font-weight: bold; } .step-color { color: #FFD60A; } .summary-label { color: #8E8E93; margin-top: 2px; }
+.record-list { flex-direction: column; }
+.record-card { background-color: #111317; flex-direction: column; }
+.record-head, .record-metrics { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
+.record-title { color: #FFFFFF; font-weight: bold; } .sync-text { color: #0A84FF; }
+.record-meta { color: #8E8E93; margin-top: 4px; } .record-metrics { margin-top: 7px; } .record-value { color: #D1D1D6; }
+.record-source { color: #30D158; margin-top: 4px; }
+.empty-state { justify-content: center; align-items: center; flex-direction: column; }
+.empty-title { color: #FFFFFF; font-size: 12px; font-weight: bold; } .empty-copy { width: 130px; color: #8E8E93; font-size: 8px; line-height: 13px; text-align: center; margin-top: 8px; }
 </style>
