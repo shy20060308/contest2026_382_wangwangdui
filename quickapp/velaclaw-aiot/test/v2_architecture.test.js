@@ -30,6 +30,13 @@ function validateRelativeImports(full, source) {
   }
 }
 
+function assertSemanticFeature(relative) {
+  const source = read(relative)
+  assert.ok(!source.includes('/presentation/'), relative + ' semantic Feature must never depend on Presentation')
+  assert.ok(!source.includes('/design/'), relative + ' semantic Feature must never depend on Design')
+  assert.ok(!/#[0-9A-Fa-f]{6}\b/.test(source), relative + ' semantic Feature must not own visual color tokens')
+}
+
 assert.ok(!fs.existsSync(path.join(root, 'src/v2/domain')), 'src/v2/domain must not exist; canonical business rules live only in src/domain')
 
 Object.keys(manifest.router.pages || {}).forEach(route => {
@@ -70,6 +77,18 @@ featureFiles.filter(name => name.endsWith('.js')).forEach(full => {
   assert.ok(!shapeBranch.test(source), relative + ' Feature must not branch on screen shape; screen differences belong to Design')
 })
 
+;[
+  'src/v2/features/activity/controller.js',
+  'src/v2/features/health/controller.js',
+  'src/v2/features/history/controller.js',
+  'src/v2/features/today/controller.js',
+  'src/v2/features/clock/controller.js',
+  'src/v2/features/watchface/controller.js',
+  'src/v2/features/workout/controller.js',
+  'src/v2/features/workout/selection.js',
+  'src/v2/features/workout/history_controller.js'
+].forEach(assertSemanticFeature)
+
 const domainFiles = []
 walk(path.join(root, 'src/domain'), domainFiles)
 domainFiles.filter(name => name.endsWith('.js')).forEach(full => {
@@ -77,6 +96,15 @@ domainFiles.filter(name => name.endsWith('.js')).forEach(full => {
   const source = fs.readFileSync(full, 'utf8')
   assert.ok(!source.includes('/v2/features/') && !source.includes('/v2/design/') && !source.includes('/pages/') && !source.includes('/components/'), relative + ' Domain must not depend upward on Feature, Design or UI')
 })
+
+const calendarDomain = read('src/domain/calendar/index.js')
+assert.ok(!calendarDomain.includes('textColor') && !calendarDomain.includes('backgroundColor'), 'Calendar Domain must expose date semantics only')
+assert.ok(!/#[0-9A-Fa-f]{6}\b/.test(calendarDomain), 'Calendar Domain must never own UI colors')
+const watchfaceDomain = read('src/domain/watchface/catalog.js')
+assert.ok(!/\b(background|accent|borderColor)\b/.test(watchfaceDomain), 'Watchface Domain catalog must contain semantic metadata only')
+assert.ok(!/#[0-9A-Fa-f]{6}\b/.test(watchfaceDomain), 'Watchface Domain catalog must never own visual colors')
+const workoutDistance = read('src/domain/workout/distance.js')
+assert.ok(workoutDistance.includes('acceptedSegment') && workoutDistance.includes('meters >= 2 && meters <= 200'), 'Workout distance acceptance must remain a Domain rule')
 
 const watchfaceDir = path.join(root, 'src/components/watchfaces')
 fs.readdirSync(watchfaceDir).filter(name => name.endsWith('.ux')).forEach(name => {
@@ -95,6 +123,9 @@ const clockFeature = read('src/v2/features/clock/controller.js')
 const clockDesign = read('src/v2/design/specs/clock.js')
 const notification = read('src/pages/notification_demo/notification_demo.ux')
 const workout = read('src/pages/workout/workout.ux')
+const workoutFeature = read('src/v2/features/workout/controller.js')
+const workoutSelection = read('src/pages/workout_select/workout_select.ux')
+const workoutHistory = read('src/pages/workout_history/workout_history.ux')
 const launcher = read('src/pages/applist/applist.ux')
 const selector = read('src/pages/watchface/index.ux')
 
@@ -108,20 +139,24 @@ assert.ok(geometry.includes('PILL_GESTURE_BAR = 36') && geometry.includes('capsu
 assert.ok(deviceProfile.includes("../../capabilities/device"), 'V2 device profile must consume the device capability gateway')
 
 assert.ok(clock.includes("../../v2/features/clock/controller"), 'Clock must be a thin V2 page')
-assert.ok(clock.includes("../../v2/design/specs/clock"), 'Clock L3 art direction must live outside feature logic')
+assert.ok(clock.includes("../../v2/design/specs/clock") && clock.includes("../../v2/design/views/clock"), 'Clock must bind Feature state through Design')
 assert.ok(clock.includes('configureFaces(plan.faceIds)'), 'Clock page must inject the Design-selected face set into the Feature')
-assert.ok(!clockFeature.includes('presentation/watchface') && !clockFeature.includes('availability'), 'Clock Feature must not know shape-specific face availability')
+assert.ok(!clockFeature.includes('/design/') && !clockFeature.includes('analog') && !clockFeature.includes('batteryColor'), 'Clock Feature must remain presentation-free')
 assert.ok(clockDesign.includes("faceIds = ['sport', 'simple', 'dashboard', 'mechanical']") && clockDesign.includes("faceIds = ['sport', 'simple', 'dashboard', 'alpine']"), 'Clock Design must own shape-specific face availability')
 assert.ok(!clock.includes('notificationManager') && !clock.includes('deviceSettings') && !clock.includes('faceRegistry'), 'Clock must not regain legacy orchestration')
 
 assert.ok(notification.includes("../../v2/features/notification/controller"), 'notification demo and clock must share one V2 feature runtime')
-assert.ok(workout.includes("../../v2/features/workout/controller"), 'Workout page must consume only its V2 feature controller')
+assert.ok(workout.includes("../../v2/features/workout/controller") && workout.includes("../../v2/design/views/workout"), 'Workout Page must bind semantic Feature state through Design View')
+assert.ok(workout.includes("this.sessionStatus === 'running'"), 'Workout interaction must branch on semantic status, never button copy')
+assert.ok(!workoutFeature.includes('typeName') && !workoutFeature.includes('durationText') && !workoutFeature.includes('distanceText'), 'Workout Feature must not regain presentation formatting')
+assert.ok(workoutSelection.includes("../../v2/design/specs/workout_select") && workoutSelection.includes("../../v2/design/views/workout_selection"), 'Workout Selection must be Design Engine driven')
+assert.ok(workoutHistory.includes("../../v2/design/views/workout_history"), 'Workout History must format records in Design View')
 assert.ok(launcher.includes("../../v2/features/launcher/controller"), 'Launcher business semantics must be shared across L3 surfaces')
-assert.ok(selector.includes("../../v2/features/watchface/controller"), 'Watchface selection must use one V2 feature controller')
+assert.ok(selector.includes("../../v2/features/watchface/controller") && selector.includes("../../v2/design/views/watchface_selector"), 'Watchface selection must separate semantic Feature and visual Design View')
 
 const capabilityEvent = read('src/capabilities/system_event.js')
 const capabilityInterconnect = read('src/capabilities/interconnect.js')
 assert.ok(capabilityEvent.includes('subscribe: subscribe') && capabilityEvent.includes('unsubscribe: unsubscribe'), 'system-event gateway must own lazy subscription lifecycle')
 assert.ok(capabilityInterconnect.includes('consumerCount'), 'interconnect gateway must release native listeners after the final consumer')
 
-console.log('V2 architecture verified: one Domain root, shape-blind Feature decisions, and downward-only UI ownership')
+console.log('V2 architecture verified: semantic Features, pure Domains, Design-owned visuals, and downward-only dependencies')
