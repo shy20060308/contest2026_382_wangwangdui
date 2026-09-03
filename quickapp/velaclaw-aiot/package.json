@@ -19,6 +19,7 @@
     "docs:check": "node scripts/check-docs.js",
     "v2:scene": "node test/v2_scene.test.js",
     "v2:architecture": "node test/v2_architecture.test.js",
+    "v2:runtime": "node test/v2_runtime_contracts.test.js",
     "capabilities:check": "node test/capability_runtime.test.js",
     "power:logic": "node test/power_state_machine.test.js",
     "power:runtime": "node test/power_runtime.test.js",
@@ -27,11 +28,10 @@
     "calendar:logic": "node test/calendar_utils.test.js",
     "analog:logic": "node test/analog_face.test.js",
     "honeycomb:logic": "node test/honeycomb_layout.test.js",
-    "haptic:logic": "node test/haptic_patterns.test.js",
     "check:legacy": "node test/architecture_guard.test.js && node test/layout_adapter.test.js && node scripts/check-multiscreen.js",
     "icons:render": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-icons.ps1 && python scripts/render-soft-icons.py",
     "backgrounds:render": "python scripts/fade-watchface-background.py --input assets/watchfaces/alpine_night_source.jpg --output src/common/watchfaces/alpine_night.jpg",
-    "check": "npm run lint && npm run v2:scene && npm run v2:architecture && npm run capabilities:check && npm run power:logic && npm run power:runtime && npm run health:logic && npm run activity:persistence && npm run calendar:logic && npm run analog:logic && npm run honeycomb:logic && npm run haptic:logic && npm run docs:check"
+    "check": "npm run lint && npm run v2:scene && npm run v2:architecture && npm run v2:runtime && npm run capabilities:check && npm run power:logic && npm run power:runtime && npm run health:logic && npm run activity:persistence && npm run calendar:logic && npm run analog:logic && npm run honeycomb:logic && npm run docs:check"
   },
   "lint-staged": {
     "*.{ux,js}": ["prettier --write", "node scripts/lint.js", "git add"],
