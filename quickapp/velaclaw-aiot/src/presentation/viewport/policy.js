@@ -11,13 +11,13 @@ function cloneViewport(profile) {
 
 function design(profile) {
   var result = cloneViewport(profile || {})
-  if (!profile || !profile.isBetaPillViewport) return result
+  var isBand10Beta = !!(profile && profile.isBetaPillViewport && Number(profile.screenWidth) === 212)
+  if (!isBand10Beta) return result
 
-  // The beta pill compatibility viewport predates the Design Engine. It shifts
-  // legacy page roots down to avoid the host's top cover. Design Engine pages
-  // already reserve the capsule cap through safe geometry, so reusing that
-  // legacy inset would make layout coordinates and rendered coordinates differ.
-  // Keep one 192-wide design canvas and let safe-area geometry own the inset.
+  // Band 10 beta legacy pages use a 24px root inset. Design Engine pages already
+  // reserve the capsule cap in their own geometry, so applying both insets makes
+  // the rendered coordinate system shorter than the Layout Plan and can create
+  // bottom overflow. Restore the full 192-wide, 471-high design canvas here.
   result.viewportPosition = 'absolute'
   result.viewportLeft = '0px'
   result.viewportTop = '0px'
