@@ -32,11 +32,11 @@ import pageRuntime from '../../../v2/app/page_runtime'
 import navigation from '../../../v2/app/navigation'
 import { createDiagnosticsController } from '../../../v2/features/settings/diagnostics_controller'
 import detailDesign from '../../../v2/design/specs/settings_detail'
-import pager from '../../../v2/design/pager'
+import diagnosticsView from '../../../v2/design/views/diagnostics'
 
 export default {
   private: {
-    pageIndex: 0, pageText: '1 / 1', pageProgress: '100%', capabilityPage: [],
+    pageIndex: 0, pageText: '1 / 1', pageProgress: '100%', capabilityPage: [], capabilities: [],
     deviceFamily: '检测中', screenSize: '--', hostSceneText: '--', formFactor: '--', platformText: '--', viewportMode: '--',
     headerLeft: 22, headerTop: 24, headerWidth: 148, headerHeight: 20, streamLeft: 22, streamTop: 49, streamWidth: 148, streamHeight: 104, pagerTop: 158, pagerHeight: 18,
     titleSize: 12, cardRadius: 16, capabilityHeight: 24, capabilityGap: 5,
@@ -44,8 +44,8 @@ export default {
   },
   onInit() {
     var self = this
-    this.controller = createDiagnosticsController(function (view) { self.applyView(view) })
-    pageRuntime.bind(this, { contentWidth: function (profile) { return profile.formFactor === 'circle' ? 148 : (profile.formFactor === 'rect' ? 164 : 168) } }, function (profile, scene, safe) {
+    this.controller = createDiagnosticsController(function (model) { self.applyModel(model) })
+    pageRuntime.bind(this, { contentWidth: function (profile) { return detailDesign.contentWidth(profile) } }, function (profile, scene, safe) {
       var plan = detailDesign.resolve(profile, scene, safe)
       self.headerLeft = plan.header.left; self.headerTop = plan.header.top; self.headerWidth = plan.header.width; self.headerHeight = plan.header.height
       self.streamLeft = plan.stream.left; self.streamTop = plan.stream.top; self.streamWidth = plan.stream.width
@@ -57,22 +57,18 @@ export default {
       self.controller.configureScene(profile, scene)
     })
   },
-  onShow() { this.controller.refresh() },
+  onShow() { if (this.controller) this.controller.refresh() },
   onBackPress() { navigation.back(); return true },
-  applyView(view) {
+  applyModel(model) {
+    var view = diagnosticsView.project(model)
     var device = view.device
     this.deviceFamily = device.deviceFamily; this.screenSize = device.screenSize; this.hostSceneText = device.hostSceneText; this.formFactor = device.formFactor; this.platformText = device.platformText; this.viewportMode = device.viewportMode
     this.capabilities = view.capabilities
     this.refreshPage()
   },
   refreshPage() {
-    var groups = [{ id: 'device' }]
-    var size = this.capabilityPageSize || 3
-    for (var start = 0; start < (this.capabilities || []).length; start += size) groups.push({ id: 'cap-' + start, items: this.capabilities.slice(start, start + size) })
-    var state = pager.resolve(groups, this.pageIndex, 1)
-    this.pageIndex = state.pageIndex; this.pageText = state.pageText; this.pageProgress = state.progress
-    var group = state.items[0]
-    this.capabilityPage = group && group.items ? group.items : []
+    var state = diagnosticsView.page(this.capabilities, this.pageIndex, this.capabilityPageSize || 3)
+    this.pageIndex = state.pageIndex; this.pageText = state.pageText; this.pageProgress = state.pageProgress; this.capabilityPage = state.capabilityPage
   },
   previousPage() { this.pageIndex--; this.refreshPage() },
   nextPage() { this.pageIndex++; this.refreshPage() }
