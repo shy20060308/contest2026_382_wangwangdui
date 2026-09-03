@@ -12,12 +12,17 @@ const bridge = fs.readFileSync(path.join(root, 'src', 'common', 'honeycomb_layou
 const engine = fs.readFileSync(path.join(root, 'src', 'presentation', 'engines', 'honeycomb.js'), 'utf8')
 const catalogSource = fs.readFileSync(path.join(root, 'src', 'domain', 'apps', 'catalog.js'), 'utf8')
 
-assert.ok(source.includes("import honeycombLayout from '../../common/honeycomb_layout'"), 'applist compatibility import must still resolve the shared L3 engine')
+assert.ok(source.includes("import honeycombLayout from '../../presentation/engines/honeycomb'"), 'L3 applist must import the honeycomb presentation engine directly')
+assert.ok(source.includes("import appCatalog from '../../domain/apps/catalog'"), 'launcher surfaces must share one domain app catalog')
+assert.ok(source.includes("import freeSurface from '../../presentation/layout/free_surface'"), 'L3 launcher must resolve surface strategy outside the page')
+assert.ok(source.includes("import applistLayout from '../../presentation/layout/specs/applist'"), 'L3 launcher design decision must live in a spec')
 assert.ok(source.includes('honeycombLayout.buildSlots'), 'slot construction must be delegated to honeycomb engine')
 assert.ok(source.includes('honeycombLayout.layoutSlots'), 'per-frame geometry must be delegated to honeycomb engine')
 assert.ok(source.includes('honeycombLayout.pickSlotByDirection'), 'direction picking must be delegated to honeycomb engine')
 assert.ok(source.includes('honeycombLayout.nextDragOffset'), 'drag projection must be delegated to honeycomb engine')
 assert.ok(source.includes('honeycombLayout.backOut'), 'snap easing must be delegated to honeycomb engine')
+assert.ok(source.includes("surface === 'paged-list'"), 'pill list must be a distinct L3 surface')
+assert.ok(source.includes("surface === 'designed-grid'"), 'rect grid must be a distinct L3 surface')
 
 ;[
   'CIRCLE_SPACING',
@@ -33,7 +38,9 @@ assert.ok(source.includes('honeycombLayout.backOut'), 'snap easing must be deleg
 
 assert.ok(!source.includes('Math.sqrt(CIRCLE_SPACING'), 'applist must not regenerate honeycomb lattice geometry')
 assert.ok(!source.includes('distance / alignment'), 'applist must not duplicate directional geometry scoring')
-assert.ok(bridge.includes("../presentation/engines/honeycomb"), 'common path must be a compatibility bridge to the L3 engine')
+assert.ok(!source.includes('launcherApps.createCircleApps'), 'page must not own screen-specific app catalogs')
+assert.ok(!source.includes('launcherApps.createPillApps'), 'page must not own screen-specific app catalogs')
+assert.ok(bridge.includes("../presentation/engines/honeycomb"), 'common path must remain a compatibility bridge to the L3 engine')
 assert.ok(bridge.split(/\r?\n/).filter(Boolean).length <= 2, 'compatibility bridge must not regain honeycomb implementation')
 assert.ok(engine.includes('SPACING = 46'), 'presentation engine must own lattice spacing')
 assert.ok(engine.includes('FOCUS_Y = 90'), 'presentation engine must own focus geometry')
