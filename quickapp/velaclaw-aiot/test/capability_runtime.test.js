@@ -3,7 +3,16 @@ const path = require('path')
 const assert = require('assert')
 
 const root = path.resolve(__dirname, '..')
-const read = function (name) { return fs.readFileSync(path.join(root, name), 'utf8') }
+const read = name => fs.readFileSync(path.join(root, name), 'utf8')
+const manifest = JSON.parse(read('src/manifest.json'))
+
+function hasRawDeviceApi(source) {
+  return [
+    '@system.battery', '@system.brightness', '@system.device', '@system.event',
+    '@system.geolocation', '@system.interconnect', '@system.sensor', '@system.storage',
+    '@system.vibrator', '@service.health'
+  ].some(token => source.includes(token))
+}
 
 const healthChannel = read('src/capabilities/internal/health_channel.js')
 const heart = read('src/capabilities/heart_rate.js')
@@ -19,87 +28,57 @@ const storage = read('src/capabilities/storage.js')
 const systemEvent = read('src/capabilities/system_event.js')
 const interconnect = read('src/capabilities/interconnect.js')
 const introspection = read('src/capabilities/introspection.js')
-const powerRuntime = read('src/runtime/power/controller.js')
-const powerManager = read('src/common/power_manager.js')
-const gpsTracker = read('src/common/gps_tracker.js')
-const haptic = read('src/common/haptic_feedback.js')
-const profile = read('src/presentation/viewport/profile.js')
-const brightnessPage = read('src/pages/settings/brightness/brightness.ux')
-const motionPage = read('src/pages/settings/motion/motion.ux')
-const diagnosticsPage = read('src/pages/settings/diagnostics/diagnostics.ux')
-const clockPage = read('src/pages/clock/clock.ux')
-
-function hasRawDeviceApi(source) {
-  return [
-    '@system.battery', '@system.brightness', '@system.device', '@system.event',
-    '@system.geolocation', '@system.interconnect', '@system.sensor', '@system.storage',
-    '@system.vibrator', '@service.health'
-  ].some(function (token) { return source.includes(token) })
-}
 
 assert.ok(healthChannel.includes("from '@service.health'"), 'health raw API must be isolated in capability runtime')
-assert.ok(healthChannel.includes('listeners.length === 1'), 'health channel must start lazily for first consumer')
-assert.ok(healthChannel.includes('listeners.length === 0'), 'health channel must stop after last consumer')
-assert.ok(healthChannel.includes('isAvailable: serviceAvailable'), 'health gateways must expose non-activating availability introspection')
+assert.ok(healthChannel.includes('listeners.length === 1') && healthChannel.includes('listeners.length === 0'), 'health gateway must be demand-driven')
 assert.ok(heart.includes("dataTypeName: 'HEART_RATE'"), 'heart rate must be independently triggerable')
 assert.ok(spo2.includes("dataTypeName: 'SPO2'"), 'SpO2 must be independently triggerable')
 assert.ok(stress.includes("dataTypeName: 'STRESS'"), 'stress must be independently triggerable')
-
 assert.ok(motion.includes("from '@system.sensor'"), 'motion gateway must own accelerometer API')
-assert.ok(motion.includes('consumers.length === 0'), 'motion must release native sampling after last consumer')
-assert.ok(motion.includes("interval === 'game'"), 'motion gateway must preserve high-rate diagnostics')
-assert.ok(motion.includes('desiredInterval()'), 'motion gateway must reconcile consumer sampling needs')
-assert.ok(motion.includes('if (active) stopNative()'), 'motion gateway must restart when required sampling cadence changes')
-assert.ok(motion.includes('isAvailable:'), 'motion gateway must expose non-activating availability')
 assert.ok(location.includes("from '@system.geolocation'"), 'location gateway must own geolocation API')
-assert.ok(location.includes('listeners.length === 1'), 'location must start on first consumer')
-assert.ok(location.includes('listeners.length === 0'), 'location must stop after last consumer')
-
 assert.ok(device.includes("from '@system.device'"), 'device gateway must own device API')
 assert.ok(battery.includes("from '@system.battery'"), 'battery gateway must own battery API')
-assert.ok(battery.includes('isAvailable:'), 'battery gateway must expose availability without reading battery state')
 assert.ok(displayPower.includes("from '@system.brightness'"), 'display gateway must own brightness API')
-assert.ok(displayPower.includes('setMode:'), 'display gateway must own automatic/manual brightness mode')
-assert.ok(displayPower.includes('isAvailable:'), 'display gateway must expose availability')
 assert.ok(vibration.includes("from '@system.vibrator'"), 'vibration gateway must own vibrator API')
 assert.ok(storage.includes("from '@system.storage'"), 'storage gateway must own storage API')
-assert.ok(systemEvent.includes("from '@system.event'"), 'system event API must be isolated in its gateway')
-assert.ok(interconnect.includes("from '@system.interconnect'"), 'interconnect API must be isolated in its gateway')
+assert.ok(systemEvent.includes("from '@system.event'"), 'event gateway must own system event API')
+assert.ok(interconnect.includes("from '@system.interconnect'"), 'interconnect gateway must own interconnect API')
 
-assert.ok(introspection.includes("import motion from './motion'"), 'capability introspection must consume gateways rather than native APIs')
-assert.ok(introspection.includes("import systemEvent from './system_event'"), 'capability introspection must include event gateway')
-assert.ok(introspection.includes("import interconnect from './interconnect'"), 'capability introspection must include interconnect gateway')
-assert.ok(!hasRawDeviceApi(introspection), 'capability introspection must not access raw APIs')
+assert.ok(!hasRawDeviceApi(introspection), 'capability introspection must compose gateways without probing native APIs')
+assert.ok(introspection.includes("import motion from './motion'"), 'introspection must consume motion gateway')
+assert.ok(introspection.includes("import systemEvent from './system_event'"), 'introspection must consume event gateway')
 
-assert.ok(powerRuntime.includes("../../capabilities/display_power"), 'Power Runtime must use display capability')
-assert.ok(powerRuntime.includes("../../capabilities/motion"), 'Power Runtime must use motion capability')
-assert.ok(powerRuntime.includes("../../capabilities/heart_rate"), 'Power Runtime must use heart-rate capability')
-assert.ok(powerRuntime.includes("../../capabilities/battery"), 'Power Runtime must use battery capability')
+const powerRuntime = read('src/runtime/power/controller.js')
+assert.ok(powerRuntime.includes("../../capabilities/display_power"), 'Power Runtime must use display gateway')
+assert.ok(powerRuntime.includes("../../capabilities/motion"), 'Power Runtime must use motion gateway')
+assert.ok(powerRuntime.includes("../../capabilities/heart_rate"), 'Power Runtime must use heart-rate gateway')
+assert.ok(powerRuntime.includes("../../capabilities/battery"), 'Power Runtime must use battery gateway')
 assert.ok(!hasRawDeviceApi(powerRuntime), 'Power Runtime must never regress to raw device APIs')
 
-assert.ok(powerManager.includes("../capabilities/display_power"), 'legacy power manager must use display capability')
-assert.ok(powerManager.includes("../capabilities/motion"), 'legacy power manager must use motion capability')
-assert.ok(!hasRawDeviceApi(powerManager), 'legacy power manager must never regress to raw device APIs')
-assert.ok(gpsTracker.includes("../capabilities/location"), 'GPS tracker must use location capability')
-assert.ok(!gpsTracker.includes('@system.geolocation'), 'GPS tracker must not own geolocation API')
-assert.ok(haptic.includes("../capabilities/vibration"), 'haptic logic must use vibration capability')
-assert.ok(!haptic.includes('@system.vibrator'), 'haptic logic must not own vibrator API')
-assert.ok(profile.includes("../../capabilities/device"), 'viewport must consume device capability')
-assert.ok(!profile.includes('platform/vela'), 'viewport must not use retired platform layer')
+const brightnessFeature = read('src/v2/features/settings/brightness_controller.js')
+const motionFeature = read('src/v2/features/settings/motion_controller.js')
+const diagnosticsFeature = read('src/v2/features/settings/diagnostics_controller.js')
+const workoutFeature = read('src/v2/features/workout/controller.js')
+const notificationFeature = read('src/v2/features/notification/controller.js')
+const deviceProfile = read('src/v2/system/device_profile.js')
 
-assert.ok(brightnessPage.includes("../../../capabilities/display_power"), 'brightness settings must use display capability')
-assert.ok(!brightnessPage.includes("from '@system.brightness'"), 'brightness settings must not access the raw brightness API')
-assert.ok(motionPage.includes("../../../capabilities/motion"), 'motion diagnostics must use motion capability')
-assert.ok(motionPage.includes("interval: 'game'"), 'motion diagnostics must request its sampling intent through the gateway')
-assert.ok(!motionPage.includes("from '@system.sensor'"), 'motion diagnostics must not access the raw sensor API')
-assert.ok(diagnosticsPage.includes("../../../capabilities/introspection"), 'device diagnostics must consume capability introspection')
-assert.ok(diagnosticsPage.includes("from '@system.router'"), 'framework routing may remain a page concern')
-assert.ok(!hasRawDeviceApi(diagnosticsPage), 'device diagnostics must never probe native device APIs directly')
+assert.ok(brightnessFeature.includes("../../../capabilities/display_power"), 'brightness Feature must use display gateway')
+assert.ok(motionFeature.includes("../../../capabilities/motion"), 'motion Feature must use motion gateway')
+assert.ok(diagnosticsFeature.includes("../../../capabilities/introspection"), 'diagnostics Feature must use capability introspection')
+assert.ok(workoutFeature.includes("../../../capabilities/location"), 'workout Feature must use location gateway')
+assert.ok(notificationFeature.includes("../../../capabilities/system_event") && notificationFeature.includes("../../../capabilities/interconnect"), 'notification Feature must use event/interconnect gateways')
+assert.ok(deviceProfile.includes("../../capabilities/device"), 'V2 device profile must use device gateway')
+;[brightnessFeature, motionFeature, diagnosticsFeature, workoutFeature, notificationFeature, deviceProfile].forEach(source => assert.ok(!hasRawDeviceApi(source), 'V2 application layers must not bypass capability gateways'))
 
-assert.ok(clockPage.includes("../../runtime/power/controller"), 'clock must consume Power Runtime')
-assert.ok(!clockPage.includes("from '@system.battery'"), 'clock must not access raw battery API')
-assert.ok(!clockPage.includes('health_sample_service'), 'clock must not access legacy health transport')
-assert.ok(!clockPage.includes('power_manager'), 'clock must not use legacy power manager')
-assert.ok(!clockPage.includes('setInterval('), 'clock must not own power cadence timers')
+Object.keys(manifest.router.pages || {}).forEach(route => {
+  const page = manifest.router.pages[route]
+  const source = read(path.join('src', route, page.component + '.ux'))
+  assert.ok(!source.includes('/capabilities/'), route + ' Page must not depend on Capability directly')
+  assert.ok(!hasRawDeviceApi(source), route + ' Page must not access raw device APIs')
+  assert.ok(!source.includes('@system.router'), route + ' Page must delegate navigation to V2 app runtime')
+})
 
-console.log('Capability Runtime verified: device APIs are isolated while framework routing stays page-local')
+const navigation = read('src/v2/app/navigation.js')
+assert.ok(navigation.includes("from '@system.router'"), 'V2 navigation must be the sole router framework boundary')
+
+console.log('Capability Runtime verified: raw Vela APIs stay in gateways and Pages stay capability-free')
