@@ -117,5 +117,6 @@ export default {
   getSnapshot: function () { return clone(latest) },
   consumerCount: function () { return consumers.length },
   isActive: function () { return active },
-  getInterval: function () { return activeInterval }
+  getInterval: function () { return activeInterval },
+  isAvailable: function () { return !!(sensor && sensor.subscribeAccelerometer) }
 }
