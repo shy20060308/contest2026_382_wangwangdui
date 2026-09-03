@@ -1,9 +1,10 @@
 import workoutState from '../../../domain/workout/state_machine'
 import workoutRepository from '../../../domain/workout/repository'
-import { getWorkoutModes } from './controller'
+
+var MODE_TYPES = ['walk', 'run']
 
 export default {
-  getModes: getWorkoutModes,
+  getModeTypes: function () { return MODE_TYPES.slice() },
   hasActive: function (callback) {
     var current = workoutState.getActive()
     if (current) { if (callback) callback(true); return }
