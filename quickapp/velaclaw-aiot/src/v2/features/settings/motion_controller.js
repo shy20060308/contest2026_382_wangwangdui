@@ -1,6 +1,6 @@
 import motion from '../../../capabilities/motion'
 import vibration from '../../../capabilities/vibration'
-var metrics = require('../../domain/motion/metrics')
+var metrics = require('../../../domain/motion/metrics')
 
 function format(value) { return Number(value || 0).toFixed(2) }
 
