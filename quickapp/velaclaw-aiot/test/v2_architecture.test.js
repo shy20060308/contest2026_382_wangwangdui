@@ -30,7 +30,6 @@ function validateRelativeImports(full, source) {
   }
 }
 
-// A rewrite must have one Domain root. V2 is application/design/runtime, not a second business world.
 assert.ok(!fs.existsSync(path.join(root, 'src/v2/domain')), 'src/v2/domain must not exist; canonical business rules live only in src/domain')
 
 Object.keys(manifest.router.pages || {}).forEach(route => {
@@ -67,6 +66,7 @@ featureFiles.filter(name => name.endsWith('.js')).forEach(full => {
   const source = fs.readFileSync(full, 'utf8')
   assert.ok(!source.includes('/pages/') && !source.includes('/components/'), relative + ' Feature must never depend on Page or Component')
   assert.ok(!source.includes('/presentation/layout/') && !source.includes('/presentation/viewport/'), relative + ' Feature must not depend on legacy presentation infrastructure')
+  assert.ok(!/\b(formFactor|isCircle|isPill|isRect)\b/.test(source), relative + ' Feature must be shape-blind; screen differences belong to Design')
 })
 
 const domainFiles = []
@@ -123,4 +123,4 @@ const capabilityInterconnect = read('src/capabilities/interconnect.js')
 assert.ok(capabilityEvent.includes('subscribe: subscribe') && capabilityEvent.includes('unsubscribe: unsubscribe'), 'system-event gateway must own lazy subscription lifecycle')
 assert.ok(capabilityInterconnect.includes('consumerCount'), 'interconnect gateway must release native listeners after the final consumer')
 
-console.log('V2 architecture verified: one Domain root, resolved dependencies, and downward-only UI ownership')
+console.log('V2 architecture verified: one Domain root, shape-blind Features, and downward-only UI ownership')
