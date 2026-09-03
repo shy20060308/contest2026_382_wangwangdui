@@ -1,12 +1,12 @@
 <template>
   <div class="applist-page {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px; margin-top: {{ pageOffsetY }}px;" @swipe="handleSwipe">
-    <div class="top-row" if="{{ profileReady && !isCircle }}">
+    <div class="top-row {{ isRect ? 'rect-top-row' : '' }}" if="{{ profileReady && !isCircle }}">
       <text class="page-side-spacer"></text>
-      <text class="page-title">应用</text>
+      <text class="page-title {{ isRect ? 'rect-page-title' : '' }}">应用</text>
       <text class="page-number">{{ pageText }}</text>
     </div>
 
-    <div class="pill-list" if="{{ profileReady && !isCircle }}">
+    <div class="pill-list" if="{{ profileReady && surface === 'paged-list' }}">
       <div class="app-item" for="{{ pageApps }}" tid="id" @click="openApp($item)">
         <image class="app-icon" src="{{ $item.icon }}"></image>
         <text class="app-name">{{ $item.label }}</text>
@@ -14,13 +14,21 @@
       </div>
     </div>
 
-    <stack class="circle-honeycomb" if="{{ profileReady && isCircle }}" @touchstart="handleCircleTouchStart" @touchmove="handleCircleTouchMove" @touchend="handleCircleTouchEnd">
+    <div class="rect-grid" if="{{ profileReady && surface === 'designed-grid' }}">
+      <div class="grid-app" for="{{ pageApps }}" tid="id" @click="openApp($item)" style="margin-right: {{ $item.marginRight }}px; margin-bottom: {{ $item.marginBottom }}px; border-color: {{ $item.accent }};">
+        <image class="grid-icon" src="{{ $item.icon }}"></image>
+        <div class="grid-copy">
+          <text class="grid-name">{{ $item.label }}</text>
+          <div class="grid-accent" style="background-color: {{ $item.accent }};"></div>
+        </div>
+      </div>
+    </div>
+
+    <stack class="circle-honeycomb" if="{{ profileReady && surface === 'honeycomb' }}" @touchstart="handleCircleTouchStart" @touchmove="handleCircleTouchMove" @touchend="handleCircleTouchEnd">
       <!--
         触摸事件同时绑在图标上：beta 运行时不跨组件冒泡（见 docs/TECHNICAL.md），
-        而 .circle-app 自带 @click，会吃掉从图标上起手的整串触摸事件，
-        导致「按在图标上拖不动、只有拖空白处才有反应」。
-        与 clock.ux 在根节点和各表盘组件上重复绑定 swipe/longpress 同理。
-        处理函数按事件时间戳去重，父子都收到时也只生效一次。
+        而 .circle-app 自带 @click，会吃掉从图标上起手的整串触摸事件。
+        页面只负责事件调度；蜂巢坐标、聚焦和吸附全部属于 L3 Presentation Engine。
       -->
       <div class="circle-app {{ $item.isCenter ? 'is-center' : '' }}" for="{{ circleSlots }}" tid="slotKey" style="left: {{ $item.left }}px; top: {{ $item.top }}px; width: {{ $item.size }}px; height: {{ $item.size }}px; opacity: {{ $item.opacity }};" @click="focusOrOpenCircleApp($item)" @touchstart="handleCircleTouchStart" @touchmove="handleCircleTouchMove" @touchend="handleCircleTouchEnd">
         <image class="circle-icon" style="width: {{ $item.size }}px; height: {{ $item.size }}px; border-radius: {{ $item.radius }}px;" src="{{ $item.icon }}"></image>
@@ -28,8 +36,6 @@
       <div class="circle-position-track">
         <div class="circle-position-dot" style="top: {{ circleIndicatorTop }}px;"></div>
       </div>
-      <!-- 名称条排在图标之后：本运行时按 DOM 顺序叠放，靠后即在上层。
-           它盖在图标上方，同样要能起手拖拽，否则底部中央会留下一块死区。 -->
       <div class="center-label-glass" @touchstart="handleCircleTouchStart" @touchmove="handleCircleTouchMove" @touchend="handleCircleTouchEnd"></div>
       <div class="center-label-sheen"></div>
       <div class="center-label" @touchstart="handleCircleTouchStart" @touchmove="handleCircleTouchMove" @touchend="handleCircleTouchEnd">
@@ -38,12 +44,12 @@
       </div>
     </stack>
 
-    <div class="pager-row" if="{{ profileReady && !isCircle }}">
-      <text class="pager-button" style="color: {{ previousColor }}" @click="previousPage">‹</text>
-      <div class="pager-track">
+    <div class="pager-row {{ isRect ? 'rect-pager-row' : '' }}" if="{{ profileReady && !isCircle }}">
+      <text class="pager-button {{ isRect ? 'rect-pager-button' : '' }}" style="color: {{ previousColor }}" @click="previousPage">‹</text>
+      <div class="pager-track {{ isRect ? 'rect-pager-track' : '' }}">
         <div class="pager-fill" style="width: {{ pageProgress }}"></div>
       </div>
-      <text class="pager-button" style="color: {{ nextColor }}" @click="nextPage">›</text>
+      <text class="pager-button {{ isRect ? 'rect-pager-button' : '' }}" style="color: {{ nextColor }}" @click="nextPage">›</text>
     </div>
   </div>
 </template>
@@ -51,14 +57,39 @@
 <script>
 import router from '@system.router'
 import pageMotion from '../../common/page_motion'
-import launcherApps from '../../common/launcher_apps'
 import fixedPager from '../../common/fixed_pager'
-import pageViewport from '../../common/page_viewport'
-import honeycombLayout from '../../common/honeycomb_layout'
+import layoutRuntime from '../../presentation/layout/runtime'
+import freeSurface from '../../presentation/layout/free_surface'
+import applistLayout from '../../presentation/layout/specs/applist'
+import honeycombLayout from '../../presentation/engines/honeycomb'
+import appCatalog from '../../domain/apps/catalog'
+
+var GRID_ACCENTS = ['#3A7DFF', '#30D158', '#FF9F0A', '#BF5AF2', '#64D2FF', '#FF375F']
+
+function decorateGridApps(items) {
+  var source = items || []
+  var result = []
+  for (var i = 0; i < source.length; i++) {
+    var item = source[i]
+    result.push({
+      id: item.id,
+      label: item.label,
+      icon: item.icon,
+      softIcon: item.softIcon,
+      route: item.route,
+      accent: GRID_ACCENTS[i % GRID_ACCENTS.length],
+      marginRight: i % 2 === 0 ? 8 : 0,
+      marginBottom: i < 4 ? 6 : 0
+    })
+  }
+  return result
+}
 
 export default {
   private: {
     isCircle: false,
+    isRect: false,
+    surface: '',
     profileReady: false,
     viewportClass: '',
     viewportPosition: 'relative',
@@ -68,6 +99,7 @@ export default {
     viewportTop: '0px',
     allApps: [],
     pageApps: [],
+    pageSize: 4,
     circleSlots: [],
     focusedLabel: '',
     circleDragOffset: 0,
@@ -93,9 +125,14 @@ export default {
 
   onInit() {
     var self = this
-    pageViewport.bind(this, function (profile) {
-      self.isCircle = profile.isCircle
-      self.allApps = self.isCircle ? launcherApps.createCircleApps() : launcherApps.createPillApps()
+    layoutRuntime.bind(this, function (profile) {
+      return freeSurface.resolve(profile, applistLayout)
+    }, function (plan) {
+      self.surface = plan.surface
+      self.isCircle = plan.surface === 'honeycomb'
+      self.isRect = plan.surface === 'designed-grid'
+      self.pageSize = plan.pageSize || 4
+      self.allApps = appCatalog.list(plan.appIds)
       if (self.isCircle) {
         self.circleSlots = honeycombLayout.buildSlots(self.allApps)
         self.lastSlotSignature = null
@@ -131,9 +168,9 @@ export default {
       this.refreshCirclePage()
       return
     }
-    var state = fixedPager.build(this.allApps, this.pageIndex, 4)
+    var state = fixedPager.build(this.allApps, this.pageIndex, this.pageSize)
     this.pageIndex = state.pageIndex
-    this.pageApps = state.items
+    this.pageApps = this.surface === 'designed-grid' ? decorateGridApps(state.items) : state.items
     this.pageText = state.pageText
     this.pageProgress = Math.round((state.pageNumber / state.pageCount) * 100) + '%'
     this.previousColor = state.hasPrevious ? '#0A84FF' : '#3A3A3C'
@@ -197,7 +234,7 @@ export default {
       this.moveCircleFocus(honeycombLayout.DIRECTIONS.left)
       return
     }
-    var state = fixedPager.move(this.allApps, this.pageIndex, 4, -1)
+    var state = fixedPager.move(this.allApps, this.pageIndex, this.pageSize, -1)
     if (state.pageIndex === this.pageIndex) return
     this.pageIndex = state.pageIndex
     this.refreshPage()
@@ -208,7 +245,7 @@ export default {
       this.moveCircleFocus(honeycombLayout.DIRECTIONS.right)
       return
     }
-    var state = fixedPager.move(this.allApps, this.pageIndex, 4, 1)
+    var state = fixedPager.move(this.allApps, this.pageIndex, this.pageSize, 1)
     if (state.pageIndex === this.pageIndex) return
     this.pageIndex = state.pageIndex
     this.refreshPage()
@@ -360,7 +397,6 @@ export default {
   background-color: #000000;
   width: 100%;
   height: 100%;
-  padding: 16px 12px;
 }
 
 .top-row {
@@ -369,8 +405,14 @@ export default {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-top: 50px;
+  margin-top: 66px;
   margin-bottom: 8px;
+}
+
+.rect-top-row {
+  height: 24px;
+  margin-top: 8px;
+  margin-bottom: 6px;
 }
 
 .page-title {
@@ -379,6 +421,10 @@ export default {
   font-weight: bold;
   color: #FFFFFF;
   text-align: center;
+}
+
+.rect-page-title {
+  font-size: 16px;
 }
 
 .page-side-spacer,
@@ -404,7 +450,7 @@ export default {
   padding-right: 9px;
   margin-bottom: 9px;
   background-color: #14181F;
-  border-radius: 11px;
+  border-radius: 14px;
 }
 
 .app-icon {
@@ -428,12 +474,53 @@ export default {
   text-align: right;
 }
 
-/*
- * 圆屏蜂巢：中心 + 六邻居 + 四外环，间距恒为 46px。
- * 聚焦点 (96,90) 略高于画布中心，把底部弧线让给名称条。
- * 名称条压在图标之上（DOM 顺序靠后即在上层，本运行时不用 z-index），
- * 图标穿过时淡出而不是横向弹开。
- */
+.rect-grid {
+  width: 168px;
+  height: 156px;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.grid-app {
+  width: 80px;
+  height: 48px;
+  flex-direction: row;
+  align-items: center;
+  padding: 6px;
+  border-width: 1px;
+  border-radius: 12px;
+  background-color: #11161D;
+}
+
+.grid-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 14px;
+  margin-right: 7px;
+}
+
+.grid-copy {
+  width: 31px;
+  height: 30px;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.grid-name {
+  width: 31px;
+  font-size: 9px;
+  font-weight: bold;
+  color: #FFFFFF;
+  lines: 2;
+}
+
+.grid-accent {
+  width: 20px;
+  height: 2px;
+  border-radius: 1px;
+  margin-top: 3px;
+}
+
 .circle-honeycomb {
   width: 192px;
   height: 192px;
@@ -451,7 +538,6 @@ export default {
   z-index: 3;
 }
 
-/* 名称条：96 宽落在 y=152..172，四角均在内切圆内（已由安全区模型验证）。 */
 .center-label {
   left: 48px;
   top: 152px;
@@ -474,7 +560,6 @@ export default {
   opacity: 0.82;
 }
 
-/* 顶边高光：一条 1px 亮线，暗示玻璃的厚度与曲面。 */
 .center-label-sheen {
   left: 62px;
   top: 153px;
@@ -504,7 +589,6 @@ export default {
   text-align: center;
 }
 
-/* 位置指示器：贴着右侧弧线，圆心 (96,96) 半径 96，x=178 处安全。 */
 .circle-position-track {
   left: 178px;
   top: 68px;
@@ -522,12 +606,6 @@ export default {
   background-color: #0A84FF;
 }
 
-/*
- * 原来这里有 .circle-gesture-tip「上下滑动」，位于 y=181..190、宽 58px。
- * 内切圆在 y=190 处只有 39px 宽，那行字左右两端本来就被弧线切掉了。
- * 名称条第二行的「点按打开」已经承担提示职责，故整体移除。
- */
-
 .pager-row {
   width: 156px;
   height: 28px;
@@ -535,6 +613,12 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-top: 0px;
+}
+
+.rect-pager-row {
+  width: 128px;
+  height: 24px;
+  margin-top: 4px;
 }
 
 .pager-button {
@@ -545,6 +629,12 @@ export default {
   text-align: center;
 }
 
+.rect-pager-button {
+  width: 28px;
+  height: 22px;
+  font-size: 18px;
+}
+
 .pager-track {
   width: 72px;
   height: 4px;
@@ -552,15 +642,13 @@ export default {
   background-color: #24262B;
 }
 
+.rect-pager-track {
+  width: 64px;
+}
+
 .pager-fill {
   height: 4px;
   border-radius: 2px;
   background-color: #0A84FF;
-}
-
-@media (shape: circle) {
-  .applist-page {
-    padding: 0px;
-  }
 }
 </style>
