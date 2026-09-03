@@ -38,19 +38,8 @@ import pageRuntime from '../../v2/app/page_runtime'
 import navigation from '../../v2/app/navigation'
 import { createWatchfaceController } from '../../v2/features/watchface/controller'
 import selectorDesign from '../../v2/design/specs/watchface_selector'
+import selectorView from '../../v2/design/views/watchface_selector'
 import pager from '../../v2/design/pager'
-
-function decorateRect(faces, gap) {
-  var result = []
-  for (var i = 0; i < faces.length; i++) {
-    var source = faces[i], item = {}
-    for (var key in source) item[key] = source[key]
-    item.marginRight = i % 2 === 0 ? gap : 0
-    item.marginBottom = i < 2 ? gap : 0
-    result.push(item)
-  }
-  return result
-}
 
 export default {
   private: {
@@ -63,7 +52,7 @@ export default {
   onInit() {
     var self = this
     this.controller = createWatchfaceController(function (state) { self.applyState(state) })
-    pageRuntime.bind(this, { contentWidth: function (profile) { return profile.formFactor === 'circle' ? 148 : (profile.formFactor === 'rect' ? 164 : 168) } }, function (profile, scene, safe) {
+    pageRuntime.bind(this, { contentWidth: function (profile) { return selectorDesign.contentWidth(profile) } }, function (profile, scene, safe) {
       self.plan = selectorDesign.resolve(profile, scene, safe)
       self.applyPlan(self.plan)
       self.controller.configure(self.plan.faceIds)
@@ -73,7 +62,7 @@ export default {
   },
   onShow() { this.pageVisible = true; if (this.planReady) this.controller.load() },
   onHide() { this.pageVisible = false },
-  onDestroy() { this.pageVisible = false; this.faces = []; this.visibleFaces = [] },
+  onDestroy() { this.pageVisible = false; this.faces = []; this.visibleFaces = []; this.rectFaces = [] },
   onBackPress() { navigation.back(); return true },
 
   applyPlan(plan) {
@@ -88,11 +77,13 @@ export default {
   },
 
   applyState(state) {
-    this.faces = state.faces
-    this.selectedIndex = state.selectedIndex
-    var selected = state.faces[state.selectedIndex]
-    this.selectedName = selected ? selected.name : '活力数字'; this.selectedAccent = selected ? selected.accent : '#0A84FF'; this.previewName = this.selectedName
-    this.rectFaces = decorateRect(state.faces, this.gridGap)
+    var view = selectorView.project(state, this.gridGap)
+    this.faces = view.faces
+    this.selectedIndex = view.selectedIndex
+    this.selectedName = view.selectedName
+    this.selectedAccent = view.selectedAccent
+    this.previewName = view.previewName
+    this.rectFaces = view.rectFaces
     this.refreshPage()
   },
   refreshPage() { var state = pager.resolve(this.faces, this.pageIndex, this.pageSize); this.pageIndex = state.pageIndex; this.pageText = state.pageText; this.visibleFaces = state.items },
