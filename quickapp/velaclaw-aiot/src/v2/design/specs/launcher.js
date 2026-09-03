@@ -28,9 +28,13 @@ function resolve(profile, scene, safe) {
       itemGap: 8,
       titleSize: 18,
       nameSize: 14,
-      arrowSize: 20
+      arrowSize: 20,
+      iconSize: 42,
+      itemRadius: 22
     }
   }
+  var gap = 6
+  var itemWidth = Math.floor((safe.width - gap) / 2)
   return {
     freedom: freedom.describe(freedom.FREE),
     shape: shape,
@@ -41,10 +45,13 @@ function resolve(profile, scene, safe) {
     content: { left: safe.left, top: safe.top + 30, width: safe.width, height: Math.max(100, safe.height - 62) },
     pager: { left: safe.left, top: safe.bottom - 24, width: safe.width, height: 20 },
     columns: 2,
-    gap: 6,
+    gap: gap,
+    itemWidth: itemWidth,
     itemHeight: 54,
     titleSize: 14,
-    nameSize: 9
+    nameSize: 9,
+    iconSize: 30,
+    itemRadius: 14
   }
 }
 
