@@ -6,7 +6,7 @@
     </div>
 
     <div class="settings-list" style="position: absolute; left: {{ listLeft }}px; top: {{ listTop }}px; width: {{ listWidth }}px; height: {{ listHeight }}px;">
-      <div class="settings-item" for="{{ pageItems }}" tid="id" @click="openSetting($item)" style="width: {{ itemWidth }}px; height: {{ itemHeight }}px; padding: {{ itemPadding }}px; border-radius: {{ itemRadius }}px;">
+      <div class="settings-item" for="{{ pageItems }}" tid="id" @click="openSetting($item)" style="width: {{ itemWidth }}px; height: {{ itemHeight }}px; margin-bottom: {{ $item.marginBottom }}px; padding: {{ itemPadding }}px; border-radius: {{ itemRadius }}px;">
         <image class="item-icon" src="{{ $item.icon }}" style="width: {{ iconSize }}px; height: {{ iconSize }}px; border-radius: {{ iconRadius }}px; margin-right: {{ iconMargin }}px;"></image>
         <div class="item-copy" style="width: {{ itemCopyWidth }}px;">
           <text class="item-name" style="font-size: {{ itemNameFontSize }}px;">{{ $item.name }}</text>
@@ -42,6 +42,23 @@ function region(plan, id) {
   return null
 }
 
+function decorateItems(items, gap) {
+  var source = items || []
+  var result = []
+  for (var i = 0; i < source.length; i++) {
+    var item = source[i]
+    result.push({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      icon: item.icon,
+      route: item.route,
+      marginBottom: i < source.length - 1 ? gap : 0
+    })
+  }
+  return result
+}
+
 export default {
   private: {
     settings: [
@@ -72,6 +89,7 @@ export default {
     footerHeight: 14,
     itemWidth: 148,
     itemHeight: 50,
+    itemGap: 6,
     itemPadding: 7,
     itemRadius: 18,
     iconSize: 30,
@@ -102,8 +120,10 @@ export default {
     var self = this
     layoutRuntime.bind(this, function (profile) {
       return pagedStack.resolve(profile, settingsLayout)
-    }, function (plan) {
-      self.applyLayout(plan)
+    }, function (plan, profile) {
+      self.layoutProfile = profile
+      self.capacityPlan = plan
+      self.pageSize = plan.pageSize
       self.refreshPage()
     })
   },
@@ -143,9 +163,10 @@ export default {
 
     var geometryScale = plan.scale || 1
     var visualScale = plan.visualScale || geometryScale
-    var iconScale = Math.min(1.2, visualScale)
+    var iconScale = Math.min(1.35, visualScale)
     this.itemWidth = plan.itemWidth
     this.itemHeight = plan.itemHeight
+    this.itemGap = plan.itemGap
     this.itemPadding = Math.round(7 * geometryScale)
     this.itemRadius = Math.round(18 * visualScale)
     this.iconSize = Math.round(30 * iconScale)
@@ -164,10 +185,17 @@ export default {
     this.pagerButtonWidth = Math.max(24, Math.round(26 * geometryScale))
   },
 
+  applyPageLayout(visibleCount) {
+    if (!this.layoutProfile || !this.capacityPlan || visibleCount <= 0) return
+    var plan = pagedStack.resolvePage(this.layoutProfile, settingsLayout, this.capacityPlan, visibleCount)
+    this.applyLayout(plan)
+  },
+
   refreshPage() {
     var state = fixedPager.build(this.settings, this.pageIndex, this.pageSize)
     this.pageIndex = state.pageIndex
-    this.pageItems = state.items
+    this.applyPageLayout(state.items.length)
+    this.pageItems = decorateItems(state.items, this.itemGap)
     this.pageText = state.pageText
     this.previousColor = state.hasPrevious ? '#0A84FF' : '#3A3A3C'
     this.nextColor = state.hasNext ? '#0A84FF' : '#3A3A3C'
@@ -241,10 +269,6 @@ export default {
 .settings-list,
 .item-copy {
   flex-direction: column;
-}
-
-.settings-list {
-  justify-content: space-between;
 }
 
 .settings-item {
