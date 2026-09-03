@@ -4,6 +4,9 @@ const assert = require('assert')
 
 const root = path.resolve(__dirname, '..')
 const read = function (name) { return fs.readFileSync(path.join(root, name), 'utf8') }
+const scrollFlowRuntime = require('../src/presentation/layout/scroll_flow')
+const historyLayoutRuntime = require('../src/presentation/layout/specs/history')
+const workoutSelectLayoutRuntime = require('../src/presentation/layout/specs/workout_select')
 
 const detail = read('src/pages/detail/detail.ux')
 const settings = read('src/pages/settings/settings/settings.ux')
@@ -20,7 +23,6 @@ const historySpec = read('src/presentation/layout/specs/history.js')
 const applistSpec = read('src/presentation/layout/specs/applist.js')
 const watchfaceSpec = read('src/presentation/layout/specs/watchface_selector.js')
 const pagedStack = read('src/presentation/layout/paged_stack.js')
-const scrollFlow = read('src/presentation/layout/scroll_flow.js')
 const freeSurface = read('src/presentation/layout/free_surface.js')
 const appCatalog = read('src/domain/apps/catalog.js')
 const watchfaceCatalog = read('src/domain/watchface/catalog.js')
@@ -65,8 +67,18 @@ assert.ok(history.includes("../../presentation/layout/specs/history"), 'history 
 assert.ok(!history.includes('@media (shape:'), 'history top-level geometry must come from composition rather than shape CSS')
 assert.ok(historySpec.includes('freedomLevel: 2'), 'history spec must declare L2')
 assert.ok(historySpec.includes("insightVariant: 'column'"), 'rect history may use a distinct dashboard composition')
-assert.ok(scrollFlow.includes("flowMode = 'composed-header-scroll'"), 'scroll flow must explicitly separate fixed composition from stream semantics')
-assert.ok(scrollFlow.includes('heroHeight'), 'scroll flow must expose normal-flow handoff after composed header')
+
+// Validate the Scroll Flow protocol by executing it. Source-string matching became
+// brittle once reserved viewport streams were added, while the semantic contract
+// is what pages and future Skills actually depend on.
+const historyFlowPlan = scrollFlowRuntime.resolve({ formFactor: 'circle', logicalHeight: 192 }, historyLayoutRuntime)
+assert.strictEqual(historyFlowPlan.flowMode, 'composed-header-scroll', 'history must hand composed header geometry into a scrolling stream')
+assert.ok(historyFlowPlan.heroHeight > 0, 'history scroll flow must expose composed header handoff')
+assert.ok(historyFlowPlan.stream && historyFlowPlan.stream.top >= historyFlowPlan.heroHeight, 'history stream must begin after composed content')
+
+const workoutSelectFlowPlan = scrollFlowRuntime.resolve({ formFactor: 'circle', logicalHeight: 192 }, workoutSelectLayoutRuntime)
+assert.strictEqual(workoutSelectFlowPlan.flowMode, 'reserved-viewport-scroll', 'L1 selector must reserve a validated scrolling viewport')
+assert.ok(workoutSelectFlowPlan.stream.viewportHeight > 0, 'reserved scroll flow must expose a real viewport height')
 
 assert.ok(applist.includes("../../presentation/layout/free_surface"), 'L3 launcher must resolve its art-directed surface through Design Engine')
 assert.ok(applist.includes("../../domain/apps/catalog"), 'L3 surfaces must share one domain app catalog')
