@@ -1,307 +1,88 @@
 <template>
-  <div class="settings-page {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px;" @swipe="handleSwipe">
-    <div class="top-row" style="position: absolute; left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;">
-      <text class="page-title" style="font-size: {{ titleFontSize }}px;">设置</text>
-      <text class="page-number" style="font-size: {{ pageNumberFontSize }}px;">{{ pageText }}</text>
-    </div>
-
-    <div class="settings-list" style="position: absolute; left: {{ listLeft }}px; top: {{ listTop }}px; width: {{ listWidth }}px; height: {{ listHeight }}px;">
-      <div class="settings-item" for="{{ pageItems }}" tid="id" @click="openSetting($item)" style="width: {{ itemWidth }}px; height: {{ itemHeight }}px; margin-bottom: {{ $item.marginBottom }}px; padding: {{ itemPadding }}px; border-radius: {{ itemRadius }}px;">
-        <image class="item-icon" src="{{ $item.icon }}" style="width: {{ iconSize }}px; height: {{ iconSize }}px; border-radius: {{ iconRadius }}px; margin-right: {{ iconMargin }}px;"></image>
-        <div class="item-copy" style="width: {{ itemCopyWidth }}px;">
-          <text class="item-name" style="font-size: {{ itemNameFontSize }}px;">{{ $item.name }}</text>
-          <text class="item-sub" style="font-size: {{ itemSubFontSize }}px; line-height: {{ itemSubLineHeight }}px; margin-top: {{ itemSubMargin }}px;">{{ $item.description }}</text>
-        </div>
-        <text class="item-arrow" style="width: {{ arrowWidth }}px; font-size: {{ arrowFontSize }}px;">›</text>
+  <stack class="settings-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
+    <div class="settings-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
+      <div class="header" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;"><text class="title" style="font-size: {{ titleSize }}px;">设置</text><text class="page-text">{{ pageText }}</text></div>
+      <div class="settings-list" style="left: {{ listLeft }}px; top: {{ listTop }}px; width: {{ listWidth }}px; height: {{ listHeight }}px;">
+        <div class="setting-card" for="{{ pageItems }}" tid="id" @click="openSetting($item)" style="width: {{ listWidth }}px; height: {{ itemHeight }}px; margin-bottom: {{ $item.marginBottom }}px; border-radius: {{ itemRadius }}px; padding: {{ itemPadding }}px;"><image class="item-icon" src="{{ $item.icon }}" style="width: {{ iconSize }}px; height: {{ iconSize }}px; border-radius: {{ iconRadius }}px;"></image><div class="item-copy"><text class="item-name" style="font-size: {{ itemNameSize }}px;">{{ $item.name }}</text><text class="item-desc" style="font-size: {{ itemDescSize }}px; line-height: {{ itemDescLineHeight }}px;">{{ $item.description }}</text></div><text class="item-arrow" style="font-size: {{ arrowSize }}px;">›</text></div>
       </div>
+      <div class="pager" style="left: {{ footerLeft }}px; top: {{ footerTop }}px; width: {{ footerWidth }}px; height: {{ footerHeight }}px;"><text class="pager-button" @click="previousPage">‹</text><div class="dots"><div class="dot" for="{{ dots }}" style="background-color: {{ $item.color }};"></div></div><text class="pager-button" @click="nextPage">›</text></div>
     </div>
-
-    <div class="pager-row" style="position: absolute; left: {{ footerLeft }}px; top: {{ footerTop }}px; width: {{ footerWidth }}px; height: {{ footerHeight }}px;">
-      <text class="pager-button" style="width: {{ pagerButtonWidth }}px; height: {{ footerHeight }}px; font-size: {{ pagerFontSize }}px; color: {{ previousColor }}" @click="previousPage">‹</text>
-      <div class="pager-center">
-        <div class="page-dot" for="{{ pageDots }}" style="background-color: {{ $item.color }}"></div>
-      </div>
-      <text class="pager-button" style="width: {{ pagerButtonWidth }}px; height: {{ footerHeight }}px; font-size: {{ pagerFontSize }}px; color: {{ nextColor }}" @click="nextPage">›</text>
-    </div>
-  </div>
+  </stack>
 </template>
 
 <script>
-import router from '@system.router'
-import fixedPager from '../../../common/fixed_pager'
-import pageMotion from '../../../common/page_motion'
-import layoutRuntime from '../../../presentation/layout/runtime'
-import pagedStack from '../../../presentation/layout/paged_stack'
-import settingsLayout from '../../../presentation/layout/specs/settings'
+import pageRuntime from '../../../v2/app/page_runtime'
+import navigation from '../../../v2/app/navigation'
+import { getSettingsMenu } from '../../../v2/features/settings/menu_controller'
+import pager from '../../../v2/design/pager'
+import pagedStack from '../../../v2/design/paged_stack'
 
-function region(plan, id) {
-  var list = plan && plan.regions ? plan.regions : []
-  for (var i = 0; i < list.length; i++) {
-    if (list[i].id === id) return list[i]
-  }
-  return null
-}
-
-function decorateItems(items, gap) {
-  var source = items || []
+function decorate(items, gap) {
   var result = []
-  for (var i = 0; i < source.length; i++) {
-    var item = source[i]
-    result.push({
-      id: item.id,
-      name: item.name,
-      description: item.description,
-      icon: item.icon,
-      route: item.route,
-      marginBottom: i < source.length - 1 ? gap : 0
-    })
+  for (var i = 0; i < items.length; i++) {
+    var source = items[i]
+    result.push({ id: source.id, name: source.name, description: source.description, icon: source.icon, route: source.route, marginBottom: i < items.length - 1 ? gap : 0 })
   }
   return result
 }
 
 export default {
   private: {
-    settings: [
-      { id: 'sync', name: '蓝牙同步', description: '连接手机并模拟数据上传', icon: '/common/icons/sync.jpg', route: '/pages/settings/bluetooth' },
-      { id: 'vibration', name: '震动反馈', description: '提醒开关、强度与反馈模式', icon: '/common/icons/vibration.jpg', route: '/pages/settings/vibration' },
-      { id: 'brightness', name: '亮度与省电', description: '亮度、抬腕亮屏、低功耗', icon: '/common/icons/brightness.jpg', route: '/pages/settings/brightness' },
-      { id: 'motion', name: '动作与加速度', description: '三轴诊断与动作强度测量', icon: '/common/icons/motion.jpg', route: '/pages/settings/motion' },
-      { id: 'diagnostics', name: '设备自检', description: '屏幕档案与系统能力状态', icon: '/common/icons/diagnostics.jpg', route: '/pages/settings/diagnostics' }
-    ],
-    pageItems: [],
-    pageDots: [],
-    pageIndex: 0,
-    pageSize: 2,
-    pageText: '1 / 1',
-    previousColor: '#3A3A3C',
-    nextColor: '#3A3A3C',
-    headerLeft: 36,
-    headerTop: 23,
-    headerWidth: 120,
-    headerHeight: 20,
-    listLeft: 22,
-    listTop: 47,
-    listWidth: 148,
-    listHeight: 106,
-    footerLeft: 41,
-    footerTop: 157,
-    footerWidth: 110,
-    footerHeight: 14,
-    itemWidth: 148,
-    itemHeight: 50,
-    itemGap: 6,
-    itemPadding: 7,
-    itemRadius: 18,
-    iconSize: 30,
-    iconRadius: 15,
-    iconMargin: 7,
-    itemCopyWidth: 91,
-    arrowWidth: 12,
-    titleFontSize: 12,
-    pageNumberFontSize: 7,
-    itemNameFontSize: 10,
-    itemSubFontSize: 6,
-    itemSubLineHeight: 8,
-    itemSubMargin: 2,
-    arrowFontSize: 12,
-    pagerFontSize: 14,
-    pagerButtonWidth: 26,
-    pageOpacity: 1,
-    pageOffset: 0,
-    viewportClass: '',
-    viewportPosition: 'relative',
-    viewportLeft: '0px',
-    viewportWidth: '100%',
-    viewportHeight: '100%',
-    viewportTop: '0px'
+    pageItems: [], dots: [], pageIndex: 0, pageText: '1 / 1', pageSize: 2,
+    headerLeft: 22, headerTop: 24, headerWidth: 148, headerHeight: 20, listLeft: 22, listTop: 49, listWidth: 148, listHeight: 104, footerLeft: 22, footerTop: 158, footerWidth: 148, footerHeight: 16,
+    itemHeight: 49, itemGap: 6, itemRadius: 18, itemPadding: 7, iconSize: 30, iconRadius: 15, titleSize: 12, itemNameSize: 10, itemDescSize: 6, itemDescLineHeight: 8, arrowSize: 13,
+    sceneWidth: 192, sceneHeight: 192, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
   },
-
   onInit() {
     var self = this
-    layoutRuntime.bind(this, function (profile) {
-      return pagedStack.resolve(profile, settingsLayout)
-    }, function (plan, profile) {
-      self.layoutProfile = profile
-      self.capacityPlan = plan
-      self.pageSize = plan.pageSize
+    this.items = getSettingsMenu()
+    pageRuntime.bind(this, { contentWidth: function (profile) { return profile.formFactor === 'circle' ? 148 : (profile.formFactor === 'rect' ? 164 : 168) } }, function (profile, scene, safe) {
+      self.capacityPlan = pagedStack.resolve(safe, { minItems: 2, maxItems: 3, headerHeight: safe.height > 250 ? 30 : 20, footerHeight: safe.height > 250 ? 24 : 16, sectionGap: safe.height > 250 ? 10 : 6, minItemHeight: 48, maxItemHeight: 82, itemGap: safe.height > 250 ? 10 : 6 })
+      self.pageSize = self.capacityPlan.pageSize
       self.refreshPage()
     })
   },
-
-  onShow() {
-    pageMotion.enter(this)
-    this.refreshPage()
-  },
-
-  onHide() {
-    pageMotion.clear(this)
-  },
-
-  onDestroy() {
-    pageMotion.clear(this)
-  },
-
-  applyLayout(plan) {
-    var header = region(plan, 'header')
-    var list = region(plan, 'list')
-    var footer = region(plan, 'footer')
-    if (!header || !list || !footer) return
-
-    this.pageSize = plan.pageSize
-    this.headerLeft = header.left
-    this.headerTop = header.top
-    this.headerWidth = header.width
-    this.headerHeight = header.height
-    this.listLeft = list.left
-    this.listTop = list.top
-    this.listWidth = list.width
-    this.listHeight = list.height
-    this.footerLeft = footer.left
-    this.footerTop = footer.top
-    this.footerWidth = footer.width
-    this.footerHeight = footer.height
-
-    var geometryScale = plan.scale || 1
-    var visualScale = plan.visualScale || geometryScale
-    var iconScale = Math.min(1.35, visualScale)
-    this.itemWidth = plan.itemWidth
-    this.itemHeight = plan.itemHeight
-    this.itemGap = plan.itemGap
-    this.itemPadding = Math.round(7 * geometryScale)
-    this.itemRadius = Math.round(18 * visualScale)
-    this.iconSize = Math.round(30 * iconScale)
-    this.iconRadius = Math.round(this.iconSize / 2)
-    this.iconMargin = Math.round(7 * geometryScale)
-    this.arrowWidth = Math.round(12 * geometryScale)
-    this.itemCopyWidth = Math.max(48, Math.round(this.itemWidth - this.itemPadding * 2 - this.iconSize - this.iconMargin - this.arrowWidth))
-    this.titleFontSize = Math.max(10, Math.round(12 * visualScale))
-    this.pageNumberFontSize = Math.max(6, Math.round(7 * visualScale))
-    this.itemNameFontSize = Math.max(9, Math.round(10 * visualScale))
-    this.itemSubFontSize = Math.max(6, Math.round(6 * visualScale))
-    this.itemSubLineHeight = Math.max(8, Math.round(8 * visualScale))
-    this.itemSubMargin = Math.max(1, Math.round(2 * visualScale))
-    this.arrowFontSize = Math.max(11, Math.round(12 * visualScale))
-    this.pagerFontSize = Math.max(13, Math.round(14 * visualScale))
-    this.pagerButtonWidth = Math.max(24, Math.round(26 * geometryScale))
-  },
-
-  applyPageLayout(visibleCount) {
-    if (!this.layoutProfile || !this.capacityPlan || visibleCount <= 0) return
-    var plan = pagedStack.resolvePage(this.layoutProfile, settingsLayout, this.capacityPlan, visibleCount)
-    this.applyLayout(plan)
-  },
-
+  onShow() { this.refreshPage() },
+  onBackPress() { navigation.back(); return true },
   refreshPage() {
-    var state = fixedPager.build(this.settings, this.pageIndex, this.pageSize)
-    this.pageIndex = state.pageIndex
-    this.applyPageLayout(state.items.length)
-    this.pageItems = decorateItems(state.items, this.itemGap)
-    this.pageText = state.pageText
-    this.previousColor = state.hasPrevious ? '#0A84FF' : '#3A3A3C'
-    this.nextColor = state.hasNext ? '#0A84FF' : '#3A3A3C'
+    if (!this.capacityPlan) return
+    var state = pager.resolve(this.items, this.pageIndex, this.pageSize)
+    this.pageIndex = state.pageIndex; this.pageText = state.pageText
+    var plan = pagedStack.reflow(this.capacityPlan, state.items.length)
+    this.applyPlan(plan)
+    this.pageItems = decorate(state.items, plan.itemGap)
     var dots = []
-    for (var index = 0; index < state.pageCount; index++) {
-      dots.push({ color: index === state.pageIndex ? '#0A84FF' : '#3A3A3C' })
-    }
-    this.pageDots = dots
+    for (var i = 0; i < state.pageCount; i++) dots.push({ color: i === state.pageIndex ? '#0A84FF' : '#3A3A3C' })
+    this.dots = dots
   },
-
-  previousPage() {
-    var state = fixedPager.move(this.settings, this.pageIndex, this.pageSize, -1)
-    if (state.pageIndex === this.pageIndex) return
-    this.pageIndex = state.pageIndex
-    this.refreshPage()
+  applyPlan(plan) {
+    this.headerLeft = plan.header.left; this.headerTop = plan.header.top; this.headerWidth = plan.header.width; this.headerHeight = plan.header.height
+    this.listLeft = plan.list.left; this.listTop = plan.list.top; this.listWidth = plan.list.width; this.listHeight = plan.list.height
+    this.footerLeft = plan.footer.left; this.footerTop = plan.footer.top; this.footerWidth = plan.footer.width; this.footerHeight = plan.footer.height
+    this.itemHeight = plan.itemHeight; this.itemGap = plan.itemGap
+    var scale = plan.visualScale || 1
+    this.itemRadius = Math.round(18 * Math.min(1.4, scale)); this.itemPadding = Math.round(7 * Math.min(1.3, scale)); this.iconSize = Math.round(30 * Math.min(1.35, scale)); this.iconRadius = Math.round(this.iconSize / 2)
+    this.titleSize = Math.round(12 * Math.min(1.4, scale)); this.itemNameSize = Math.round(10 * Math.min(1.35, scale)); this.itemDescSize = Math.max(6, Math.round(6 * Math.min(1.35, scale))); this.itemDescLineHeight = this.itemDescSize + 2; this.arrowSize = Math.round(13 * Math.min(1.35, scale))
   },
-
-  nextPage() {
-    var state = fixedPager.move(this.settings, this.pageIndex, this.pageSize, 1)
-    if (state.pageIndex === this.pageIndex) return
-    this.pageIndex = state.pageIndex
-    this.refreshPage()
-  },
-
-  openSetting(item) {
-    if (item && item.route) pageMotion.push(this, router, item.route)
-  },
-
-  handleSwipe(event) {
-    if (!event) return
-    if (event.direction === 'left') {
-      this.nextPage()
-    } else if (event.direction === 'right') {
-      if (this.pageIndex > 0) this.previousPage()
-      else pageMotion.back(this, router)
-    }
-  }
+  previousPage() { this.pageIndex--; this.refreshPage() },
+  nextPage() { this.pageIndex++; this.refreshPage() },
+  openSetting(item) { if (item && item.route) navigation.push(item.route) }
 }
 </script>
 
 <style>
-.settings-page {
-  background-color: #000000;
-  width: 100%;
-  height: 100%;
-}
-
-.top-row,
-.pager-row,
-.settings-item {
-  flex-direction: row;
-  align-items: center;
-}
-
-.top-row,
-.pager-row {
-  justify-content: space-between;
-}
-
-.page-title,
-.item-name {
-  font-weight: bold;
-  color: #FFFFFF;
-}
-
-.page-number,
-.item-sub {
-  color: #8E8E93;
-}
-
-.settings-list,
-.item-copy {
-  flex-direction: column;
-}
-
-.settings-item {
-  background-color: #12171C;
-}
-
-.item-sub {
-  lines: 2;
-}
-
-.item-arrow {
-  color: #636366;
-  text-align: right;
-}
-
-.pager-button {
-  font-weight: bold;
-  text-align: center;
-}
-
-.pager-center {
-  width: 60px;
-  height: 12px;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-}
-
-.page-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 3px;
-  margin-left: 3px;
-  margin-right: 3px;
-}
+.settings-root, .settings-scene { background-color: #000000; }
+.settings-scene { position: absolute; left: 0px; top: 0px; }
+.header, .settings-list, .pager { position: absolute; }
+.header, .pager, .setting-card { flex-direction: row; align-items: center; }
+.header, .pager { justify-content: space-between; }
+.title { color: #FFFFFF; font-weight: bold; } .page-text { color: #8E8E93; font-size: 7px; }
+.settings-list { flex-direction: column; }
+.setting-card { background-color: #12171C; }
+.item-icon { object-fit: cover; } .item-copy { flex: 1; flex-direction: column; margin-left: 8px; }
+.item-name { color: #FFFFFF; font-weight: bold; } .item-desc { color: #8E8E93; lines: 2; margin-top: 2px; }
+.item-arrow { width: 14px; color: #636366; text-align: right; }
+.pager-button { width: 30px; color: #0A84FF; font-size: 18px; text-align: center; }
+.dots { width: 70px; flex-direction: row; justify-content: center; align-items: center; }
+.dot { width: 6px; height: 6px; border-radius: 3px; margin-left: 3px; margin-right: 3px; }
 </style>
