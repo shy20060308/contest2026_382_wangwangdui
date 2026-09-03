@@ -89,10 +89,7 @@ function buildMonth(year, monthIndex, today) {
     var cellYear = cellDate.getFullYear()
     cellMonth = cellDate.getMonth()
     var isToday = !!today && cellYear === today.getFullYear() && cellMonth === today.getMonth() && cellDay === today.getDate()
-    cells.push({
-      key: cellYear + '-' + pad2(cellMonth + 1) + '-' + pad2(cellDay), day: cellDay, inMonth: inMonth, isToday: isToday,
-      textColor: isToday ? '#FFFFFF' : (inMonth ? '#E5E5EA' : '#4D4D52'), backgroundColor: isToday ? '#FF375F' : 'transparent'
-    })
+    cells.push({ key: cellYear + '-' + pad2(cellMonth + 1) + '-' + pad2(cellDay), day: cellDay, inMonth: inMonth, isToday: isToday })
   }
   return cells
 }
