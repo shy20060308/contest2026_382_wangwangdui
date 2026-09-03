@@ -9,22 +9,21 @@ function clearTimers() {
 
 function pulsesFor(pattern, level) {
   var strong = level === 'strong'
-  if (pattern === 'alert') return { count: strong ? 4 : 3, gap: 180 }
-  if (pattern === 'countdown') return { count: 3, gap: 260 }
-  if (pattern === 'tap') return { count: 1, gap: 0 }
-  return { count: strong ? 3 : 2, gap: 220 }
+  var light = level === 'light'
+  if (pattern === 'alert') return { count: strong ? 3 : 2, gap: light ? 240 : 180, mode: 'long' }
+  if (pattern === 'countdown') return { count: 3, gap: light ? 320 : 260, mode: 'short' }
+  if (pattern === 'tap') return { count: 1, gap: 0, mode: 'short' }
+  return { count: strong ? 3 : 2, gap: light ? 280 : 220, mode: 'short' }
 }
 
 function play(pattern, level) {
   clearTimers()
   var spec = pulsesFor(pattern, level)
-  var mode = vibration.getSystemMode()
-  if (mode === undefined || mode === null || mode < 0) mode = 0
-  vibration.vibrate(mode)
+  vibration.vibrate(spec.mode)
   for (var i = 1; i < spec.count; i++) {
-    ;(function (delay) {
+    ;(function (delay, mode) {
       timers.push(setTimeout(function () { vibration.vibrate(mode) }, delay))
-    })(i * spec.gap)
+    })(i * spec.gap, spec.mode)
   }
 }
 
