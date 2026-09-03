@@ -34,14 +34,14 @@ function walkPlan(value, host, label, seen) {
 profiles.forEach(profile => {
   const host = scene.resolve(profile)
   const safe = scene.safeForWidth(profile, profile.width)
-  assert.ok(host.width === 192, profile.name + ' must use the 192 logical design width')
+  assert.strictEqual(host.width, 192, profile.name + ' must use the 192 logical design width')
   assert.ok(host.height > 0, profile.name + ' Host Scene must have positive height')
   assert.ok(safe.left >= 0 && safe.left + safe.width <= host.width, profile.name + ' safe width must stay inside Host Scene')
   assert.ok(safe.top >= 0 && safe.bottom <= host.height, profile.name + ' safe vertical band must stay inside Host Scene')
   assert.ok(safe.height > 0, profile.name + ' must retain a usable safe region')
   if (profile.formFactor === 'circle') assert.ok(safe.top > 0 && safe.bottom < host.height, 'circle content must respect curved caps')
   if (profile.formFactor === 'pill') {
-    assert.ok(safe.gestureBar === 36, profile.name + ' must reserve the Pill gesture area')
+    assert.strictEqual(safe.gestureBar, 36, profile.name + ' must reserve the Pill gesture area')
     assert.ok(safe.bottom <= host.height - 12, profile.name + ' must keep content away from the bottom gesture edge')
   }
 })
@@ -49,17 +49,18 @@ profiles.forEach(profile => {
 fs.readdirSync(specsDir).filter(name => name.endsWith('.js')).forEach(name => {
   const spec = require(path.join(specsDir, name))
   if (!spec || typeof spec.resolve !== 'function') return
+  assert.ok(spec.freedomLevel === 1 || spec.freedomLevel === 2 || spec.freedomLevel === 3, name + ' must export an explicit Design Freedom level')
   profiles.forEach(profile => {
     const host = scene.resolve(profile)
     const safe = scene.safeForWidth(profile, profile.width)
     const plan = spec.resolve(profile, host, safe)
     assert.ok(plan && typeof plan === 'object', name + ' must resolve a plan for ' + profile.name)
-    const level = plan.freedomLevel || spec.freedomLevel || (plan.freedom && plan.freedom.level)
-    assert.ok(level === 1 || level === 2 || level === 3, name + ' must explicitly resolve a Design Freedom level for ' + profile.name)
-    if (plan.strategy) {
-      const expected = level === 1 ? 'auto' : level === 2 ? 'assisted' : 'free'
-      assert.strictEqual(plan.strategy, expected, name + ' strategy must match its Design Freedom level')
-    }
+    assert.ok(plan.freedomLevel === 1 || plan.freedomLevel === 2 || plan.freedomLevel === 3, name + ' must put freedomLevel on every resolved plan for ' + profile.name)
+    assert.strictEqual(plan.freedomLevel, spec.freedomLevel, name + ' resolved level must match exported level')
+    const expected = plan.freedomLevel === 1 ? 'auto' : plan.freedomLevel === 2 ? 'assisted' : 'free'
+    assert.strictEqual(plan.strategy, expected, name + ' strategy must explicitly match its Design Freedom level')
+    assert.strictEqual(plan.shape, profile.formFactor, name + ' must explicitly identify the resolved shape')
+    assert.ok(typeof plan.surface === 'string' && plan.surface.length > 0, name + ' must explicitly identify its composition surface')
     if (name === 'today.js') {
       assert.strictEqual(plan.interaction, 'explicit-buttons', 'Today must use explicit month controls on ' + profile.name)
       assert.strictEqual(plan.overflow, 'fixed', 'Today must remain a fixed non-scroll surface on ' + profile.name)
@@ -105,4 +106,4 @@ assert.ok(!clock.includes('rectangular-stage" if="{{ !isCircle }}'), 'Rect must 
 const today = fs.readFileSync(path.join(root, 'src/pages/today/today.ux'), 'utf8')
 assert.ok(today.includes('.circle-calendar-grid { height: 78px; }') && today.includes('.circle-cell { width: 19px; height: 13px;'), 'Circle calendar grid must stay within its 130px safe band')
 
-console.log('V2 visual contracts verified: Host Scene bounds, fixed-surface fit, Design Freedom and independent compositions')
+console.log('V2 visual contracts verified: Host Scene bounds and every composition declares explicit Design Freedom/strategy/shape/surface')
