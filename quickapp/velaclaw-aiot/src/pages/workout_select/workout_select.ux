@@ -17,6 +17,8 @@
 import pageRuntime from '../../v2/app/page_runtime'
 import navigation from '../../v2/app/navigation'
 import workoutSelection from '../../v2/features/workout/selection'
+import selectionDesign from '../../v2/design/specs/workout_select'
+import selectionView from '../../v2/design/views/workout_selection'
 
 export default {
   private: {
@@ -26,23 +28,27 @@ export default {
   },
   onInit() {
     var self = this
-    this.modes = workoutSelection.getModes()
-    pageRuntime.bind(this, { contentWidth: function (profile) { return profile.formFactor === 'circle' ? 148 : (profile.formFactor === 'rect' ? 164 : 168) } }, function (profile, scene, safe) {
+    this.modeTypes = workoutSelection.getModeTypes()
+    this.applySemanticView(false)
+    pageRuntime.bind(this, { contentWidth: function (profile) { return selectionDesign.contentWidth(profile) } }, function (profile, scene, safe) {
       self.contentWidth = safe.width
-      var tall = safe.height > 250, compact = safe.height < 170
-      self.titleSize = compact ? 13 : (tall ? 18 : 15)
-      self.streamTop = safe.top + (compact ? 25 : 34)
-      self.streamHeight = Math.max(50, safe.bottom - self.streamTop)
-      self.cardHeight = compact ? 52 : (tall ? 76 : 62)
-      self.cardRadius = Math.round(self.cardHeight * 0.32)
-      self.actionHeight = compact ? 38 : (tall ? 50 : 42)
-      self.actionRadius = Math.round(self.actionHeight / 2)
-      self.modeNameSize = compact ? 10 : (tall ? 15 : 12)
-      self.modeDescSize = compact ? 6 : (tall ? 9 : 7)
+      self.applyPlan(selectionDesign.resolve(profile, scene, safe))
     })
   },
-  onShow() { var self = this; workoutSelection.hasActive(function (active) { self.hasActive = active }) },
+  onShow() { var self = this; workoutSelection.hasActive(function (active) { self.applySemanticView(active) }) },
   onBackPress() { navigation.back(); return true },
+  applySemanticView(active) { var view = selectionView.project({ modeTypes: this.modeTypes || [], hasActive: active }); this.modes = view.modes; this.hasActive = view.hasActive },
+  applyPlan(plan) {
+    this.titleSize = plan.titleSize
+    this.streamTop = plan.stream.top
+    this.streamHeight = plan.stream.height
+    this.cardHeight = plan.cardHeight
+    this.cardRadius = plan.cardRadius
+    this.actionHeight = plan.actionHeight
+    this.actionRadius = plan.actionRadius
+    this.modeNameSize = plan.modeNameSize
+    this.modeDescSize = plan.modeDescSize
+  },
   selectMode(type) { workoutSelection.create(type, function () { navigation.push('/pages/workout') }) },
   continueWorkout() { navigation.push('/pages/workout') },
   openHistory() { navigation.push('/pages/workout_history') }
