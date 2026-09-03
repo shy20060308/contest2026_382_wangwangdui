@@ -24,13 +24,13 @@ function resolve(profile, scene, safe) {
       header: { left: safe.left, top: safe.top, width: safe.width, height: 28 },
       content: { left: safe.left, top: safe.top + 36, width: safe.width, height: Math.max(120, safe.height - 78) },
       pager: { left: safe.left, top: safe.bottom - 30, width: safe.width, height: 24 },
-      itemHeight: 72,
+      itemHeight: 62,
       itemGap: 8,
       titleSize: 18,
       nameSize: 14,
       arrowSize: 20,
-      iconSize: 42,
-      itemRadius: 22
+      iconSize: 40,
+      itemRadius: 20
     }
   }
   var gap = 6
