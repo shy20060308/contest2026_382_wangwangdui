@@ -10,6 +10,11 @@ function applyHostViewport(page, profile) {
   page.viewportHeight = profile.viewportHeight || '100%'
 }
 
+function resolveContentWidth(profile, value) {
+  if (typeof value === 'function') return value(profile)
+  return value || 168
+}
+
 function applyScene(page, profile, contentWidth) {
   var hostScene = scene.resolve(profile)
   var safe = scene.safeForWidth(profile, contentWidth || 168)
@@ -27,7 +32,8 @@ function bind(page, options, callback) {
   var config = options || {}
   screenProfile.resolve(page, function (profile) {
     applyHostViewport(page, profile)
-    var result = applyScene(page, profile, config.contentWidth || 168)
+    var width = resolveContentWidth(profile, config.contentWidth)
+    var result = applyScene(page, profile, width)
     if (typeof callback === 'function') callback(profile, result.scene, result.safe)
   })
 }
