@@ -2,10 +2,9 @@ import powerRuntimeFactory from '../../../runtime/power/controller'
 import activityStore from '../../../domain/activity/store'
 import historyRepository from '../../../domain/history/repository'
 import watchfaceStore from '../../../domain/watchface/store'
-import settingsStore from '../../domain/settings/store'
+import settingsStore from '../../../domain/settings/store'
 import { createNotificationController } from '../notification/controller'
 var faceCatalog = require('../../../domain/watchface/catalog')
-var availability = require('../../../presentation/watchface/availability')
 var analog = require('../../design/analog')
 
 var MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
@@ -13,6 +12,7 @@ var WEEKS = ['SUN','MON','TUE','WED','THU','FRI','SAT']
 
 function pad2(value) { return value < 10 ? '0' + value : '' + value }
 function formatNumber(value) { return Number(value || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') }
+function copyIds(ids) { return Array.isArray(ids) && ids.length ? ids.slice() : ['sport','simple','dashboard'] }
 
 function batteryView(percent) {
   var value = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)))
@@ -26,8 +26,7 @@ function powerView(mode) {
 }
 
 export function createClockController(onChange, onNotification) {
-  var shape = 'rect'
-  var faceIds = availability.idsFor(shape)
+  var faceIds = ['sport','simple','dashboard']
   var selectedFaceId = faceIds[0]
   var heartValues = []
   var started = false
@@ -37,7 +36,6 @@ export function createClockController(onChange, onNotification) {
     if (typeof onNotification === 'function') onNotification(state)
   })
   var state = {
-    shape: shape,
     faceIndex: 0,
     faceId: selectedFaceId,
     faceBackground: '#000000',
@@ -56,6 +54,7 @@ export function createClockController(onChange, onNotification) {
   function applyFace(id) {
     var nextId = faceIds.indexOf(id) >= 0 ? id : faceIds[0]
     var face = faceCatalog.get(nextId) || faceCatalog.get(faceIds[0])
+    if (!face) return
     selectedFaceId = nextId
     state.faceId = nextId
     state.faceIndex = Math.max(0, faceIds.indexOf(nextId))
@@ -70,7 +69,7 @@ export function createClockController(onChange, onNotification) {
     state.displayWeek = WEEKS[now.getDay()]
     state.displayHours = pad2(now.getHours())
     state.displayMinutes = pad2(now.getMinutes())
-    if (shape === 'circle' && selectedFaceId === 'mechanical') {
+    if (selectedFaceId === 'mechanical') {
       var value = analog.angles(now.getHours(), now.getMinutes(), now.getSeconds())
       state.hourHandTransform = analog.transform(value.hour)
       state.minuteHandTransform = analog.transform(value.minute)
@@ -135,10 +134,8 @@ export function createClockController(onChange, onNotification) {
   }
 
   return {
-    configureShape: function (nextShape) {
-      shape = nextShape || 'rect'
-      state.shape = shape
-      faceIds = availability.idsFor(shape)
+    configureFaces: function (allowedFaceIds) {
+      faceIds = copyIds(allowedFaceIds)
       applyFace(selectedFaceId)
       emit()
     },
