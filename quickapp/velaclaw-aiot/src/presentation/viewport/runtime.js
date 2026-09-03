@@ -1,4 +1,5 @@
 import screenProfile from './profile'
+var viewportPolicy = require('./policy')
 
 var DEFAULTS = {
   viewportClass: '',
@@ -9,14 +10,24 @@ var DEFAULTS = {
   viewportHeight: '100%'
 }
 
+function applyValues(page, values) {
+  if (!page || !values) return
+  page.viewportClass = values.viewportClass
+  page.viewportPosition = values.viewportPosition
+  page.viewportLeft = values.viewportLeft
+  page.viewportTop = values.viewportTop
+  page.viewportWidth = values.viewportWidth
+  page.viewportHeight = values.viewportHeight
+}
+
 function apply(page, profile) {
   if (!page || !profile) return
-  page.viewportClass = profile.viewportClass
-  page.viewportPosition = profile.viewportPosition
-  page.viewportLeft = profile.viewportLeft
-  page.viewportTop = profile.viewportTop
-  page.viewportWidth = profile.viewportWidth
-  page.viewportHeight = profile.viewportHeight
+  applyValues(page, viewportPolicy.legacy(profile))
+}
+
+function applyDesign(page, profile) {
+  if (!page || !profile) return
+  applyValues(page, viewportPolicy.design(profile))
 }
 
 function bind(page, callback) {
@@ -29,5 +40,6 @@ function bind(page, callback) {
 module.exports = {
   DEFAULTS: DEFAULTS,
   apply: apply,
+  applyDesign: applyDesign,
   bind: bind
 }
