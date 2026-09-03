@@ -20,5 +20,6 @@ export default {
   },
   setKeepScreenOn: function (keepScreenOn) {
     return call(brightness && brightness.setKeepScreenOn, { keepScreenOn: !!keepScreenOn })
-  }
+  },
+  isAvailable: function () { return !!(brightness && brightness.setValue) }
 }
