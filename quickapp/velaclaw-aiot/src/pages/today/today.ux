@@ -47,10 +47,12 @@
 import pageRuntime from '../../v2/app/page_runtime'
 import navigation from '../../v2/app/navigation'
 import { createTodayController } from '../../v2/features/today/controller'
+import todayDesign from '../../v2/design/specs/today'
+import todayView from '../../v2/design/views/today'
 
 export default {
   private: {
-    ready: false, isCircle: false, isPill: false, isRect: false, pageIndex: 0,
+    ready: false, isCircle: false, isPill: false, isRect: false, pageIndex: 0, designPlan: null, todayModel: null,
     sceneWidth: 192, sceneHeight: 192, sceneSafeLeft: 0, sceneSafeTop: 0, sceneSafeHeight: 192,
     viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%',
     yearText: '', monthText: '', monthNumberText: '', dayText: '', weekdayText: '', lunarText: '',
@@ -58,15 +60,18 @@ export default {
   },
   onInit() {
     var self = this
-    this.controller = createTodayController(function (model) { self.applyModel(model) })
-    pageRuntime.bind(this, { contentWidth: function (profile) { if (profile.formFactor === 'circle') return 136; if (profile.formFactor === 'rect') return 164; return 168 } }, function (profile) {
-      self.isCircle = profile.formFactor === 'circle'; self.isPill = profile.formFactor === 'pill'; self.isRect = profile.formFactor === 'rect'; self.ready = true
+    this.controller = createTodayController(function (model) { self.acceptModel(model) })
+    pageRuntime.bind(this, { contentWidth: function (profile) { return todayDesign.contentWidth(profile) } }, function (profile, scene, safe) {
+      var plan = todayDesign.resolve(profile, scene, safe)
+      self.designPlan = plan
+      self.isCircle = plan.shape === 'circle'; self.isPill = plan.shape === 'pill'; self.isRect = plan.shape === 'rect'; self.ready = true
     })
   },
   onShow() { if (this.controller) this.controller.start() },
   onHide() { if (this.controller) this.controller.stop() },
-  onDestroy() { if (this.controller) this.controller.stop(); this.calendarCells = [] },
+  onDestroy() { if (this.controller) this.controller.stop(); this.todayModel = null; this.calendarCells = [] },
   onBackPress() { if (this.pageIndex === 1) { this.pageIndex = 0; return true } navigation.back(); return true },
+  acceptModel(model) { this.todayModel = model; if (this.designPlan) this.applyModel(todayView.project(model, this.designPlan)) },
   applyModel(model) {
     this.yearText = model.yearText; this.monthText = model.monthText; this.monthNumberText = model.monthNumberText; this.dayText = model.dayText; this.weekdayText = model.weekdayText; this.lunarText = model.lunarText
     this.stepsText = model.stepsText; this.caloriesText = model.caloriesText; this.standText = model.standText; this.heartText = model.heartText; this.goalPercent = model.goalPercent; this.goalWidth = model.goalWidth; this.calendarTitle = model.calendarTitle; this.calendarCells = model.calendarCells
