@@ -1,654 +1,155 @@
 <template>
-  <div class="applist-page {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px; margin-top: {{ pageOffsetY }}px;" @swipe="handleSwipe">
-    <div class="top-row {{ isRect ? 'rect-top-row' : '' }}" if="{{ profileReady && !isCircle }}">
-      <text class="page-side-spacer"></text>
-      <text class="page-title {{ isRect ? 'rect-page-title' : '' }}">应用</text>
-      <text class="page-number">{{ pageText }}</text>
-    </div>
+  <stack class="launcher-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
+    <div class="launcher-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
+      <stack class="honeycomb" if="{{ surface === 'honeycomb' }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;" @touchstart="onHoneyStart" @touchmove="onHoneyMove" @touchend="onHoneyEnd">
+        <div class="honey-app" for="{{ circleSlots }}" tid="slotKey" style="left: {{ $item.left }}px; top: {{ $item.top }}px; width: {{ $item.size }}px; height: {{ $item.size }}px; opacity: {{ $item.opacity }};" @click="tapHoney($item)"><image class="honey-icon" src="{{ $item.icon }}" style="width: {{ $item.size }}px; height: {{ $item.size }}px; border-radius: {{ $item.radius }}px;"></image></div>
+        <div class="honey-label"><text class="honey-name">{{ focusedLabel }}</text><text class="honey-hint">点按打开</text></div>
+      </stack>
 
-    <div class="pill-list" if="{{ profileReady && surface === 'paged-list' }}">
-      <div class="app-item" for="{{ pageApps }}" tid="id" @click="openApp($item)">
-        <image class="app-icon" src="{{ $item.icon }}"></image>
-        <text class="app-name">{{ $item.label }}</text>
-        <text class="app-arrow">›</text>
-      </div>
-    </div>
-
-    <div class="rect-grid" if="{{ profileReady && surface === 'designed-grid' }}">
-      <div class="grid-app" for="{{ pageApps }}" tid="id" @click="openApp($item)" style="margin-right: {{ $item.marginRight }}px; margin-bottom: {{ $item.marginBottom }}px; border-color: {{ $item.accent }};">
-        <image class="grid-icon" src="{{ $item.icon }}"></image>
-        <div class="grid-copy">
-          <text class="grid-name">{{ $item.label }}</text>
-          <div class="grid-accent" style="background-color: {{ $item.accent }};"></div>
+      <div class="list-surface" if="{{ surface === 'paged-list' }}">
+        <div class="launcher-header" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;"><text class="launcher-title" style="font-size: {{ titleSize }}px;">应用</text><text class="page-text">{{ pageText }}</text></div>
+        <div class="pill-list" style="left: {{ contentLeft }}px; top: {{ contentTop }}px; width: {{ contentWidth }}px; height: {{ contentHeight }}px;">
+          <div class="pill-app" for="{{ pageApps }}" tid="id" @click="openApp($item)" style="width: {{ contentWidth }}px; height: {{ itemHeight }}px; margin-bottom: {{ itemGap }}px; border-radius: {{ itemRadius }}px;"><image class="pill-icon" src="{{ $item.icon }}" style="width: {{ iconSize }}px; height: {{ iconSize }}px; border-radius: {{ iconRadius }}px;"></image><text class="pill-name" style="font-size: {{ nameSize }}px;">{{ $item.label }}</text><text class="pill-arrow" style="font-size: {{ arrowSize }}px;">›</text></div>
         </div>
+        <div class="pager" style="left: {{ pagerLeft }}px; top: {{ pagerTop }}px; width: {{ pagerWidth }}px; height: {{ pagerHeight }}px;"><text class="pager-button" style="color: {{ previousColor }};" @click="previousPage">‹</text><div class="pager-track"><div class="pager-fill" style="width: {{ pageProgress }};"></div></div><text class="pager-button" style="color: {{ nextColor }};" @click="nextPage">›</text></div>
+      </div>
+
+      <div class="grid-surface" if="{{ surface === 'designed-grid' }}">
+        <div class="launcher-header" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;"><text class="launcher-title" style="font-size: {{ titleSize }}px;">应用</text><text class="page-text">{{ pageText }}</text></div>
+        <div class="rect-grid" style="left: {{ contentLeft }}px; top: {{ contentTop }}px; width: {{ contentWidth }}px; height: {{ contentHeight }}px;">
+          <div class="grid-app" for="{{ gridApps }}" tid="id" @click="openApp($item)" style="width: {{ itemWidth }}px; height: {{ itemHeight }}px; margin-right: {{ $item.marginRight }}px; margin-bottom: {{ $item.marginBottom }}px; border-radius: {{ itemRadius }}px; border-color: {{ $item.accent }};"><image class="grid-icon" src="{{ $item.icon }}" style="width: {{ iconSize }}px; height: {{ iconSize }}px; border-radius: {{ iconRadius }}px;"></image><text class="grid-name" style="font-size: {{ nameSize }}px;">{{ $item.label }}</text><div class="grid-accent" style="background-color: {{ $item.accent }};"></div></div>
+        </div>
+        <div class="pager" style="left: {{ pagerLeft }}px; top: {{ pagerTop }}px; width: {{ pagerWidth }}px; height: {{ pagerHeight }}px;"><text class="pager-button" style="color: {{ previousColor }};" @click="previousPage">‹</text><div class="pager-track"><div class="pager-fill" style="width: {{ pageProgress }};"></div></div><text class="pager-button" style="color: {{ nextColor }};" @click="nextPage">›</text></div>
       </div>
     </div>
-
-    <stack class="circle-honeycomb" if="{{ profileReady && surface === 'honeycomb' }}" @touchstart="handleCircleTouchStart" @touchmove="handleCircleTouchMove" @touchend="handleCircleTouchEnd">
-      <!--
-        触摸事件同时绑在图标上：beta 运行时不跨组件冒泡（见 docs/TECHNICAL.md），
-        而 .circle-app 自带 @click，会吃掉从图标上起手的整串触摸事件。
-        页面只负责事件调度；蜂巢坐标、聚焦和吸附全部属于 L3 Presentation Engine。
-      -->
-      <div class="circle-app {{ $item.isCenter ? 'is-center' : '' }}" for="{{ circleSlots }}" tid="slotKey" style="left: {{ $item.left }}px; top: {{ $item.top }}px; width: {{ $item.size }}px; height: {{ $item.size }}px; opacity: {{ $item.opacity }};" @click="focusOrOpenCircleApp($item)" @touchstart="handleCircleTouchStart" @touchmove="handleCircleTouchMove" @touchend="handleCircleTouchEnd">
-        <image class="circle-icon" style="width: {{ $item.size }}px; height: {{ $item.size }}px; border-radius: {{ $item.radius }}px;" src="{{ $item.icon }}"></image>
-      </div>
-      <div class="circle-position-track">
-        <div class="circle-position-dot" style="top: {{ circleIndicatorTop }}px;"></div>
-      </div>
-      <div class="center-label-glass" @touchstart="handleCircleTouchStart" @touchmove="handleCircleTouchMove" @touchend="handleCircleTouchEnd"></div>
-      <div class="center-label-sheen"></div>
-      <div class="center-label" @touchstart="handleCircleTouchStart" @touchmove="handleCircleTouchMove" @touchend="handleCircleTouchEnd">
-        <text class="center-name">{{ focusedLabel }}</text>
-        <text class="center-hint">点按打开</text>
-      </div>
-    </stack>
-
-    <div class="pager-row {{ isRect ? 'rect-pager-row' : '' }}" if="{{ profileReady && !isCircle }}">
-      <text class="pager-button {{ isRect ? 'rect-pager-button' : '' }}" style="color: {{ previousColor }}" @click="previousPage">‹</text>
-      <div class="pager-track {{ isRect ? 'rect-pager-track' : '' }}">
-        <div class="pager-fill" style="width: {{ pageProgress }}"></div>
-      </div>
-      <text class="pager-button {{ isRect ? 'rect-pager-button' : '' }}" style="color: {{ nextColor }}" @click="nextPage">›</text>
-    </div>
-  </div>
+  </stack>
 </template>
 
 <script>
-import router from '@system.router'
-import pageMotion from '../../common/page_motion'
-import fixedPager from '../../common/fixed_pager'
-import layoutRuntime from '../../presentation/layout/runtime'
-import freeSurface from '../../presentation/layout/free_surface'
-import applistLayout from '../../presentation/layout/specs/applist'
-import honeycombLayout from '../../presentation/engines/honeycomb'
-import appCatalog from '../../domain/apps/catalog'
+import pageRuntime from '../../v2/app/page_runtime'
+import navigation from '../../v2/app/navigation'
+import { createLauncherController } from '../../v2/features/launcher/controller'
+import launcherDesign from '../../v2/design/specs/launcher'
+import honeycomb from '../../presentation/engines/honeycomb'
 
-var GRID_ACCENTS = ['#3A7DFF', '#30D158', '#FF9F0A', '#BF5AF2', '#64D2FF', '#FF375F']
-
-function decorateGridApps(items) {
-  var source = items || []
+var ACCENTS = ['#3A7DFF','#30D158','#FF9F0A','#BF5AF2','#64D2FF','#FF375F']
+function decorateGrid(items, gap) {
   var result = []
-  for (var i = 0; i < source.length; i++) {
-    var item = source[i]
-    result.push({
-      id: item.id,
-      label: item.label,
-      icon: item.icon,
-      softIcon: item.softIcon,
-      route: item.route,
-      accent: GRID_ACCENTS[i % GRID_ACCENTS.length],
-      marginRight: i % 2 === 0 ? 8 : 0,
-      marginBottom: i < 4 ? 6 : 0
-    })
+  for (var i = 0; i < items.length; i++) {
+    var source = items[i]
+    result.push({ id: source.id, label: source.label, icon: source.icon, route: source.route, accent: ACCENTS[i % ACCENTS.length], marginRight: i % 2 === 0 ? gap : 0, marginBottom: i < 4 ? gap : 0 })
   }
   return result
 }
 
 export default {
   private: {
-    isCircle: false,
-    isRect: false,
-    surface: '',
-    profileReady: false,
-    viewportClass: '',
-    viewportPosition: 'relative',
-    viewportLeft: '0px',
-    viewportWidth: '100%',
-    viewportHeight: '100%',
-    viewportTop: '0px',
-    allApps: [],
-    pageApps: [],
-    pageSize: 4,
-    circleSlots: [],
-    focusedLabel: '',
-    circleDragOffset: 0,
-    circleDragOffsetX: 0,
-    circleDragOffsetY: 0,
-    circleDragFocusIndex: 0,
-    circlePanX: 0,
-    circlePanY: 0,
-    circleTouchLastY: 0,
-    circleTouchActive: false,
-    circleAnimationTimer: null,
-    circleAnimating: false,
-    circleIndicatorTop: 0,
-    pageIndex: 0,
-    pageText: '1 / 1',
-    pageProgress: '100%',
-    previousColor: '#3A3A3C',
-    nextColor: '#3A3A3C',
-    pageOpacity: 1,
-    pageOffset: 0,
-    pageOffsetY: 0
+    surface: '', pageApps: [], gridApps: [], pageText: '1 / 1', pageProgress: '100%', previousColor: '#3A3A3C', nextColor: '#3A3A3C',
+    headerLeft: 12, headerTop: 24, headerWidth: 168, headerHeight: 28, contentLeft: 12, contentTop: 60, contentWidth: 168, contentHeight: 300, pagerLeft: 12, pagerTop: 400, pagerWidth: 168, pagerHeight: 24,
+    itemHeight: 62, itemGap: 8, itemWidth: 79, itemRadius: 20, titleSize: 18, nameSize: 14, arrowSize: 20, iconSize: 40, iconRadius: 20, gridGap: 6,
+    circleSlots: [], focusedLabel: '', circleFocusIndex: 0, circlePanX: 0, circlePanY: 0, circleDragX: 0, circleDragY: 0, circleTouchActive: false,
+    sceneWidth: 192, sceneHeight: 192, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
   },
-
   onInit() {
     var self = this
-    layoutRuntime.bind(this, function (profile) {
-      return freeSurface.resolve(profile, applistLayout)
-    }, function (plan) {
-      self.surface = plan.surface
-      self.isCircle = plan.surface === 'honeycomb'
-      self.isRect = plan.surface === 'designed-grid'
-      self.pageSize = plan.pageSize || 4
-      self.allApps = appCatalog.list(plan.appIds)
-      if (self.isCircle) {
-        self.circleSlots = honeycombLayout.buildSlots(self.allApps)
-        self.lastSlotSignature = null
-      }
-      self.profileReady = true
-      self.refreshPage()
+    this.controller = createLauncherController(function (state) { self.applyState(state) })
+    pageRuntime.bind(this, { contentWidth: function (profile) { return profile.formFactor === 'circle' ? 148 : (profile.formFactor === 'rect' ? 164 : 168) } }, function (profile, scene, safe) {
+      self.plan = launcherDesign.resolve(profile, scene, safe)
+      self.applyPlan(self.plan)
+      self.controller.configure(self.plan.appIds, self.plan.pageSize)
     })
   },
+  onHide() { this.circleTouchActive = false },
+  onDestroy() { this.circleTouchActive = false; this.circleSlots = [] },
+  onBackPress() { navigation.back(); return true },
 
-  onShow() {
-    pageMotion.enter(this)
-    if (this.profileReady) this.refreshPage()
+  applyPlan(plan) {
+    this.surface = plan.surface
+    if (plan.header) { this.headerLeft = plan.header.left; this.headerTop = plan.header.top; this.headerWidth = plan.header.width; this.headerHeight = plan.header.height }
+    if (plan.content) { this.contentLeft = plan.content.left; this.contentTop = plan.content.top; this.contentWidth = plan.content.width; this.contentHeight = plan.content.height }
+    if (plan.pager) { this.pagerLeft = plan.pager.left; this.pagerTop = plan.pager.top; this.pagerWidth = plan.pager.width; this.pagerHeight = plan.pager.height }
+    this.itemHeight = plan.itemHeight || this.itemHeight; this.itemGap = plan.itemGap || plan.gap || this.itemGap; this.itemWidth = plan.itemWidth || this.itemWidth; this.itemRadius = plan.itemRadius || this.itemRadius
+    this.titleSize = plan.titleSize || this.titleSize; this.nameSize = plan.nameSize || this.nameSize; this.arrowSize = plan.arrowSize || this.arrowSize; this.iconSize = plan.iconSize || this.iconSize; this.iconRadius = Math.round(this.iconSize / 2); this.gridGap = plan.gap || 6
   },
 
-  onHide() {
-    clearTimeout(this.circleAnimationTimer)
-    this.circleAnimationTimer = null
-    this.circleAnimating = false
-    this.circleTouchActive = false
-    pageMotion.clear(this)
-  },
-
-  onDestroy() {
-    clearTimeout(this.circleAnimationTimer)
-    this.circleAnimationTimer = null
-    this.circleAnimating = false
-    this.circleTouchActive = false
-    pageMotion.clear(this)
-  },
-
-  refreshPage() {
-    if (this.isCircle) {
-      this.refreshCirclePage()
-      return
-    }
-    var state = fixedPager.build(this.allApps, this.pageIndex, this.pageSize)
-    this.pageIndex = state.pageIndex
-    this.pageApps = this.surface === 'designed-grid' ? decorateGridApps(state.items) : state.items
+  applyState(state) {
+    this.pageApps = state.items
+    this.gridApps = decorateGrid(state.items, this.gridGap)
     this.pageText = state.pageText
-    this.pageProgress = Math.round((state.pageNumber / state.pageCount) * 100) + '%'
+    this.pageProgress = state.progress
     this.previousColor = state.hasPrevious ? '#0A84FF' : '#3A3A3C'
     this.nextColor = state.hasNext ? '#0A84FF' : '#3A3A3C'
+    if (this.surface === 'honeycomb' && !this.circleSlots.length) this.initHoneycomb(state.all)
   },
 
-  refreshCirclePage(keepOffset) {
-    var count = this.allApps.length
-    if (!count) return
-    if (this.pageIndex < 0) this.pageIndex = 0
-    if (this.pageIndex >= count) this.pageIndex = count - 1
-    if (!keepOffset) {
-      this.circleDragOffset = 0
-      this.circleDragOffsetX = 0
-      this.circleDragOffsetY = 0
-      var selected = this.circleSlots[this.pageIndex]
-      var initialPan = honeycombLayout.panForSlot(selected, 74)
-      if (initialPan) {
-        this.circlePanX = initialPan.x
-        this.circlePanY = initialPan.y
-      }
-    }
-    this.circleDragFocusIndex = this.pageIndex
-    this.focusedLabel = this.allApps[this.pageIndex].label
-    this.pageText = this.pageIndex + 1 + ' / ' + count
-    this.pageProgress = Math.round(((this.pageIndex + 1) / count) * 100) + '%'
-    this.previousColor = this.pageIndex > 0 ? '#0A84FF' : '#3A3A3C'
-    this.nextColor = this.pageIndex < count - 1 ? '#0A84FF' : '#3A3A3C'
-    this.circleIndicatorTop = count > 1 ? Math.round((this.pageIndex / (count - 1)) * 42) : 0
-    this.updateCircleSlotPositions()
+  initHoneycomb(apps) {
+    this.circleSlots = honeycomb.buildSlots(apps)
+    this.circleFocusIndex = 0
+    var target = honeycomb.panForSlot(this.circleSlots[0], 74)
+    this.circlePanX = target ? target.x : 0; this.circlePanY = target ? target.y : 0
+    this.refreshHoneycomb()
   },
 
-  updateCircleSlotPositions() {
-    var offsetX = this.circleDragOffsetX || 0
-    var offsetY = this.circleDragOffsetY || 0
-    var panX = this.circlePanX || 0
-    var panY = this.circlePanY || 0
-    var signature = offsetX + '|' + offsetY + '|' + panX + '|' + panY
-    if (signature === this.lastSlotSignature) return
-    this.lastSlotSignature = signature
-
-    var frame = honeycombLayout.layoutSlots(this.circleSlots, panX, panY, offsetX, offsetY)
-    var nearest = frame.nearestIndex >= 0 ? frame.slots[frame.nearestIndex] : null
-    this.circleDragFocusIndex = nearest ? nearest.sourceIndex : this.pageIndex
-    if (nearest && nearest.label !== this.focusedLabel) this.focusedLabel = nearest.label
+  refreshHoneycomb() {
+    var frame = honeycomb.layoutSlots(this.circleSlots, this.circlePanX, this.circlePanY, this.circleDragX, this.circleDragY)
     this.circleSlots = frame.slots
+    if (frame.nearestIndex >= 0) { this.circleFocusIndex = frame.slots[frame.nearestIndex].sourceIndex; this.focusedLabel = frame.slots[frame.nearestIndex].label }
   },
 
-  moveCircleFocus(direction, keepOffset) {
-    var count = this.allApps.length
-    if (!count) return false
-    var bestIndex = honeycombLayout.pickSlotByDirection(this.circleSlots, this.pageIndex, direction)
-    if (bestIndex < 0) return false
-    this.pageIndex = bestIndex
-    this.refreshCirclePage(keepOffset)
-    return true
-  },
-
-  previousPage() {
-    if (this.isCircle) {
-      this.moveCircleFocus(honeycombLayout.DIRECTIONS.left)
-      return
-    }
-    var state = fixedPager.move(this.allApps, this.pageIndex, this.pageSize, -1)
-    if (state.pageIndex === this.pageIndex) return
-    this.pageIndex = state.pageIndex
-    this.refreshPage()
-  },
-
-  nextPage() {
-    if (this.isCircle) {
-      this.moveCircleFocus(honeycombLayout.DIRECTIONS.right)
-      return
-    }
-    var state = fixedPager.move(this.allApps, this.pageIndex, this.pageSize, 1)
-    if (state.pageIndex === this.pageIndex) return
-    this.pageIndex = state.pageIndex
-    this.refreshPage()
-  },
-
-  openApp(item) {
-    if (!item) return
-    if (!item.route) {
-      pageMotion.back(this, router)
-      return
-    }
-    pageMotion.push(this, router, item.route)
-  },
-
-  focusOrOpenCircleApp(item) {
-    if (!item || Date.now() < (this.suppressCircleClickUntil || 0)) return
-    if (item.isCenter) {
-      this.openApp(item)
-      return
-    }
-    this.pageIndex = item.sourceIndex
-    this.refreshCirclePage()
-  },
-
-  handleCircleTouchStart(event) {
-    if (this.circleAnimating) return
-    if (this.circleTouchActive) return
+  onHoneyStart(event) {
     if (!event.touches || !event.touches[0]) return
-    var point = event.touches[0]
-    this.circleTouchStartX = point.pageX
-    this.circleTouchStartY = point.pageY
-    this.circleTouchLastX = point.pageX
-    this.circleTouchLastY = point.pageY
-    this.circleTouchActive = true
-    this.circleDragMoved = false
+    var p = event.touches[0]; this.touchStartX = p.pageX; this.touchStartY = p.pageY; this.touchLastX = p.pageX; this.touchLastY = p.pageY; this.circleTouchActive = true; this.dragMoved = false
   },
-
-  handleCircleTouchMove(event) {
-    if (this.circleAnimating || !this.circleTouchActive) return
-    if (!event.touches || !event.touches[0]) return
-    var point = event.touches[0]
-    var deltaX = point.pageX - this.circleTouchLastX
-    var deltaY = point.pageY - this.circleTouchLastY
-    var totalX = point.pageX - this.circleTouchStartX
-    var totalY = point.pageY - this.circleTouchStartY
-    if (Math.abs(totalX) > 7 || Math.abs(totalY) > 7) this.circleDragMoved = true
-    this.circleTouchLastX = point.pageX
-    this.circleTouchLastY = point.pageY
-    if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) return
-    this.circleDragOffsetX = honeycombLayout.nextDragOffset(this.circleDragOffsetX, deltaX)
-    this.circleDragOffsetY = honeycombLayout.nextDragOffset(this.circleDragOffsetY, deltaY)
-    this.updateCircleSlotPositions()
+  onHoneyMove(event) {
+    if (!this.circleTouchActive || !event.touches || !event.touches[0]) return
+    var p = event.touches[0], dx = p.pageX - this.touchLastX, dy = p.pageY - this.touchLastY
+    this.touchLastX = p.pageX; this.touchLastY = p.pageY
+    if (Math.abs(p.pageX - this.touchStartX) > 6 || Math.abs(p.pageY - this.touchStartY) > 6) this.dragMoved = true
+    this.circleDragX = honeycomb.nextDragOffset(this.circleDragX, dx); this.circleDragY = honeycomb.nextDragOffset(this.circleDragY, dy); this.refreshHoneycomb()
   },
-
-  handleCircleTouchEnd(event) {
+  onHoneyEnd(event) {
     if (!this.circleTouchActive) return
-    this.lastCircleTouchEndAt = Date.now()
     this.circleTouchActive = false
-    var point = event.changedTouches && event.changedTouches[0]
-    var totalX = point ? point.pageX - this.circleTouchStartX : 0
-    var totalY = point ? point.pageY - this.circleTouchStartY : 0
-    if (totalX > 60 && Math.abs(totalY) < 28 && this.circleTouchStartX < 24) {
-      this.backFromCircle()
-      return
-    }
-    if (this.circleDragMoved) {
-      this.suppressCircleClickUntil = Date.now() + 220
-      var distance = Math.sqrt(totalX * totalX + totalY * totalY)
-      var targetIndex = distance >= honeycombLayout.SNAP_DISTANCE ? this.circleDragFocusIndex : this.pageIndex
-      this.snapCircleFocus(targetIndex)
-    }
+    var p = event.changedTouches && event.changedTouches[0]
+    var totalX = p ? p.pageX - this.touchStartX : 0, totalY = p ? p.pageY - this.touchStartY : 0
+    if (totalX > 58 && Math.abs(totalY) < 30 && this.touchStartX < 26) { navigation.back(); return }
+    if (!this.dragMoved) return
+    var target = this.circleSlots[this.circleFocusIndex]
+    var pan = honeycomb.panForSlot(target)
+    if (pan) { this.circlePanX = pan.x; this.circlePanY = pan.y }
+    this.circleDragX = 0; this.circleDragY = 0; this.refreshHoneycomb(); this.suppressTapUntil = Date.now() + 180
+  },
+  tapHoney(item) {
+    if (!item || Date.now() < (this.suppressTapUntil || 0)) return
+    if (!item.isCenter) { var pan = honeycomb.panForSlot(item); if (pan) { this.circlePanX = pan.x; this.circlePanY = pan.y; this.circleDragX = 0; this.circleDragY = 0; this.refreshHoneycomb() } return }
+    this.openApp(item)
   },
 
-  snapCircleFocus(targetIndex) {
-    if (this.circleAnimating) return
-    var self = this
-    var startPanX = (this.circlePanX || 0) + (this.circleDragOffsetX || 0)
-    var startPanY = (this.circlePanY || 0) + (this.circleDragOffsetY || 0)
-    var selected = this.circleSlots[targetIndex]
-    var targetPan = honeycombLayout.panForSlot(selected)
-    var targetPanX = targetPan ? targetPan.x : startPanX
-    var targetPanY = targetPan ? targetPan.y : startPanY
-    this.pageIndex = targetIndex
-    this.circlePanX = startPanX
-    this.circlePanY = startPanY
-    this.circleDragOffsetX = 0
-    this.circleDragOffsetY = 0
-    this.refreshCirclePage(true)
-    this.circleAnimating = true
-    this.suppressCircleClickUntil = Date.now() + 220
-    var startedAt = Date.now()
-    clearTimeout(this.circleAnimationTimer)
-    function tick() {
-      var progress = Math.min(1, (Date.now() - startedAt) / honeycombLayout.SNAP_DURATION)
-      var eased = honeycombLayout.backOut(progress)
-      self.circlePanX = startPanX + (targetPanX - startPanX) * eased
-      self.circlePanY = startPanY + (targetPanY - startPanY) * eased
-      self.updateCircleSlotPositions()
-      if (progress >= 1) {
-        self.circleDragOffset = 0
-        self.circleDragOffsetX = 0
-        self.circleDragOffsetY = 0
-        self.circlePanX = targetPanX
-        self.circlePanY = targetPanY
-        self.refreshCirclePage(true)
-        self.circleAnimating = false
-        self.circleAnimationTimer = null
-        return
-      }
-      self.circleAnimationTimer = setTimeout(tick, honeycombLayout.FRAME_MS)
-    }
-    tick()
-  },
-
-  backFromCircle() {
-    var now = Date.now()
-    if (now - (this.lastCircleBackAt || 0) < 300) return
-    this.lastCircleBackAt = now
-    pageMotion.back(this, router)
-  },
-
-  handleSwipe(event) {
-    if (!event) return
-    if (this.isCircle) {
-      if (this.circleTouchActive) return
-      if (Date.now() - (this.lastCircleTouchEndAt || 0) < 260) return
-      if (event.direction === 'up') this.moveCircleFocus(honeycombLayout.DIRECTIONS.up)
-      else if (event.direction === 'down') this.moveCircleFocus(honeycombLayout.DIRECTIONS.down)
-      else if (event.direction === 'left') this.moveCircleFocus(honeycombLayout.DIRECTIONS.left)
-      else if (event.direction === 'right') this.moveCircleFocus(honeycombLayout.DIRECTIONS.right)
-      return
-    }
-    if (event.direction === 'left') {
-      this.nextPage()
-    } else if (event.direction === 'right') {
-      if (this.pageIndex > 0) this.previousPage()
-      else pageMotion.back(this, router)
-    } else if (event.direction === 'down') {
-      pageMotion.back(this, router)
-    }
-  }
+  previousPage() { this.controller.previous() },
+  nextPage() { this.controller.next() },
+  openApp(item) { if (!item) return; if (!item.route) navigation.back(); else navigation.push(item.route) }
 }
 </script>
 
 <style>
-.applist-page {
-  flex-direction: column;
-  align-items: center;
-  background-color: #000000;
-  width: 100%;
-  height: 100%;
-}
-
-.top-row {
-  width: 168px;
-  height: 30px;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 66px;
-  margin-bottom: 8px;
-}
-
-.rect-top-row {
-  height: 24px;
-  margin-top: 8px;
-  margin-bottom: 6px;
-}
-
-.page-title {
-  width: 112px;
-  font-size: 21px;
-  font-weight: bold;
-  color: #FFFFFF;
-  text-align: center;
-}
-
-.rect-page-title {
-  font-size: 16px;
-}
-
-.page-side-spacer,
-.page-number {
-  width: 28px;
-  font-size: 11px;
-  color: #8E8E93;
-  text-align: right;
-}
-
-.pill-list {
-  width: 168px;
-  height: 292px;
-  flex-direction: column;
-}
-
-.app-item {
-  flex-direction: row;
-  align-items: center;
-  width: 168px;
-  height: 64px;
-  padding-left: 10px;
-  padding-right: 9px;
-  margin-bottom: 9px;
-  background-color: #14181F;
-  border-radius: 14px;
-}
-
-.app-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 18px;
-  margin-right: 11px;
-}
-
-.app-name {
-  width: 91px;
-  font-size: 16px;
-  color: #FFFFFF;
-  font-weight: bold;
-}
-
-.app-arrow {
-  width: 12px;
-  font-size: 20px;
-  color: #636366;
-  text-align: right;
-}
-
-.rect-grid {
-  width: 168px;
-  height: 156px;
-  flex-direction: row;
-  flex-wrap: wrap;
-}
-
-.grid-app {
-  width: 80px;
-  height: 48px;
-  flex-direction: row;
-  align-items: center;
-  padding: 6px;
-  border-width: 1px;
-  border-radius: 12px;
-  background-color: #11161D;
-}
-
-.grid-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 14px;
-  margin-right: 7px;
-}
-
-.grid-copy {
-  width: 31px;
-  height: 30px;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.grid-name {
-  width: 31px;
-  font-size: 9px;
-  font-weight: bold;
-  color: #FFFFFF;
-  lines: 2;
-}
-
-.grid-accent {
-  width: 20px;
-  height: 2px;
-  border-radius: 1px;
-  margin-top: 3px;
-}
-
-.circle-honeycomb {
-  width: 192px;
-  height: 192px;
-}
-
-.circle-app {
-  position: absolute;
-}
-
-.circle-icon {
-  object-fit: cover;
-}
-
-.circle-app.is-center {
-  z-index: 3;
-}
-
-.center-label {
-  left: 48px;
-  top: 152px;
-  width: 96px;
-  height: 20px;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.center-label-glass {
-  left: 48px;
-  top: 152px;
-  width: 96px;
-  height: 20px;
-  border-radius: 10px;
-  border-width: 1px;
-  border-color: #5A6675;
-  background-color: #0E141C;
-  opacity: 0.82;
-}
-
-.center-label-sheen {
-  left: 62px;
-  top: 153px;
-  width: 68px;
-  height: 1px;
-  border-radius: 1px;
-  background-color: #FFFFFF;
-  opacity: 0.22;
-}
-
-.center-name {
-  width: 92px;
-  height: 12px;
-  font-size: 10px;
-  font-weight: bold;
-  color: #FFFFFF;
-  text-align: center;
-  lines: 1;
-  text-overflow: ellipsis;
-}
-
-.center-hint {
-  width: 92px;
-  height: 7px;
-  font-size: 5px;
-  color: #7C8794;
-  text-align: center;
-}
-
-.circle-position-track {
-  left: 178px;
-  top: 68px;
-  width: 3px;
-  height: 56px;
-  border-radius: 2px;
-  background-color: #23262C;
-}
-
-.circle-position-dot {
-  left: 0px;
-  width: 3px;
-  height: 14px;
-  border-radius: 2px;
-  background-color: #0A84FF;
-}
-
-.pager-row {
-  width: 156px;
-  height: 28px;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 0px;
-}
-
-.rect-pager-row {
-  width: 128px;
-  height: 24px;
-  margin-top: 4px;
-}
-
-.pager-button {
-  width: 36px;
-  height: 26px;
-  font-size: 22px;
-  font-weight: bold;
-  text-align: center;
-}
-
-.rect-pager-button {
-  width: 28px;
-  height: 22px;
-  font-size: 18px;
-}
-
-.pager-track {
-  width: 72px;
-  height: 4px;
-  border-radius: 2px;
-  background-color: #24262B;
-}
-
-.rect-pager-track {
-  width: 64px;
-}
-
-.pager-fill {
-  height: 4px;
-  border-radius: 2px;
-  background-color: #0A84FF;
-}
+.launcher-root, .launcher-scene { background-color: #000000; }
+.launcher-scene { position: absolute; left: 0px; top: 0px; }
+.honeycomb { position: absolute; left: 0px; top: 0px; background-color: #000000; }
+.honey-app { position: absolute; } .honey-icon { object-fit: cover; }
+.honey-label { position: absolute; left: 48px; top: 151px; width: 96px; height: 32px; border-radius: 16px; background-color: #111317; flex-direction: column; justify-content: center; align-items: center; }
+.honey-name { width: 90px; color: #FFFFFF; font-size: 9px; font-weight: bold; text-align: center; } .honey-hint { width: 90px; color: #636366; font-size: 5px; text-align: center; margin-top: 1px; }
+.launcher-header, .pill-list, .rect-grid, .pager { position: absolute; }
+.launcher-header { flex-direction: row; justify-content: space-between; align-items: center; }
+.launcher-title { color: #FFFFFF; font-weight: bold; } .page-text { color: #636366; font-size: 8px; }
+.pill-list { flex-direction: column; overflow: hidden; }
+.pill-app { background-color: #14161A; flex-direction: row; align-items: center; padding-left: 12px; padding-right: 12px; }
+.pill-icon { object-fit: cover; } .pill-name { flex: 1; color: #FFFFFF; font-weight: bold; margin-left: 12px; } .pill-arrow { width: 20px; color: #636366; text-align: right; }
+.rect-grid { flex-direction: row; flex-wrap: wrap; align-content: flex-start; }
+.grid-app { border-width: 1px; background-color: #111317; flex-direction: row; align-items: center; padding: 8px; }
+.grid-icon { object-fit: cover; } .grid-name { flex: 1; color: #FFFFFF; font-weight: bold; margin-left: 6px; lines: 1; }
+.grid-accent { width: 3px; height: 24px; border-radius: 2px; margin-left: 4px; }
+.pager { flex-direction: row; justify-content: space-between; align-items: center; }
+.pager-button { width: 28px; height: 24px; font-size: 20px; text-align: center; }
+.pager-track { width: 96px; height: 4px; border-radius: 2px; background-color: #242426; }
+.pager-fill { height: 4px; border-radius: 2px; background-color: #0A84FF; }
 </style>
