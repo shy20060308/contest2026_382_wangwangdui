@@ -2,7 +2,7 @@ import activityStore from '../../../domain/activity/store'
 import healthStore from '../../../domain/health/store'
 import historyRepository from '../../../domain/history/repository'
 import workoutRepository from '../../../domain/workout/repository'
-import settingsStore from '../../domain/settings/store'
+import settingsStore from '../../../domain/settings/store'
 import transport from './mock_transport'
 var protocol = require('./protocol')
 
