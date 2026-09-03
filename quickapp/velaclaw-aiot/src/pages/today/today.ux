@@ -52,7 +52,7 @@ import todayView from '../../v2/design/views/today'
 
 export default {
   private: {
-    ready: false, isCircle: false, isPill: false, isRect: false, pageIndex: 0, designPlan: null, todayModel: null,
+    ready: false, pageVisible: false, isCircle: false, isPill: false, isRect: false, pageIndex: 0, designPlan: null, todayModel: null,
     sceneWidth: 192, sceneHeight: 192, sceneSafeLeft: 0, sceneSafeTop: 0, sceneSafeHeight: 192,
     viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%',
     yearText: '', monthText: '', monthNumberText: '', dayText: '', weekdayText: '', lunarText: '',
@@ -65,11 +65,13 @@ export default {
       var plan = todayDesign.resolve(profile, scene, safe)
       self.designPlan = plan
       self.isCircle = plan.shape === 'circle'; self.isPill = plan.shape === 'pill'; self.isRect = plan.shape === 'rect'; self.ready = true
+      if (self.todayModel) self.applyModel(todayView.project(self.todayModel, plan))
+      if (self.pageVisible) self.controller.start()
     })
   },
-  onShow() { if (this.controller) this.controller.start() },
-  onHide() { if (this.controller) this.controller.stop() },
-  onDestroy() { if (this.controller) this.controller.stop(); this.todayModel = null; this.calendarCells = [] },
+  onShow() { this.pageVisible = true; if (this.ready && this.controller) this.controller.start() },
+  onHide() { this.pageVisible = false; if (this.controller) this.controller.stop() },
+  onDestroy() { this.pageVisible = false; if (this.controller) this.controller.stop(); this.todayModel = null; this.calendarCells = [] },
   onBackPress() { if (this.pageIndex === 1) { this.pageIndex = 0; return true } navigation.back(); return true },
   acceptModel(model) { this.todayModel = model; if (this.designPlan) this.applyModel(todayView.project(model, this.designPlan)) },
   applyModel(model) {
@@ -97,7 +99,7 @@ export default {
 .circle-calendar-head { width: 136px; height: 18px; flex-direction: row; justify-content: space-between; align-items: center; } .circle-calendar-title { width: 92px; font-size: 9px; color: #FFFFFF; text-align: center; font-weight: bold; }
 .circle-nav { width: 20px; height: 18px; justify-content: center; align-items: center; } .circle-nav-text { font-size: 15px; color: #FF375F; }
 .circle-week-row, .circle-calendar-grid { width: 133px; flex-direction: row; flex-wrap: wrap; } .circle-week-row { height: 10px; } .circle-week { width: 19px; font-size: 5px; color: #8E8E93; text-align: center; }
-.circle-calendar-grid { height: 84px; } .circle-cell { width: 19px; height: 14px; justify-content: center; align-items: center; } .circle-cell-text { width: 14px; height: 12px; border-radius: 6px; font-size: 6px; text-align: center; }
+.circle-calendar-grid { height: 78px; } .circle-cell { width: 19px; height: 13px; justify-content: center; align-items: center; } .circle-cell-text { width: 14px; height: 12px; border-radius: 6px; font-size: 6px; text-align: center; }
 .pill-surface { position: absolute; width: 168px; flex-direction: column; align-items: center; }
 .pill-date-hero { width: 168px; height: 88px; border-radius: 26px; background-color: #171318; flex-direction: row; align-items: center; padding: 12px; }
 .pill-day-block { width: 72px; height: 66px; flex-direction: column; } .pill-month-badge { width: 42px; height: 20px; border-radius: 10px; background-color: #FF375F; font-size: 10px; color: #FFFFFF; text-align: center; padding-top: 4px; } .pill-day-value { width: 72px; height: 48px; font-size: 46px; color: #FFFFFF; font-weight: bold; }
