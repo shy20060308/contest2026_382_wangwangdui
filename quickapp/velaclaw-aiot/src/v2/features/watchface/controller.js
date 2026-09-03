@@ -1,19 +1,6 @@
 import watchfaceStore from '../../../domain/watchface/store'
 import faceCatalog from '../../../domain/watchface/catalog'
 
-function decorate(face, selectedId) {
-  return {
-    id: face.id,
-    name: face.name,
-    description: face.description,
-    tag: face.tag,
-    background: face.background,
-    accent: face.accent,
-    selected: face.id === selectedId,
-    borderColor: face.id === selectedId ? face.accent : '#2C2C2E'
-  }
-}
-
 export function createWatchfaceController(onChange) {
   var ids = []
   var selectedId = 'sport'
@@ -25,13 +12,9 @@ export function createWatchfaceController(onChange) {
 
   function snapshot() {
     selectedId = normalize(selectedId)
-    var source = faceCatalog.list(ids)
-    var faces = []
+    var faces = faceCatalog.list(ids)
     var selectedIndex = 0
-    for (var i = 0; i < source.length; i++) {
-      faces.push(decorate(source[i], selectedId))
-      if (source[i].id === selectedId) selectedIndex = i
-    }
+    for (var i = 0; i < faces.length; i++) if (faces[i].id === selectedId) selectedIndex = i
     return { selectedId: selectedId, selectedIndex: selectedIndex, faces: faces }
   }
 
