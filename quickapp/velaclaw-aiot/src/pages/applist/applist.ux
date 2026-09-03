@@ -32,7 +32,7 @@ import appRoutes from '../../v2/app/app_routes'
 import { createLauncherController } from '../../v2/features/launcher/controller'
 import launcherDesign from '../../v2/design/specs/launcher'
 import launcherView from '../../v2/design/views/launcher'
-import honeycomb from '../../presentation/engines/honeycomb'
+import honeycomb from '../../v2/design/engines/honeycomb'
 
 export default {
   private: {
