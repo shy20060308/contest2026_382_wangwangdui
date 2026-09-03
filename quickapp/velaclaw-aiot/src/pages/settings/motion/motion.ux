@@ -26,6 +26,7 @@ import pageRuntime from '../../../v2/app/page_runtime'
 import navigation from '../../../v2/app/navigation'
 import { createMotionController } from '../../../v2/features/settings/motion_controller'
 import detailDesign from '../../../v2/design/specs/settings_detail'
+import motionView from '../../../v2/design/views/motion'
 
 export default {
   private: {
@@ -35,17 +36,29 @@ export default {
   },
   onInit() {
     var self = this
-    this.controller = createMotionController(function (view) { self.applyView(view) })
-    pageRuntime.bind(this, { contentWidth: function (profile) { return profile.formFactor === 'circle' ? 148 : (profile.formFactor === 'rect' ? 164 : 168) } }, function (profile, scene, safe) { var plan = detailDesign.resolve(profile, scene, safe); self.headerLeft = plan.header.left; self.headerTop = plan.header.top; self.headerWidth = plan.header.width; self.headerHeight = plan.header.height; self.streamLeft = plan.stream.left; self.streamTop = plan.stream.top; self.streamWidth = plan.stream.width; self.streamHeight = plan.stream.height; self.titleSize = plan.titleSize; self.cardRadius = plan.cardRadius; self.cardGap = plan.cardGap })
+    this.controller = createMotionController(function (model) { self.applyModel(model) })
+    pageRuntime.bind(this, { contentWidth: function (profile) { return detailDesign.contentWidth(profile) } }, function (profile, scene, safe) {
+      var plan = detailDesign.resolve(profile, scene, safe)
+      self.headerLeft = plan.header.left; self.headerTop = plan.header.top; self.headerWidth = plan.header.width; self.headerHeight = plan.header.height
+      self.streamLeft = plan.stream.left; self.streamTop = plan.stream.top; self.streamWidth = plan.stream.width; self.streamHeight = plan.stream.height
+      self.titleSize = plan.titleSize; self.cardRadius = plan.cardRadius; self.cardGap = plan.cardGap
+    })
   },
-  onShow() { this.controller.refresh() },
-  onHide() { this.controller.stop() },
-  onDestroy() { this.controller.stop() },
+  onShow() { if (this.controller) this.controller.refresh() },
+  onHide() { if (this.controller) this.controller.stop() },
+  onDestroy() { if (this.controller) this.controller.stop() },
   onBackPress() { navigation.back(); return true },
-  applyView(view) { this.sensorStatus = view.sensorStatus; this.sensorColor = view.sensorColor; this.sensorButtonText = view.sensorButtonText; this.xText = view.xText; this.yText = view.yText; this.zText = view.zText; this.magnitudeText = view.magnitudeText; this.scoreText = view.scoreText; this.intensityColor = view.intensityColor; this.sampleText = view.sampleText; this.countdownText = view.countdownText; this.actionResult = view.actionResult; this.actionColor = view.actionColor; this.actionPeakText = view.actionPeakText; this.measureButtonText = view.measureButtonText },
-  toggleSensor() { this.controller.toggleSensor() }, resetCalibration() { this.controller.reset() }, startMeasure() { this.controller.startMeasure() },
-  previousPage() { if (this.pageIndex > 0) this.pageIndex--; this.pageLabel = this.pageIndex === 0 ? '实时诊断' : '动作测量' },
-  nextPage() { if (this.pageIndex < 1) this.pageIndex++; this.pageLabel = this.pageIndex === 0 ? '实时诊断' : '动作测量' }
+  applyModel(model) {
+    var view = motionView.project(model)
+    this.sensorStatus = view.sensorStatus; this.sensorColor = view.sensorColor; this.sensorButtonText = view.sensorButtonText
+    this.xText = view.xText; this.yText = view.yText; this.zText = view.zText; this.magnitudeText = view.magnitudeText; this.scoreText = view.scoreText; this.intensityColor = view.intensityColor; this.sampleText = view.sampleText
+    this.countdownText = view.countdownText; this.actionResult = view.actionResult; this.actionColor = view.actionColor; this.actionPeakText = view.actionPeakText; this.measureButtonText = view.measureButtonText
+  },
+  toggleSensor() { if (this.controller) this.controller.toggleSensor() },
+  resetCalibration() { if (this.controller) this.controller.reset() },
+  startMeasure() { if (this.controller) this.controller.startMeasure() },
+  previousPage() { if (this.pageIndex > 0) this.pageIndex--; this.pageLabel = motionView.pageLabel(this.pageIndex) },
+  nextPage() { if (this.pageIndex < 1) this.pageIndex++; this.pageLabel = motionView.pageLabel(this.pageIndex) }
 }
 </script>
 
