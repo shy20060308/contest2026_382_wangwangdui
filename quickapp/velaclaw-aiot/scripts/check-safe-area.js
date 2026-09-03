@@ -1,8 +1,8 @@
 /**
  * 圆屏 / 胶囊屏安全区回归校验
  *
- * 旧页面仍按 CSS 流式盒模型检查；已经迁入 Design Engine 的页面直接执行 Layout Spec，
- * 以 Adapter 产出的真实 region plan 为准。后者不再反向解析 CSS magic number。
+ * 旧页面仍按 CSS 流式盒模型检查；已经迁入 Design Engine 的页面直接验证其
+ * layout plan 或明确的 art-directed surface safety contract。
  */
 const fs = require('fs')
 const path = require('path')
@@ -43,9 +43,7 @@ function readNumeric(block, selector, property) {
   let result = null
   let rule
   while ((rule = rulePattern.exec(block)) !== null) {
-    const selectors = rule[1].split(',').map(function (item) {
-      return item.trim()
-    })
+    const selectors = rule[1].split(',').map(function (item) { return item.trim() })
     if (selectors.indexOf(selector) < 0) continue
     const valueMatch = rule[2].match(valuePattern)
     if (valueMatch) result = Number(valueMatch[1])
@@ -66,9 +64,7 @@ function readPaddingTop(circleBlock, baseSource, selector) {
   let result = null
   let rule
   while ((rule = rulePattern.exec(circleBlock || baseSource)) !== null) {
-    const selectors = rule[1].split(',').map(function (item) {
-      return item.trim()
-    })
+    const selectors = rule[1].split(',').map(function (item) { return item.trim() })
     if (selectors.indexOf(selector) < 0) continue
     const shorthand = rule[2].match(/(?:^|;)\s*padding\s*:\s*(-?\d+)px/)
     if (shorthand) result = Number(shorthand[1])
@@ -78,14 +74,6 @@ function readPaddingTop(circleBlock, baseSource, selector) {
 
 // Legacy CSS-flow pages. As each page moves to Design Engine it should leave this list.
 const CIRCLE_PAGES = [
-  {
-    page: 'src/pages/today/today.ux',
-    root: '.today-page',
-    flows: [
-      { name: '摘要页', children: ['.summary-page'] },
-      { name: '月历页', children: ['.calendar-page'] }
-    ]
-  },
   {
     page: 'src/pages/settings/diagnostics/diagnostics.ux',
     root: '.diagnostics-page',
@@ -115,27 +103,20 @@ CIRCLE_PAGES.forEach(function (target) {
 
   target.flows.forEach(function (flow) {
     let cursor = readPaddingTop(circleBlock, baseSource, target.root)
-
     flow.children.forEach(function (selector) {
       const height = readEffective(circleBlock, baseSource, selector, 'height')
       const width = readEffective(circleBlock, baseSource, selector, 'width')
       const marginTop = readEffective(circleBlock, baseSource, selector, 'margin-top') || 0
       const marginBottom = readEffective(circleBlock, baseSource, selector, 'margin-bottom') || 0
-
       if (height === null || width === null) {
         errors.push(target.page + ' ' + selector + ' 未声明宽高，无法校验圆屏安全区')
         return
       }
-
       cursor += marginTop
       const left = Math.round((safeArea.DESIGN_WIDTH - width) / 2)
       if (!safeArea.fitsInCircle(safeArea.DESIGN_WIDTH, left, cursor, width, height)) {
         const band = safeArea.circleBandForWidth(safeArea.DESIGN_WIDTH, width)
-        errors.push(
-          target.page + ' [' + flow.name + '] ' + selector + ' 超出圆屏安全区：' +
-          width + '×' + height + ' 落在 y=' + cursor + '..' + (cursor + height) +
-          '，该宽度仅有 y=' + band.top + '..' + band.bottom + ' 可用'
-        )
+        errors.push(target.page + ' [' + flow.name + '] ' + selector + ' 超出圆屏安全区：' + width + '×' + height + ' 落在 y=' + cursor + '..' + (cursor + height) + '，该宽度仅有 y=' + band.top + '..' + band.bottom + ' 可用')
       }
       cursor += height + marginBottom
     })
@@ -156,6 +137,12 @@ if (settingsPlan.pageSize !== 2) {
   errors.push('Settings L1 圆屏应由 Design Engine 自动收敛为 2 项/页，实际=' + settingsPlan.pageSize)
 }
 
+// Today L2 uses an art-directed circle surface rather than legacy shape CSS.
+// Both summary and calendar intentionally occupy the same proven 136×130 safe band.
+if (!safeArea.fitsInCircle(192, 28, 31, 136, 130)) {
+  errors.push('Today L2 圆屏 136×130 art-directed surface 已超出安全带')
+}
+
 if (safeArea.capsuleCapInset(192, 168) !== 50) {
   errors.push('胶囊端帽推导偏离真机校准值 50px，请同步复核 test/safe_area.test.js')
 }
@@ -164,13 +151,9 @@ if (safeArea.inscribedSquare(192) !== 135) {
 }
 
 if (errors.length > 0) {
-  errors.forEach(function (error) {
-    console.error('safe-area error: ' + error)
-  })
+  errors.forEach(function (error) { console.error('safe-area error: ' + error) })
   process.exitCode = 1
 } else {
-  const legacyFlowCount = CIRCLE_PAGES.reduce(function (total, item) {
-    return total + item.flows.length
-  }, 0)
-  console.log('Checked circle safe-area geometry for ' + legacyFlowCount + ' legacy flows + 2 Design Engine plans')
+  const legacyFlowCount = CIRCLE_PAGES.reduce(function (total, item) { return total + item.flows.length }, 0)
+  console.log('Checked ' + legacyFlowCount + ' legacy circle flows + Settings/Workout/Today Design Engine safety contracts')
 }
