@@ -1,7 +1,7 @@
 import activityStore from '../../../domain/activity/store'
 import healthStore from '../../../domain/health/store'
 import { mapActivity } from '../../../presentation/mappers/activity'
-var calendar = require('../../domain/calendar')
+var calendar = require('../../../domain/calendar')
 
 var WEEKDAYS = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
 
