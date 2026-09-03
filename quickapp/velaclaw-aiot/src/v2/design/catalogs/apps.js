@@ -13,10 +13,12 @@ var APPS = {
   today: { label: '今日日历', icon: '/common/icons/calendar.jpg', accent: '#30D158' }
 }
 
+function softIcon(path) { return String(path || '').replace('/common/icons/', '/common/icons/soft/') }
+
 function get(id) {
   var source = APPS[id]
-  if (!source) return { id: id, label: id || '', icon: '', accent: '#8E8E93' }
-  return { id: id, label: source.label, icon: source.icon, accent: source.accent }
+  if (!source) return { id: id, label: id || '', icon: '', softIcon: '', accent: '#8E8E93' }
+  return { id: id, label: source.label, icon: source.icon, softIcon: softIcon(source.icon), accent: source.accent }
 }
 
 function list(ids) {
