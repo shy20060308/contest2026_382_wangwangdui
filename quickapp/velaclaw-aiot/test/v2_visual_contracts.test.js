@@ -54,8 +54,30 @@ fs.readdirSync(specsDir).filter(name => name.endsWith('.js')).forEach(name => {
     const safe = scene.safeForWidth(profile, profile.width)
     const plan = spec.resolve(profile, host, safe)
     assert.ok(plan && typeof plan === 'object', name + ' must resolve a plan for ' + profile.name)
+    const level = plan.freedomLevel || spec.freedomLevel || (plan.freedom && plan.freedom.level)
+    assert.ok(level === 1 || level === 2 || level === 3, name + ' must explicitly resolve a Design Freedom level for ' + profile.name)
+    if (plan.strategy) {
+      const expected = level === 1 ? 'auto' : level === 2 ? 'assisted' : 'free'
+      assert.strictEqual(plan.strategy, expected, name + ' strategy must match its Design Freedom level')
+    }
     walkPlan(plan, host, name + ':' + profile.name, [])
   })
+})
+
+const designFiles = []
+function walk(dir) {
+  fs.readdirSync(dir, { withFileTypes: true }).forEach(entry => {
+    const target = path.join(dir, entry.name)
+    if (entry.isDirectory()) walk(target)
+    else if (entry.name.endsWith('.js')) designFiles.push(target)
+  })
+}
+walk(path.join(root, 'src/v2/design'))
+designFiles.forEach(full => {
+  const source = fs.readFileSync(full, 'utf8')
+  const relative = path.relative(root, full).replace(/\\/g, '/')
+  assert.ok(!source.includes('/features/'), relative + ' Design must never depend upward on Feature')
+  assert.ok(!source.includes('/capabilities/'), relative + ' Design must never access device capability APIs')
 })
 
 const pageRuntime = fs.readFileSync(path.join(root, 'src/v2/app/page_runtime.js'), 'utf8')
@@ -72,4 +94,4 @@ assert.ok(clock.includes('<div class="circle-stage" if="{{ isCircle }}">'), 'Cir
 assert.ok(clock.includes('<sportrect') && clock.includes('<simplerect') && clock.includes('<dashboardrect'), 'Rect Clock must render dedicated Rect watchfaces')
 assert.ok(!clock.includes('rectangular-stage" if="{{ !isCircle }}'), 'Rect must never fall back to a shared Pill/Rect composition')
 
-console.log('V2 visual contracts verified across circle, rect, Band9 and Band10 Host Scenes')
+console.log('V2 visual contracts verified: Host Scene bounds, Design Freedom and three independent Clock compositions')
