@@ -81,20 +81,19 @@ function layoutSpec(source, count, verticalScale, lockedScale) {
   }
 }
 
-function decorate(plan, source, count, verticalScale) {
+function decorate(plan, source, visibleCount, verticalScale) {
   var config = source || {}
   var metrics = expansionMetrics(config, verticalScale)
   var scale = plan.scale || 1
   var maxVisualScale = number(config.maxVisualScale, 1.34)
   var visualScale = scale * (1 + (metrics.verticalScale - 1) * number(config.visualExpansion, 0.5))
 
-  plan.pageSize = count
+  plan.visibleCount = visibleCount
   plan.itemWidth = round(number(config.item && config.item.width, 148) * scale)
   plan.itemHeight = round(number(config.item && config.item.height, 50) * metrics.verticalScale * scale)
   plan.itemGap = round(number(config.itemGap, 6) * metrics.rhythmScale * scale)
   plan.verticalScale = round(metrics.verticalScale)
   plan.visualScale = round(clamp(visualScale, scale, maxVisualScale))
-  plan.capacityReduced = count < Math.max(1, Math.round(number(config.maxItems, 3)))
   return plan
 }
 
@@ -122,15 +121,42 @@ function resolve(profile, source) {
   for (var count = maxItems; count >= minItems; count--) {
     var plan = adapter.resolve(profile, layoutSpec(config, count, 1))
     lastPlan = plan
-    if (!plan.needsOverride) return expandComfort(profile, config, count, plan)
+    if (!plan.needsOverride) {
+      var result = expandComfort(profile, config, count, plan)
+      result.pageSize = count
+      result.capacityReduced = count < maxItems
+      return result
+    }
   }
 
   if (!lastPlan) lastPlan = adapter.resolve(profile, layoutSpec(config, minItems, 1))
-  return decorate(lastPlan, config, minItems, 1)
+  var fallback = decorate(lastPlan, config, minItems, 1)
+  fallback.pageSize = minItems
+  fallback.capacityReduced = minItems < maxItems
+  return fallback
+}
+
+function resolvePage(profile, source, capacityPlan, visibleCount) {
+  var config = source || {}
+  var capacity = capacityPlan && capacityPlan.pageSize
+    ? capacityPlan.pageSize
+    : Math.max(1, Math.round(number(config.maxItems, 3)))
+  var count = Math.max(1, Math.min(capacity, Math.round(number(visibleCount, capacity))))
+  var geometryScale = capacityPlan && capacityPlan.scale ? capacityPlan.scale : 1
+  var verticalScale = capacityPlan && capacityPlan.verticalScale ? capacityPlan.verticalScale : 1
+  var candidate = adapter.resolve(profile, layoutSpec(config, count, verticalScale, geometryScale))
+  var result = decorate(candidate, config, count, verticalScale)
+
+  result.pageSize = capacity
+  result.capacityReduced = capacityPlan ? !!capacityPlan.capacityReduced : capacity < Math.max(1, Math.round(number(config.maxItems, 3)))
+  result.visualScale = capacityPlan && capacityPlan.visualScale ? capacityPlan.visualScale : result.visualScale
+  result.isPartialPage = count < capacity
+  return result
 }
 
 module.exports = {
   resolve: resolve,
+  resolvePage: resolvePage,
   listHeight: listHeight,
   layoutSpec: layoutSpec
 }
