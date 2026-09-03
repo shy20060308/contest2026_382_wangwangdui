@@ -9,8 +9,10 @@ const path = require('path')
 const safeArea = require('../src/common/safe_area')
 const layoutAdapter = require('../src/presentation/layout/adapter')
 const pagedStack = require('../src/presentation/layout/paged_stack')
+const scrollFlow = require('../src/presentation/layout/scroll_flow')
 const workoutLayout = require('../src/presentation/layout/specs/workout')
 const settingsLayout = require('../src/presentation/layout/specs/settings')
+const workoutHistoryLayout = require('../src/presentation/layout/specs/workout_history')
 
 const root = path.resolve(__dirname, '..')
 const errors = []
@@ -81,14 +83,6 @@ const CIRCLE_PAGES = [
       { name: '屏幕档案页', children: ['.top-row', '.device-card', '.pager-row'] },
       { name: '能力列表页', children: ['.top-row', '.capability-list', '.pager-row'] }
     ]
-  },
-  {
-    page: 'src/pages/workout_history/workout_history.ux',
-    root: '.history-page',
-    flows: [
-      { name: '运动记录', children: ['.top-row', '.summary-row', '.record-scroll'] },
-      { name: '空记录态', children: ['.top-row', '.summary-row', '.empty-state'] }
-    ]
   }
 ]
 
@@ -137,8 +131,15 @@ if (settingsPlan.pageSize !== 2) {
   errors.push('Settings L1 圆屏应由 Design Engine 自动收敛为 2 项/页，实际=' + settingsPlan.pageSize)
 }
 
+const workoutHistoryPlan = scrollFlow.resolve(circleProfile, workoutHistoryLayout)
+if (workoutHistoryPlan.needsOverride || workoutHistoryPlan.violations.length) {
+  errors.push('Workout History L1 Scroll Flow 未通过圆屏安全几何：' + JSON.stringify(workoutHistoryPlan.violations))
+}
+if (!workoutHistoryPlan.stream || workoutHistoryPlan.stream.viewportHeight < 50) {
+  errors.push('Workout History L1 圆屏必须保留至少 50px 可滚动视口')
+}
+
 // Today L2 uses an art-directed circle surface rather than legacy shape CSS.
-// Both summary and calendar intentionally occupy the same proven 136×130 safe band.
 if (!safeArea.fitsInCircle(192, 28, 31, 136, 130)) {
   errors.push('Today L2 圆屏 136×130 art-directed surface 已超出安全带')
 }
@@ -155,5 +156,5 @@ if (errors.length > 0) {
   process.exitCode = 1
 } else {
   const legacyFlowCount = CIRCLE_PAGES.reduce(function (total, item) { return total + item.flows.length }, 0)
-  console.log('Checked ' + legacyFlowCount + ' legacy circle flows + Settings/Workout/Today Design Engine safety contracts')
+  console.log('Checked ' + legacyFlowCount + ' legacy circle flows + four Design Engine safety contracts')
 }
