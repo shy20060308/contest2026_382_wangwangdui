@@ -4,26 +4,8 @@ import historyRepository from '../../../domain/history/repository'
 import watchfaceStore from '../../../domain/watchface/store'
 import settingsStore from '../../../domain/settings/store'
 import { createNotificationController } from '../notification/controller'
-var faceCatalog = require('../../../domain/watchface/catalog')
-var analog = require('../../design/analog')
 
-var MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
-var WEEKS = ['SUN','MON','TUE','WED','THU','FRI','SAT']
-
-function pad2(value) { return value < 10 ? '0' + value : '' + value }
-function formatNumber(value) { return Number(value || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') }
 function copyIds(ids) { return Array.isArray(ids) && ids.length ? ids.slice() : ['sport','simple','dashboard'] }
-
-function batteryView(percent) {
-  var value = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)))
-  return { percent: value, width: value + '%', color: value <= 20 ? '#FF453A' : value <= 50 ? '#FFD60A' : '#30D158' }
-}
-
-function powerView(mode) {
-  if (mode === 'SLEEP') return { mode: mode, label: '息屏', hint: '已暂停刷新', dimVisible: false, sleepVisible: true }
-  if (mode === 'DIM') return { mode: mode, label: '暗屏', hint: '低频刷新', dimVisible: true, sleepVisible: false }
-  return { mode: 'ACTIVE', label: '亮屏', hint: '实时刷新', dimVisible: false, sleepVisible: false }
-}
 
 export function createClockController(onChange, onNotification) {
   var faceIds = ['sport','simple','dashboard']
@@ -38,52 +20,57 @@ export function createClockController(onChange, onNotification) {
   var state = {
     faceIndex: 0,
     faceId: selectedFaceId,
-    faceBackground: '#000000',
-    faceAccent: '#0A84FF',
-    displayMonth: 'JAN', displayDate: '01', displayWeek: 'MON', displayHours: '00', displayMinutes: '00',
-    analogTicks: analog.ticks(), hourHandTransform: analog.transform(0), minuteHandTransform: analog.transform(0), secondHandTransform: analog.transform(0),
-    batteryPercent: 75, batteryWidth: '75%', batteryColor: '#30D158',
-    currentHeartRate: 88, heartRateData: [], stepsText: '0', stepsGoalText: '0', goalPercent: 0, stepsProgressWidth: '0%',
-    powerMode: 'ACTIVE', powerModeText: '亮屏', powerRefreshText: '实时刷新', powerDimVisible: false, powerSleepVisible: false
+    timestamp: Date.now(),
+    batteryPercent: 75,
+    currentHeartRate: 88,
+    heartRateValues: [],
+    steps: 0,
+    stepsGoal: 0,
+    goalPercent: 0,
+    stepsPercent: 0,
+    powerMode: 'ACTIVE'
+  }
+
+  function snapshot() {
+    return {
+      faceIndex: state.faceIndex,
+      faceId: state.faceId,
+      timestamp: state.timestamp,
+      batteryPercent: state.batteryPercent,
+      currentHeartRate: state.currentHeartRate,
+      heartRateValues: state.heartRateValues.slice(),
+      steps: state.steps,
+      stepsGoal: state.stepsGoal,
+      goalPercent: state.goalPercent,
+      stepsPercent: state.stepsPercent,
+      powerMode: state.powerMode
+    }
   }
 
   function emit() {
-    if (typeof onChange === 'function') onChange(state)
+    var value = snapshot()
+    if (typeof onChange === 'function') onChange(value)
+    return value
   }
 
   function applyFace(id) {
     var nextId = faceIds.indexOf(id) >= 0 ? id : faceIds[0]
-    var face = faceCatalog.get(nextId) || faceCatalog.get(faceIds[0])
-    if (!face) return
     selectedFaceId = nextId
     state.faceId = nextId
     state.faceIndex = Math.max(0, faceIds.indexOf(nextId))
-    state.faceBackground = face.background
-    state.faceAccent = face.accent
   }
 
   function updateTime() {
-    var now = new Date()
-    state.displayMonth = MONTHS[now.getMonth()]
-    state.displayDate = now.getDate().toString()
-    state.displayWeek = WEEKS[now.getDay()]
-    state.displayHours = pad2(now.getHours())
-    state.displayMinutes = pad2(now.getMinutes())
-    if (selectedFaceId === 'mechanical') {
-      var value = analog.angles(now.getHours(), now.getMinutes(), now.getSeconds())
-      state.hourHandTransform = analog.transform(value.hour)
-      state.minuteHandTransform = analog.transform(value.minute)
-      state.secondHandTransform = analog.transform(value.second)
-    }
+    state.timestamp = Date.now()
     emit()
   }
 
   function refreshActivity() {
     var activity = activityStore.getSnapshot()
-    state.stepsText = formatNumber(activity.steps)
-    state.stepsGoalText = formatNumber(activity.stepsGoal)
-    state.goalPercent = activity.goalPercent
-    state.stepsProgressWidth = Math.max(0, Math.min(100, activity.stepsPercent || 0)) + '%'
+    state.steps = Number(activity.steps) || 0
+    state.stepsGoal = Number(activity.stepsGoal) || 0
+    state.goalPercent = Math.max(0, Math.min(100, Number(activity.goalPercent) || 0))
+    state.stepsPercent = Math.max(0, Math.min(100, Number(activity.stepsPercent) || 0))
   }
 
   function onHeartRate(sample) {
@@ -91,25 +78,17 @@ export function createClockController(onChange, onNotification) {
     state.currentHeartRate = Math.round(Number(sample.value) || state.currentHeartRate)
     heartValues.push(state.currentHeartRate)
     if (heartValues.length > 10) heartValues.shift()
-    state.heartRateData = heartValues.slice()
+    state.heartRateValues = heartValues.slice()
     emit()
   }
 
   function onBattery(percent) {
-    var view = batteryView(percent)
-    state.batteryPercent = view.percent
-    state.batteryWidth = view.width
-    state.batteryColor = view.color
+    state.batteryPercent = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)))
     emit()
   }
 
   function onPower(mode) {
-    var view = powerView(mode)
-    state.powerMode = view.mode
-    state.powerModeText = view.label
-    state.powerRefreshText = view.hint
-    state.powerDimVisible = view.dimVisible
-    state.powerSleepVisible = view.sleepVisible
+    state.powerMode = mode === 'SLEEP' || mode === 'DIM' ? mode : 'ACTIVE'
     emit()
   }
 
@@ -171,6 +150,6 @@ export function createClockController(onChange, onNotification) {
     wake: function (reason) { if (powerRuntime) powerRuntime.markActive(reason || 'wake') },
     dismissNotification: function () { notification.dismiss() },
     hangUpNotification: function () { notification.hangUp() },
-    getSnapshot: function () { return state }
+    getSnapshot: snapshot
   }
 }
