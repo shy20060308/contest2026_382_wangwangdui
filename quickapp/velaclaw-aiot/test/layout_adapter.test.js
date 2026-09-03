@@ -17,6 +17,13 @@ function rect() {
   return { formFactor: 'rect', logicalHeight: 228 }
 }
 
+function region(plan, id) {
+  for (let i = 0; i < plan.regions.length; i++) {
+    if (plan.regions[i].id === id) return plan.regions[i]
+  }
+  return null
+}
+
 const simple = {
   id: 'simple-stack',
   default: {
@@ -66,9 +73,19 @@ const settingsPill = pagedStack.resolve(pill(), settingsLayout)
 assert.strictEqual(settingsPill.pageSize, 3, 'pill should keep three cards when vertical space is available')
 assert.strictEqual(settingsPill.capacityReduced, false)
 assert.strictEqual(settingsPill.needsOverride, false)
-assert.ok(settingsPill.verticalScale >= 1.3, 'tall pill viewport should expand card height instead of leaving a tiny circle-density stack')
-assert.ok(settingsPill.itemHeight >= 72, 'pill settings cards should grow to a comfortable touch height')
-assert.ok(settingsPill.visualScale >= 1.2, 'pill typography and icon density should grow with available vertical space')
+assert.ok(settingsPill.verticalScale >= 1.4, 'tall pill viewport should expand card height instead of leaving a tiny circle-density stack')
+assert.ok(settingsPill.itemHeight >= 84, 'pill settings cards should grow to a comfortable touch height')
+assert.ok(settingsPill.itemWidth >= 170, 'pill settings cards should use the available horizontal canvas')
+assert.ok(settingsPill.visualScale >= 1.35, 'pill typography and icon density should grow with available space')
+
+const settingsPillLastPage = pagedStack.resolvePage(pill(), settingsLayout, settingsPill, 2)
+const pillLastList = region(settingsPillLastPage, 'list')
+const pillLastFooter = region(settingsPillLastPage, 'footer')
+assert.strictEqual(settingsPillLastPage.pageSize, 3, 'partial page reflow must preserve navigation capacity')
+assert.strictEqual(settingsPillLastPage.visibleCount, 2, 'partial page must expose the actual visible item count')
+assert.strictEqual(settingsPillLastPage.isPartialPage, true, 'two items in a three-item capacity page must be marked partial')
+assert.ok(Math.abs(pillLastList.height - (settingsPillLastPage.itemHeight * 2 + settingsPillLastPage.itemGap)) < 1, 'partial page list height must contain only visible cards and one real gap')
+assert.ok(pillLastFooter.top - pillLastList.bottom < 20, 'partial page must keep pager near the visible card group instead of leaving a hollow middle')
 
 const settingsRect = pagedStack.resolve(rect(), settingsLayout)
 assert.strictEqual(settingsRect.pageSize, 3, 'rect should keep three cards when they fit at readable scale')
@@ -155,4 +172,4 @@ assert.ok(unsafePlan.violations.length > 0)
 const rectPlan = adapter.resolve(rect(), simple)
 assert.strictEqual(rectPlan.needsOverride, false)
 
-console.log('Design Engine verified: L1 capacity/comfort expansion, L2 composition, L3 free mode and refusal boundaries work')
+console.log('Design Engine verified: L1 capacity/partial-page comfort, L2 composition, L3 free mode and refusal boundaries work')
