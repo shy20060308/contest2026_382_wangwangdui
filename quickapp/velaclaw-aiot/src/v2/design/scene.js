@@ -1,4 +1,4 @@
-var safeArea = require('../../presentation/viewport/safe_area')
+var geometry = require('./geometry')
 
 function px(value, fallback) {
   if (typeof value === 'number') return value
@@ -7,12 +7,12 @@ function px(value, fallback) {
 }
 
 function resolve(profile) {
-  var logicalHeight = Number(profile && profile.logicalHeight) || safeArea.DESIGN_WIDTH
+  var logicalHeight = Number(profile && profile.logicalHeight) || geometry.DESIGN_WIDTH
   var hostTop = px(profile && profile.viewportTop, 0)
   var hostHeight = px(profile && profile.viewportHeight, 0)
   if (!hostHeight) hostHeight = Math.max(1, logicalHeight - hostTop)
   return {
-    width: safeArea.DESIGN_WIDTH,
+    width: geometry.DESIGN_WIDTH,
     height: hostHeight,
     hostTop: hostTop,
     hostBottom: hostTop + hostHeight,
@@ -21,10 +21,10 @@ function resolve(profile) {
 }
 
 function safeForWidth(profile, contentWidth, comfort) {
-  var scene = resolve(profile)
-  var globalSafe = safeArea.resolve(profile, contentWidth, comfort)
-  var top = Math.max(0, globalSafe.top - scene.hostTop)
-  var bottom = Math.min(scene.height, globalSafe.bottom - scene.hostTop)
+  var host = resolve(profile)
+  var globalSafe = geometry.safe(profile, contentWidth, comfort)
+  var top = Math.max(0, globalSafe.top - host.hostTop)
+  var bottom = Math.min(host.height, globalSafe.bottom - host.hostTop)
   if (bottom < top) bottom = top
   return {
     left: globalSafe.left,
