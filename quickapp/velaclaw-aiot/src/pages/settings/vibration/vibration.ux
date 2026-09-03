@@ -27,6 +27,7 @@ import pageRuntime from '../../../v2/app/page_runtime'
 import navigation from '../../../v2/app/navigation'
 import { createVibrationController } from '../../../v2/features/settings/vibration_controller'
 import detailDesign from '../../../v2/design/specs/settings_detail'
+import vibrationView from '../../../v2/design/views/settings_vibration'
 
 export default {
   private: {
@@ -37,18 +38,18 @@ export default {
   },
   onInit() {
     var self = this
-    this.controller = createVibrationController(function (view) { self.applyView(view) })
-    pageRuntime.bind(this, { contentWidth: function (profile) { return profile.formFactor === 'circle' ? 148 : (profile.formFactor === 'rect' ? 164 : 168) } }, function (profile, scene, safe) { var plan = detailDesign.resolve(profile, scene, safe); self.headerLeft = plan.header.left; self.headerTop = plan.header.top; self.headerWidth = plan.header.width; self.headerHeight = plan.header.height; self.streamLeft = plan.stream.left; self.streamTop = plan.stream.top; self.streamWidth = plan.stream.width; self.streamHeight = plan.stream.height; self.titleSize = plan.titleSize; self.cardRadius = plan.cardRadius; self.cardGap = plan.cardGap })
+    this.controller = createVibrationController(function (model) { self.applyView(vibrationView.project(model)) })
+    pageRuntime.bind(this, { contentWidth: function (profile) { return detailDesign.contentWidth(profile) } }, function (profile, scene, safe) { var plan = detailDesign.resolve(profile, scene, safe); self.headerLeft = plan.header.left; self.headerTop = plan.header.top; self.headerWidth = plan.header.width; self.headerHeight = plan.header.height; self.streamLeft = plan.stream.left; self.streamTop = plan.stream.top; self.streamWidth = plan.stream.width; self.streamHeight = plan.stream.height; self.titleSize = plan.titleSize; self.cardRadius = plan.cardRadius; self.cardGap = plan.cardGap })
   },
   onShow() { this.controller.load() },
   onHide() { this.controller.stop() },
   onDestroy() { this.controller.stop() },
   onBackPress() { navigation.back(); return true },
   applyView(view) {
-    this.statusText = view.statusText; this.statusColor = view.statusColor; this.enabledText = view.enabled ? '开' : '关'; this.levelText = view.levelText; this.patternText = view.patternText; this.feedbackText = view.feedbackText; this.capabilityText = view.capabilityText; this.capabilityColor = view.capabilityColor; this.systemModeText = view.systemModeText
-    this.lightBg = view.level === 'light' ? '#FF9F0A' : '#1C1C1E'; this.mediumBg = view.level === 'medium' ? '#FF9F0A' : '#1C1C1E'; this.strongBg = view.level === 'strong' ? '#FF9F0A' : '#1C1C1E'
-    this.tapBg = view.pattern === 'tap' ? '#2D210F' : '#14181F'; this.goalBg = view.pattern === 'goal' ? '#2D210F' : '#14181F'; this.countdownBg = view.pattern === 'countdown' ? '#2D210F' : '#14181F'; this.alertBg = view.pattern === 'alert' ? '#2D210F' : '#14181F'
-    this.tapState = view.pattern === 'tap' ? '已选' : '›'; this.goalState = view.pattern === 'goal' ? '已选' : '›'; this.countdownState = view.pattern === 'countdown' ? '已选' : '›'; this.alertState = view.pattern === 'alert' ? '已选' : '›'
+    this.statusText = view.statusText; this.statusColor = view.statusColor; this.enabledText = view.enabledText; this.levelText = view.levelText; this.patternText = view.patternText; this.feedbackText = view.feedbackText; this.capabilityText = view.capabilityText; this.capabilityColor = view.capabilityColor; this.systemModeText = view.systemModeText
+    this.lightBg = view.lightBg; this.mediumBg = view.mediumBg; this.strongBg = view.strongBg
+    this.tapBg = view.tapBg; this.goalBg = view.goalBg; this.countdownBg = view.countdownBg; this.alertBg = view.alertBg
+    this.tapState = view.tapState; this.goalState = view.goalState; this.countdownState = view.countdownState; this.alertState = view.alertState
   },
   toggleVibration() { this.controller.toggle() }, setLight() { this.controller.setLevel('light') }, setMedium() { this.controller.setLevel('medium') }, setStrong() { this.controller.setLevel('strong') }, playCurrent() { this.controller.playCurrent() },
   selectTap() { this.controller.selectPattern('tap') }, selectGoal() { this.controller.selectPattern('goal') }, selectCountdown() { this.controller.selectPattern('countdown') }, selectAlert() { this.controller.selectPattern('alert') },
