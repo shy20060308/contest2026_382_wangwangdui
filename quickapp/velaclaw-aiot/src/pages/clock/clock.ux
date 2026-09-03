@@ -6,15 +6,24 @@
 <import name="dashboardcircle" src="../../components/watchfaces/dashboard_circle.ux"></import>
 <import name="mechanicalcircle" src="../../components/watchfaces/mechanical_circle.ux"></import>
 <import name="alpineface" src="../../components/watchfaces/alpine.ux"></import>
+<import name="sportrect" src="../../components/watchfaces/sport_rect.ux"></import>
+<import name="simplerect" src="../../components/watchfaces/simple_rect.ux"></import>
+<import name="dashboardrect" src="../../components/watchfaces/dashboard_rect.ux"></import>
 
 <template>
   <stack class="clock-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};" @swipe="handleSwipe" @longpress="openFaceSelector">
     <div class="clock-scene" if="{{ profileReady }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px; background-color: {{ faceBackground }};" @click="markActive">
-      <div class="rectangular-stage" if="{{ !isCircle }}">
+      <div class="pill-stage" if="{{ isPill }}">
         <sportface if="{{ faceId === 'sport' }}" onopen-health="openHealth" onopen-steps="openSteps" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-minutes="{{ displayMinutes }}" display-hours="{{ displayHours }}" face-accent="{{ faceAccent }}" battery-percent="{{ batteryPercent }}" battery-width="{{ batteryWidth }}" battery-color="{{ batteryColor }}" heart-rate-data="{{ heartRateData }}" current-heart-rate="{{ currentHeartRate }}" steps-text="{{ stepsText }}" steps-goal-text="{{ stepsGoalText }}"></sportface>
         <simpleface if="{{ faceId === 'simple' }}" onopen-health="openHealth" onopen-steps="openSteps" display-week="{{ displayWeek }}" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-hours="{{ displayHours }}" display-minutes="{{ displayMinutes }}" face-accent="{{ faceAccent }}" goal-percent="{{ goalPercent }}" steps-text="{{ stepsText }}" current-heart-rate="{{ currentHeartRate }}" battery-percent="{{ batteryPercent }}" battery-color="{{ batteryColor }}"></simpleface>
         <dashboardface if="{{ faceId === 'dashboard' }}" onopen-health="openHealth" onopen-steps="openSteps" display-week="{{ displayWeek }}" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-hours="{{ displayHours }}" display-minutes="{{ displayMinutes }}" face-accent="{{ faceAccent }}" steps-text="{{ stepsText }}" steps-goal-text="{{ stepsGoalText }}" steps-progress-width="{{ stepsProgressWidth }}" current-heart-rate="{{ currentHeartRate }}" heart-rate-data="{{ heartRateData }}" battery-percent="{{ batteryPercent }}" battery-width="{{ batteryWidth }}" battery-color="{{ batteryColor }}"></dashboardface>
-        <alpineface if="{{ isPill && faceId === 'alpine' }}" onopen-today="openToday" onopen-health="openHealth" onopen-steps="openSteps" display-week="{{ displayWeek }}" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-hours="{{ displayHours }}" display-minutes="{{ displayMinutes }}" steps-text="{{ stepsText }}" current-heart-rate="{{ currentHeartRate }}" battery-percent="{{ batteryPercent }}" battery-width="{{ batteryWidth }}" battery-color="{{ batteryColor }}" panel-glass-top="{{ alpineDataGlassTop }}" panel-row-top="{{ alpineDataRowTop }}" battery-row-top="{{ alpineBatteryRowTop }}"></alpineface>
+        <alpineface if="{{ faceId === 'alpine' }}" onopen-today="openToday" onopen-health="openHealth" onopen-steps="openSteps" display-week="{{ displayWeek }}" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-hours="{{ displayHours }}" display-minutes="{{ displayMinutes }}" steps-text="{{ stepsText }}" current-heart-rate="{{ currentHeartRate }}" battery-percent="{{ batteryPercent }}" battery-width="{{ batteryWidth }}" battery-color="{{ batteryColor }}" panel-glass-top="{{ alpineDataGlassTop }}" panel-row-top="{{ alpineDataRowTop }}" battery-row-top="{{ alpineBatteryRowTop }}"></alpineface>
+      </div>
+
+      <div class="rect-stage" if="{{ isRect }}">
+        <sportrect if="{{ faceId === 'sport' }}" onopen-health="openHealth" onopen-steps="openSteps" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-minutes="{{ displayMinutes }}" display-hours="{{ displayHours }}" face-accent="{{ faceAccent }}" battery-percent="{{ batteryPercent }}" battery-width="{{ batteryWidth }}" battery-color="{{ batteryColor }}" current-heart-rate="{{ currentHeartRate }}" steps-text="{{ stepsText }}" steps-goal-text="{{ stepsGoalText }}"></sportrect>
+        <simplerect if="{{ faceId === 'simple' }}" onopen-health="openHealth" onopen-steps="openSteps" display-week="{{ displayWeek }}" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-hours="{{ displayHours }}" display-minutes="{{ displayMinutes }}" face-accent="{{ faceAccent }}" goal-percent="{{ goalPercent }}" steps-text="{{ stepsText }}" current-heart-rate="{{ currentHeartRate }}" battery-percent="{{ batteryPercent }}" battery-color="{{ batteryColor }}"></simplerect>
+        <dashboardrect if="{{ faceId === 'dashboard' }}" onopen-health="openHealth" onopen-steps="openSteps" display-week="{{ displayWeek }}" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-hours="{{ displayHours }}" display-minutes="{{ displayMinutes }}" face-accent="{{ faceAccent }}" steps-text="{{ stepsText }}" steps-goal-text="{{ stepsGoalText }}" steps-progress-width="{{ stepsProgressWidth }}" current-heart-rate="{{ currentHeartRate }}" heart-rate-data="{{ heartRateData }}" battery-percent="{{ batteryPercent }}" battery-color="{{ batteryColor }}"></dashboardrect>
       </div>
 
       <div class="circle-stage" if="{{ isCircle }}">
@@ -44,7 +53,7 @@ import clockDesign from '../../v2/design/specs/clock'
 
 export default {
   private: {
-    profileReady: false, isCircle: false, isPill: false, notificationOverlay: false,
+    profileReady: false, isCircle: false, isPill: false, isRect: false, notificationOverlay: false,
     faceId: 'sport', faceBackground: '#000000', faceAccent: '#0A84FF',
     displayMonth: 'JAN', displayDate: '01', displayWeek: 'MON', displayHours: '00', displayMinutes: '00',
     analogTicks: [], hourHandTransform: '', minuteHandTransform: '', secondHandTransform: '',
@@ -62,6 +71,7 @@ export default {
       var plan = clockDesign.resolve(profile, scene)
       self.isCircle = plan.shape === 'circle'
       self.isPill = plan.shape === 'pill'
+      self.isRect = plan.shape === 'rect'
       self.notificationOverlay = plan.notificationOverlay
       self.alpineDataGlassTop = plan.alpineDataGlassTop
       self.alpineDataRowTop = plan.alpineDataRowTop
@@ -111,7 +121,7 @@ export default {
 <style>
 .clock-root, .clock-scene { background-color: #000000; }
 .clock-scene { position: absolute; left: 0px; top: 0px; overflow: hidden; }
-.rectangular-stage, .circle-stage { width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; }
+.pill-stage, .rect-stage, .circle-stage { width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; }
 .dim-cover, .sleep-cover, .notification-cover { position: absolute; left: 0px; top: 0px; width: 100%; height: 100%; }
 .dim-cover { background-color: #000000; opacity: 0.55; justify-content: flex-end; align-items: center; padding-bottom: 40px; }
 .dim-text { width: 128px; height: 22px; border-radius: 11px; background-color: #141414; color: #FFD60A; font-size: 10px; text-align: center; }
