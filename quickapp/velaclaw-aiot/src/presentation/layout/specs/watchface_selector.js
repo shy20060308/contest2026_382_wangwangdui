@@ -1,3 +1,5 @@
+var availability = require('../../watchface/availability')
+
 module.exports = {
   id: 'watchface-selector-l3-free',
   freedomLevel: 3,
@@ -5,7 +7,7 @@ module.exports = {
   default: {
     mode: 'external-engine',
     surface: 'cards-pager',
-    itemIds: ['sport', 'simple', 'dashboard', 'alpine'],
+    itemIds: availability.idsFor('pill'),
     pageSize: 2,
     safeWidth: 168,
     tokens: {
@@ -17,7 +19,7 @@ module.exports = {
     circle: {
       mode: 'external-engine',
       surface: 'preview-swiper',
-      itemIds: ['sport', 'simple', 'dashboard', 'mechanical'],
+      itemIds: availability.idsFor('circle'),
       pageSize: 1,
       safeWidth: 152,
       tokens: {
@@ -28,7 +30,7 @@ module.exports = {
     rect: {
       mode: 'external-engine',
       surface: 'preview-grid',
-      itemIds: ['sport', 'simple', 'dashboard'],
+      itemIds: availability.idsFor('rect'),
       pageSize: 3,
       columns: 2,
       safeWidth: 168,
@@ -40,7 +42,7 @@ module.exports = {
     pill: {
       mode: 'external-engine',
       surface: 'cards-pager',
-      itemIds: ['sport', 'simple', 'dashboard', 'alpine'],
+      itemIds: availability.idsFor('pill'),
       pageSize: 2,
       safeWidth: 168,
       tokens: {
