@@ -3,7 +3,7 @@ import storage from '../../capabilities/storage'
 var KEY = 'device_settings_v1'
 var cached = {
   bluetoothConnected: false,
-  lastSyncText: '未同步',
+  lastSyncAt: 0,
   vibrationEnabled: true,
   vibrationLevel: 'medium',
   vibrationPattern: 'goal',
@@ -25,11 +25,16 @@ function pattern(value) {
   return value === 'tap' || value === 'goal' || value === 'countdown' || value === 'alert' ? value : 'goal'
 }
 
+function syncTimestamp(value) {
+  var number = Number(value)
+  return isFinite(number) && number > 0 ? Math.round(number) : 0
+}
+
 function normalize(source) {
   var value = source || {}
   return {
     bluetoothConnected: !!value.bluetoothConnected,
-    lastSyncText: value.lastSyncText || '未同步',
+    lastSyncAt: syncTimestamp(value.lastSyncAt),
     vibrationEnabled: value.vibrationEnabled !== false,
     vibrationLevel: value.vibrationLevel === 'light' || value.vibrationLevel === 'strong' ? value.vibrationLevel : 'medium',
     vibrationPattern: pattern(value.vibrationPattern),
@@ -83,13 +88,5 @@ export default {
     persist(callback)
     return clone()
   },
-  brightness: clampBrightness,
-  vibrationLevelText: function (level) { return level === 'light' ? '轻' : level === 'strong' ? '强' : '中' },
-  vibrationPatternText: function (name) { return name === 'tap' ? '轻触' : name === 'countdown' ? '倒计时' : name === 'alert' ? '警报' : '达标' },
-  syncTimeText: function () {
-    var d = new Date()
-    var h = d.getHours() < 10 ? '0' + d.getHours() : '' + d.getHours()
-    var m = d.getMinutes() < 10 ? '0' + d.getMinutes() : '' + d.getMinutes()
-    return h + ':' + m
-  }
+  brightness: clampBrightness
 }
