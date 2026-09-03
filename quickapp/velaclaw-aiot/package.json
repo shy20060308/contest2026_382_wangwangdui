@@ -9,16 +9,8 @@
     "url": "https://gitlink.org.cn/temlike/vela_band_rep.git"
   },
   "homepage": "https://gitlink.org.cn/temlike/vela_band_rep",
-  "keywords": [
-    "openvela",
-    "vela",
-    "quick-app",
-    "smart-band",
-    "smart-watch"
-  ],
-  "engines": {
-    "node": ">=18"
-  },
+  "keywords": ["openvela", "vela", "quick-app", "smart-band", "smart-watch"],
+  "engines": { "node": ">=18" },
   "scripts": {
     "start": "aiot start --watch",
     "build": "aiot build --enable-jsc",
@@ -59,21 +51,15 @@
     "haptic:logic": "node test/haptic_patterns.test.js",
     "haptic:check": "node scripts/check-haptic-ui.js",
     "health:visual": "node scripts/check-health-visual.js",
+    "v2:scene": "node test/v2_scene.test.js",
+    "v2:architecture": "node test/v2_architecture.test.js",
     "icons:render": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-icons.ps1 && python scripts/render-soft-icons.py",
     "backgrounds:render": "python scripts/fade-watchface-background.py --input assets/watchfaces/alpine_night_source.jpg --output src/common/watchfaces/alpine_night.jpg",
-    "check": "npm run lint && npm run architecture:check && npm run capabilities:check && npm run power:logic && npm run power:runtime && npm run clock:runtime && npm run layout:logic && npm run design:boundary && npm run multiscreen:check && npm run safearea:check && npm run health:check && npm run haptic:check && npm run health:logic && npm run health:boundary && npm run health:layout && npm run activity:persistence && npm run history:layout && npm run steps:design && npm run watchdata:boundary && npm run workout:architecture && npm run pager:logic && npm run motion:logic && npm run calendar:logic && npm run today:design && npm run analog:logic && npm run face:selector && npm run face:logic && npm run navigation:logic && npm run viewport:logic && npm run viewport:policy && npm run safearea:logic && npm run honeycomb:logic && npm run honeycomb:boundary && npm run haptic:logic && npm run docs:check"
+    "check": "npm run lint && npm run v2:scene && npm run v2:architecture && npm run architecture:check && npm run capabilities:check && npm run power:logic && npm run power:runtime && npm run clock:runtime && npm run layout:logic && npm run design:boundary && npm run multiscreen:check && npm run safearea:check && npm run health:check && npm run haptic:check && npm run health:logic && npm run health:boundary && npm run health:layout && npm run activity:persistence && npm run history:layout && npm run steps:design && npm run watchdata:boundary && npm run workout:architecture && npm run pager:logic && npm run motion:logic && npm run calendar:logic && npm run today:design && npm run analog:logic && npm run face:selector && npm run face:logic && npm run navigation:logic && npm run viewport:logic && npm run viewport:policy && npm run safearea:logic && npm run honeycomb:logic && npm run honeycomb:boundary && npm run haptic:logic && npm run docs:check"
   },
   "lint-staged": {
-    "*.{ux,js}": [
-      "prettier --write",
-      "node scripts/lint.js",
-      "git add"
-    ],
-    "*.{less,css}": [
-      "prettier --write",
-      "stylelint --fix --custom-syntax postcss-less",
-      "git add"
-    ]
+    "*.{ux,js}": ["prettier --write", "node scripts/lint.js", "git add"],
+    "*.{less,css}": ["prettier --write", "stylelint --fix --custom-syntax postcss-less", "git add"]
   },
   "devDependencies": {
     "@aiot-toolkit/jsc": "^1.0.3",
