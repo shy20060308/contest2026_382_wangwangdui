@@ -25,6 +25,7 @@
 import pageRuntime from '../../v2/app/page_runtime'
 import navigation from '../../v2/app/navigation'
 import { createActivityController } from '../../v2/features/activity/controller'
+var activityView = require('../../v2/design/views/activity')
 
 function clamp(value, min, max) { return Math.max(min, Math.min(max, value)) }
 
@@ -39,7 +40,7 @@ export default {
   },
   onInit() {
     var self = this
-    this.controller = createActivityController(function (metrics) { self.metrics = metrics })
+    this.controller = createActivityController(function (metrics) { self.applyMetrics(metrics) })
     pageRuntime.bind(this, { contentWidth: function (profile) { return profile.formFactor === 'circle' ? 148 : (profile.formFactor === 'rect' ? 164 : 168) } }, function (profile, scene, safe) {
       self.contentWidth = safe.width
       var tall = safe.height > 250
@@ -62,13 +63,14 @@ export default {
       self.barColumnWidth = Math.round((self.contentWidth / 8) * 100) / 100
       self.barWidth = clamp(Math.round(self.barColumnWidth * 0.55), 9, 13)
       self.tickSize = compact ? 5 : 7
-      self.controller.start(self.chartHeight)
+      self.controller.start()
     })
   },
   onShow() { if (this.controller) this.controller.refresh() },
   onHide() { this.metrics = [] },
   onDestroy() { this.metrics = [] },
   onBackPress() { navigation.back(); return true },
+  applyMetrics(metrics) { this.metrics = activityView.present(metrics, this.chartHeight) },
   goToHistory() { navigation.push('/pages/history') }
 }
 </script>
