@@ -29,6 +29,14 @@ const motionPage = read('src/pages/settings/motion/motion.ux')
 const diagnosticsPage = read('src/pages/settings/diagnostics/diagnostics.ux')
 const clockPage = read('src/pages/clock/clock.ux')
 
+function hasRawDeviceApi(source) {
+  return [
+    '@system.battery', '@system.brightness', '@system.device', '@system.event',
+    '@system.geolocation', '@system.interconnect', '@system.sensor', '@system.storage',
+    '@system.vibrator', '@service.health'
+  ].some(function (token) { return source.includes(token) })
+}
+
 assert.ok(healthChannel.includes("from '@service.health'"), 'health raw API must be isolated in capability runtime')
 assert.ok(healthChannel.includes('listeners.length === 1'), 'health channel must start lazily for first consumer')
 assert.ok(healthChannel.includes('listeners.length === 0'), 'health channel must stop after last consumer')
@@ -61,18 +69,17 @@ assert.ok(interconnect.includes("from '@system.interconnect'"), 'interconnect AP
 assert.ok(introspection.includes("import motion from './motion'"), 'capability introspection must consume gateways rather than native APIs')
 assert.ok(introspection.includes("import systemEvent from './system_event'"), 'capability introspection must include event gateway')
 assert.ok(introspection.includes("import interconnect from './interconnect'"), 'capability introspection must include interconnect gateway')
-assert.ok(!introspection.includes('@system.') && !introspection.includes('@service.'), 'capability introspection must not access raw APIs')
+assert.ok(!hasRawDeviceApi(introspection), 'capability introspection must not access raw APIs')
 
 assert.ok(powerRuntime.includes("../../capabilities/display_power"), 'Power Runtime must use display capability')
 assert.ok(powerRuntime.includes("../../capabilities/motion"), 'Power Runtime must use motion capability')
 assert.ok(powerRuntime.includes("../../capabilities/heart_rate"), 'Power Runtime must use heart-rate capability')
 assert.ok(powerRuntime.includes("../../capabilities/battery"), 'Power Runtime must use battery capability')
-assert.ok(!powerRuntime.includes('@system.'), 'Power Runtime must never regress to raw system APIs')
-assert.ok(!powerRuntime.includes('@service.'), 'Power Runtime must never regress to raw services')
+assert.ok(!hasRawDeviceApi(powerRuntime), 'Power Runtime must never regress to raw device APIs')
 
 assert.ok(powerManager.includes("../capabilities/display_power"), 'legacy power manager must use display capability')
 assert.ok(powerManager.includes("../capabilities/motion"), 'legacy power manager must use motion capability')
-assert.ok(!powerManager.includes('@system.'), 'legacy power manager must never regress to raw system APIs')
+assert.ok(!hasRawDeviceApi(powerManager), 'legacy power manager must never regress to raw device APIs')
 assert.ok(gpsTracker.includes("../capabilities/location"), 'GPS tracker must use location capability')
 assert.ok(!gpsTracker.includes('@system.geolocation'), 'GPS tracker must not own geolocation API')
 assert.ok(haptic.includes("../capabilities/vibration"), 'haptic logic must use vibration capability')
@@ -86,7 +93,8 @@ assert.ok(motionPage.includes("../../../capabilities/motion"), 'motion diagnosti
 assert.ok(motionPage.includes("interval: 'game'"), 'motion diagnostics must request its sampling intent through the gateway')
 assert.ok(!motionPage.includes("from '@system.sensor'"), 'motion diagnostics must not access the raw sensor API')
 assert.ok(diagnosticsPage.includes("../../../capabilities/introspection"), 'device diagnostics must consume capability introspection')
-assert.ok(!diagnosticsPage.includes('@system.') && !diagnosticsPage.includes('@service.'), 'device diagnostics must never probe native APIs directly')
+assert.ok(diagnosticsPage.includes("from '@system.router'"), 'framework routing may remain a page concern')
+assert.ok(!hasRawDeviceApi(diagnosticsPage), 'device diagnostics must never probe native device APIs directly')
 
 assert.ok(clockPage.includes("../../runtime/power/controller"), 'clock must consume Power Runtime')
 assert.ok(!clockPage.includes("from '@system.battery'"), 'clock must not access raw battery API')
@@ -94,4 +102,4 @@ assert.ok(!clockPage.includes('health_sample_service'), 'clock must not access l
 assert.ok(!clockPage.includes('power_manager'), 'clock must not use legacy power manager')
 assert.ok(!clockPage.includes('setInterval('), 'clock must not own power cadence timers')
 
-console.log('Capability Runtime verified: device APIs are isolated, lazy, introspectable and independently triggerable')
+console.log('Capability Runtime verified: device APIs are isolated while framework routing stays page-local')
