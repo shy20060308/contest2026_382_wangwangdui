@@ -9,6 +9,15 @@ function push(path, params) {
   }
 }
 
+function replace(path, params) {
+  try {
+    router.replace({ uri: path, params: params || {} })
+    return true
+  } catch (error) {
+    return false
+  }
+}
+
 function back() {
   try {
     router.back()
@@ -20,5 +29,6 @@ function back() {
 
 export default {
   push: push,
+  replace: replace,
   back: back
 }
