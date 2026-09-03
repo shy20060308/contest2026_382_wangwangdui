@@ -14,12 +14,8 @@ function walk(dir, files) {
   })
 }
 
-function pageSource(route, page) {
-  return path.join('src', route, page.component + '.ux')
-}
+function pageSource(route, page) { return path.join('src', route, page.component + '.ux') }
 
-// Every routed page is now part of the V2 application. No route may remain as a
-// legacy exception because the rewrite treats the old app only as a functional reference.
 Object.keys(manifest.router.pages || {}).forEach(route => {
   const relative = pageSource(route, manifest.router.pages[route])
   const full = path.join(root, relative)
@@ -27,7 +23,7 @@ Object.keys(manifest.router.pages || {}).forEach(route => {
   const source = fs.readFileSync(full, 'utf8')
   assert.ok(source.includes('/v2/'), relative + ' must enter the V2 application architecture')
   assert.ok(!source.includes('/common/'), relative + ' must not depend on legacy common modules')
-  assert.ok(!source.includes('/presentation/layout/'), relative + ' must not use the legacy layout engine')
+  assert.ok(!source.includes('/presentation/layout/') && !source.includes('/presentation/viewport/'), relative + ' must not use legacy design/viewport engines')
   assert.ok(!source.includes('pageViewport') && !source.includes('pageMotion') && !source.includes('watchData'), relative + ' must not regain legacy page/runtime bridges')
   assert.ok(!source.includes('@service.'), relative + ' must not access service APIs directly')
   assert.ok(!source.includes('@system.'), relative + ' must not access system APIs directly; navigation belongs in V2 app runtime')
@@ -39,27 +35,30 @@ v2Files.filter(name => name.endsWith('.js')).forEach(full => {
   const relative = path.relative(root, full).replace(/\\/g, '/')
   const source = fs.readFileSync(full, 'utf8')
   assert.ok(!source.includes('/common/'), relative + ' must not depend on legacy common modules')
-  assert.ok(!source.includes('/presentation/layout/'), relative + ' must not depend on the legacy Design Engine')
+  assert.ok(!source.includes('/presentation/layout/') && !source.includes('/presentation/viewport/'), relative + ' must own its V2 design/viewport primitives')
   assert.ok(!source.includes('@service.'), relative + ' must not access Vela services directly')
-  if (relative !== 'src/v2/app/navigation.js') {
-    assert.ok(!source.includes('@system.'), relative + ' must not access Vela system APIs directly')
-  } else {
-    assert.ok(source.includes("@system.router"), 'V2 navigation is the sole framework-router boundary')
-  }
+  if (relative !== 'src/v2/app/navigation.js') assert.ok(!source.includes('@system.'), relative + ' must not access Vela system APIs directly')
+  else assert.ok(source.includes("@system.router"), 'V2 navigation is the sole framework-router boundary')
 })
 
 const pageRuntime = read('src/v2/app/page_runtime.js')
 const scene = read('src/v2/design/scene.js')
+const geometry = read('src/v2/design/geometry.js')
+const deviceProfile = read('src/v2/system/device_profile.js')
 const clock = read('src/pages/clock/clock.ux')
 const notification = read('src/pages/notification_demo/notification_demo.ux')
 const workout = read('src/pages/workout/workout.ux')
 const launcher = read('src/pages/applist/applist.ux')
 const selector = read('src/pages/watchface/index.ux')
 
+assert.ok(pageRuntime.includes("../system/device_profile"), 'V2 runtime must resolve its own device profile')
 assert.ok(pageRuntime.includes('../design/scene'), 'all pages must share the Host Scene contract')
 assert.ok(!pageRuntime.includes('applyDesign') && !pageRuntime.includes('layoutRuntime'), 'V2 runtime must never resize the host viewport to fit design math')
-assert.ok(scene.includes('globalSafe.top - scene.hostTop'), 'safe geometry must be projected into Host Scene coordinates')
-assert.ok(scene.includes('globalSafe.bottom - scene.hostTop'), 'safe bottom must be projected into Host Scene coordinates')
+assert.ok(scene.includes("require('./geometry')"), 'V2 scene must own wearable geometry')
+assert.ok(scene.includes('globalSafe.top - host.hostTop'), 'safe geometry must be projected into Host Scene coordinates')
+assert.ok(scene.includes('globalSafe.bottom - host.hostTop'), 'safe bottom must be projected into Host Scene coordinates')
+assert.ok(geometry.includes('PILL_GESTURE_BAR = 36') && geometry.includes('capsuleInset'), 'V2 geometry must model pill caps and gesture area')
+assert.ok(deviceProfile.includes("../../capabilities/device"), 'V2 device profile must consume the device capability gateway')
 
 assert.ok(clock.includes("../../v2/features/clock/controller"), 'Clock must be a thin V2 page')
 assert.ok(clock.includes("../../v2/design/specs/clock"), 'Clock L3 art direction must live outside feature logic')
