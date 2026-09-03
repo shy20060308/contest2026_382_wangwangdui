@@ -48,6 +48,7 @@
     "pager:logic": "node test/fixed_pager.test.js",
     "motion:logic": "node test/motion_metrics.test.js",
     "calendar:logic": "node test/calendar_utils.test.js",
+    "today:design": "node test/today_design.test.js",
     "analog:logic": "node test/analog_face.test.js",
     "face:selector": "node test/watchface_selector.test.js",
     "face:logic": "node test/face_scope.test.js",
@@ -58,7 +59,7 @@
     "health:visual": "node scripts/check-health-visual.js",
     "icons:render": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-icons.ps1 && python scripts/render-soft-icons.py",
     "backgrounds:render": "python scripts/fade-watchface-background.py --input assets/watchfaces/alpine_night_source.jpg --output src/common/watchfaces/alpine_night.jpg",
-    "check": "npm run lint && npm run architecture:check && npm run capabilities:check && npm run power:logic && npm run power:runtime && npm run clock:runtime && npm run layout:logic && npm run design:boundary && npm run multiscreen:check && npm run safearea:check && npm run health:check && npm run haptic:check && npm run health:logic && npm run health:boundary && npm run health:layout && npm run activity:persistence && npm run history:layout && npm run watchdata:boundary && npm run workout:architecture && npm run pager:logic && npm run motion:logic && npm run calendar:logic && npm run analog:logic && npm run face:selector && npm run face:logic && npm run navigation:logic && npm run viewport:logic && npm run safearea:logic && npm run honeycomb:logic && npm run honeycomb:boundary && npm run haptic:logic && npm run docs:check"
+    "check": "npm run lint && npm run architecture:check && npm run capabilities:check && npm run power:logic && npm run power:runtime && npm run clock:runtime && npm run layout:logic && npm run design:boundary && npm run multiscreen:check && npm run safearea:check && npm run health:check && npm run haptic:check && npm run health:logic && npm run health:boundary && npm run health:layout && npm run activity:persistence && npm run history:layout && npm run watchdata:boundary && npm run workout:architecture && npm run pager:logic && npm run motion:logic && npm run calendar:logic && npm run today:design && npm run analog:logic && npm run face:selector && npm run face:logic && npm run navigation:logic && npm run viewport:logic && npm run safearea:logic && npm run honeycomb:logic && npm run honeycomb:boundary && npm run haptic:logic && npm run docs:check"
   },
   "lint-staged": {
     "*.{ux,js}": [
