@@ -8,7 +8,7 @@ function mapCapabilityStatus(items) {
       id: item.id,
       name: item.name,
       api: item.api,
-      status: available ? 'Gateway 可用' : '原生不可用',
+      status: available ? '可用' : '不可用',
       color: available ? '#30D158' : '#FF453A',
       background: available ? '#123422' : '#3A1517',
       fallback: !!item.fallback
