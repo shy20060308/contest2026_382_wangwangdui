@@ -1,470 +1,79 @@
 <template>
-  <scroll class="history-page {{ viewportClass }}" scroll-y="true" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px;" @swipe="handleSwipe">
-    <div class="history-hero" style="height: {{ heroHeight }}px;">
-      <div class="top-row" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;">
-        <text class="page-title" style="font-size: {{ titleFontSize }}px;">7日趋势</text>
-        <text class="back-text" style="font-size: {{ backFontSize }}px;" @click="goBack">返回</text>
-      </div>
+  <stack class="history-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
+    <stack class="history-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
+      <scroll class="circle-history" if="{{ ready && isCircle }}" scroll-y="true" style="left: {{ sceneSafeLeft }}px; top: {{ sceneSafeTop }}px; width: {{ contentWidth }}px; height: {{ sceneSafeHeight }}px;">
+        <div class="circle-head"><text class="circle-title">7日趋势</text><text class="circle-today">今日 {{ todayStepsText }}</text></div>
+        <div class="circle-chart"><div class="chart-row circle-chart-row"><div class="bar-cell circle-bar-cell" for="{{ bars }}" tid="label"><div class="bar-space circle-bar-space"><div class="step-bar" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div><text class="bar-small">{{ $item.shortSteps }}</text><text class="bar-label">{{ $item.label }}</text></div></div></div>
+        <div class="circle-insights"><div class="circle-insight"><text class="insight-label">最佳</text><text class="insight-value">{{ bestStepsText }}</text></div><div class="circle-insight"><text class="insight-label">心率</text><text class="insight-value heart">{{ avgHeartText }}</text></div><div class="circle-insight"><text class="insight-label">达成</text><text class="insight-value yellow">{{ goalText }}</text></div></div>
+        <text class="records-title">每日记录</text>
+        <div class="circle-record" for="{{ records }}" tid="date"><text class="record-date">{{ $item.date }}</text><div class="record-copy"><text class="record-main">{{ $item.stepsText }} 步</text><text class="record-sub">{{ $item.caloriesText }} kcal · {{ $item.heartText }}</text></div><text class="record-goal">{{ $item.goalText }}</text></div>
+      </scroll>
 
-      <text if="{{ loading }}" class="loading-text" style="top: {{ loadingTop }}px;">加载中...</text>
+      <scroll class="pill-history" if="{{ ready && isPill }}" scroll-y="true" style="left: {{ sceneSafeLeft }}px; top: {{ sceneSafeTop }}px; width: {{ contentWidth }}px; height: {{ sceneSafeHeight }}px;">
+        <div class="pill-head"><div><text class="pill-title">7日趋势</text><text class="pill-subtitle">活动与健康摘要</text></div><text class="pill-goal">{{ goalText }}</text></div>
+        <div class="pill-summary"><div class="summary-card"><text class="summary-label">今日步数</text><text class="summary-value yellow">{{ todayStepsText }}</text></div><div class="summary-card"><text class="summary-label">日均步数</text><text class="summary-value blue">{{ avgStepsText }}</text></div></div>
+        <div class="pill-chart"><text class="section-title">步数趋势</text><div class="chart-row pill-chart-row"><div class="bar-cell pill-bar-cell" for="{{ bars }}" tid="label"><div class="bar-space pill-bar-space"><div class="step-bar wide" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div><text class="bar-small">{{ $item.shortSteps }}</text><text class="bar-label">{{ $item.label }}</text></div></div></div>
+        <div class="pill-insights"><div class="pill-insight"><text class="insight-label">最佳</text><text class="insight-value">{{ bestStepsText }}</text><text class="insight-detail">{{ bestDayText }}</text></div><div class="pill-insight"><text class="insight-label">平均心率</text><text class="insight-value heart">{{ avgHeartText }}</text><text class="insight-detail">7日</text></div><div class="pill-insight"><text class="insight-label">今日达成</text><text class="insight-value yellow">{{ goalText }}</text><text class="insight-detail">目标</text></div></div>
+        <text class="records-title pill-records-title">每日记录</text>
+        <div class="pill-record" for="{{ records }}" tid="date"><text class="record-date">{{ $item.date }}</text><div class="record-copy"><text class="record-main">{{ $item.stepsText }} 步</text><text class="record-sub">{{ $item.caloriesText }} kcal · {{ $item.heartText }}</text></div><text class="record-goal">{{ $item.goalText }}</text></div>
+      </scroll>
 
-      <div class="summary-row" if="{{ !loading && summaryVisible }}" style="left: {{ summaryLeft }}px; top: {{ summaryTop }}px; width: {{ summaryWidth }}px; height: {{ summaryHeight }}px;">
-        <div class="summary-item" style="width: {{ summaryItemWidth }}px; height: {{ summaryItemHeight }}px; border-radius: {{ cardRadius }}px; padding-left: {{ cardPadding }}px;">
-          <text class="summary-value step-color" style="font-size: {{ summaryValueFontSize }}px;">{{ todayStepsText }}</text>
-          <text class="summary-label" style="font-size: {{ summaryLabelFontSize }}px;">今日步数</text>
-        </div>
-        <div class="summary-item" style="width: {{ summaryItemWidth }}px; height: {{ summaryItemHeight }}px; border-radius: {{ cardRadius }}px; padding-left: {{ cardPadding }}px;">
-          <text class="summary-value blue-color" style="font-size: {{ summaryValueFontSize }}px;">{{ avgStepsText }}</text>
-          <text class="summary-label" style="font-size: {{ summaryLabelFontSize }}px;">日均步数</text>
-        </div>
-      </div>
-
-      <div class="chart-card" if="{{ !loading }}" style="left: {{ chartLeft }}px; top: {{ chartTop }}px; width: {{ chartWidth }}px; height: {{ chartHeight }}px; border-radius: {{ cardRadius }}px; padding: {{ chartPadding }}px;">
-        <text class="section-title" style="font-size: {{ sectionTitleFontSize }}px;">步数趋势</text>
-        <div class="chart-row" style="width: {{ chartInnerWidth }}px; height: {{ chartRowHeight }}px; margin-top: {{ chartTopGap }}px;">
-          <div class="bar-cell" for="{{ stepBars }}" tid="label" style="width: {{ barCellWidth }}px;">
-            <div class="bar-space" style="width: {{ barCellWidth }}px; height: {{ chartMaxHeight }}px;">
-              <div class="step-bar" style="width: {{ barWidth }}px; height: {{ $item.height }}px; background-color: {{ $item.color }}; border-radius: {{ barRadius }}px;"></div>
-            </div>
-            <text class="bar-steps" style="width: {{ barCellWidth }}px; font-size: {{ barStepsFontSize }}px;">{{ $item.shortSteps }}</text>
-            <text class="bar-label" style="width: {{ barCellWidth }}px; font-size: {{ barLabelFontSize }}px;">{{ $item.label }}</text>
-          </div>
-        </div>
-      </div>
-
-      <div class="insight-row {{ insightClass }}" if="{{ !loading }}" style="left: {{ insightsLeft }}px; top: {{ insightsTop }}px; width: {{ insightsWidth }}px; height: {{ insightsHeight }}px;">
-        <div class="insight-item" style="width: {{ insightItemWidth }}px; height: {{ insightItemHeight }}px; border-radius: {{ insightRadius }}px;">
-          <text class="insight-label" style="font-size: {{ insightLabelFontSize }}px;">最佳</text>
-          <text class="insight-value" style="font-size: {{ insightValueFontSize }}px;">{{ bestStepsText }}</text>
-          <text class="insight-small" if="{{ insightDetailVisible }}" style="font-size: {{ insightSmallFontSize }}px;">{{ bestDayText }}</text>
-        </div>
-        <div class="insight-item" style="width: {{ insightItemWidth }}px; height: {{ insightItemHeight }}px; border-radius: {{ insightRadius }}px;">
-          <text class="insight-label" style="font-size: {{ insightLabelFontSize }}px;">心率</text>
-          <text class="insight-value heart-color" style="font-size: {{ insightValueFontSize }}px;">{{ avgHeartText }}</text>
-          <text class="insight-small" if="{{ insightDetailVisible }}" style="font-size: {{ insightSmallFontSize }}px;">7日平均</text>
-        </div>
-        <div class="insight-item" style="width: {{ insightItemWidth }}px; height: {{ insightItemHeight }}px; border-radius: {{ insightRadius }}px;">
-          <text class="insight-label" style="font-size: {{ insightLabelFontSize }}px;">达成</text>
-          <text class="insight-value step-color" style="font-size: {{ insightValueFontSize }}px;">{{ goalText }}</text>
-          <text class="insight-small" if="{{ insightDetailVisible }}" style="font-size: {{ insightSmallFontSize }}px;">今日目标</text>
-        </div>
-      </div>
-    </div>
-
-    <div class="record-scroll" if="{{ !loading }}" style="width: {{ streamWidth }}px; height: {{ recordsHeight }}px;">
-      <div class="record-item" for="{{ records }}" tid="date" style="width: {{ streamWidth }}px; height: {{ recordHeight }}px; margin-bottom: {{ recordGap }}px; border-radius: {{ recordRadius }}px; padding-left: {{ recordPadding }}px; padding-right: {{ recordPadding }}px;">
-        <text class="record-date" style="width: {{ recordDateWidth }}px; font-size: {{ recordSubFontSize }}px;">{{ $item.date }}</text>
-        <div class="record-values" style="width: {{ recordValuesWidth }}px;">
-          <text class="record-main" style="font-size: {{ recordMainFontSize }}px;">{{ $item.stepsText }} 步</text>
-          <text class="record-sub" style="font-size: {{ recordSubFontSize }}px;">{{ $item.caloriesText }} kcal · {{ $item.heartText }}</text>
-        </div>
-        <text class="record-goal" style="width: {{ recordGoalWidth }}px; font-size: {{ recordGoalFontSize }}px;">{{ $item.goalText }}</text>
-      </div>
-    </div>
-  </scroll>
+      <scroll class="rect-history" if="{{ ready && isRect }}" scroll-y="true" style="left: {{ sceneSafeLeft }}px; top: {{ sceneSafeTop }}px; width: {{ contentWidth }}px; height: {{ sceneSafeHeight }}px;">
+        <div class="rect-head"><text class="rect-title">7日趋势</text><div class="rect-head-values"><text class="rect-head-label">今日</text><text class="rect-head-value">{{ todayStepsText }}</text><text class="rect-head-label">日均</text><text class="rect-head-value blue">{{ avgStepsText }}</text></div></div>
+        <div class="rect-dashboard"><div class="rect-chart"><div class="chart-row rect-chart-row"><div class="bar-cell rect-bar-cell" for="{{ bars }}" tid="label"><div class="bar-space rect-bar-space"><div class="step-bar" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div><text class="bar-label">{{ $item.label }}</text></div></div></div><div class="rect-insight-column"><div class="rect-insight"><text class="insight-label">最佳</text><text class="insight-value">{{ bestStepsText }}</text></div><div class="rect-insight"><text class="insight-label">心率</text><text class="insight-value heart">{{ avgHeartText }}</text></div><div class="rect-insight"><text class="insight-label">达成</text><text class="insight-value yellow">{{ goalText }}</text></div></div></div>
+        <text class="records-title">每日记录</text>
+        <div class="rect-record" for="{{ records }}" tid="date"><text class="record-date">{{ $item.date }}</text><div class="record-copy"><text class="record-main">{{ $item.stepsText }} 步</text><text class="record-sub">{{ $item.caloriesText }} kcal · {{ $item.heartText }}</text></div><text class="record-goal">{{ $item.goalText }}</text></div>
+      </scroll>
+    </stack>
+  </stack>
 </template>
 
 <script>
-import router from '@system.router'
-import historyRepository from '../../domain/history/repository'
-import { mapHistory } from '../../presentation/mappers/history'
-import pageMotion from '../../common/page_motion'
-import layoutRuntime from '../../presentation/layout/runtime'
-import scrollFlow from '../../presentation/layout/scroll_flow'
-import historyLayout from '../../presentation/layout/specs/history'
-
-function findRegion(plan, id) {
-  var regions = plan && plan.regions ? plan.regions : []
-  for (var i = 0; i < regions.length; i++) {
-    if (regions[i].id === id) return regions[i]
-  }
-  return null
-}
-
-function setRegion(page, prefix, region) {
-  if (!region) return
-  page[prefix + 'Left'] = region.left
-  page[prefix + 'Top'] = region.top
-  page[prefix + 'Width'] = region.width
-  page[prefix + 'Height'] = region.height
-}
+import pageRuntime from '../../v2/app/page_runtime'
+import navigation from '../../v2/app/navigation'
+import { createHistoryController } from '../../v2/features/history/controller'
 
 export default {
   private: {
-    loading: true,
-    summaryVisible: true,
-    insightDetailVisible: true,
-    insightClass: '',
-    compactLabels: false,
-    todayStepsText: '0',
-    avgStepsText: '0',
-    bestStepsText: '0',
-    bestDayText: '--',
-    avgHeartText: '--',
-    totalCaloriesText: '0',
-    goalText: '0%',
-    stepBars: [],
-    records: [],
-    heroHeight: 380,
-    headerLeft: 18,
-    headerTop: 28,
-    headerWidth: 156,
-    headerHeight: 28,
-    summaryLeft: 14,
-    summaryTop: 64,
-    summaryWidth: 164,
-    summaryHeight: 60,
-    chartLeft: 14,
-    chartTop: 132,
-    chartWidth: 164,
-    chartHeight: 150,
-    insightsLeft: 14,
-    insightsTop: 290,
-    insightsWidth: 164,
-    insightsHeight: 62,
-    streamWidth: 164,
-    recordHeight: 48,
-    recordGap: 8,
-    streamBottomPadding: 32,
-    recordsHeight: 32,
-    chartMaxHeight: 88,
-    titleFontSize: 18,
-    backFontSize: 10,
-    summaryItemWidth: 78,
-    summaryItemHeight: 58,
-    summaryValueFontSize: 18,
-    summaryLabelFontSize: 11,
-    sectionTitleFontSize: 13,
-    chartPadding: 8,
-    chartInnerWidth: 148,
-    chartRowHeight: 118,
-    chartTopGap: 4,
-    barCellWidth: 21,
-    barWidth: 12,
-    barRadius: 4,
-    barStepsFontSize: 9,
-    barLabelFontSize: 8,
-    insightItemWidth: 50,
-    insightItemHeight: 60,
-    insightRadius: 9,
-    insightLabelFontSize: 10,
-    insightValueFontSize: 13,
-    insightSmallFontSize: 8,
-    cardRadius: 9,
-    cardPadding: 7,
-    recordRadius: 9,
-    recordPadding: 8,
-    recordDateWidth: 34,
-    recordValuesWidth: 88,
-    recordGoalWidth: 24,
-    recordMainFontSize: 13,
-    recordSubFontSize: 8,
-    recordGoalFontSize: 11,
-    loadingTop: 90,
-    pageOpacity: 1,
-    pageOffset: 0,
-    viewportClass: '',
-    viewportPosition: 'relative',
-    viewportLeft: '0px',
-    viewportWidth: '100%',
-    viewportHeight: '100%',
-    viewportTop: '0px'
+    ready: false, isCircle: false, isPill: false, isRect: false, contentWidth: 148,
+    sceneWidth: 192, sceneHeight: 192, sceneSafeLeft: 22, sceneSafeTop: 35, sceneSafeHeight: 120,
+    viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%',
+    todayStepsText: '0', avgStepsText: '0', bestStepsText: '0', bestDayText: '--', avgHeartText: '--', goalText: '0%', bars: [], records: []
   },
-
   onInit() {
     var self = this
-    layoutRuntime.bind(this, function (profile) {
-      return scrollFlow.resolve(profile, historyLayout)
-    }, function (plan) {
-      self.applyLayout(plan)
-      if (self.pageVisible) self.loadHistory()
+    this.controller = createHistoryController(function (model) { self.applyModel(model) })
+    pageRuntime.bind(this, { contentWidth: function (profile) { return profile.formFactor === 'circle' ? 148 : (profile.formFactor === 'rect' ? 164 : 168) } }, function (profile, scene, safe) {
+      self.contentWidth = safe.width; self.isCircle = profile.formFactor === 'circle'; self.isPill = profile.formFactor === 'pill'; self.isRect = profile.formFactor === 'rect'; self.ready = true
+      self.controller.load(profile.formFactor === 'pill' ? 88 : (profile.formFactor === 'rect' ? 64 : 52))
     })
   },
-
-  onShow() {
-    this.pageVisible = true
-    this.loading = true
-    pageMotion.enter(this)
-    this.loadHistory()
-  },
-
-  onHide() {
-    this.pageVisible = false
-    pageMotion.clear(this)
-    this.releaseHistoryData()
-  },
-
-  onDestroy() {
-    this.pageVisible = false
-    pageMotion.clear(this)
-    this.releaseHistoryData()
-  },
-
-  applyLayout(plan) {
-    var header = findRegion(plan, 'header')
-    var summary = findRegion(plan, 'summary')
-    var chart = findRegion(plan, 'chart')
-    var insights = findRegion(plan, 'insights')
-    var tokens = plan.tokens || {}
-    var stream = plan.stream || {}
-    var visualScale = (Number(tokens.visualScale) || 1) * (plan.scale || 1)
-
-    setRegion(this, 'header', header)
-    setRegion(this, 'summary', summary)
-    setRegion(this, 'chart', chart)
-    setRegion(this, 'insights', insights)
-
-    this.heroHeight = plan.heroHeight
-    this.summaryVisible = tokens.summaryVisible !== false
-    this.insightDetailVisible = tokens.insightDetailVisible !== false
-    this.insightClass = tokens.insightVariant === 'column' ? 'insight-column' : ''
-    this.compactLabels = !!tokens.compactLabels
-    this.chartMaxHeight = Number(tokens.chartMaxHeight) || 84
-    this.streamWidth = Number(stream.width) || 156
-    this.recordHeight = Number(stream.itemHeight) || 44
-    this.recordGap = Number(stream.gap) || 6
-    this.streamBottomPadding = Number(stream.bottomPadding) || 24
-
-    var summaryWidth = summary ? summary.width : this.summaryWidth
-    var summaryHeight = summary ? summary.height : this.summaryHeight
-    this.summaryItemWidth = Math.max(50, Math.floor((summaryWidth - 8) / 2))
-    this.summaryItemHeight = Math.max(34, summaryHeight - 2)
-
-    var chartWidth = chart ? chart.width : this.chartWidth
-    var chartHeight = chart ? chart.height : this.chartHeight
-    this.chartPadding = Math.max(5, Math.round(8 * visualScale))
-    this.chartInnerWidth = Math.max(70, chartWidth - this.chartPadding * 2)
-    this.chartRowHeight = Math.max(this.chartMaxHeight + 14, chartHeight - this.chartPadding * 2 - 14)
-    this.chartTopGap = Math.max(2, Math.round(4 * visualScale))
-    this.barCellWidth = Math.max(9, Math.floor(this.chartInnerWidth / 7))
-    this.barWidth = Math.max(6, Math.round(12 * visualScale))
-    this.barRadius = Math.max(3, Math.round(4 * visualScale))
-
-    var insightWidth = insights ? insights.width : this.insightsWidth
-    var insightHeight = insights ? insights.height : this.insightsHeight
-    if (tokens.insightVariant === 'column') {
-      this.insightItemWidth = insightWidth
-      this.insightItemHeight = Math.max(22, Math.floor((insightHeight - 8) / 3))
-    } else {
-      this.insightItemWidth = Math.max(34, Math.floor((insightWidth - 8) / 3))
-      this.insightItemHeight = insightHeight
-    }
-
-    this.titleFontSize = Math.max(12, Math.round(18 * visualScale))
-    this.backFontSize = Math.max(7, Math.round(10 * visualScale))
-    this.summaryValueFontSize = Math.max(12, Math.round(18 * visualScale))
-    this.summaryLabelFontSize = Math.max(7, Math.round(11 * visualScale))
-    this.sectionTitleFontSize = Math.max(9, Math.round(13 * visualScale))
-    this.barStepsFontSize = Math.max(6, Math.round(9 * visualScale))
-    this.barLabelFontSize = Math.max(6, Math.round(8 * visualScale))
-    this.insightLabelFontSize = Math.max(6, Math.round(10 * visualScale))
-    this.insightValueFontSize = Math.max(9, Math.round(13 * visualScale))
-    this.insightSmallFontSize = Math.max(6, Math.round(8 * visualScale))
-    this.cardRadius = Math.max(8, Math.round(10 * visualScale))
-    this.cardPadding = Math.max(5, Math.round(7 * visualScale))
-    this.insightRadius = Math.max(8, Math.round(10 * visualScale))
-    this.recordRadius = Math.max(8, Math.round(10 * visualScale))
-    this.recordPadding = Math.max(6, Math.round(8 * visualScale))
-    this.recordMainFontSize = Math.max(9, Math.round(13 * visualScale))
-    this.recordSubFontSize = Math.max(7, Math.round(8 * visualScale))
-    this.recordGoalFontSize = Math.max(8, Math.round(11 * visualScale))
-
-    var innerRecordWidth = this.streamWidth - this.recordPadding * 2
-    this.recordDateWidth = Math.max(26, Math.round(innerRecordWidth * 0.22))
-    this.recordGoalWidth = Math.max(22, Math.round(innerRecordWidth * 0.18))
-    this.recordValuesWidth = Math.max(52, innerRecordWidth - this.recordDateWidth - this.recordGoalWidth)
-    this.loadingTop = header ? header.bottom + 20 : 90
-    this.refreshRecordsHeight()
-  },
-
-  loadHistory() {
-    var self = this
-    historyRepository.getHistory(function (history) {
-      if (!self.pageVisible) return
-      var summary = mapHistory(history, {
-        chartMaxHeight: self.chartMaxHeight,
-        compactLabels: self.compactLabels
-      })
-      self.todayStepsText = summary.todayStepsText
-      self.avgStepsText = summary.avgStepsText
-      self.bestStepsText = summary.bestStepsText
-      self.bestDayText = summary.bestDayText
-      self.avgHeartText = summary.avgHeartText
-      self.totalCaloriesText = summary.totalCaloriesText
-      self.goalText = summary.goalText
-      self.stepBars = summary.stepBars
-      self.records = summary.records
-      self.refreshRecordsHeight()
-      self.loading = false
-    })
-  },
-
-  refreshRecordsHeight() {
-    var count = this.records ? this.records.length : 0
-    if (!count) {
-      this.recordsHeight = this.streamBottomPadding
-      return
-    }
-    this.recordsHeight = count * this.recordHeight + Math.max(0, count - 1) * this.recordGap + this.streamBottomPadding
-  },
-
-  releaseHistoryData() {
-    this.stepBars = []
-    this.records = []
-    this.refreshRecordsHeight()
-  },
-
-  goBack() {
-    pageMotion.back(this, router)
-  },
-
-  handleSwipe(e) {
-    if (e.direction === 'down' || e.direction === 'right') pageMotion.back(this, router)
-  }
+  onShow() { if (this.ready && this.controller) this.controller.load(this.isPill ? 88 : (this.isRect ? 64 : 52)) },
+  onHide() { this.bars = []; this.records = [] },
+  onDestroy() { this.bars = []; this.records = [] },
+  onBackPress() { navigation.back(); return true },
+  applyModel(model) { this.todayStepsText = model.todayStepsText; this.avgStepsText = model.avgStepsText; this.bestStepsText = model.bestStepsText; this.bestDayText = model.bestDayText; this.avgHeartText = model.avgHeartText; this.goalText = model.goalText; this.bars = model.bars; this.records = model.records }
 }
 </script>
 
 <style>
-.history-page {
-  flex-direction: column;
-  align-items: center;
-  background-color: #000000;
-  width: 100%;
-  height: 100%;
-}
-
-.history-hero {
-  position: relative;
-  width: 192px;
-}
-
-.top-row,
-.summary-row,
-.chart-card,
-.insight-row {
-  position: absolute;
-}
-
-.top-row,
-.summary-row,
-.insight-row,
-.record-item {
-  flex-direction: row;
-  align-items: center;
-}
-
-.top-row,
-.summary-row,
-.insight-row {
-  justify-content: space-between;
-}
-
-.page-title,
-.summary-value,
-.section-title,
-.insight-value,
-.record-main,
-.record-goal {
-  font-weight: bold;
-}
-
-.page-title,
-.section-title,
-.insight-value,
-.record-main {
-  color: #FFFFFF;
-}
-
-.back-text,
-.summary-label,
-.insight-label,
-.insight-small,
-.record-date,
-.record-sub,
-.bar-steps,
-.bar-label {
-  color: #8E8E93;
-}
-
-.summary-item,
-.insight-item,
-.record-values,
-.chart-card,
-.record-scroll {
-  flex-direction: column;
-}
-
-.summary-item {
-  justify-content: center;
-  background-color: #14181F;
-}
-
-.chart-card {
-  background-color: #111317;
-}
-
-.chart-row {
-  flex-direction: row;
-  align-items: flex-end;
-}
-
-.bar-cell,
-.bar-space,
-.insight-item {
-  flex-direction: column;
-  align-items: center;
-}
-
-.bar-space {
-  justify-content: flex-end;
-}
-
-.bar-steps,
-.bar-label {
-  text-align: center;
-}
-
-.insight-item {
-  justify-content: center;
-  background-color: #14181F;
-}
-
-.insight-column {
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.record-scroll {
-  align-items: center;
-}
-
-.record-item {
-  background-color: #101214;
-}
-
-.record-goal {
-  color: #FFD60A;
-  text-align: right;
-}
-
-.step-color {
-  color: #FFD60A;
-}
-
-.blue-color {
-  color: #3A7DFF;
-}
-
-.heart-color {
-  color: #FF375F;
-}
-
-.loading-text {
-  position: absolute;
-  left: 22px;
-  width: 148px;
-  text-align: center;
-  color: #8E8E93;
-  font-size: 12px;
-}
+.history-root, .history-scene { background-color: #000000; } .history-scene { position: absolute; left: 0px; top: 0px; }
+.circle-history, .pill-history, .rect-history { position: absolute; flex-direction: column; }
+.chart-row { flex-direction: row; align-items: flex-end; justify-content: space-between; } .bar-cell { flex-direction: column; align-items: center; } .bar-space { flex-direction: column; justify-content: flex-end; align-items: center; } .step-bar { width: 7px; border-radius: 4px; } .step-bar.wide { width: 10px; } .bar-label { color: #636366; text-align: center; } .bar-small { color: #8E8E93; text-align: center; }
+.heart { color: #FF375F; } .yellow { color: #FFD60A; } .blue { color: #64D2FF; }
+.insight-label { color: #8E8E93; } .insight-value { color: #FFFFFF; font-weight: bold; } .insight-detail { color: #636366; }
+.records-title { color: #FFFFFF; font-weight: bold; }
+.record-date { color: #8E8E93; } .record-copy { flex-direction: column; } .record-main { color: #FFFFFF; font-weight: bold; } .record-sub { color: #636366; } .record-goal { color: #30D158; text-align: right; }
+.circle-head { width: 148px; height: 24px; flex-direction: row; justify-content: space-between; align-items: center; } .circle-title { font-size: 12px; color: #FFFFFF; font-weight: bold; } .circle-today { font-size: 7px; color: #FFD60A; }
+.circle-chart { width: 148px; height: 72px; border-radius: 18px; background-color: #101215; padding: 8px; } .circle-chart-row { width: 132px; height: 56px; } .circle-bar-cell { width: 18px; } .circle-bar-space { width: 18px; height: 44px; } .circle-bar-cell .bar-small { width: 18px; font-size: 5px; } .circle-bar-cell .bar-label { width: 18px; font-size: 5px; }
+.circle-insights { width: 148px; height: 38px; margin-top: 6px; flex-direction: row; justify-content: space-between; } .circle-insight { width: 46px; height: 38px; border-radius: 12px; background-color: #15171B; padding: 6px; flex-direction: column; } .circle-insight .insight-label { font-size: 5px; } .circle-insight .insight-value { font-size: 8px; margin-top: 3px; }
+.circle-history .records-title { width: 148px; font-size: 8px; margin-top: 7px; margin-bottom: 4px; } .circle-record { width: 148px; height: 38px; border-radius: 12px; background-color: #101215; margin-bottom: 5px; padding: 6px 8px; flex-direction: row; align-items: center; } .circle-record .record-date { width: 28px; font-size: 6px; } .circle-record .record-copy { width: 86px; } .circle-record .record-main { font-size: 8px; } .circle-record .record-sub { font-size: 5px; margin-top: 2px; } .circle-record .record-goal { width: 22px; font-size: 7px; }
+.pill-head { width: 168px; height: 48px; flex-direction: row; justify-content: space-between; align-items: center; } .pill-title { font-size: 18px; color: #FFFFFF; font-weight: bold; } .pill-subtitle { font-size: 8px; color: #636366; margin-top: 2px; } .pill-goal { font-size: 16px; color: #30D158; font-weight: bold; }
+.pill-summary { width: 168px; height: 72px; flex-direction: row; justify-content: space-between; } .summary-card { width: 80px; height: 72px; border-radius: 20px; background-color: #15171B; padding: 11px; flex-direction: column; } .summary-label { font-size: 8px; color: #8E8E93; } .summary-value { font-size: 20px; font-weight: bold; margin-top: 8px; }
+.pill-chart { width: 168px; height: 130px; margin-top: 10px; border-radius: 24px; background-color: #101215; padding: 12px; } .section-title { font-size: 10px; color: #FFFFFF; font-weight: bold; } .pill-chart-row { width: 144px; height: 100px; margin-top: 6px; } .pill-bar-cell { width: 20px; } .pill-bar-space { width: 20px; height: 78px; } .pill-bar-cell .bar-small { width: 20px; font-size: 6px; } .pill-bar-cell .bar-label { width: 20px; font-size: 6px; }
+.pill-insights { width: 168px; height: 70px; margin-top: 10px; flex-direction: row; justify-content: space-between; } .pill-insight { width: 52px; height: 70px; border-radius: 18px; background-color: #15171B; padding: 9px; flex-direction: column; } .pill-insight .insight-label { font-size: 7px; } .pill-insight .insight-value { font-size: 11px; margin-top: 7px; } .pill-insight .insight-detail { font-size: 6px; margin-top: 5px; }
+.pill-records-title { width: 168px; font-size: 11px; margin-top: 12px; margin-bottom: 6px; } .pill-record { width: 168px; height: 52px; border-radius: 17px; background-color: #101215; margin-bottom: 7px; padding: 8px 10px; flex-direction: row; align-items: center; } .pill-record .record-date { width: 34px; font-size: 7px; } .pill-record .record-copy { width: 98px; } .pill-record .record-main { font-size: 10px; } .pill-record .record-sub { font-size: 6px; margin-top: 3px; } .pill-record .record-goal { width: 26px; font-size: 9px; }
+.rect-head { width: 164px; height: 38px; flex-direction: row; justify-content: space-between; align-items: center; } .rect-title { font-size: 16px; color: #FFFFFF; font-weight: bold; } .rect-head-values { flex-direction: row; align-items: center; } .rect-head-label { font-size: 6px; color: #8E8E93; margin-left: 6px; } .rect-head-value { font-size: 9px; color: #FFD60A; margin-left: 3px; }
+.rect-dashboard { width: 164px; height: 94px; flex-direction: row; justify-content: space-between; } .rect-chart { width: 112px; height: 94px; border-radius: 17px; background-color: #101215; padding: 8px; } .rect-chart-row { width: 96px; height: 78px; } .rect-bar-cell { width: 13px; } .rect-bar-space { width: 13px; height: 66px; } .rect-bar-cell .bar-label { width: 13px; font-size: 5px; } .rect-insight-column { width: 46px; height: 94px; flex-direction: column; justify-content: space-between; } .rect-insight { width: 46px; height: 29px; border-radius: 9px; background-color: #15171B; padding: 4px 6px; flex-direction: column; } .rect-insight .insight-label { font-size: 5px; } .rect-insight .insight-value { font-size: 7px; margin-top: 2px; }
+.rect-history .records-title { width: 164px; font-size: 9px; margin-top: 7px; margin-bottom: 4px; } .rect-record { width: 164px; height: 40px; border-radius: 12px; background-color: #101215; margin-bottom: 5px; padding: 6px 8px; flex-direction: row; align-items: center; } .rect-record .record-date { width: 32px; font-size: 6px; } .rect-record .record-copy { width: 98px; } .rect-record .record-main { font-size: 8px; } .rect-record .record-sub { font-size: 5px; margin-top: 2px; } .rect-record .record-goal { width: 22px; font-size: 7px; }
 </style>
