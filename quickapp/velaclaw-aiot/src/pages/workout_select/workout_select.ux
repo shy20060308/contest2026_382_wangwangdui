@@ -1,208 +1,59 @@
 <template>
-  <div class="select-page {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px;" @touchstart="onTouchStart" @touchend="onTouchEnd">
-    <div class="top-row" style="position: absolute; left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;">
-      <text class="page-title" style="font-size: {{ titleFontSize }}px;">运动模式</text>
-      <text class="history-link" style="font-size: {{ historyFontSize }}px;" @click="openHistory">记录</text>
+  <stack class="selector-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
+    <div class="selector-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
+      <text class="selector-title" style="left: {{ sceneSafeLeft }}px; top: {{ sceneSafeTop }}px; width: {{ contentWidth }}px; font-size: {{ titleSize }}px;">开始运动</text>
+      <scroll class="selector-stream" scroll-y="true" style="left: {{ sceneSafeLeft }}px; top: {{ streamTop }}px; width: {{ contentWidth }}px; height: {{ streamHeight }}px;">
+        <div class="continue-card" if="{{ hasActive }}" @click="continueWorkout" style="width: {{ contentWidth }}px; height: {{ actionHeight }}px; border-radius: {{ actionRadius }}px;"><div><text class="continue-title">继续运动</text><text class="continue-sub">恢复未完成记录</text></div><text class="chevron">›</text></div>
+        <div class="mode-card" for="{{ modes }}" tid="type" @click="selectMode($item.type)" style="width: {{ contentWidth }}px; height: {{ cardHeight }}px; border-radius: {{ cardRadius }}px;">
+          <div class="mode-accent" style="background-color: {{ $item.color }};"></div><div class="mode-copy"><text class="mode-name" style="font-size: {{ modeNameSize }}px;">{{ $item.name }}</text><text class="mode-desc" style="font-size: {{ modeDescSize }}px;">{{ $item.desc }}</text></div><text class="chevron">›</text>
+        </div>
+        <div class="history-card" @click="openHistory" style="width: {{ contentWidth }}px; height: {{ actionHeight }}px; border-radius: {{ actionRadius }}px;"><div><text class="history-title">运动记录</text><text class="history-sub">查看已完成训练</text></div><text class="chevron">›</text></div>
+      </scroll>
     </div>
-
-    <scroll class="mode-stream" scroll-y="true" style="position: absolute; left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ streamWidth }}px; height: {{ streamHeight }}px;">
-      <div class="mode-card walk-card" style="width: {{ cardWidth }}px; height: {{ cardHeight }}px; padding: {{ cardPadding }}px; border-radius: {{ cardRadius }}px; margin-bottom: {{ cardGap }}px;" @click="startWalk">
-        <div class="mode-icon walk-icon" style="width: {{ iconSize }}px; height: {{ iconSize }}px; border-radius: {{ iconRadius }}px; margin-right: {{ iconGap }}px;"><text class="mode-letter" style="font-size: {{ modeLetterFontSize }}px;">W</text></div>
-        <div class="mode-copy" style="width: {{ copyWidth }}px;">
-          <text class="mode-name" style="font-size: {{ modeNameFontSize }}px;">步行</text>
-          <text class="mode-desc" style="font-size: {{ modeDescFontSize }}px;">轻量有氧与日常健走</text>
-          <text class="mode-meta" style="font-size: {{ modeMetaFontSize }}px;">约 90 步/分钟</text>
-        </div>
-        <text class="mode-arrow" style="width: {{ arrowWidth }}px; font-size: {{ arrowFontSize }}px;">›</text>
-      </div>
-
-      <div class="mode-card run-card" style="width: {{ cardWidth }}px; height: {{ cardHeight }}px; padding: {{ cardPadding }}px; border-radius: {{ cardRadius }}px; margin-bottom: {{ cardGap }}px;" @click="startRun">
-        <div class="mode-icon run-icon" style="width: {{ iconSize }}px; height: {{ iconSize }}px; border-radius: {{ iconRadius }}px; margin-right: {{ iconGap }}px;"><text class="mode-letter" style="font-size: {{ modeLetterFontSize }}px;">R</text></div>
-        <div class="mode-copy" style="width: {{ copyWidth }}px;">
-          <text class="mode-name" style="font-size: {{ modeNameFontSize }}px;">跑步</text>
-          <text class="mode-desc" style="font-size: {{ modeDescFontSize }}px;">更高步频与热量消耗</text>
-          <text class="mode-meta" style="font-size: {{ modeMetaFontSize }}px;">约 150 步/分钟</text>
-        </div>
-        <text class="mode-arrow" style="width: {{ arrowWidth }}px; font-size: {{ arrowFontSize }}px;">›</text>
-      </div>
-
-      <div class="active-card" if="{{ activeVisible }}" style="width: {{ cardWidth }}px; height: {{ activeHeight }}px; padding-left: {{ activePadding }}px; border-radius: {{ activeRadius }}px; margin-bottom: {{ cardGap }}px;" @click="continueWorkout">
-        <text class="active-title" style="font-size: {{ activeTitleFontSize }}px;">继续上次运动</text>
-        <text class="active-value" style="font-size: {{ activeValueFontSize }}px;">{{ activeType }} · {{ activeDuration }}</text>
-      </div>
-
-      <text class="page-tip" style="width: {{ cardWidth }}px; font-size: {{ tipFontSize }}px;">模拟器使用运动模型估算数据</text>
-      <div class="stream-bottom-space" style="height: {{ streamBottomPadding }}px;"></div>
-    </scroll>
-  </div>
+  </stack>
 </template>
 
 <script>
-import router from '@system.router'
-import workoutManager from '../../common/workout_manager'
-import pageMotion from '../../common/page_motion'
-import swipeBack from '../../common/swipe_back'
-import layoutRuntime from '../../presentation/layout/runtime'
-import scrollFlow from '../../presentation/layout/scroll_flow'
-import workoutSelectLayout from '../../presentation/layout/specs/workout_select'
-
-function region(plan, id) {
-  var list = plan && plan.regions ? plan.regions : []
-  for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i]
-  return null
-}
+import pageRuntime from '../../v2/app/page_runtime'
+import navigation from '../../v2/app/navigation'
+import workoutSelection from '../../v2/features/workout/selection'
 
 export default {
   private: {
-    activeVisible: false,
-    activeType: '',
-    activeDuration: '',
-    headerLeft: 36,
-    headerTop: 22,
-    headerWidth: 120,
-    headerHeight: 20,
-    streamLeft: 22,
-    streamTop: 46,
-    streamWidth: 148,
-    streamHeight: 110,
-    cardWidth: 148,
-    cardHeight: 72,
-    cardGap: 8,
-    cardPadding: 9,
-    cardRadius: 20,
-    iconSize: 35,
-    iconRadius: 18,
-    iconGap: 8,
-    copyWidth: 82,
-    arrowWidth: 12,
-    titleFontSize: 13,
-    historyFontSize: 7,
-    modeLetterFontSize: 14,
-    modeNameFontSize: 13,
-    modeDescFontSize: 7,
-    modeMetaFontSize: 7,
-    arrowFontSize: 12,
-    activeHeight: 43,
-    activePadding: 10,
-    activeRadius: 16,
-    activeTitleFontSize: 9,
-    activeValueFontSize: 7,
-    tipFontSize: 7,
-    streamBottomPadding: 16,
-    pageOpacity: 1,
-    pageOffset: 0,
-    viewportClass: '',
-    viewportPosition: 'relative',
-    viewportLeft: '0px',
-    viewportWidth: '100%',
-    viewportHeight: '100%',
-    viewportTop: '0px'
+    modes: [], hasActive: false, contentWidth: 148, titleSize: 14, streamTop: 58, streamHeight: 90, cardHeight: 58, cardRadius: 20, actionHeight: 42, actionRadius: 18, modeNameSize: 12, modeDescSize: 7,
+    sceneWidth: 192, sceneHeight: 192, sceneSafeLeft: 22, sceneSafeTop: 35, sceneSafeHeight: 120,
+    viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
   },
-
   onInit() {
     var self = this
-    layoutRuntime.bind(this, function (profile) {
-      return scrollFlow.resolve(profile, workoutSelectLayout)
-    }, function (plan) {
-      self.applyLayout(plan)
+    this.modes = workoutSelection.getModes()
+    pageRuntime.bind(this, { contentWidth: function (profile) { return profile.formFactor === 'circle' ? 148 : (profile.formFactor === 'rect' ? 164 : 168) } }, function (profile, scene, safe) {
+      self.contentWidth = safe.width
+      var tall = safe.height > 250, compact = safe.height < 170
+      self.titleSize = compact ? 13 : (tall ? 18 : 15)
+      self.streamTop = safe.top + (compact ? 25 : 34)
+      self.streamHeight = Math.max(50, safe.bottom - self.streamTop)
+      self.cardHeight = compact ? 52 : (tall ? 76 : 62)
+      self.cardRadius = Math.round(self.cardHeight * 0.32)
+      self.actionHeight = compact ? 38 : (tall ? 50 : 42)
+      self.actionRadius = Math.round(self.actionHeight / 2)
+      self.modeNameSize = compact ? 10 : (tall ? 15 : 12)
+      self.modeDescSize = compact ? 6 : (tall ? 9 : 7)
     })
   },
-
-  onShow() {
-    pageMotion.enter(this)
-    var self = this
-    workoutManager.loadActive(function (session) {
-      self.activeVisible = !!session
-      if (session) {
-        self.activeType = session.typeName
-        self.activeDuration = session.durationText
-      }
-    })
-  },
-
-  onHide() { pageMotion.clear(this) },
-  onDestroy() { pageMotion.clear(this) },
-
-  applyLayout(plan) {
-    var header = region(plan, 'header')
-    var stream = plan && plan.stream
-    if (!header || !stream) return
-    this.headerLeft = header.left
-    this.headerTop = header.top
-    this.headerWidth = header.width
-    this.headerHeight = header.height
-    this.streamLeft = stream.left
-    this.streamTop = stream.top
-    this.streamWidth = stream.width
-    this.streamHeight = stream.viewportHeight
-    this.cardWidth = stream.width
-    this.cardHeight = stream.itemHeight
-    this.cardGap = stream.gap
-    this.streamBottomPadding = stream.bottomPadding
-
-    var scale = plan.scale || 1
-    var visualScale = Math.max(0.9, Math.min(1.24, scale))
-    this.cardPadding = Math.max(8, Math.round(9 * scale))
-    this.cardRadius = Math.max(16, Math.round(20 * visualScale))
-    this.iconSize = Math.max(32, Math.round(35 * visualScale))
-    this.iconRadius = Math.round(this.iconSize / 2)
-    this.iconGap = Math.max(7, Math.round(8 * scale))
-    this.arrowWidth = Math.max(11, Math.round(12 * scale))
-    this.copyWidth = Math.max(66, Math.round(this.cardWidth - this.cardPadding * 2 - this.iconSize - this.iconGap - this.arrowWidth))
-    this.titleFontSize = Math.max(12, Math.round(13 * visualScale))
-    this.historyFontSize = Math.max(7, Math.round(7 * visualScale))
-    this.modeLetterFontSize = Math.max(13, Math.round(14 * visualScale))
-    this.modeNameFontSize = Math.max(12, Math.round(13 * visualScale))
-    this.modeDescFontSize = Math.max(7, Math.round(7 * visualScale))
-    this.modeMetaFontSize = Math.max(7, Math.round(7 * visualScale))
-    this.arrowFontSize = Math.max(12, Math.round(12 * visualScale))
-    this.activeHeight = Math.max(40, Math.round(43 * visualScale))
-    this.activePadding = Math.max(9, Math.round(10 * scale))
-    this.activeRadius = Math.max(14, Math.round(16 * visualScale))
-    this.activeTitleFontSize = Math.max(9, Math.round(9 * visualScale))
-    this.activeValueFontSize = Math.max(7, Math.round(7 * visualScale))
-    this.tipFontSize = Math.max(7, Math.round(7 * visualScale))
-  },
-
-  startWalk() { this.startMode('walk') },
-  startRun() { this.startMode('run') },
-
-  startMode(type) {
-    var self = this
-    workoutManager.start(type, function () {
-      pageMotion.push(self, router, '/pages/workout')
-    })
-  },
-
-  continueWorkout() { pageMotion.push(this, router, '/pages/workout') },
-  openHistory() { pageMotion.push(this, router, '/pages/workout_history') },
-  onTouchStart(e) { swipeBack.start(this, e) },
-  onTouchEnd(e) { swipeBack.end(this, e, router) }
+  onShow() { var self = this; workoutSelection.hasActive(function (active) { self.hasActive = active }) },
+  onBackPress() { navigation.back(); return true },
+  selectMode(type) { workoutSelection.create(type, function () { navigation.push('/pages/workout') }) },
+  continueWorkout() { navigation.push('/pages/workout') },
+  openHistory() { navigation.push('/pages/workout_history') }
 }
 </script>
 
 <style>
-.select-page { width: 100%; height: 100%; background-color: #000000; }
-.top-row,
-.mode-card { flex-direction: row; align-items: center; }
-.top-row { justify-content: space-between; }
-.page-title { font-weight: bold; color: #FFFFFF; }
-.history-link { color: #0A84FF; }
-.mode-stream { flex-direction: column; }
-.mode-card { border-width: 1px; }
-.walk-card { background-color: #0A1812; border-color: #245C3C; }
-.run-card { background-color: #1A1108; border-color: #684114; }
-.mode-icon { justify-content: center; align-items: center; }
-.walk-icon { background-color: #30D158; }
-.run-icon { background-color: #FF9F0A; }
-.mode-letter { font-weight: bold; color: #000000; }
-.mode-copy { flex-direction: column; }
-.mode-name { color: #FFFFFF; font-weight: bold; }
-.mode-desc { color: #C7C7CC; margin-top: 4px; }
-.mode-meta { color: #8E8E93; margin-top: 5px; }
-.mode-arrow { color: #8E8E93; text-align: right; }
-.active-card { flex-direction: column; justify-content: center; background-color: #111317; }
-.active-title { font-weight: bold; color: #FFFFFF; }
-.active-value { color: #FFD60A; margin-top: 4px; }
-.page-tip { color: #666666; text-align: center; }
+.selector-root, .selector-scene { background-color: #000000; } .selector-scene { position: absolute; left: 0px; top: 0px; }
+.selector-title { position: absolute; height: 22px; color: #FFFFFF; font-weight: bold; text-align: center; }
+.selector-stream { position: absolute; flex-direction: column; }
+.mode-card, .continue-card, .history-card { background-color: #15171B; flex-direction: row; align-items: center; margin-bottom: 9px; padding: 10px 12px; }
+.mode-accent { width: 5px; height: 70%; border-radius: 3px; } .mode-copy { flex-direction: column; margin-left: 10px; flex: 1; } .mode-name { color: #FFFFFF; font-weight: bold; } .mode-desc { color: #8E8E93; margin-top: 4px; }
+.continue-title { font-size: 10px; color: #30D158; font-weight: bold; } .continue-sub, .history-sub { font-size: 7px; color: #8E8E93; margin-top: 3px; } .history-title { font-size: 10px; color: #FFFFFF; font-weight: bold; } .chevron { width: 18px; font-size: 18px; color: #636366; text-align: right; }
 </style>
