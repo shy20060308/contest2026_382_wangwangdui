@@ -30,5 +30,6 @@ export default {
     } catch (error) {}
     if (callback) callback(cachedPercent)
   },
-  getCached: function () { return cachedPercent }
+  getCached: function () { return cachedPercent },
+  isAvailable: function () { return !!(battery && battery.getStatus) }
 }
