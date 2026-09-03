@@ -1,34 +1,26 @@
 import capabilityIntrospection from '../../../capabilities/introspection'
 
-function status(entry) {
-  if (entry.available) return { text: '可用', color: '#30D158', background: '#102A19' }
-  if (entry.fallback) return { text: '兼容', color: '#FFD60A', background: '#2A2310' }
-  return { text: '不可用', color: '#FF453A', background: '#321519' }
-}
-
-function mapCapability(entry) {
-  var state = status(entry || {})
-  return {
-    id: entry.id,
-    name: entry.name,
-    api: entry.api,
-    status: state.text,
-    color: state.color,
-    background: state.background
-  }
-}
-
-function profileView(profile, scene) {
+function deviceSnapshot(profile) {
   var source = profile || {}
-  var host = scene || {}
   return {
-    deviceFamily: source.deviceFamily || source.model || 'unknown',
-    screenSize: (source.screenWidth || '--') + ' × ' + (source.screenHeight || '--'),
-    formFactor: source.formFactor || 'rect',
-    platformText: (source.model || 'unknown') + ' / ' + (source.platformVersionCode || '--'),
-    hostSceneText: Math.round(Number(host.width) || 0) + ' × ' + Math.round(Number(host.height) || 0),
-    viewportMode: source.isBetaPillViewport ? '宿主兼容视口' : '标准宿主视口'
+    deviceFamily: source.deviceFamily,
+    model: source.model,
+    screenWidth: source.screenWidth,
+    screenHeight: source.screenHeight,
+    formFactor: source.formFactor,
+    platformVersionCode: source.platformVersionCode,
+    isBetaPillViewport: !!source.isBetaPillViewport
   }
+}
+
+function hostSnapshot(scene) {
+  var source = scene || {}
+  return { width: Number(source.width) || 0, height: Number(source.height) || 0 }
+}
+
+function capabilitySnapshot(entry) {
+  var source = entry || {}
+  return { id: source.id, name: source.name, api: source.api, available: !!source.available, fallback: !!source.fallback }
 }
 
 export function createDiagnosticsController(onChange) {
@@ -38,11 +30,8 @@ export function createDiagnosticsController(onChange) {
   function snapshot() {
     var raw = capabilityIntrospection.list()
     var capabilities = []
-    for (var i = 0; i < raw.length; i++) capabilities.push(mapCapability(raw[i]))
-    return {
-      device: profileView(profile, scene),
-      capabilities: capabilities
-    }
+    for (var i = 0; i < raw.length; i++) capabilities.push(capabilitySnapshot(raw[i]))
+    return { device: deviceSnapshot(profile), host: hostSnapshot(scene), capabilities: capabilities }
   }
 
   function emit() {
