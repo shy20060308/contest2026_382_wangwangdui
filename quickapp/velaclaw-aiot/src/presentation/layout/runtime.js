@@ -26,7 +26,10 @@ function resolvePlan(profile, specOrResolver) {
 
 function bind(page, specOrResolver, callback) {
   screenProfile.resolve(page, function (profile) {
-    viewportRuntime.apply(page, profile)
+    // Layout plans are expressed in full design coordinates. Do not apply the
+    // legacy beta-pill top offset here or rendered coordinates diverge from the
+    // safe geometry used by the planner.
+    viewportRuntime.applyDesign(page, profile)
     var plan = resolvePlan(profile, specOrResolver)
     apply(page, plan)
     if (typeof callback === 'function') callback(plan, profile)
