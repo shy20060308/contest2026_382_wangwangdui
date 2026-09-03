@@ -1,5 +1,12 @@
 var freedom = require('../freedom')
 
+function contentWidth(profile) {
+  var shape = profile && profile.formFactor ? profile.formFactor : 'rect'
+  if (shape === 'circle') return 148
+  if (shape === 'pill') return 168
+  return 164
+}
+
 function resolve(profile, scene, safe) {
   var tall = safe.height > 250
   var compact = safe.height < 170
@@ -13,7 +20,10 @@ function resolve(profile, scene, safe) {
   var itemHeight = compact ? 66 : (tall ? 94 : 78)
   return {
     freedom: freedom.describe(freedom.AUTO),
+    freedomLevel: freedom.AUTO,
+    strategy: 'auto',
     shape: profile && profile.formFactor ? profile.formFactor : 'rect',
+    surface: 'summary-record-stream',
     header: { left: safe.left, top: headerTop, width: safe.width, height: headerHeight },
     summary: { left: safe.left, top: summaryTop, width: safe.width, height: summaryHeight },
     stream: { left: safe.left, top: streamTop, width: safe.width, height: streamHeight, itemHeight: itemHeight, gap: tall ? 10 : 7 },
@@ -28,7 +38,4 @@ function resolve(profile, scene, safe) {
   }
 }
 
-module.exports = {
-  freedomLevel: freedom.AUTO,
-  resolve: resolve
-}
+module.exports = { freedomLevel: freedom.AUTO, contentWidth: contentWidth, resolve: resolve }
