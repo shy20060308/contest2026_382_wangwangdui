@@ -4,6 +4,14 @@ function region(left, top, width, height) {
   return { left: left, top: top, width: width, height: height }
 }
 
+function finalize(plan) {
+  var metricGap = plan.metricGap
+  var columns = plan.metricColumns
+  plan.metricItemWidth = Math.floor((plan.metrics.width - metricGap * (columns - 1)) / columns)
+  plan.actionWidth = Math.floor((plan.actions.width - plan.actionGap) / 2)
+  return plan
+}
+
 function resolve(profile, scene, safe) {
   var shape = profile && profile.formFactor ? profile.formFactor : 'rect'
   var plan = {
@@ -15,7 +23,9 @@ function resolve(profile, scene, safe) {
     metrics: region(safe.left, safe.top + 100, safe.width, 66),
     actions: region(safe.left, Math.max(safe.top + 172, safe.bottom - 42), safe.width, 38),
     metricColumns: 4,
+    metricGap: 4,
     metricHeight: 60,
+    actionGap: 8,
     titleSize: 14,
     statusSize: 8,
     durationSize: 31,
@@ -34,7 +44,9 @@ function resolve(profile, scene, safe) {
     plan.metrics = region(safe.left, safe.top + 65, safe.width, 58)
     plan.actions = region(safe.left + 10, safe.bottom - 25, safe.width - 20, 22)
     plan.metricColumns = 2
+    plan.metricGap = 4
     plan.metricHeight = 27
+    plan.actionGap = 8
     plan.titleSize = 10
     plan.statusSize = 6
     plan.durationSize = 27
@@ -44,7 +56,7 @@ function resolve(profile, scene, safe) {
     plan.metricLabelSize = 5
     plan.actionSize = 8
     plan.radius = 14
-    return plan
+    return finalize(plan)
   }
 
   if (shape === 'pill') {
@@ -56,7 +68,9 @@ function resolve(profile, scene, safe) {
     plan.metrics = region(safe.left, contentTop + 164, safe.width, 166)
     plan.actions = region(safe.left, Math.min(safe.bottom - actionsHeight, contentTop + 346), safe.width, actionsHeight)
     plan.metricColumns = 2
+    plan.metricGap = 8
     plan.metricHeight = 78
+    plan.actionGap = 10
     plan.titleSize = 18
     plan.statusSize = 10
     plan.durationSize = 50
@@ -68,7 +82,7 @@ function resolve(profile, scene, safe) {
     plan.radius = 20
   }
 
-  return plan
+  return finalize(plan)
 }
 
 module.exports = {
