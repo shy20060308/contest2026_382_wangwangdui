@@ -1,29 +1,21 @@
 import activityStore from '../../../domain/activity/store'
 import healthStore from '../../../domain/health/store'
-import { mapActivity } from '../../../presentation/mappers/activity'
 var calendar = require('../../../domain/calendar')
-
-var WEEKDAYS = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
-
-function pad2(value) { return value < 10 ? '0' + value : '' + value }
 
 function copy(state) {
   return {
-    yearText: state.yearText,
-    monthText: state.monthText,
-    monthNumberText: state.monthNumberText,
-    dayText: state.dayText,
-    weekdayText: state.weekdayText,
+    currentYear: state.currentYear,
+    currentMonth: state.currentMonth,
+    currentDay: state.currentDay,
+    currentWeekday: state.currentWeekday,
     lunarText: state.lunarText,
-    stepsText: state.stepsText,
-    caloriesText: state.caloriesText,
-    standText: state.standText,
-    heartText: state.heartText,
+    steps: state.steps,
+    calories: state.calories,
+    standHours: state.standHours,
+    heartRate: state.heartRate,
     goalPercent: state.goalPercent,
-    goalWidth: state.goalWidth,
     calendarYear: state.calendarYear,
     calendarMonth: state.calendarMonth,
-    calendarTitle: state.calendarTitle,
     calendarCells: state.calendarCells.slice()
   }
 }
@@ -31,47 +23,63 @@ function copy(state) {
 export function createTodayController(onChange) {
   var now = new Date()
   var state = {
-    yearText: '', monthText: '', monthNumberText: '', dayText: '', weekdayText: '', lunarText: '',
-    stepsText: '0', caloriesText: '0', standText: '0', heartText: '--', goalPercent: 0, goalWidth: '0%',
-    calendarYear: now.getFullYear(), calendarMonth: now.getMonth(), calendarTitle: '', calendarCells: []
+    currentYear: now.getFullYear(),
+    currentMonth: now.getMonth(),
+    currentDay: now.getDate(),
+    currentWeekday: now.getDay(),
+    lunarText: calendar.formatLunar(now),
+    steps: 0,
+    calories: 0,
+    standHours: 0,
+    heartRate: null,
+    goalPercent: 0,
+    calendarYear: now.getFullYear(),
+    calendarMonth: now.getMonth(),
+    calendarCells: []
   }
   var started = false
 
-  function emit() { if (typeof onChange === 'function') onChange(copy(state)) }
-  function refreshCalendar() {
-    var today = new Date()
-    state.calendarTitle = state.calendarYear + '年 ' + (state.calendarMonth + 1) + '月'
-    state.monthNumberText = pad2(state.calendarMonth + 1)
-    state.calendarCells = calendar.buildMonth(state.calendarYear, state.calendarMonth, today)
+  function emit() {
+    var value = copy(state)
+    if (typeof onChange === 'function') onChange(value)
+    return value
   }
+
+  function refreshCalendar() {
+    state.calendarCells = calendar.buildMonth(state.calendarYear, state.calendarMonth, new Date())
+  }
+
   function refreshDate() {
     var date = new Date()
-    state.yearText = date.getFullYear() + ' 年'
-    state.monthText = date.getMonth() + 1 + '月'
-    state.dayText = String(date.getDate())
-    state.weekdayText = WEEKDAYS[date.getDay()]
+    state.currentYear = date.getFullYear()
+    state.currentMonth = date.getMonth()
+    state.currentDay = date.getDate()
+    state.currentWeekday = date.getDay()
     state.lunarText = calendar.formatLunar(date)
     state.calendarYear = date.getFullYear()
     state.calendarMonth = date.getMonth()
     refreshCalendar()
   }
+
   function applyActivity(snapshot) {
-    var view = mapActivity(snapshot)
-    state.stepsText = view.stepsText
-    state.caloriesText = view.caloriesText
-    state.standText = view.standText
-    state.goalPercent = view.goalPercent
-    state.goalWidth = view.goalWidth
-    emit()
-  }
-  function onHealth(snapshot) {
-    if (snapshot && snapshot.heartRate !== undefined && snapshot.heartRate !== null) state.heartText = String(snapshot.heartRate)
+    var source = snapshot || {}
+    state.steps = Number(source.steps) || 0
+    state.calories = Number(source.calories) || 0
+    state.standHours = Number(source.standHours) || 0
+    state.goalPercent = Math.max(0, Math.min(100, Number(source.goalPercent) || 0))
     emit()
   }
 
+  function onHealth(snapshot) {
+    if (snapshot && snapshot.heartRate !== undefined && snapshot.heartRate !== null) state.heartRate = Number(snapshot.heartRate) || 0
+    emit()
+  }
+
+  refreshCalendar()
+
   return {
     start: function () {
-      if (started) return
+      if (started) { emit(); return }
       started = true
       refreshDate()
       emit()
