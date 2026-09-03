@@ -3,6 +3,8 @@ import vibration from '../../../capabilities/vibration'
 import haptics from '../../system/haptics'
 var patterns = require('../../../domain/haptics/patterns')
 
+var HAPTIC_OWNER = 'settings-vibration'
+
 export function createVibrationController(onChange) {
   var state = settingsStore.getSnapshot()
   var feedbackCode = 'idle'
@@ -30,19 +32,36 @@ export function createVibrationController(onChange) {
   }
 
   function play(name) {
-    if (!state.vibrationEnabled) { feedbackCode = 'disabled'; return emit() }
+    if (!state.vibrationEnabled) {
+      haptics.stop(HAPTIC_OWNER)
+      feedbackCode = 'disabled'
+      return emit()
+    }
     var normalized = patterns.normalize(name)
-    haptics.play(normalized, state.vibrationLevel)
-    feedbackCode = vibration.available() ? 'played' : 'unavailable'
+    feedbackCode = haptics.play(normalized, state.vibrationLevel, HAPTIC_OWNER) ? 'played' : 'unavailable'
     return emit()
   }
 
   return {
     load: function () { settingsStore.load(function (value) { state = value; feedbackCode = 'loaded'; emit() }) },
-    stop: function () { haptics.stop() },
-    toggle: function () { return commit('vibrationEnabled', !state.vibrationEnabled) },
+    stop: function () { haptics.stop(HAPTIC_OWNER) },
+    toggle: function () {
+      var enabled = !state.vibrationEnabled
+      state = settingsStore.update('vibrationEnabled', enabled)
+      if (!enabled) {
+        haptics.stop(HAPTIC_OWNER)
+        feedbackCode = 'disabled'
+      } else {
+        feedbackCode = 'idle'
+      }
+      return emit()
+    },
     setLevel: function (level) { return commit('vibrationLevel', level) },
-    selectPattern: function (name) { state = settingsStore.update('vibrationPattern', patterns.normalize(name)); emit(); return play(name) },
+    selectPattern: function (name) {
+      var normalized = patterns.normalize(name)
+      state = settingsStore.update('vibrationPattern', normalized)
+      return play(normalized)
+    },
     playCurrent: function () { return play(state.vibrationPattern) },
     refresh: emit
   }
