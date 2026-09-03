@@ -1,101 +1,65 @@
 <template>
-  <scroll class="steps-page {{ viewportClass }}" scroll-y="true" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px;" @touchstart="onTouchStart" @touchend="onTouchEnd">
-    <text class="page-title" static>运动</text>
+  <div class="steps-page {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px;" @touchstart="onTouchStart" @touchend="onTouchEnd">
+    <text class="page-title" static style="position: absolute; left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px; font-size: {{ titleFontSize }}px;">运动</text>
 
-    <div class="history-entry" @click="goToHistory">
-      <text class="history-title" static>7日趋势</text>
-      <text class="history-sub" static>查看历史记录</text>
+    <div class="history-entry" @click="goToHistory" style="position: absolute; left: {{ historyLeft }}px; top: {{ historyTop }}px; width: {{ historyWidth }}px; height: {{ historyHeight }}px; border-radius: {{ historyRadius }}px; padding-left: {{ historyPadding }}px; padding-right: {{ historyPadding }}px;">
+      <text class="history-title" static style="font-size: {{ historyTitleFontSize }}px;">7日趋势</text>
+      <text class="history-sub" static style="font-size: {{ historySubFontSize }}px;">查看历史记录</text>
     </div>
 
-    <div for="{{ metrics }}" class="metric-section" tid="name">
-      <div class="ml-row">
-        <text class="ml-label" style="color: {{ $item.color }}">{{ $item.name }}</text>
-      </div>
-      <text class="mc-val" style="color: {{ $item.color }}">{{ $item.current }}</text>
-      <text class="mg-val" style="color: #888888;">/ {{ $item.goal }} {{ $item.unit }}</text>
-      <div class="chart-area">
-        <div class="cb-row">
-          <div class="bc" for="{{ $item.bars }}" tid="t">
-            <div class="bar-space">
-              <div class="bar-inner" style="height: {{ $item.h }}px; background-color: {{ $item.color }};"></div>
+    <scroll class="metric-scroll" scroll-y="true" style="position: absolute; left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ streamWidth }}px; height: {{ streamHeight }}px;">
+      <div for="{{ metrics }}" class="metric-section" tid="name" style="width: {{ metricWidth }}px; margin-bottom: {{ metricGap }}px;">
+        <div class="ml-row">
+          <text class="ml-label" style="font-size: {{ labelFontSize }}px; color: {{ $item.color }}">{{ $item.name }}</text>
+        </div>
+        <text class="mc-val" style="font-size: {{ valueFontSize }}px; line-height: {{ valueLineHeight }}px; color: {{ $item.color }}">{{ $item.current }}</text>
+        <text class="mg-val" style="font-size: {{ goalFontSize }}px; line-height: {{ goalLineHeight }}px; color: #888888;">/ {{ $item.goal }} {{ $item.unit }}</text>
+        <div class="chart-area">
+          <div class="cb-row">
+            <div class="bc" for="{{ $item.bars }}" tid="t" style="width: {{ barColumnWidth }}px;">
+              <div class="bar-space" style="width: {{ barColumnWidth }}px; height: {{ chartHeight }}px;">
+                <div class="bar-inner" style="width: {{ barWidth }}px; height: {{ $item.h }}px; background-color: {{ $item.color }};"></div>
+              </div>
+              <text class="bl" style="width: {{ barColumnWidth }}px; font-size: {{ tickFontSize }}px;">{{ $item.t }}</text>
             </div>
-            <text class="bl">{{ $item.t }}</text>
           </div>
         </div>
       </div>
-    </div>
-
-  </scroll>
+    </scroll>
+  </div>
 </template>
 
 <script>
 import router from '@system.router'
 import activityStore from '../../domain/activity/store'
-import { mapActivity } from '../../presentation/mappers/activity'
+import { mapStepsMetrics } from '../../presentation/mappers/steps'
 import pageMotion from '../../common/page_motion'
-import pageViewport from '../../common/page_viewport'
 import swipeBack from '../../common/swipe_back'
+import layoutRuntime from '../../presentation/layout/runtime'
+import scrollFlow from '../../presentation/layout/scroll_flow'
+import stepsLayout from '../../presentation/layout/specs/steps'
 
-var labels = ['0', '3', '6', '9', '12', '15', '18', '21']
-var chartH = 60
-
-function makeBars(vals, color) {
-  var bars = []
-  var maxVal = vals[0]
-  for (var i = 1; i < vals.length; i++) {
-    if (vals[i] > maxVal) maxVal = vals[i]
-  }
-  if (maxVal <= 0) maxVal = 1
-  for (var j = 0; j < vals.length; j++) {
-    var h = Math.round((vals[j] / maxVal) * chartH)
-    if (h < 3) h = 3
-    bars.push({ t: labels[j], h: h, color: color })
-  }
-  return bars
+function region(plan, id) {
+  var list = plan && plan.regions ? plan.regions : []
+  for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i]
+  return null
 }
 
-function makeTrendValues(total) {
-  var ratios = [0.05, 0.11, 0.18, 0.26, 0.22, 0.14, 0.09, 0.04]
-  var result = []
-  for (var i = 0; i < ratios.length; i++) {
-    result.push(Math.max(1, Math.round(total * ratios[i])))
-  }
-  return result
-}
-
-function makeMetrics(snapshot) {
-  var view = mapActivity(snapshot)
-  return [
-    {
-      name: '步数',
-      current: view.stepsText,
-      goal: view.stepsGoalText,
-      unit: '步',
-      color: '#FFD60A',
-      bars: makeBars(makeTrendValues(snapshot.steps), '#FFD60A')
-    },
-    {
-      name: '卡路里',
-      current: view.caloriesText,
-      goal: view.caloriesGoalText,
-      unit: 'kcal',
-      color: '#FF9F0A',
-      bars: makeBars(makeTrendValues(snapshot.calories), '#FF9F0A')
-    },
-    {
-      name: '站立',
-      current: view.standText,
-      goal: view.standGoalText,
-      unit: 'h',
-      color: '#0A84FF',
-      bars: makeBars(makeTrendValues(snapshot.standHours), '#0A84FF')
-    }
-  ]
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value))
 }
 
 export default {
   private: {
     metrics: [],
+    chartHeight: 56,
+    headerLeft: 36, headerTop: 23, headerWidth: 120, headerHeight: 22,
+    historyLeft: 22, historyTop: 49, historyWidth: 148, historyHeight: 30,
+    streamLeft: 22, streamTop: 83, streamWidth: 148, streamHeight: 70,
+    metricWidth: 148, metricGap: 8,
+    titleFontSize: 14, historyRadius: 15, historyPadding: 10, historyTitleFontSize: 9, historySubFontSize: 7,
+    labelFontSize: 8, valueFontSize: 22, valueLineHeight: 24, goalFontSize: 8, goalLineHeight: 10,
+    barColumnWidth: 18.5, barWidth: 10, tickFontSize: 7,
     pageOpacity: 1,
     pageOffset: 0,
     viewportClass: '',
@@ -108,8 +72,10 @@ export default {
 
   onInit() {
     var self = this
-    pageViewport.bind(this, function (profile) {
-      chartH = profile.isCircle ? 48 : 60
+    layoutRuntime.bind(this, function (profile) {
+      return scrollFlow.resolve(profile, stepsLayout)
+    }, function (plan) {
+      self.applyLayout(plan)
       self.loadCurrentData()
     })
   },
@@ -129,11 +95,57 @@ export default {
     this.releaseMetrics()
   },
 
+  applyLayout(plan) {
+    var header = region(plan, 'header')
+    var history = region(plan, 'history')
+    if (header) {
+      this.headerLeft = header.left
+      this.headerTop = header.top
+      this.headerWidth = header.width
+      this.headerHeight = header.height
+    }
+    if (history) {
+      this.historyLeft = history.left
+      this.historyTop = history.top
+      this.historyWidth = history.width
+      this.historyHeight = history.height
+    }
+    if (plan.stream) {
+      this.streamLeft = plan.stream.left
+      this.streamTop = plan.stream.top
+      this.streamWidth = plan.stream.width
+      this.streamHeight = plan.stream.viewportHeight
+      this.metricWidth = plan.stream.width
+      this.metricGap = plan.stream.gap
+    }
+
+    var scale = plan.scale || 1
+    var tokens = plan.tokens || {}
+    this.titleFontSize = clamp(Math.round(14 * scale), 12, 18)
+    this.historyRadius = Math.round(this.historyHeight / 2)
+    this.historyPadding = clamp(Math.round(10 * scale), 8, 12)
+    this.historyTitleFontSize = clamp(Math.round(9 * scale), 8, 12)
+    this.historySubFontSize = clamp(Math.round(7 * scale), 6, 10)
+    this.labelFontSize = clamp(Math.round(8 * scale), 7, 11)
+    this.valueFontSize = clamp(Math.round(22 * scale), 19, 30)
+    this.valueLineHeight = this.valueFontSize + 2
+    this.goalFontSize = clamp(Math.round(8 * scale), 7, 12)
+    this.goalLineHeight = this.goalFontSize + 2
+    this.chartHeight = clamp(
+      Math.round((plan.stream ? plan.stream.itemHeight : 118) * (tokens.chartRatio || 0.5)),
+      tokens.minChartHeight || 48,
+      tokens.maxChartHeight || 68
+    )
+    this.barColumnWidth = Math.round((this.metricWidth / 8) * 100) / 100
+    this.barWidth = clamp(Math.round(this.barColumnWidth * 0.56), 9, 13)
+    this.tickFontSize = clamp(Math.round(7 * scale), 6, 9)
+  },
+
   loadCurrentData() {
     var self = this
-    this.metrics = makeMetrics(activityStore.getSnapshot())
+    this.metrics = mapStepsMetrics(activityStore.getSnapshot(), this.chartHeight)
     activityStore.hydrate(function (snapshot) {
-      self.metrics = makeMetrics(snapshot)
+      self.metrics = mapStepsMetrics(snapshot, self.chartHeight)
     })
   },
 
@@ -156,174 +168,20 @@ export default {
 </script>
 
 <style>
-.steps-page {
-  flex-direction: column;
-  align-items: center;
-  background-color: #000000;
-  width: 100%;
-  height: 100%;
-  padding: 16px;
-}
-
-.page-title {
-  font-size: 24px;
-  font-weight: bold;
-  color: #FFD60A;
-  text-align: center;
-  margin-bottom: 10px;
-}
-
-.history-entry {
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  width: 160px;
-  height: 34px;
-  background-color: #14181F;
-  border-radius: 8px;
-  padding-left: 10px;
-  padding-right: 10px;
-  margin-bottom: 8px;
-}
-
-.history-title {
-  font-size: 14px;
-  color: #FFFFFF;
-  font-weight: bold;
-}
-
-.history-sub {
-  font-size: 10px;
-  color: #8E8E93;
-}
-
-.metric-section {
-  flex-direction: column;
-  width: 160px;
-  margin-bottom: 6px;
-}
-
-.ml-row {
-  flex-direction: row;
-  align-items: center;
-  margin-bottom: 0px;
-}
-
-.ml-label {
-  font-size: 12px;
-  font-weight: bold;
-}
-
-.mc-val {
-  font-size: 28px;
-  font-weight: bold;
-  line-height: 30px;
-}
-
-.mg-val {
-  font-size: 13px;
-  line-height: 16px;
-}
-
-.chart-area {
-  flex-direction: column;
-  margin-top: 0px;
-}
-
-.cb-row {
-  flex-direction: row;
-  align-items: flex-start;
-}
-
-.bc {
-  flex-direction: column;
-  width: 20px;
-  align-items: center;
-}
-
-.bar-space {
-  flex-direction: column;
-  width: 20px;
-  height: 60px;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.bar-inner {
-  width: 12px;
-  border-radius: 2px;
-}
-
-.bl {
-  width: 20px;
-  font-size: 10px;
-  color: #666666;
-  text-align: center;
-  margin-top: 2px;
-}
-
-@media (shape: circle) {
-  .steps-page {
-    padding-top: 18px;
-    padding-left: 22px;
-    padding-right: 22px;
-    padding-bottom: 28px;
-  }
-
-  .page-title {
-    font-size: 14px;
-    margin-bottom: 6px;
-  }
-
-  .history-entry,
-  .metric-section {
-    width: 148px;
-  }
-
-  .history-entry {
-    height: 29px;
-    border-radius: 14px;
-  }
-
-  .history-title {
-    font-size: 9px;
-  }
-
-  .history-sub,
-  .ml-label {
-    font-size: 7px;
-  }
-
-  .mc-val {
-    font-size: 21px;
-    line-height: 23px;
-  }
-
-  .mg-val {
-    font-size: 8px;
-    line-height: 10px;
-  }
-
-  .bc,
-  .bar-space,
-  .bl {
-    width: 18px;
-  }
-
-  .bar-space {
-    height: 48px;
-  }
-
-  .bar-inner {
-    width: 10px;
-  }
-
-  .bl {
-    font-size: 7px;
-  }
-
-  .metric-section {
-    margin-bottom: 9px;
-  }
-}
+.steps-page { width: 100%; height: 100%; background-color: #000000; }
+.page-title { font-weight: bold; color: #FFD60A; text-align: center; }
+.history-entry { flex-direction: row; justify-content: space-between; align-items: center; background-color: #14181F; }
+.history-title { color: #FFFFFF; font-weight: bold; }
+.history-sub { color: #8E8E93; }
+.metric-scroll { flex-direction: column; }
+.metric-section { flex-direction: column; }
+.ml-row { flex-direction: row; align-items: center; }
+.ml-label { font-weight: bold; }
+.mc-val { font-weight: bold; }
+.chart-area { flex-direction: column; }
+.cb-row { flex-direction: row; align-items: flex-start; }
+.bc { flex-direction: column; align-items: center; }
+.bar-space { flex-direction: column; align-items: center; justify-content: flex-end; }
+.bar-inner { border-radius: 2px; }
+.bl { color: #666666; text-align: center; margin-top: 2px; }
 </style>
