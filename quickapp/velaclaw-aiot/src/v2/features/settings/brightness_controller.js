@@ -1,4 +1,4 @@
-import settingsStore from '../../domain/settings/store'
+import settingsStore from '../../../domain/settings/store'
 import displayPower from '../../../capabilities/display_power'
 
 export function createBrightnessController(onChange) {
