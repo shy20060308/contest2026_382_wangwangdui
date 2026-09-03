@@ -1,4 +1,4 @@
-import screenProfile from '../../presentation/viewport/profile'
+import deviceProfile from '../system/device_profile'
 var scene = require('../design/scene')
 
 function applyHostViewport(page, profile) {
@@ -11,8 +11,10 @@ function applyHostViewport(page, profile) {
 }
 
 function resolveContentWidth(profile, value) {
-  if (typeof value === 'function') return value(profile)
-  return value || 168
+  var next = typeof value === 'function' ? value(profile) : value
+  var number = Number(next)
+  if (!isFinite(number) || number <= 0) number = 168
+  return Math.max(48, Math.min(192, Math.round(number)))
 }
 
 function applyScene(page, profile, contentWidth) {
@@ -30,7 +32,7 @@ function applyScene(page, profile, contentWidth) {
 
 function bind(page, options, callback) {
   var config = options || {}
-  screenProfile.resolve(page, function (profile) {
+  deviceProfile.resolve(page, function (profile) {
     applyHostViewport(page, profile)
     var width = resolveContentWidth(profile, config.contentWidth)
     var result = applyScene(page, profile, width)
