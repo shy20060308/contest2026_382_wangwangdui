@@ -30,10 +30,12 @@
 import pageRuntime from '../../v2/app/page_runtime'
 import navigation from '../../v2/app/navigation'
 import { createHealthController } from '../../v2/features/health/controller'
+import healthDesign from '../../v2/design/specs/health'
+import healthView from '../../v2/design/views/health'
 
 export default {
   private: {
-    ready: false, isCircle: false, isPill: false, isRect: false, contentWidth: 148,
+    ready: false, pageVisible: false, isCircle: false, isPill: false, isRect: false, contentWidth: 148, designPlan: null, healthModel: null,
     sceneWidth: 192, sceneHeight: 192, sceneSafeLeft: 22, sceneSafeTop: 35, sceneSafeHeight: 120,
     viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%',
     heartRate: 88, spo2: 97, stress: 28, dailyMin: 48, dailyMax: 95,
@@ -43,16 +45,19 @@ export default {
   },
   onInit() {
     var self = this
-    this.controller = createHealthController(function (model) { self.applyModel(model) })
-    pageRuntime.bind(this, { contentWidth: function (profile) { return profile.formFactor === 'circle' ? 148 : (profile.formFactor === 'rect' ? 164 : 168) } }, function (profile, scene, safe) {
-      self.contentWidth = safe.width; self.isCircle = profile.formFactor === 'circle'; self.isPill = profile.formFactor === 'pill'; self.isRect = profile.formFactor === 'rect'; self.ready = true
-      self.controller.start(profile.formFactor === 'pill' ? 42 : (profile.formFactor === 'rect' ? 30 : 24))
+    this.controller = createHealthController(function (model) { self.acceptModel(model) })
+    pageRuntime.bind(this, { contentWidth: function (profile) { return healthDesign.contentWidth(profile) } }, function (profile, scene, safe) {
+      var plan = healthDesign.resolve(profile, scene, safe)
+      self.designPlan = plan; self.contentWidth = safe.width
+      self.isCircle = plan.shape === 'circle'; self.isPill = plan.shape === 'pill'; self.isRect = plan.shape === 'rect'; self.ready = true
+      if (self.pageVisible) self.controller.start()
     })
   },
-  onShow() { if (this.controller) this.controller.refresh() },
-  onHide() { if (this.controller) this.controller.stop() },
-  onDestroy() { if (this.controller) this.controller.stop(); this.heartBars = []; this.spo2Bars = []; this.stressBars = [] },
+  onShow() { this.pageVisible = true; if (this.ready && this.controller) this.controller.start() },
+  onHide() { this.pageVisible = false; if (this.controller) this.controller.stop() },
+  onDestroy() { this.pageVisible = false; if (this.controller) this.controller.stop(); this.healthModel = null; this.heartBars = []; this.spo2Bars = []; this.stressBars = [] },
   onBackPress() { navigation.back(); return true },
+  acceptModel(model) { this.healthModel = model; if (this.designPlan) this.applyModel(healthView.project(model, this.designPlan)) },
   applyModel(model) {
     this.heartRate = model.heartRate; this.spo2 = model.spo2; this.stress = model.stress; this.dailyMin = model.dailyMin; this.dailyMax = model.dailyMax
     this.heartStatus = model.heartStatus; this.heartStatusColor = model.heartStatusColor; this.spo2Status = model.spo2Status; this.spo2StatusColor = model.spo2StatusColor; this.stressStatus = model.stressStatus; this.stressStatusColor = model.stressStatusColor
