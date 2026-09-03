@@ -1,5 +1,5 @@
 <template>
-  <div class="today-page {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px;" @swipe="handleSwipe">
+  <stack class="today-page {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px;" @swipe="handleSwipe">
     <div class="circle-summary-surface" if="{{ profileReady && isCircleSurface && surfacePageIndex === 0 }}">
       <div class="circle-date-card">
         <div class="circle-month-badge"><text class="circle-month-text">{{ monthText }}</text></div>
@@ -33,7 +33,7 @@
       <div class="surface-pager"><div class="surface-dot"></div><div class="surface-dot active-dot"></div></div>
     </div>
 
-    <div class="pill-summary-surface" if="{{ profileReady && isPillSurface && surfacePageIndex === 0 }}" @touchstart="handlePillTouchStart" @touchmove="handlePillTouchMove" @touchend="handlePillTouchEnd">
+    <div class="pill-summary-surface" if="{{ profileReady && isPillSurface && surfacePageIndex === 0 }}" @touchstart="handlePillTouchStart" @touchend="handlePillTouchEnd">
       <div class="pill-date-hero">
         <div class="pill-month-badge"><text class="pill-month-text">{{ monthText }}</text></div>
         <text class="pill-day-value">{{ dayText }}</text>
@@ -42,7 +42,7 @@
       <div class="pill-summary-title-row"><text class="pill-summary-title">今日摘要</text><text class="pill-summary-goal">目标 {{ goalPercent }}%</text></div>
       <div class="pill-goal-track"><div class="pill-goal-fill" style="width: {{ goalWidth }}"></div></div>
       <div class="pill-metric-grid">
-        <div class="pill-metric-card blue-card"><text class="pill-metric-label">步数</text><text class="pill-metric-value">{{ stepsText }}</text><text class="pill-metric-unit">步</text></div>
+        <div class="pill-metric-card blue-card"><text class="pill-metric-label">步数</text><text class="pill-metric-value pill-steps-value" style="font-size: {{ pillStepsFontSize }}px;">{{ stepsText }}</text><text class="pill-metric-unit">步</text></div>
         <div class="pill-metric-card orange-card"><text class="pill-metric-label">热量</text><text class="pill-metric-value">{{ caloriesText }}</text><text class="pill-metric-unit">千卡</text></div>
         <div class="pill-metric-card red-card"><text class="pill-metric-label">心率</text><text class="pill-metric-value">{{ heartText }}</text><text class="pill-metric-unit">bpm</text></div>
         <div class="pill-metric-card green-card"><text class="pill-metric-label">站立</text><text class="pill-metric-value">{{ standText }}</text><text class="pill-metric-unit">小时</text></div>
@@ -51,7 +51,7 @@
       <div class="pill-surface-pager"><div class="pill-dot active-pill-dot"></div><div class="pill-dot"></div></div>
     </div>
 
-    <div class="pill-calendar-surface" if="{{ profileReady && isPillSurface && surfacePageIndex === 1 }}" @touchstart="handlePillTouchStart" @touchmove="handlePillTouchMove" @touchend="handlePillTouchEnd">
+    <div class="pill-calendar-surface" if="{{ profileReady && isPillSurface && surfacePageIndex === 1 }}" @touchstart="handlePillTouchStart" @touchend="handlePillTouchEnd">
       <div class="pill-month-hero">
         <div class="pill-month-number-block"><text class="pill-month-number">{{ monthNumberText }}</text><text class="pill-month-unit">MONTH</text></div>
         <div class="pill-month-copy"><text class="pill-calendar-title">{{ calendarTitle }}</text><text class="pill-calendar-lunar">今日 · {{ lunarText }}</text><text class="pill-calendar-nav">上下滑动切换月份</text></div>
@@ -88,7 +88,7 @@
         <div class="rect-calendar-cell" for="{{ calendarCells }}" tid="key"><text class="rect-calendar-day" style="color: {{ $item.textColor }}; background-color: {{ $item.backgroundColor }};">{{ $item.day }}</text></div>
       </div>
     </div>
-  </div>
+  </stack>
 </template>
 
 <script>
@@ -108,17 +108,19 @@ function pad2(value) {
   return value < 10 ? '0' + value : '' + value
 }
 
-function consumeTouch(event) {
-  try {
-    if (event && event.stopPropagation) event.stopPropagation()
-    if (event && event.preventDefault) event.preventDefault()
-  } catch (error) {}
+function metricFontSize(value) {
+  var length = String(value || '').length
+  if (length <= 4) return 24
+  if (length === 5) return 20
+  if (length === 6) return 17
+  return 15
 }
 
 export default {
   private: {
     yearText: '', monthText: '', monthNumberText: '', dayText: '', weekdayText: '', lunarText: '',
     stepsText: '--', caloriesText: '--', heartText: '--', standText: '--', goalPercent: 0, goalWidth: '0%',
+    pillStepsFontSize: 20,
     profileReady: false,
     isCircleSurface: false,
     isPillSurface: false,
@@ -192,6 +194,7 @@ export default {
   applyActivity(snapshot) {
     var view = mapActivity(snapshot)
     this.stepsText = view.stepsText
+    this.pillStepsFontSize = metricFontSize(view.stepsText)
     this.caloriesText = view.caloriesText
     this.standText = view.standText
     this.goalPercent = view.goalPercent
@@ -218,7 +221,6 @@ export default {
   },
 
   handlePillTouchStart(event) {
-    consumeTouch(event)
     if (!event || !event.touches || !event.touches[0]) return
     var point = event.touches[0]
     this.pillTouchStartX = point.pageX
@@ -226,13 +228,7 @@ export default {
     this.pillTouchTracking = true
   },
 
-  handlePillTouchMove(event) {
-    if (!this.pillTouchTracking) return
-    consumeTouch(event)
-  },
-
   handlePillTouchEnd(event) {
-    consumeTouch(event)
     if (!this.pillTouchTracking || !event || !event.changedTouches || !event.changedTouches[0]) {
       this.pillTouchTracking = false
       return
@@ -331,7 +327,8 @@ export default {
 .pill-metric-grid { width: 168px; height: 172px; margin-top: 13px; flex-direction: row; flex-wrap: wrap; justify-content: space-between; }
 .pill-metric-card { width: 80px; height: 80px; border-radius: 20px; margin-bottom: 12px; padding: 11px; flex-direction: column; }
 .pill-metric-label { font-size: 9px; color: #8E8E93; }
-.pill-metric-value { font-size: 24px; color: #FFFFFF; font-weight: bold; margin-top: 5px; }
+.pill-metric-value { width: 58px; font-size: 24px; color: #FFFFFF; font-weight: bold; margin-top: 5px; lines: 1; }
+.pill-steps-value { width: 58px; }
 .pill-metric-unit { font-size: 8px; color: #8E8E93; margin-top: 2px; }
 .pill-summary-hint { width: 168px; font-size: 8px; color: #666666; text-align: center; margin-top: 3px; }
 .pill-surface-pager { width: 80px; height: 8px; margin-top: 5px; flex-direction: row; justify-content: center; align-items: center; }
