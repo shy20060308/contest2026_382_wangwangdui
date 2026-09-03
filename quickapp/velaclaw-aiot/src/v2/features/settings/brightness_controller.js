@@ -4,25 +4,19 @@ import displayPower from '../../../capabilities/display_power'
 export function createBrightnessController(onChange) {
   var state = settingsStore.getSnapshot()
 
-  function emit() {
-    var percent = Math.round((state.brightnessValue / 255) * 100)
-    var view = {
+  function snapshot() {
+    return {
       brightnessValue: state.brightnessValue,
-      brightnessText: percent + '%',
-      brightnessDetail: state.brightnessValue + ' / 255',
-      manualStateText: state.autoBrightness ? '自动管理' : '可调节',
-      autoBrightness: state.autoBrightness,
-      raiseWakeEnabled: state.raiseWakeEnabled,
-      lowPowerEnabled: state.lowPowerEnabled,
-      autoText: state.autoBrightness ? '开' : '关',
-      raiseText: state.raiseWakeEnabled ? '开' : '关',
-      lowPowerText: state.lowPowerEnabled ? '开' : '关',
-      autoColor: state.autoBrightness ? '#30D158' : '#8E8E93',
-      raiseColor: state.raiseWakeEnabled ? '#30D158' : '#8E8E93',
-      lowPowerColor: state.lowPowerEnabled ? '#30D158' : '#8E8E93'
+      autoBrightness: !!state.autoBrightness,
+      raiseWakeEnabled: state.raiseWakeEnabled !== false,
+      lowPowerEnabled: state.lowPowerEnabled !== false
     }
-    if (typeof onChange === 'function') onChange(view)
-    return view
+  }
+
+  function emit() {
+    var value = snapshot()
+    if (typeof onChange === 'function') onChange(value)
+    return value
   }
 
   function commit(key, value) {
