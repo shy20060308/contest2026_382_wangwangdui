@@ -62,4 +62,14 @@ const pageRuntime = fs.readFileSync(path.join(root, 'src/v2/app/page_runtime.js'
 assert.ok(pageRuntime.includes('applyHostViewport(page, profile)'), 'pages must render inside the Host Scene supplied by Vela')
 assert.ok(!pageRuntime.includes('applyDesign') && !pageRuntime.includes('viewportHeight = profile.logicalHeight'), 'Design Engine must never enlarge the host viewport to make a composition fit')
 
+const clock = fs.readFileSync(path.join(root, 'src/pages/clock/clock.ux'), 'utf8')
+;['sport_rect.ux', 'simple_rect.ux', 'dashboard_rect.ux'].forEach(name => {
+  assert.ok(fs.existsSync(path.join(root, 'src/components/watchfaces', name)), 'Rect Clock requires dedicated composition ' + name)
+})
+assert.ok(clock.includes('<div class="pill-stage" if="{{ isPill }}">'), 'Pill Clock must have its own composition stage')
+assert.ok(clock.includes('<div class="rect-stage" if="{{ isRect }}">'), 'Rect Clock must have its own composition stage')
+assert.ok(clock.includes('<div class="circle-stage" if="{{ isCircle }}">'), 'Circle Clock must have its own composition stage')
+assert.ok(clock.includes('<sportrect') && clock.includes('<simplerect') && clock.includes('<dashboardrect'), 'Rect Clock must render dedicated Rect watchfaces')
+assert.ok(!clock.includes('rectangular-stage" if="{{ !isCircle }}'), 'Rect must never fall back to a shared Pill/Rect composition')
+
 console.log('V2 visual contracts verified across circle, rect, Band9 and Band10 Host Scenes')
