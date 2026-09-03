@@ -6,6 +6,7 @@ const workoutLayout = require('../src/presentation/layout/specs/workout')
 const settingsLayout = require('../src/presentation/layout/specs/settings')
 const diagnosticsLayout = require('../src/presentation/layout/specs/diagnostics')
 const workoutHistoryLayout = require('../src/presentation/layout/specs/workout_history')
+const workoutSelectLayout = require('../src/presentation/layout/specs/workout_select')
 
 const errors = []
 const circleProfile = { formFactor: 'circle', logicalHeight: 192 }
@@ -28,6 +29,12 @@ const workoutHistoryPlan = scrollFlow.resolve(circleProfile, workoutHistoryLayou
 requirePlan('Workout History L1 Scroll Flow', workoutHistoryPlan)
 if (!workoutHistoryPlan.stream || workoutHistoryPlan.stream.viewportHeight < 50) {
   errors.push('Workout History L1 圆屏必须保留至少 50px 可滚动视口')
+}
+
+const workoutSelectPlan = scrollFlow.resolve(circleProfile, workoutSelectLayout)
+requirePlan('Workout Select L1 Scroll Flow', workoutSelectPlan)
+if (!workoutSelectPlan.stream || workoutSelectPlan.stream.viewportHeight < 70) {
+  errors.push('Workout Select L1 圆屏必须保留至少 70px 运动模式滚动视口')
 }
 
 // Today is an L2 art-directed surface. Both circle pages intentionally share this band.
