@@ -1,38 +1,48 @@
 import motion from '../../../capabilities/motion'
-import vibration from '../../../capabilities/vibration'
+import haptics from '../../system/haptics'
 var metrics = require('../../../domain/motion/metrics')
-
-function format(value) { return Number(value || 0).toFixed(2) }
 
 export function createMotionController(onChange) {
   var state = metrics.createState()
   var sensorActive = false
+  var sensorStatus = 'idle'
   var measureActive = false
   var measureStartSamples = 0
   var measureEndsAt = 0
   var measurePeak = 0
+  var measurePhase = 'idle'
+  var measureIntensityKey = 'stable'
+  var remainingMs = 3000
   var timer = null
-  var sensorStatus = '未启动'
-  var measurement = { countdown: '3.0', result: '待测量', color: '#8E8E93', button: '开始测量' }
 
-  function emit() {
-    var view = {
+  function snapshot() {
+    return {
       sensorActive: sensorActive,
       sensorStatus: sensorStatus,
-      sensorColor: sensorActive ? '#30D158' : '#8E8E93',
-      sensorButtonText: sensorActive ? '停止诊断' : '开始诊断',
-      xText: format(state.x), yText: format(state.y), zText: format(state.z), magnitudeText: format(state.magnitude), scoreText: format(state.score), intensityLabel: state.intensity.label, intensityColor: state.intensity.color,
-      sampleText: sensorActive ? '已收到 ' + state.sampleCount + ' 个样本 · 当前' + state.intensity.label : '启动后显示真实样本与采样数量',
-      countdownText: measurement.countdown, actionResult: measurement.result, actionColor: measurement.color, actionPeakText: format(measurePeak), measureButtonText: measurement.button,
-      measureActive: measureActive
+      x: state.x,
+      y: state.y,
+      z: state.z,
+      magnitude: state.magnitude,
+      score: state.score,
+      sampleCount: state.sampleCount,
+      intensityKey: state.intensityKey,
+      measureActive: measureActive,
+      measurePhase: measurePhase,
+      measureIntensityKey: measureIntensityKey,
+      measurePeak: measurePeak,
+      remainingMs: remainingMs
     }
-    if (typeof onChange === 'function') onChange(view)
-    return view
+  }
+
+  function emit() {
+    var value = snapshot()
+    if (typeof onChange === 'function') onChange(value)
+    return value
   }
 
   function onSample(sample) {
     state = metrics.applySample(state, sample)
-    sensorStatus = '正在出数'
+    sensorStatus = 'streaming'
     if (measureActive && state.score > measurePeak) measurePeak = state.score
     emit()
   }
@@ -41,7 +51,7 @@ export function createMotionController(onChange) {
     if (sensorActive) return true
     var ok = motion.subscribe(onSample, { interval: 'game' })
     sensorActive = !!ok
-    sensorStatus = ok ? '等待样本' : '接口不可用'
+    sensorStatus = ok ? 'waiting' : 'unavailable'
     emit()
     return sensorActive
   }
@@ -49,34 +59,61 @@ export function createMotionController(onChange) {
   function stopSensor() {
     motion.unsubscribe(onSample)
     sensorActive = false
-    sensorStatus = '已停止'
+    sensorStatus = 'stopped'
     emit()
+  }
+
+  function stopTimer() {
+    if (timer) clearInterval(timer)
+    timer = null
   }
 
   function finishMeasure() {
     if (!measureActive) return
-    clearInterval(timer); timer = null; measureActive = false
+    stopTimer()
+    measureActive = false
+    remainingMs = 0
     var received = state.sampleCount > measureStartSamples
-    var intensity = metrics.classify(measurePeak)
-    measurement = { countdown: '完成', result: received ? intensity.label : '无样本', color: received ? intensity.color : '#FF453A', button: '再次测量' }
-    vibration.vibrate(received ? 'short' : 'long')
+    measureIntensityKey = metrics.classify(measurePeak)
+    measurePhase = received ? 'complete' : 'no-samples'
+    haptics.play(received ? 'tap' : 'alert', 'medium')
     emit()
   }
 
   return {
     refresh: emit,
     toggleSensor: function () { if (sensorActive) stopSensor(); else startSensor() },
-    reset: function () { state = metrics.createState(); measurePeak = 0; sensorStatus = sensorActive ? '重新校准中' : sensorStatus; return emit() },
-    startMeasure: function () {
-      if (measureActive || !startSensor()) return emit()
-      measureActive = true; measurePeak = 0; measureStartSamples = state.sampleCount; measureEndsAt = Date.now() + 3000
-      measurement = { countdown: '3.0', result: '测量中', color: '#64D2FF', button: '请完成动作' }
-      vibration.vibrate('short')
-      clearInterval(timer)
-      timer = setInterval(function () { var remaining = Math.max(0, measureEndsAt - Date.now()); measurement.countdown = (remaining / 1000).toFixed(1); emit(); if (remaining <= 0) finishMeasure() }, 100)
+    reset: function () {
+      state = metrics.createState()
+      measurePeak = 0
+      if (sensorActive) sensorStatus = 'recalibrating'
       return emit()
     },
-    stop: function () { clearInterval(timer); timer = null; measureActive = false; motion.unsubscribe(onSample); sensorActive = false },
+    startMeasure: function () {
+      if (measureActive || !startSensor()) return emit()
+      measureActive = true
+      measurePeak = 0
+      measureStartSamples = state.sampleCount
+      measureEndsAt = Date.now() + 3000
+      remainingMs = 3000
+      measurePhase = 'measuring'
+      measureIntensityKey = 'stable'
+      haptics.play('tap', 'medium')
+      stopTimer()
+      timer = setInterval(function () {
+        remainingMs = Math.max(0, measureEndsAt - Date.now())
+        emit()
+        if (remainingMs <= 0) finishMeasure()
+      }, 100)
+      return emit()
+    },
+    stop: function () {
+      stopTimer()
+      measureActive = false
+      motion.unsubscribe(onSample)
+      sensorActive = false
+      haptics.stop()
+    },
     refreshSensor: startSensor
   }
 }
