@@ -12,7 +12,7 @@
       <div class="notification-cover" if="{{ notifyVisible }}">
         <div class="notification-body" if="{{ notifyType !== 'call' }}"><div class="notification-app"><image class="notification-icon" src="{{ notifyAppIcon }}"></image><text class="notification-name">{{ notifyAppName }}</text></div><text class="notification-content">{{ notifyContent }}</text></div>
         <div class="notification-body" if="{{ notifyType === 'call' }}"><text class="call-contact">{{ notifyContact }}</text><text class="call-phone">{{ notifyPhone }}</text></div>
-        <div class="notification-actions"><text class="notification-button" @click="handleIgnore">忽略</text><text class="notification-button hangup" if="{{ notifyType === 'call' }}" @click="handleHangup" style="color: {{ notifyHangUp ? '#777777' : '#FFFFFF' }};">挂断</text></div>
+        <div class="notification-actions"><text class="notification-button" @click="handleIgnore">忽略</text><text class="notification-button hangup" if="{{ notifyType === 'call' }}" @click="handleHangup" style="color: {{ notifyHangUpColor }};">挂断</text></div>
       </div>
     </div>
   </stack>
@@ -23,10 +23,11 @@ import pageRuntime from '../../v2/app/page_runtime'
 import navigation from '../../v2/app/navigation'
 import { createNotificationController } from '../../v2/features/notification/controller'
 import notificationDesign from '../../v2/design/specs/notification_demo'
+import notificationView from '../../v2/design/views/notification'
 
 export default {
   private: {
-    notifyVisible: false, notifyType: '', notifyAppName: '', notifyAppIcon: '', notifyContent: '', notifyContact: '', notifyPhone: '', notifyHangUp: false,
+    notifyVisible: false, notifyType: '', notifyAppName: '', notifyAppIcon: '/common/logo.png', notifyContent: '', notifyContact: '', notifyPhone: '', notifyHangUp: false, notifyHangUpColor: '#FFFFFF',
     titleLeft: 22, titleTop: 24, titleWidth: 148, titleHeight: 22, buttonsLeft: 30, buttonsTop: 52, buttonsWidth: 132, buttonsHeight: 132, buttonHeight: 28, buttonGap: 6, buttonRadius: 14, titleSize: 13, buttonSize: 9,
     sceneWidth: 192, sceneHeight: 192, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
   },
@@ -40,11 +41,14 @@ export default {
       self.buttonHeight = plan.buttonHeight; self.buttonGap = plan.gap; self.buttonRadius = plan.radius; self.titleSize = plan.titleSize; self.buttonSize = plan.buttonSize
     })
   },
-  onShow() { this.controller.start() },
-  onHide() { this.controller.stop() },
-  onDestroy() { this.controller.stop() },
+  onShow() { if (this.controller) this.controller.start() },
+  onHide() { if (this.controller) this.controller.stop() },
+  onDestroy() { if (this.controller) this.controller.stop() },
   onBackPress() { navigation.back(); return true },
-  applyNotification(state) { this.notifyVisible = state.visible; this.notifyType = state.type; this.notifyAppName = state.appName; this.notifyAppIcon = state.appIcon; this.notifyContent = state.content; this.notifyContact = state.contact; this.notifyPhone = state.phone; this.notifyHangUp = state.hangUp },
+  applyNotification(state) {
+    var view = notificationView.project(state)
+    this.notifyVisible = view.visible; this.notifyType = view.type; this.notifyAppName = view.appName; this.notifyAppIcon = view.appIcon; this.notifyContent = view.content; this.notifyContact = view.contact; this.notifyPhone = view.phone; this.notifyHangUp = view.hangUp; this.notifyHangUpColor = view.hangUpColor
+  },
   demoSms() { this.controller.showDemo('sms') },
   demoCall() { this.controller.showDemo('call') },
   demoApp() { this.controller.showDemo('app') },
