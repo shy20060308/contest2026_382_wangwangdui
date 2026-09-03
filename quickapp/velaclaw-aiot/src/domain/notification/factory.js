@@ -3,8 +3,8 @@ function normalize(payload) {
   var type = source.type === 'call' ? 'call' : 'app'
   return {
     type: type,
-    appName: source.appName || source.title || (type === 'call' ? '电话' : '通知'),
-    appIcon: source.appIcon || '/common/logo.png',
+    appName: source.appName || source.title || '',
+    appIcon: source.appIcon || '',
     content: source.content || '',
     contact: source.contact || source.title || '',
     phone: source.phone || '',
@@ -18,7 +18,4 @@ function demo(type) {
   return normalize({ type: 'app', appName: 'VelaClaw', content: '设备通知通路已连接。' })
 }
 
-module.exports = {
-  normalize: normalize,
-  demo: demo
-}
+module.exports = { normalize: normalize, demo: demo }
