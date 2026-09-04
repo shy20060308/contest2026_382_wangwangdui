@@ -7,16 +7,6 @@ var active = { heartRate: false, spo2: false, stress: false }
 var lastObservedAt = { heartRate: 0, spo2: 0, stress: 0 }
 var latestState = null
 
-function pad2(value) {
-  return value < 10 ? '0' + value : '' + value
-}
-
-function formatTime(timestamp) {
-  if (!timestamp) return '--:--'
-  var date = new Date(timestamp)
-  return pad2(date.getHours()) + ':' + pad2(date.getMinutes())
-}
-
 function normalizeMetrics(metrics) {
   var source = metrics && metrics.length ? metrics : ['heartRate']
   var result = []
@@ -28,9 +18,7 @@ function normalizeMetrics(metrics) {
 }
 
 function needsMetric(name) {
-  for (var i = 0; i < listeners.length; i++) {
-    if (listeners[i].metrics.indexOf(name) >= 0) return true
-  }
+  for (var i = 0; i < listeners.length; i++) if (listeners[i].metrics.indexOf(name) >= 0) return true
   return false
 }
 
@@ -53,17 +41,18 @@ function buildState(changedMetric) {
     heartRateLive: heart.live,
     spo2Live: spo2.live,
     stressLive: stress.live,
+    heartRateSource: heart.source || 'fallback',
+    spo2Source: spo2.source || 'fallback',
+    stressSource: stress.source || 'fallback',
     heartRateErrorCode: heart.errorCode || 0,
     spo2ErrorCode: spo2.errorCode || 0,
     stressErrorCode: stress.errorCode || 0,
     anyLive: heart.live || spo2.live || stress.live,
     serviceAvailable: heart.available || spo2.available || stress.available,
-    sourceText: heart.live || spo2.live || stress.live ? '系统实时数据' : '兼容演示数据',
     heartRateUpdatedAt: heart.updatedAt || 0,
     spo2UpdatedAt: spo2.updatedAt || 0,
     stressUpdatedAt: stress.updatedAt || 0,
     updatedAt: updatedAt,
-    updatedAtText: formatTime(updatedAt),
     heartRateChanged: false,
     spo2Changed: false,
     stressChanged: false
@@ -76,9 +65,7 @@ function buildState(changedMetric) {
 function emit(changedMetric) {
   var state = buildState(changedMetric)
   var current = listeners.slice()
-  for (var i = 0; i < current.length; i++) {
-    if (!changedMetric || current[i].metrics.indexOf(changedMetric) >= 0) current[i].listener(state)
-  }
+  for (var i = 0; i < current.length; i++) if (!changedMetric || current[i].metrics.indexOf(changedMetric) >= 0) current[i].listener(state)
 }
 
 function onHeartRate() { emit('heartRate') }
@@ -87,13 +74,8 @@ function onStress() { emit('stress') }
 
 function reconcileMetric(name, capability, handler) {
   var needed = needsMetric(name)
-  if (needed && !active[name]) {
-    active[name] = true
-    capability.subscribe(handler)
-  } else if (!needed && active[name]) {
-    capability.unsubscribe(handler)
-    active[name] = false
-  }
+  if (needed && !active[name]) { active[name] = true; capability.subscribe(handler) }
+  else if (!needed && active[name]) { capability.unsubscribe(handler); active[name] = false }
 }
 
 function reconcile() {
@@ -104,9 +86,7 @@ function reconcile() {
 
 function subscribe(listener, metrics) {
   if (typeof listener !== 'function') return
-  for (var i = 0; i < listeners.length; i++) {
-    if (listeners[i].listener === listener) return
-  }
+  for (var i = 0; i < listeners.length; i++) if (listeners[i].listener === listener) return
   listeners.push({ listener: listener, metrics: normalizeMetrics(metrics) })
   reconcile()
   listener(latestState || buildState())
@@ -114,9 +94,7 @@ function subscribe(listener, metrics) {
 
 function unsubscribe(listener) {
   var next = []
-  for (var i = 0; i < listeners.length; i++) {
-    if (listeners[i].listener !== listener) next.push(listeners[i])
-  }
+  for (var i = 0; i < listeners.length; i++) if (listeners[i].listener !== listener) next.push(listeners[i])
   listeners = next
   reconcile()
 }
