@@ -10,6 +10,7 @@ function resolve(profile, scene, safe) {
     rect: 'vitals-dashboard'
   })
   plan.chartHeight = plan.shape === 'pill' ? 42 : (plan.shape === 'rect' ? 30 : 24)
+  plan.trendMinHeight = plan.shape === 'pill' ? 9 : (plan.shape === 'rect' ? 7 : 6)
   return plan
 }
 

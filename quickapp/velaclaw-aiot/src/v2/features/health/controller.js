@@ -1,39 +1,57 @@
 import healthStore from '../../../domain/health/store'
-import historyRepository from '../../../domain/history/repository'
 var healthMetrics = require('../../../domain/health/metrics')
 
 export function createHealthController(onChange) {
-  var dailyMin = 48
-  var dailyMax = 95
-  var heartValues = [72, 78, 75, 84, 81, 88, 85, 88]
-  var spo2Values = [97, 98, 97, 96, 98, 99, 97, 98]
-  var stressValues = [18, 22, 28, 25, 31, 27, 24, 28]
+  var heartValues = []
+  var spo2Values = []
+  var stressValues = []
   var latest = null
   var started = false
-  var lifecycleGeneration = 0
+
+  function official(data, prefix) {
+    return !!(data && data[prefix + 'Live'] && data[prefix + 'Source'] === 'live')
+  }
+
+  function updateWindow(values, changed, value, allowed) {
+    var number = Number(value)
+    if (!changed || !allowed || !isFinite(number)) return values
+    return healthMetrics.pushWindow(values, Math.round(number), 10)
+  }
+
+  function seedCurrent(data) {
+    if (!data) return
+    if (!heartValues.length && official(data, 'heartRate') && Number(data.heartRate) > 0) heartValues = [Math.round(Number(data.heartRate))]
+    if (!spo2Values.length && official(data, 'spo2') && Number(data.spo2) > 0) spo2Values = [Math.round(Number(data.spo2))]
+    if (!stressValues.length && official(data, 'stress') && isFinite(Number(data.stress)) && Number(data.stress) >= 0) stressValues = [Math.round(Number(data.stress))]
+  }
 
   function emit() {
     var data = latest || healthStore.getSnapshot()
-    var heart = Number(data.heartRate) || 0
-    var spo2 = Number(data.spo2) || 0
-    var stress = Number(data.stress) || 0
+    var heartAvailable = official(data, 'heartRate')
+    var spo2Available = official(data, 'spo2')
+    var stressAvailable = official(data, 'stress')
+    var heart = heartAvailable ? (Number(data.heartRate) || 0) : 0
+    var spo2 = spo2Available ? (Number(data.spo2) || 0) : 0
+    var stress = stressAvailable && isFinite(Number(data.stress)) ? Number(data.stress) : null
+    var heartStats = healthMetrics.stats(heartValues)
     var stressStats = healthMetrics.stats(stressValues)
     var model = {
       heartRate: heart,
       spo2: spo2,
       stress: stress,
-      heartZone: healthMetrics.classifyHeartRate(heart),
-      spo2Zone: spo2 < 95 ? 'attention' : 'good',
-      stressZone: healthMetrics.classifyStress(stress),
-      dailyMin: dailyMin,
-      dailyMax: dailyMax,
+      heartZone: heartAvailable ? healthMetrics.classifyHeartRate(heart) : 'waiting',
+      spo2Zone: spo2Available ? (spo2 < 95 ? 'attention' : 'good') : 'waiting',
+      stressZone: stressAvailable ? healthMetrics.classifyStress(stress) : 'waiting',
+      dailyMin: heartStats.min,
+      dailyMax: heartStats.max,
       stressMin: stressStats.min,
       stressAvg: stressStats.avg,
       stressMax: stressStats.max,
-      heartSource: { live: !!data.heartRateLive, errorCode: Number(data.heartRateErrorCode) || 0 },
-      spo2Source: { live: !!data.spo2Live, errorCode: Number(data.spo2ErrorCode) || 0 },
-      stressSource: { live: !!data.stressLive, errorCode: Number(data.stressErrorCode) || 0 },
-      anyLive: !!data.anyLive,
+      heartSource: { live: heartAvailable, errorCode: Number(data.heartRateErrorCode) || 0, mode: data.heartRateSource || 'fallback' },
+      spo2Source: { live: spo2Available, errorCode: Number(data.spo2ErrorCode) || 0, mode: data.spo2Source || 'fallback' },
+      stressSource: { live: stressAvailable, errorCode: Number(data.stressErrorCode) || 0, mode: data.stressSource || 'fallback' },
+      anyLive: heartAvailable || spo2Available || stressAvailable,
+      serviceAvailable: !!data.serviceAvailable,
       updatedAt: Number(data.updatedAt) || 0,
       heartValues: heartValues.slice(),
       spo2Values: spo2Values.slice(),
@@ -45,13 +63,10 @@ export function createHealthController(onChange) {
 
   function onHealth(data) {
     latest = data
-    if (data.heartRateChanged) {
-      heartValues = healthMetrics.pushWindow(heartValues, data.heartRate, 10)
-      if (!dailyMin || data.heartRate < dailyMin) dailyMin = data.heartRate
-      if (data.heartRate > dailyMax) dailyMax = data.heartRate
-    }
-    if (data.spo2Changed) spo2Values = healthMetrics.pushWindow(spo2Values, data.spo2, 10)
-    if (data.stressChanged) stressValues = healthMetrics.pushWindow(stressValues, data.stress, 10)
+    seedCurrent(data)
+    heartValues = updateWindow(heartValues, data.heartRateChanged, data.heartRate, official(data, 'heartRate'))
+    spo2Values = updateWindow(spo2Values, data.spo2Changed, data.spo2, official(data, 'spo2'))
+    stressValues = updateWindow(stressValues, data.stressChanged, data.stress, official(data, 'stress'))
     emit()
   }
 
@@ -59,27 +74,11 @@ export function createHealthController(onChange) {
     start: function () {
       if (started) { emit(); return }
       started = true
-      var generation = ++lifecycleGeneration
-      historyRepository.loadHourlyHeartRate(function (hourly) {
-        if (!started || generation !== lifecycleGeneration) return
-        if (hourly && hourly.length) {
-          heartValues = []
-          dailyMin = hourly[0].min
-          dailyMax = hourly[0].max
-          for (var i = 0; i < hourly.length; i++) {
-            heartValues.push(hourly[i].avg)
-            if (hourly[i].min < dailyMin) dailyMin = hourly[i].min
-            if (hourly[i].max > dailyMax) dailyMax = hourly[i].max
-          }
-          emit()
-        }
-      })
       healthStore.subscribeAll(onHealth)
     },
     stop: function () {
       if (!started) return
       started = false
-      lifecycleGeneration++
       healthStore.unsubscribe(onHealth)
     },
     refresh: emit
