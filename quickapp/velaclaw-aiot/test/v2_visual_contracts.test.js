@@ -40,7 +40,10 @@ profiles.forEach(profile => {
   assert.ok(safe.left >= 0 && safe.left + safe.width <= host.width, profile.name + ' safe width must stay inside Host Scene')
   assert.ok(safe.top >= 0 && safe.bottom <= host.height, profile.name + ' safe vertical band must stay inside Host Scene')
   assert.ok(safe.height > 0, profile.name + ' must retain a usable safe region')
-  if (profile.formFactor === 'circle') assert.ok(safe.top > 0 && safe.bottom < host.height, 'circle content must respect curved caps')
+  if (profile.formFactor === 'circle') {
+    assert.ok(safe.top > 0 && safe.bottom < host.height, 'circle content must respect the extreme round edge')
+    assert.ok(safe.height >= 168, 'circle product surfaces must use near-full vertical space rather than a rectangular chord crop')
+  }
   if (profile.formFactor === 'pill') {
     assert.strictEqual(safe.gestureBar, 36, profile.name + ' must reserve the Pill gesture area')
     assert.ok(safe.top > 0 && safe.bottom < host.height, profile.name + ' safe content must stay away from both capsule caps')
@@ -109,12 +112,13 @@ const clock = fs.readFileSync(path.join(root, 'src/pages/clock/clock.ux'), 'utf8
 })
 assert.ok(clock.includes('<div class="pill-stage" if="{{ isPill }}">'), 'Pill Clock must have its own composition stage')
 assert.ok(clock.includes('<div class="rect-stage" if="{{ isRect }}">'), 'Rect Clock must have its own composition stage')
-assert.ok(clock.includes('<div class="circle-stage" if="{{ isCircle }}">'), 'Circle Clock must have its own composition stage')
+assert.ok(clock.includes('<div class="circle-stage" if="{{ isCircle && faceMounted }}">'), 'Circle Clock must have its own stable remounted composition stage')
 assert.ok(clock.includes('<sportrect') && clock.includes('<simplerect') && clock.includes('<dashboardrect'), 'Rect Clock must render dedicated Rect watchfaces')
 assert.ok(!clock.includes('rectangular-stage" if="{{ !isCircle }}'), 'Rect must never fall back to a shared Pill/Rect composition')
 assert.ok(clock.includes('background-color: {{ faceBackground }};'), 'Clock root must paint a face-matched fallback behind the full scene')
+assert.ok(clock.includes('overflow: visible'), 'Clock scene must not crop full-bleed watchface backgrounds at the software scene edge')
 
 const today = fs.readFileSync(path.join(root, 'src/pages/today/today.ux'), 'utf8')
 assert.ok(today.includes('.circle-calendar-grid { height: 78px; }') && today.includes('.circle-cell { width: 19px; height: 13px;'), 'Circle calendar grid must stay within its 130px safe band')
 
-console.log('V2 visual contracts verified: full-bleed Host Scene coverage with safe content bounds on every composition')
+console.log('V2 visual contracts verified: full-bleed Host Scene coverage with product-style circular surfaces')
