@@ -40,6 +40,7 @@ assert.strictEqual(count(clock, '@touchstart='), 1, 'Clock must have exactly one
 assert.strictEqual(count(clock, '@touchmove='), 1, 'Clock must have exactly one raw-touch fallback owner')
 assert.strictEqual(count(clock, '@touchend='), 1, 'Clock must have exactly one raw-touch fallback owner')
 assert.ok(clock.includes('consumeGestureEvent(event)'), 'Clock vertical fallback must consume the gesture before the host can scroll it')
+assert.ok(clock.includes("this.pendingGesture = direction"), 'Clock raw-touch fallback must wait for touch end before routing')
 assert.ok(clock.includes('this.notificationVisible) return'), 'Clock navigation gestures must be blocked while notification overlay owns interaction')
 
 const watchfaceDir = path.join(root, 'src/components/watchfaces')
@@ -59,4 +60,8 @@ assert.strictEqual(count(launcher, '@swipe="handleListSwipe"'), 2, 'Pill and Rec
 assert.ok(launcher.includes("event.direction === 'down') navigation.back()"), 'Pill launcher down-swipe must return to Clock')
 assert.ok(launcher.includes('event.preventDefault') && launcher.includes('event.stopPropagation'), 'Launcher swipe must not degrade into host scrolling')
 
-console.log('V2 interaction contracts verified: one gesture owner per rendered surface with a fixed-surface touch fallback where Vela needs it')
+const navigation = read('src/v2/app/navigation.js')
+assert.ok(navigation.includes('lastPushPath') && navigation.includes('now - lastPushAt < 800'), 'Navigation must reject duplicate pushes produced by native/raw gesture pairs')
+assert.ok(navigation.includes('setTimeout(function ()'), 'Gesture navigation must leave the active touch task before pushing a new page')
+
+console.log('V2 interaction contracts verified: one gesture owner per rendered surface with stable deferred navigation')
