@@ -56,9 +56,12 @@ assert.strictEqual(waiting.heartBars.length, 0)
 
 const controller = read('src/v2/features/health/controller.js')
 const store = read('src/domain/health/store.js')
+const page = read('src/pages/heartrate/heartrate.ux')
 assert.ok(controller.includes("data[prefix + 'Source'] === 'live'"), 'Health controller must only promote official system samples into visible metric state')
 assert.ok(!controller.includes('var heartValues = [72'), 'Health controller must not seed a fabricated trend')
 assert.ok(!controller.includes('historyRepository.loadHourlyHeartRate'), 'Health must not pull demo-backed hourly history into the official data surface')
 assert.ok(store.includes('heartRateSource: heart.source'), 'Health store must preserve capability source provenance')
+assert.ok(page.includes('.card-value-row { width: 144px;'), 'Pill Health value rows must reserve the full inner card width')
+assert.ok(page.includes('.card-value { width: 58px; height: 34px;'), 'Pill Health values must have an explicit glyph-safe width for three-digit readings')
 
 console.log('Health official-data contracts verified')
