@@ -138,8 +138,11 @@ export function createWorkoutController(onChange) {
     resume: function () {
       var session = workoutState.resume()
       if (!session) return emit(session)
-      ensureTimer()
-      startLocation()
+      if (!runtimeActive) startRuntime()
+      else {
+        ensureTimer()
+        startLocation()
+      }
       persist()
       return emit(session)
     },
