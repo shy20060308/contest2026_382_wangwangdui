@@ -2,6 +2,8 @@ const assert = require('assert')
 const fs = require('fs')
 const path = require('path')
 const workoutView = require('../src/v2/design/views/workout')
+const workoutDesign = require('../src/v2/design/specs/workout')
+const workoutHistoryDesign = require('../src/v2/design/specs/workout_history')
 
 const root = path.resolve(__dirname, '..')
 const read = name => fs.readFileSync(path.join(root, name), 'utf8')
@@ -52,6 +54,7 @@ assert.strictEqual(paused.gpsText, 'GPS 已暂停')
 const state = read('src/domain/workout/state_machine.js')
 const controller = read('src/v2/features/workout/controller.js')
 const page = read('src/pages/workout/workout.ux')
+const historyPage = read('src/pages/workout_history/workout_history.ux')
 
 assert.ok(!state.includes('initialHeartRate'), 'Workout state must not fabricate a mode-based heart rate')
 assert.ok(!state.includes('heartRateSpan'), 'Workout state must not fabricate a changing heart-rate waveform')
@@ -72,5 +75,22 @@ assert.ok(page.includes('background-color: {{ heroBackground }}'), 'Workout hero
 assert.ok(page.includes('opacity: {{ metricOpacity }}'), 'Paused workout metrics must visually de-emphasize frozen values')
 assert.ok(page.includes('background-color: {{ pauseButtonBackground }}'), 'Resume action must have a state-specific visual treatment')
 assert.ok(page.includes('{{ heartRateLabel }}'), 'Workout page must explain when official heart rate is still waiting')
+assert.ok(page.includes('height: {{ durationLineHeight }}px; line-height: {{ durationLineHeight }}px;'), 'Workout timer must reserve an explicit glyph-safe line box')
+assert.ok(page.includes('metric-card metric-right metric-bottom') && page.includes('metric-card metric-bottom'), 'Workout 2x2 metrics must only put horizontal gap on the left column')
 
-console.log('Workout state experience verified: official heart rate plus distinct running/paused presentation')
+const circleSafe = { left: 22, top: 10, width: 148, height: 172, bottom: 182 }
+const circleScene = { width: 192, height: 192 }
+const circlePlan = workoutDesign.resolve({ formFactor: 'circle' }, circleScene, circleSafe)
+assert.deepStrictEqual(circlePlan.header, { left: 32, top: 24, width: 128, height: 18 })
+assert.deepStrictEqual(circlePlan.hero, { left: 24, top: 45, width: 144, height: 48 })
+assert.deepStrictEqual(circlePlan.metrics, { left: 30, top: 97, width: 132, height: 54 })
+assert.strictEqual(circlePlan.metricItemWidth * 2 + circlePlan.metricGap, circlePlan.metrics.width, 'Circle metric row must exactly fit two cards plus one gap')
+assert.strictEqual(circlePlan.durationLineHeight, 31, 'Circle timer must keep explicit vertical breathing room')
+assert.deepStrictEqual(circlePlan.actions, { left: 42, top: 153, width: 108, height: 21 })
+
+const circleHistory = workoutHistoryDesign.resolve({ formFactor: 'circle' }, circleScene, circleSafe)
+assert.deepStrictEqual(circleHistory.header, { left: 32, top: 24, width: 128, height: 20 }, 'Circle history title must start in a wide enough round-screen chord')
+assert.deepStrictEqual(circleHistory.summary, { left: 26, top: 49, width: 140, height: 38 })
+assert.ok(historyPage.includes('height: {{ headerHeight }}px; line-height: {{ headerHeight }}px;'), 'Workout history title row must reserve a full glyph-safe line box')
+
+console.log('Workout state experience verified: official heart rate plus distinct running/paused presentation and round-screen-safe composition')
