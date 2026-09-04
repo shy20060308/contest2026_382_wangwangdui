@@ -17,9 +17,11 @@ export function createWorkoutController(onChange) {
   var gpsDistance = 0
   var persistTicks = 0
   var runtimeActive = false
+  var lifecycleGeneration = 0
 
   function emit(session) { return emitValue(onChange, session) }
   function persist() { var active = workoutState.getActive(); if (active) workoutRepository.saveActive(active) }
+  function isCurrent(generation) { return generation === lifecycleGeneration }
 
   function stopLocation() {
     clearTimeout(fallbackTimer)
@@ -29,6 +31,9 @@ export function createWorkoutController(onChange) {
   }
 
   function onLocation(point) {
+    if (!runtimeActive) return
+    var active = workoutState.getActive()
+    if (!active || active.status !== 'running') return
     clearTimeout(fallbackTimer)
     fallbackTimer = null
     if (!point) return
@@ -40,11 +45,17 @@ export function createWorkoutController(onChange) {
   function startLocation() {
     stopLocation()
     var active = workoutState.getActive()
-    gpsDistance = active && active.gpsDistanceMeters ? active.gpsDistanceMeters : 0
+    if (!active || active.status !== 'running') return
+    gpsDistance = active.gpsDistanceMeters || 0
     var subscribed = location.subscribe(onLocation)
-    if (!subscribed) emit(workoutState.updateGps({ status: 'fallback' }))
+    if (!subscribed) {
+      emit(workoutState.updateGps({ status: 'fallback' }))
+      return
+    }
     fallbackTimer = setTimeout(function () {
-      if (!lastPoint && workoutState.getActive()) emit(workoutState.updateGps({ status: 'fallback' }))
+      if (!runtimeActive) return
+      var current = workoutState.getActive()
+      if (current && current.status === 'running' && !lastPoint) emit(workoutState.updateGps({ status: 'fallback' }))
     }, 6000)
   }
 
@@ -56,8 +67,10 @@ export function createWorkoutController(onChange) {
   function ensureTimer() {
     if (timer) return
     timer = setInterval(function () {
+      if (!runtimeActive) return
       var session = workoutState.tick()
       if (!session) { stopTimer(); return }
+      if (session.status !== 'running') { stopTimer(); return }
       emit(session)
       persistTicks++
       if (persistTicks >= 10) { persistTicks = 0; persist() }
@@ -67,37 +80,46 @@ export function createWorkoutController(onChange) {
   function startRuntime() {
     if (runtimeActive) return
     runtimeActive = true
-    ensureTimer()
     var active = workoutState.getActive()
-    if (active && active.status === 'running') startLocation()
+    if (active && active.status === 'running') {
+      ensureTimer()
+      startLocation()
+    }
   }
 
-  function stopRuntime() {
+  function stopRuntime(shouldPersist) {
+    var wasActive = runtimeActive
     runtimeActive = false
+    lifecycleGeneration++
     stopTimer()
     stopLocation()
-    persist()
+    if (wasActive && shouldPersist !== false) persist()
   }
 
   return {
     start: function (type, callback) {
+      var generation = ++lifecycleGeneration
       var session = workoutState.start(type)
       workoutRepository.saveActive(session, function () {
+        if (!isCurrent(generation)) return
         startRuntime()
         emit(session)
         if (callback) callback(session)
       })
     },
     loadActive: function (callback) {
+      var generation = ++lifecycleGeneration
       var current = workoutState.getActive()
       if (current) {
         current = workoutState.tick()
+        if (!isCurrent(generation)) return
         startRuntime()
         emit(current)
         if (callback) callback(current)
         return
       }
       workoutRepository.loadActive(function (stored) {
+        if (!isCurrent(generation)) return
         if (!stored) { if (callback) callback(null); return }
         var restored = workoutState.restore(stored)
         startRuntime()
@@ -108,18 +130,21 @@ export function createWorkoutController(onChange) {
     },
     pause: function () {
       var session = workoutState.pause()
+      stopTimer()
       stopLocation()
       persist()
       return emit(session)
     },
     resume: function () {
       var session = workoutState.resume()
+      if (!session) return emit(session)
+      ensureTimer()
       startLocation()
       persist()
       return emit(session)
     },
     finish: function (callback) {
-      stopRuntime()
+      stopRuntime(false)
       var record = workoutState.finish()
       workoutRepository.clearActive()
       if (!record) { if (callback) callback(null); return }
@@ -131,8 +156,8 @@ export function createWorkoutController(onChange) {
         workoutRepository.saveRecord(record, function (saved) { savedRecord = saved || record; done() })
       })
     },
-    cancel: function () { stopRuntime(); workoutState.cancel(); workoutRepository.clearActive() },
-    stop: stopRuntime,
+    cancel: function () { stopRuntime(false); workoutState.cancel(); workoutRepository.clearActive() },
+    stop: function () { stopRuntime(true) },
     refresh: function () { var active = workoutState.getActive(); if (active) emit(workoutState.tick()) },
     getRecords: function (callback) { workoutRepository.getRecords(function (records) { if (callback) callback(Array.isArray(records) ? records : []) }) },
     markAllSynced: function (callback) { workoutRepository.markAllSynced(function (records, result) { if (callback) callback(Array.isArray(records) ? records : [], result) }) }
