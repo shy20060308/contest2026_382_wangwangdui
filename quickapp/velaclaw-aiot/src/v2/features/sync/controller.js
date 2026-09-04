@@ -8,6 +8,8 @@ var protocol = require('./protocol')
 
 export function createSyncController(onChange) {
   var capability = transport.capability()
+  var active = false
+  var lifecycleEpoch = 0
   var state = {
     connected: false,
     syncing: false,
@@ -37,7 +39,12 @@ export function createSyncController(onChange) {
     return value
   }
 
-  function collect(callback) {
+  function isLive(epoch) {
+    return active && epoch === lifecycleEpoch
+  }
+
+  function collect(callback, epoch) {
+    var expectedEpoch = epoch === undefined ? lifecycleEpoch : epoch
     var activity = activityStore.getSnapshot()
     var health = healthStore.getSnapshot()
     var history = []
@@ -45,7 +52,7 @@ export function createSyncController(onChange) {
     var pending = 2
     function done() {
       pending--
-      if (pending > 0) return
+      if (pending > 0 || !isLive(expectedEpoch)) return
       state.todaySteps = Number(activity.steps) || 0
       state.historyCount = history.length
       state.workoutCount = workouts.length
@@ -60,12 +67,25 @@ export function createSyncController(onChange) {
       emit()
       if (callback) callback(payload)
     }
-    historyRepository.getHistory(function (value) { history = Array.isArray(value) ? value : []; done() })
-    workoutRepository.getRecords(function (value) { workouts = Array.isArray(value) ? value : []; done() })
+    historyRepository.getHistory(function (value) {
+      if (!isLive(expectedEpoch)) return
+      history = Array.isArray(value) ? value : []
+      done()
+    })
+    workoutRepository.getRecords(function (value) {
+      if (!isLive(expectedEpoch)) return
+      workouts = Array.isArray(value) ? value : []
+      done()
+    })
   }
 
   function loadSettings() {
+    if (active) return emit()
+    active = true
+    lifecycleEpoch++
+    var epoch = lifecycleEpoch
     settingsStore.load(function (settings) {
+      if (!isLive(epoch)) return
       state.lastSyncAt = Number(settings.lastSyncAt) || 0
       state.connected = false
       state.syncing = false
@@ -76,92 +96,127 @@ export function createSyncController(onChange) {
       state.ackSent = 0
       state.ackTotal = 0
       emit()
-      collect()
+      collect(null, epoch)
     })
+    return emit()
   }
 
-  return {
-    load: loadSettings,
-    refreshPreview: function () { collect() },
-    toggleConnection: function () {
-      if (state.syncing) { state.phase = 'disconnect-blocked'; return emit() }
-      if (state.connected) {
-        transport.disconnect()
-        state.connected = false
-        state.progress = 0
-        state.phase = 'disconnected'
-        state.packetCount = 0
-        state.payloadChars = 0
-        settingsStore.update('bluetoothConnected', false)
-        return emit()
-      }
-      state.phase = 'connecting'
-      emit()
-      transport.connect({
-        success: function () {
-          state.connected = true
-          state.phase = 'connected'
-          settingsStore.update('bluetoothConnected', true)
-          emit()
-        },
-        fail: function () {
-          state.connected = false
-          state.phase = 'connect-failed'
-          emit()
-        }
-      })
+  function toggleConnection() {
+    if (!active) return emit()
+    if (state.syncing) { state.phase = 'disconnect-blocked'; return emit() }
+    if (state.phase === 'connecting') {
+      transport.disconnect()
+      state.connected = false
+      state.phase = 'disconnected'
+      settingsStore.update('bluetoothConnected', false)
       return emit()
-    },
-    sync: function () {
-      if (!state.connected) { state.phase = 'connect-required'; return emit() }
-      if (state.syncing) return emit()
-      state.syncing = true
+    }
+    if (state.connected) {
+      transport.disconnect()
+      state.connected = false
       state.progress = 0
+      state.phase = 'disconnected'
       state.packetCount = 0
       state.payloadChars = 0
       state.ackSent = 0
       state.ackTotal = 0
-      state.phase = 'collecting'
-      emit()
-      collect(function (payload) {
-        var transfer = protocol.encode(payload, 96)
-        state.packetCount = transfer.packets.length
-        state.payloadChars = Number(transfer.bytesText) || 0
-        state.ackTotal = transfer.packets.length
-        state.phase = 'waiting-ack'
-        emit()
-        transport.send(transfer.packets, {
-          progress: function (progressState) {
-            state.progress = progressState.percent
-            state.ackSent = progressState.sent
-            state.ackTotal = progressState.total
-            state.phase = 'sending'
-            emit()
-          },
-          success: function () {
-            state.syncing = false
-            state.progress = 100
-            state.phase = 'completed'
-            state.lastSyncAt = Date.now()
-            settingsStore.updateMany({ lastSyncAt: state.lastSyncAt, bluetoothConnected: true })
-            workoutRepository.markAllSynced(function () { collect() })
-            emit()
-          },
-          fail: function () {
-            state.syncing = false
-            state.phase = 'failed'
-            emit()
-          }
-        })
-      })
-      return emit()
-    },
-    stop: function () {
-      transport.disconnect()
-      state.connected = false
-      state.syncing = false
       settingsStore.update('bluetoothConnected', false)
-    },
+      return emit()
+    }
+    var epoch = lifecycleEpoch
+    state.phase = 'connecting'
+    emit()
+    transport.connect({
+      success: function () {
+        if (!isLive(epoch) || state.phase !== 'connecting') return
+        state.connected = true
+        state.phase = 'connected'
+        settingsStore.update('bluetoothConnected', true)
+        emit()
+      },
+      fail: function () {
+        if (!isLive(epoch) || state.phase !== 'connecting') return
+        state.connected = false
+        state.phase = 'connect-failed'
+        emit()
+      }
+    })
+    return emit()
+  }
+
+  function sync() {
+    if (!active) return emit()
+    if (!state.connected) { state.phase = 'connect-required'; return emit() }
+    if (state.syncing) return emit()
+    var epoch = lifecycleEpoch
+    state.syncing = true
+    state.progress = 0
+    state.packetCount = 0
+    state.payloadChars = 0
+    state.ackSent = 0
+    state.ackTotal = 0
+    state.phase = 'collecting'
+    emit()
+    collect(function (payload) {
+      if (!isLive(epoch) || !state.syncing) return
+      var transfer = protocol.encode(payload, 96)
+      state.packetCount = transfer.packets.length
+      state.payloadChars = Number(transfer.bytesText) || 0
+      state.ackTotal = transfer.packets.length
+      state.phase = 'waiting-ack'
+      emit()
+      transport.send(transfer.packets, {
+        progress: function (progressState) {
+          if (!isLive(epoch) || !state.syncing) return
+          state.progress = progressState.percent
+          state.ackSent = progressState.sent
+          state.ackTotal = progressState.total
+          state.phase = 'sending'
+          emit()
+        },
+        success: function () {
+          if (!isLive(epoch) || !state.syncing) return
+          state.syncing = false
+          state.progress = 100
+          state.phase = 'completed'
+          state.lastSyncAt = Date.now()
+          settingsStore.updateMany({ lastSyncAt: state.lastSyncAt, bluetoothConnected: true })
+          workoutRepository.markAllSynced(function () {
+            if (isLive(epoch)) collect(null, epoch)
+          })
+          emit()
+        },
+        fail: function () {
+          if (!isLive(epoch) || !state.syncing) return
+          state.syncing = false
+          state.phase = 'failed'
+          emit()
+        }
+      })
+    }, epoch)
+    return emit()
+  }
+
+  function stop() {
+    if (!active) return
+    active = false
+    lifecycleEpoch++
+    transport.disconnect()
+    state.connected = false
+    state.syncing = false
+    state.progress = 0
+    state.phase = 'idle'
+    state.ackSent = 0
+    state.ackTotal = 0
+    settingsStore.update('bluetoothConnected', false)
+  }
+
+  return {
+    load: loadSettings,
+    refreshPreview: function () { if (active) collect(null, lifecycleEpoch) },
+    toggleConnection: toggleConnection,
+    sync: sync,
+    stop: stop,
     refresh: emit
   }
 }
