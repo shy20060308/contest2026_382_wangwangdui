@@ -5,7 +5,7 @@
       <scroll class="content" scroll-y="true" style="left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ streamWidth }}px; height: {{ streamHeight }}px;">
         <div if="{{ pageIndex === 0 }}" class="panel" style="width: {{ streamWidth }}px;">
           <div class="status-card" @click="toggleVibration" style="width: {{ streamWidth }}px; height: {{ statusCardHeight }}px; border-radius: {{ cardRadius }}px; border-color: {{ statusColor }};"><div class="copy"><text class="label">通知与交互反馈</text><text class="status-value" style="color: {{ statusColor }};">{{ statusText }}</text><text class="sub">强度 {{ levelText }} · {{ patternText }}</text></div><text class="switch" style="color: {{ statusColor }};">{{ enabledText }}</text></div>
-          <text class="section-label">基础强度</text>
+          <text class="section-label" style="width: {{ streamWidth }}px;">基础强度</text>
           <div class="level-row" style="width: {{ streamWidth }}px; height: {{ levelRowHeight }}px;"><text class="level-button" style="width: {{ levelButtonWidth }}px; height: {{ levelButtonHeight }}px; background-color: {{ lightBg }};" @click="setLight">轻</text><text class="level-button" style="width: {{ levelButtonWidth }}px; height: {{ levelButtonHeight }}px; background-color: {{ mediumBg }};" @click="setMedium">中</text><text class="level-button" style="width: {{ levelButtonWidth }}px; height: {{ levelButtonHeight }}px; background-color: {{ strongBg }};" @click="setStrong">强</text></div>
           <div class="test-card" @click="playCurrent" style="width: {{ streamWidth }}px; height: {{ testCardHeight }}px; border-radius: {{ cardRadius }}px; margin-top: {{ cardGap }}px;"><div class="test-copy"><text class="test-title">测试当前模式</text><text class="sub test-feedback">{{ feedbackText }}</text></div><text class="arrow">›</text></div>
         </div>
@@ -86,7 +86,7 @@ export default {
 .status-card, .test-card, .capability-card, .pattern-card { padding: 10px; background-color: #14181F; margin-bottom: 7px; }
 .status-card { border-width: 1px; flex-direction: row; justify-content: space-between; align-items: center; } .copy { flex: 1; flex-direction: column; }
 .label, .sub { color: #8E8E93; font-size: 7px; } .status-value { font-size: 18px; font-weight: bold; margin-top: 3px; } .switch { width: 28px; font-size: 13px; font-weight: bold; text-align: right; }
-.section-label { width: 100%; color: #8E8E93; font-size: 8px; margin-top: 4px; margin-bottom: 5px; }
+.section-label { color: #8E8E93; font-size: 8px; margin-top: 4px; margin-bottom: 5px; }
 .level-row { flex-direction: row; justify-content: space-between; align-items: center; }
 .level-button { border-radius: 12px; color: #FFFFFF; font-size: 11px; text-align: center; }
 .test-card { flex-direction: row; align-items: center; justify-content: space-between; } .test-copy { flex: 1; flex-direction: column; } .test-title { color: #FFFFFF; font-size: 10px; font-weight: bold; } .test-feedback { margin-top: 4px; } .arrow { width: 18px; color: #636366; font-size: 14px; text-align: right; }
