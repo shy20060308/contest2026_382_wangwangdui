@@ -10,9 +10,24 @@ function contentWidth(profile) {
   return 164
 }
 
+function circleCapacity() {
+  return {
+    pageSize: 2,
+    itemHeight: 52,
+    itemGap: 7,
+    header: { left: 36, top: 20, width: 120, height: 18 },
+    list: { left: 22, top: 45, width: 148, height: 111 },
+    footer: { left: 40, top: 162, width: 112, height: 18 },
+    visualScale: 1.05,
+    capacityReduced: true,
+    fixedFrame: true
+  }
+}
+
 function resolve(profile, scene, safe) {
+  var shape = profile && profile.formFactor ? profile.formFactor : 'rect'
   var tall = safe.height > 250
-  var capacity = pagedStack.resolve(safe, {
+  var capacity = shape === 'circle' ? circleCapacity() : pagedStack.resolve(safe, {
     minItems: 2,
     maxItems: 3,
     headerHeight: tall ? 30 : 20,
@@ -26,7 +41,7 @@ function resolve(profile, scene, safe) {
     freedom: freedom.describe(freedom.AUTO),
     freedomLevel: freedom.AUTO,
     strategy: 'auto',
-    shape: profile && profile.formFactor ? profile.formFactor : 'rect',
+    shape: shape,
     surface: 'paged-settings-list',
     itemIds: ITEM_IDS.slice(),
     capacity: capacity
