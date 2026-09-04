@@ -1,4 +1,5 @@
 import location from '../../../capabilities/location'
+import heartRate from '../../../capabilities/heart_rate'
 import workoutState from '../../../domain/workout/state_machine'
 import workoutRepository from '../../../domain/workout/repository'
 import activityStore from '../../../domain/activity/store'
@@ -17,6 +18,7 @@ export function createWorkoutController(onChange) {
   var gpsDistance = 0
   var persistTicks = 0
   var runtimeActive = false
+  var heartRateSubscribed = false
   var lifecycleGeneration = 0
 
   function emit(session) { return emitValue(onChange, session) }
@@ -59,6 +61,29 @@ export function createWorkoutController(onChange) {
     }, 6000)
   }
 
+  function stopHeartRate() {
+    if (!heartRateSubscribed) return
+    heartRate.unsubscribe(onHeartRate)
+    heartRateSubscribed = false
+  }
+
+  function onHeartRate(snapshot) {
+    if (!runtimeActive || !snapshot || !snapshot.live || snapshot.source !== 'live') return
+    var active = workoutState.getActive()
+    if (!active || active.status !== 'running') return
+    var value = Number(snapshot.value)
+    if (!isFinite(value) || value <= 0) return
+    emit(workoutState.updateHeartRate(value))
+  }
+
+  function startHeartRate() {
+    stopHeartRate()
+    var active = workoutState.getActive()
+    if (!active || active.status !== 'running') return
+    heartRateSubscribed = true
+    heartRate.subscribe(onHeartRate)
+  }
+
   function stopTimer() {
     clearInterval(timer)
     timer = null
@@ -84,6 +109,7 @@ export function createWorkoutController(onChange) {
     if (active && active.status === 'running') {
       ensureTimer()
       startLocation()
+      startHeartRate()
     }
   }
 
@@ -93,6 +119,7 @@ export function createWorkoutController(onChange) {
     lifecycleGeneration++
     stopTimer()
     stopLocation()
+    stopHeartRate()
     if (wasActive && shouldPersist !== false) persist()
   }
 
@@ -132,6 +159,7 @@ export function createWorkoutController(onChange) {
       var session = workoutState.pause()
       stopTimer()
       stopLocation()
+      stopHeartRate()
       persist()
       return emit(session)
     },
@@ -142,6 +170,7 @@ export function createWorkoutController(onChange) {
       else {
         ensureTimer()
         startLocation()
+        startHeartRate()
       }
       persist()
       return emit(session)

@@ -8,6 +8,7 @@ function contentWidth(profile) {
 }
 
 function resolve(profile, scene, safe) {
+  var shape = profile && profile.formFactor ? profile.formFactor : 'rect'
   var tall = safe.height > 250
   var compact = safe.height < 170
   var headerHeight = compact ? 20 : (tall ? 30 : 24)
@@ -18,11 +19,35 @@ function resolve(profile, scene, safe) {
   var streamTop = summaryTop + summaryHeight + gap
   var streamHeight = Math.max(40, safe.bottom - streamTop)
   var itemHeight = compact ? 66 : (tall ? 94 : 78)
+
+  if (shape === 'circle') {
+    return {
+      freedom: freedom.describe(freedom.AUTO),
+      freedomLevel: freedom.AUTO,
+      strategy: 'auto',
+      shape: shape,
+      surface: 'summary-record-stream',
+      // The title is a fixed row, so it must begin inside a chord wide enough
+      // for both the title and Back action. The list below remains scrollable.
+      header: { left: 32, top: 24, width: 128, height: 20 },
+      summary: { left: 26, top: 49, width: 140, height: 38 },
+      stream: { left: 26, top: 92, width: 140, height: 90, itemHeight: 66, gap: 7 },
+      titleSize: 11,
+      backSize: 7,
+      summaryValueSize: 13,
+      summaryLabelSize: 6,
+      recordTitleSize: 10,
+      recordMetaSize: 6,
+      radius: 14,
+      padding: 7
+    }
+  }
+
   return {
     freedom: freedom.describe(freedom.AUTO),
     freedomLevel: freedom.AUTO,
     strategy: 'auto',
-    shape: profile && profile.formFactor ? profile.formFactor : 'rect',
+    shape: shape,
     surface: 'summary-record-stream',
     header: { left: safe.left, top: headerTop, width: safe.width, height: headerHeight },
     summary: { left: safe.left, top: summaryTop, width: safe.width, height: summaryHeight },

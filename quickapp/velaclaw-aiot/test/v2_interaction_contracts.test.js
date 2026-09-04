@@ -61,6 +61,15 @@ assert.ok(launcher.includes('event.preventDefault') && launcher.includes('event.
 assert.ok(launcher.includes('class="list-surface"') && launcher.includes('style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;"'), 'Pill launcher swipe owner must have a real full-scene hitbox instead of a zero-height wrapper')
 assert.ok(launcher.includes('.list-surface, .grid-surface { position: absolute; left: 0px; top: 0px;'), 'Launcher rendered surfaces must be anchored to the Host Scene')
 
+assert.ok(launcher.includes('for="{{ circleVisibleSlots }}"'), 'Circle launcher must render only currently visible honeycomb slots')
+assert.ok(launcher.includes('scheduleHoneycombLayout()'), 'Circle drag input must be frame-throttled instead of relayout on every touchmove')
+assert.ok(launcher.includes('startHoneyInertia(') && launcher.includes('settleHoneycomb()'), 'Circle launcher release must use bounded inertia and soft settling')
+assert.ok(launcher.includes('this.openApp(item)') && !launcher.includes("if (!item.isCenter)"), 'any visible Circle app must open with one tap instead of requiring center-then-tap')
+assert.ok(launcher.includes('this.touchStartX < 26'), 'two-dimensional Honeycomb must keep an explicit edge-back gesture instead of stealing vertical drag')
+assert.ok(!launcher.includes('circleDragX') && !launcher.includes('circleDragY'), 'Circle pan must be persistent instead of temporary drag offsets that force a snap')
+const tapPath = launcher.slice(launcher.indexOf('onHoneyEnd(event)'), launcher.indexOf('startHoneyInertia(vx, vy)'))
+assert.ok(tapPath.indexOf("if (!this.dragMoved)") < tapPath.indexOf('event.preventDefault'), 'a stationary Honeycomb tap must return before drag event consumption so child click can open the app')
+
 const healthPage = read('src/pages/heartrate/heartrate.ux')
 assert.ok(healthPage.includes('class="circle-health"') && healthPage.includes('style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;"'), 'Circle Health scroll viewport must use the full round scene, not the rectangular safe band')
 assert.ok(healthPage.includes('.circle-hero { width: 144px; height: 98px;'), 'Circle Health heart card must have enough height for value, chart and footer without internal clipping')
