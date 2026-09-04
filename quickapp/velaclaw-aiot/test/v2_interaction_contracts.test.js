@@ -22,7 +22,7 @@ Object.keys(manifest.router.pages || {}).forEach(route => {
   const ownsSwipe = /@swipe=/.test(source)
 
   // A scroll/list owns its axis. A page must not add a competing recognizer on
-  // top of that same surface; this was the root cause of the old Pill calendar conflict.
+  // top of that same surface; fixed surfaces may use one page-level fallback.
   if (ownsScroll) {
     assert.ok(!ownsRawTouch, relative + ' must not combine scroll/list with raw touch gesture recognition')
     assert.ok(!ownsSwipe, relative + ' must not combine scroll/list with a page swipe recognizer')
@@ -34,9 +34,12 @@ assert.ok(!/<(scroll|list)\b/.test(today), 'Today summary/calendar are fixed sur
 assert.ok(!/@touch(start|move|end)=/.test(today) && !/@swipe=/.test(today), 'Today month navigation must remain explicit click interaction')
 
 const clock = read('src/pages/clock/clock.ux')
-assert.strictEqual(count(clock, '@swipe='), 1, 'Clock must have exactly one swipe owner')
+assert.strictEqual(count(clock, '@swipe='), 1, 'Clock must have exactly one native swipe owner')
 assert.strictEqual(count(clock, '@longpress='), 1, 'Clock must have exactly one long-press owner')
-assert.ok(!/@touch(start|move|end)=/.test(clock), 'Clock must not run a parallel raw-touch recognizer')
+assert.strictEqual(count(clock, '@touchstart='), 1, 'Clock must have exactly one raw-touch fallback owner')
+assert.strictEqual(count(clock, '@touchmove='), 1, 'Clock must have exactly one raw-touch fallback owner')
+assert.strictEqual(count(clock, '@touchend='), 1, 'Clock must have exactly one raw-touch fallback owner')
+assert.ok(clock.includes('consumeGestureEvent(event)'), 'Clock vertical fallback must consume the gesture before the host can scroll it')
 assert.ok(clock.includes('this.notificationVisible) return'), 'Clock navigation gestures must be blocked while notification overlay owns interaction')
 
 const watchfaceDir = path.join(root, 'src/components/watchfaces')
@@ -51,4 +54,9 @@ assert.ok(clock.includes('onopen-health="openHealth"'), 'Clock must bind semanti
 assert.ok(clock.includes('onopen-steps="openSteps"'), 'Clock must bind semantic activity events from watchfaces')
 assert.ok(clock.includes('onopen-today="openToday"'), 'Clock must bind semantic calendar events from watchfaces')
 
-console.log('V2 interaction contracts verified: one gesture owner per surface and semantic child events only')
+const launcher = read('src/pages/applist/applist.ux')
+assert.strictEqual(count(launcher, '@swipe="handleListSwipe"'), 2, 'Pill and Rect launcher surfaces must each restore swipe navigation without touching Honeycomb')
+assert.ok(launcher.includes("event.direction === 'down') navigation.back()"), 'Pill launcher down-swipe must return to Clock')
+assert.ok(launcher.includes('event.preventDefault') && launcher.includes('event.stopPropagation'), 'Launcher swipe must not degrade into host scrolling')
+
+console.log('V2 interaction contracts verified: one gesture owner per rendered surface with a fixed-surface touch fallback where Vela needs it')
