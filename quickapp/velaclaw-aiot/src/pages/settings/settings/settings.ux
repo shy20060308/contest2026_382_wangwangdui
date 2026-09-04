@@ -26,8 +26,8 @@ function consumeSwipe(event) {
 export default {
   private: {
     pageItems: [], dots: [], pageIndex: 0, pageText: '1 / 1',
-    headerLeft: 22, headerTop: 24, headerWidth: 148, headerHeight: 20, listLeft: 22, listTop: 49, listWidth: 148, listHeight: 104, footerLeft: 22, footerTop: 158, footerWidth: 148, footerHeight: 16,
-    itemHeight: 49, itemGap: 6, itemRadius: 18, itemPadding: 7, iconSize: 30, iconRadius: 15, titleSize: 12, itemNameSize: 10, itemDescSize: 6, itemDescLineHeight: 8, arrowSize: 13,
+    headerLeft: 40, headerTop: 22, headerWidth: 112, headerHeight: 18, listLeft: 22, listTop: 45, listWidth: 148, listHeight: 111, footerLeft: 46, footerTop: 157, footerWidth: 100, footerHeight: 16,
+    itemHeight: 52, itemGap: 7, itemRadius: 18, itemPadding: 7, iconSize: 30, iconRadius: 15, titleSize: 12, itemNameSize: 10, itemDescSize: 6, itemDescLineHeight: 8, arrowSize: 13,
     sceneWidth: 192, sceneHeight: 192, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
   },
   onInit() {
