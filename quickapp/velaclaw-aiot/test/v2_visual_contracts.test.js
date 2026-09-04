@@ -152,6 +152,7 @@ assert.ok(!historyPage.includes('pill-chart-row') && !historyPage.includes('pill
 assert.ok(historyView.includes("pillLabel: isToday ? '今天'") && historyView.includes('pillWidth:') && historyView.includes('stepsText:'), 'History Design View must own the Pill row labels, comparative widths and full values')
 assert.ok(historyPage.includes('class="circle-history"') && historyPage.includes('style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;"'), 'Circle History must use the complete round canvas instead of placing its title at the unsafe chord edge')
 assert.ok(historyPage.includes('.circle-chart { width: 140px; height: 76px;') && historyPage.includes('.circle-bar-track { width: 6px; height: 42px;') && historyPage.includes('{{ $item.circleLabel }}'), 'Circle History must use compact tracked bars with single-character weekday labels')
+assert.ok(historyPage.includes('.circle-insights { width: 116px;') && historyPage.includes('.circle-insight { width: 36px;'), 'Circle History summary cards must stay inside the lower round chord')
 assert.ok(historyPage.includes('.pill-trend-section { width: 168px; height: 184px;') && historyPage.includes('.rect-dashboard { width: 164px; height: 124px;'), 'Trend layouts must use shape-specific visual hierarchy instead of one compressed chart')
 
 const settingsPage = fs.readFileSync(path.join(root, 'src/pages/settings/settings/settings.ux'), 'utf8')
