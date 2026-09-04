@@ -112,7 +112,7 @@ test('Vibration pattern 中文名称只存在于 Design View', function () {
   assert.strictEqual(view.feedbackText, '倒计时 · 已播放')
 })
 
-test('Trend View 保留七日柱状趋势但不再投影每日记录列表', function () {
+test('Trend View 保留七日趋势但不再投影每日记录列表', function () {
   const view = historyView.project({
     todaySteps: 6000,
     avgSteps: 5400,
@@ -128,6 +128,27 @@ test('Trend View 保留七日柱状趋势但不再投影每日记录列表', fun
   assert.strictEqual(view.bars.length, 2)
   assert.strictEqual(view.bestDayText, '09/03')
   assert.ok(!Object.prototype.hasOwnProperty.call(view, 'records'))
+})
+
+test('Pill History L2 使用纵向比较行并保留完整步数', function () {
+  const view = historyView.project({
+    todaySteps: 10000,
+    avgSteps: 7500,
+    bestSteps: 10000,
+    bestDate: '2026-09-04',
+    avgHeartRate: 76,
+    goalPercent: 82,
+    records: [
+      { date: '2026-09-03', steps: 5000 },
+      { date: '2026-09-04', steps: 10000 }
+    ]
+  }, { chartHeight: 10, pillTrendMinWidth: 14, pillTrendMaxWidth: 70 })
+  assert.strictEqual(view.bars[0].stepsText, '5,000')
+  assert.strictEqual(view.bars[0].pillWidth, 42)
+  assert.strictEqual(view.bars[1].stepsText, '10,000')
+  assert.strictEqual(view.bars[1].pillWidth, 70)
+  assert.strictEqual(view.bars[1].pillLabel, '今天')
+  assert.strictEqual(view.bars[1].color, '#FFD60A')
 })
 
 test('对应 Feature 不重复生成展示格式', function () {
