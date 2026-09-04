@@ -1,9 +1,23 @@
+var WEEKDAY_LABELS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+
 function formatNumber(value) {
   return Number(value || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
 function formatDay(text) {
   return String(text || '').slice(5).replace('-', '/')
+}
+
+function weekdayLabel(text) {
+  var parts = String(text || '').split('-')
+  if (parts.length >= 3) {
+    var year = Number(parts[0])
+    var month = Number(parts[1])
+    var day = Number(parts[2])
+    var date = new Date(year, month - 1, day)
+    if (!isNaN(date.getTime())) return WEEKDAY_LABELS[date.getDay()]
+  }
+  return formatDay(text)
 }
 
 function compactSteps(value) {
@@ -17,7 +31,9 @@ function compactSteps(value) {
 function project(model, plan) {
   var source = model || {}
   var records = Array.isArray(source.records) ? source.records : []
-  var chartHeight = Math.max(24, Math.round(Number(plan && plan.chartHeight) || 52))
+  var chartHeight = Math.max(10, Math.round(Number(plan && plan.chartHeight) || 52))
+  var minPillWidth = Math.max(8, Math.round(Number(plan && plan.pillTrendMinWidth) || 14))
+  var maxPillWidth = Math.max(minPillWidth, Math.round(Number(plan && plan.pillTrendMaxWidth) || 70))
   var maxSteps = 1
   var bars = []
   var i
@@ -29,11 +45,17 @@ function project(model, plan) {
   for (i = 0; i < records.length; i++) {
     var item = records[i]
     var steps = Math.max(0, Number(item.steps) || 0)
+    var ratio = Math.max(0, Math.min(1, steps / maxSteps))
+    var isToday = i === records.length - 1
     bars.push({
       label: formatDay(item.date),
+      pillLabel: isToday ? '今天' : weekdayLabel(item.date),
       shortSteps: compactSteps(steps),
-      height: Math.max(5, Math.round((steps / maxSteps) * chartHeight)),
-      color: i === records.length - 1 ? '#FFD60A' : '#3A7DFF'
+      stepsText: formatNumber(steps),
+      height: Math.max(5, Math.round(ratio * chartHeight)),
+      pillWidth: Math.round(minPillWidth + ratio * (maxPillWidth - minPillWidth)),
+      color: isToday ? '#FFD60A' : '#3A7DFF',
+      isToday: isToday
     })
   }
 
