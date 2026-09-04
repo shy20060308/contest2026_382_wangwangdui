@@ -38,6 +38,7 @@ export function createTodayController(onChange) {
     calendarCells: []
   }
   var started = false
+  var lifecycleEpoch = 0
 
   function emit() {
     var value = copy(state)
@@ -71,6 +72,7 @@ export function createTodayController(onChange) {
   }
 
   function onHealth(snapshot) {
+    if (!started) return
     if (snapshot && snapshot.heartRate !== undefined && snapshot.heartRate !== null) state.heartRate = Number(snapshot.heartRate) || 0
     emit()
   }
@@ -81,14 +83,20 @@ export function createTodayController(onChange) {
     start: function () {
       if (started) { emit(); return }
       started = true
+      lifecycleEpoch++
+      var epoch = lifecycleEpoch
       refreshDate()
       emit()
-      activityStore.hydrate(applyActivity)
+      activityStore.hydrate(function (snapshot) {
+        if (!started || epoch !== lifecycleEpoch) return
+        applyActivity(snapshot)
+      })
       healthStore.subscribeHeartRate(onHealth)
     },
     stop: function () {
       if (!started) return
       started = false
+      lifecycleEpoch++
       healthStore.unsubscribe(onHealth)
     },
     resetToday: function () { refreshDate(); emit() },
