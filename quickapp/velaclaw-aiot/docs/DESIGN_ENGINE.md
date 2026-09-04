@@ -1,173 +1,198 @@
 # Wearable Design Engine
 
-The Design Engine is not a universal layout converter. Its purpose is to decide **how much automation a wearable page should accept before implementation begins**, then provide the smallest set of primitives needed at that freedom level.
+The V2 Design Engine is not a universal responsive-layout converter. Its job is to decide **how much automation a wearable surface should accept** and to preserve meaningful product differences between circle, pill and rectangular screens.
 
 > Automation removes repetition. Art direction owns meaningful differences.
 
-## 1. Skill interview comes first
+The current runtime/Scene contract is described in [REWRITE_V2_ARCHITECTURE.md](REWRITE_V2_ARCHITECTURE.md).
 
-A development Skill should not immediately generate one UI and then force it onto circle, rectangle and pill screens. Before page implementation it asks the user to choose, or confirm, a Design Freedom Level.
+## 1. Design Freedom levels
 
 ### L1 — Auto
 
-Use when the page is structurally ordinary and shape differences have little product value.
+Use L1 when the page is structurally ordinary and the product meaning does not depend on a unique visual composition.
 
-Typical pages:
+Typical examples:
 
-- settings lists
-- detail pages
-- simple forms and controls
-- ordinary paged lists
+- settings menus;
+- simple detail pages;
+- ordinary paged lists;
+- straightforward forms and controls.
 
-The Design Engine may automatically decide safe geometry, scale, spacing, vertical alignment and page capacity.
+The Engine may resolve:
 
-Current references:
+- safe geometry;
+- page capacity;
+- spacing and card dimensions;
+- typography scale;
+- fixed pager placement.
 
-- `pages/detail` — centered `auto-stack`
-- `pages/settings/settings` — `paged-stack`
+L1 does **not** mean that every shape receives identical coordinates. A circle may need a fixed chord-aware frame while a tall pill may use spare vertical space. The rule is that these differences are resolved by the Design Spec rather than scattered as ad-hoc device checks throughout page logic.
 
-`paged-stack` first finds the largest safe page capacity, then expands density when a tall viewport has spare room. A pill screen therefore does not inherit tiny circle typography merely because both use the same 192 design width.
-
-L1 pages should not contain shape-specific top-level geometry or `profile.isCircle ? ...` capacity rules.
+Current reference: `src/pages/settings/settings` with `src/v2/design/specs/settings_menu.js`.
 
 ### L2 — Assisted
 
-Use when semantics are shared but composition has meaningful design value.
+Use L2 when product semantics are shared but the best visual expression changes meaningfully by form factor.
 
-Typical pages:
+Typical examples:
 
-- workout dashboards
-- health/history dashboards
-- media controls
-- information-dense status pages
+- health and history dashboards;
+- activity and workout views;
+- dense status pages;
+- media or summary surfaces.
 
-The application shares Domain state, actions and semantic components. The Design Engine validates geometry and provides viewport primitives, while the layout spec may choose different compositions for each form factor.
+L2 shares Domain/Feature state and semantic values, then deliberately chooses a form-factor-specific composition.
 
-Current references:
+Current `History` reference:
 
-- `pages/workout` — pill auto composition, art-directed circle/rect compositions
-- `pages/history` — composed dashboard header plus independent scrolling record flow
+- **Circle** → compact tracked vertical bars, short weekday labels, small centered insight cards;
+- **Pill** → `vertical-comparative-trend`: weekday/today label on the left, short thick horizontal comparison bar in the middle, complete step value on the right;
+- **Rect** → dashboard composition using wider horizontal space.
 
-`scroll-flow` deliberately distinguishes two different concepts:
+The previous daily-record presentation was intentionally removed because it duplicated the same information and produced unstable layouts. L2 should prefer a clear summary hierarchy instead of preserving every old visual element.
 
-1. viewport composition that must satisfy safe geometry;
-2. normal scrolling content that is allowed to move through clipped screen edges.
-
-A scrolling list must not be treated as if every record had to fit inside the static safe region simultaneously.
+`Health` follows the same principle: a circular screen may use the full 192×192 scroll canvas with chord-aware sections rather than being reduced to an inscribed rectangle.
 
 ### L3 — Free
 
-Use when the visual/interaction model itself is part of the product design.
+Use L3 when the interaction or visual model itself is a major part of the product.
 
-Typical pages:
+Typical examples:
 
-- watchfaces
-- honeycomb launchers
-- games
-- strongly branded or experimental interfaces
+- watchfaces;
+- honeycomb launchers;
+- games;
+- strongly branded/experimental surfaces.
 
-The Engine supplies viewport, safe bounds, shared semantics and optional external visual engines. It does **not** attempt to auto-recompose one surface into another.
+The Engine supplies the Scene, safe geometry, shared semantics and optional helpers, but it does not force one composition onto all shapes.
 
-Launcher design is defined as:
+Current launcher strategy:
 
-- Circle → Honeycomb
-- Pill → Paged List
-- Rect → Designed 2-column Grid
+- Circle → Honeycomb;
+- Pill → paged list;
+- Rect → designed grid.
 
-All three consume one shared `domain/apps/catalog`.
+Current watchface strategy includes form-factor-specific components such as the circular mechanical face and the pill Alpine face. These surfaces may use deterministic absolute geometry because visual precision is more important than generic layout reuse.
 
-The circle Honeycomb is a presentation engine in `presentation/engines/honeycomb.js`; its lattice math is not business logic and is not an Adapter responsibility.
+## 2. Shape language
 
-## 2. Design Engine architecture
+The stable product language is:
 
-```text
-Requirement / Product Intent
-          ↓
-Design Freedom Interview
-          ↓
-Semantic Model + Shared Domain
-          ↓
-┌─────────────────────────────────────────┐
-│ L1 Auto       L2 Assisted      L3 Free │
-│ auto-stack    composition      surface  │
-│ paged-stack   scroll-flow      engine   │
-└─────────────────────────────────────────┘
-          ↓
-Viewport + Safe Geometry
-          ↓
-Circle / Rect / Pill
-```
+### Circle
 
-Adapter primitives are implementation tools **inside** the Design Engine. They are not the product architecture by themselves.
+Use the circular canvas as a circle, not as a small central rectangle.
 
-## 3. Layout Plan metadata
+- place titles and footers in narrow chord-safe zones;
+- place wide cards near the center where the chord is widest;
+- keep bottom summaries away from the lower arc;
+- prefer compact radial/tracked visualizations;
+- scroll through the full round canvas when the content naturally exceeds one screen.
 
-Every Design Engine plan carries its development decision:
+### Pill
 
-```js
-{
-  freedomLevel: 1 | 2 | 3,
-  strategy: 'auto' | 'assisted' | 'free',
-  shape,
-  composition,
-  safeBounds,
-  regions,
-  needsOverride,
-  reason
-}
-```
+Use the long vertical axis as an advantage.
 
-Specialized primitives may add semantic metadata:
+- prefer vertical information flow;
+- use tall, readable cards;
+- use horizontal comparison bars when seven vertical columns would become cramped;
+- keep full-bleed backgrounds independent from top/bottom interaction comfort;
+- reserve right-side numeric columns when exact values matter.
 
-- `paged-stack`: `pageSize`, `capacityReduced`, `verticalScale`, `visualScale`
-- `scroll-flow`: `heroHeight`, `stream`, `tokens`
-- `free-surface`: `surface`, `appIds`, `pageSize`, `columns`
+### Rect
 
-The Engine must refuse an unsafe automatic result instead of silently shrinking below readable limits.
+Use the additional horizontal room.
 
-## 4. Capability Runtime is a separate axis
+- dashboards and two-column grids are appropriate;
+- pair visualizations with insight columns where useful;
+- avoid inheriting tall-pill spacing when the rectangle can present information side-by-side.
 
-Design freedom applies to presentation. Device abilities should remain highly unified.
+## 3. Full-bleed Scene vs safe content
+
+Every Design decision starts from the full Design Scene, then applies safe geometry to content.
 
 ```text
-Vela APIs
-   ↓
-Capability Runtime
-   ↓
-Domain
-   ↓
-Design Engine / Presentation
+Full Design Scene
+  ├─ decorative/background layers: may reach the edge
+  └─ semantic content
+       ├─ title / controls / values: safe/chord-aware
+       └─ scrolling sections: shape-aware viewport + readable internal geometry
 ```
+
+Do not crop the Scene to manufacture safety. A rounded end, circular arc or gesture zone should influence foreground placement, not create artificial black bands in the background.
+
+## 4. Wearable layout reliability rules
+
+The following implementation rules are part of the Design Engine because they have direct visual consequences on Vela:
+
+- A surface whose children are all `position:absolute` must still have an explicit width and height. Otherwise the parent may collapse and render as a black page.
+- Avoid relying on percentage widths for compact text controls when Vela measurement can collapse them. Resolve explicit shape-aware pixel geometry when the dimensions are product-critical.
+- Use `overflow:hidden` only when clipping is genuinely part of the visual design. Do not use it to hide mistakes in Scene geometry.
+- Do not assume first-mount flex measurement is identical to a later remount for precision watchfaces. Prefer deterministic geometry where available.
+- Static safe geometry and scrolling flow are different concepts. A long list does not need every row to fit inside the safe rectangle at the same time.
+
+## 5. Design View boundary
+
+Pages should receive display-ready values from Design Views where presentation semantics are involved.
 
 Examples:
 
-- `heart_rate`
-- `blood_oxygen`
-- `stress`
-- `motion`
-- `location`
-- `battery`
-- `device`
-- `display_power`
-- `storage`
-- `vibration`
+- formatted step values;
+- `今天` / weekday labels;
+- comparative bar widths;
+- selected state colors;
+- capability/status text.
 
-Capability Gateways are small, independently triggerable and lazy. They do not know screen shape or product presentation policy.
+The page should not duplicate Domain calculations or invent a second presentation model.
 
-This produces the intended split:
+A typical V2 flow is:
 
-> Upper layers preserve design freedom; lower layers unify device capabilities.
+```text
+Domain model
+   ↓
+Feature Controller
+   ↓
+Design Spec (geometry / freedom / surface)
+   +
+Design View (display-ready semantics)
+   ↓
+Page
+```
 
-## 5. Skill decision rule
+## 6. Interaction is part of the design
 
-Before generating a page, a Skill should:
+Visual freedom does not mean arbitrary gesture behavior.
+
+The product should preserve stable navigation semantics:
+
+- page-level navigation gestures have one owner;
+- nested visual components must not compete for the same navigation gesture;
+- a native swipe and a raw-touch compatibility fallback may coexist only when they belong to the same owner and produce the same semantic action;
+- paged surfaces should provide a visible alternative (for example arrows) when appropriate.
+
+## 7. Choosing a level for new work
+
+Before implementing a new page or major redesign:
 
 1. identify shared functional semantics;
-2. estimate visual importance, interaction specificity, shape sensitivity and information density;
+2. estimate information density, shape sensitivity and interaction specificity;
 3. recommend L1, L2 or L3;
-4. ask the user to confirm the Design Freedom Level;
-5. generate only the primitives appropriate for that level;
-6. validate all target form factors;
-7. if an L1 layout cannot remain readable, stop and ask whether the user wants an L2/L3 redesign instead of hiding the failure with more scaling.
+4. define the shape strategy before writing page markup;
+5. keep Domain/Feature behavior shared unless the product behavior itself differs;
+6. validate pill, circle and rectangular targets;
+7. if an L1 result becomes cramped or unreadable, promote the surface to L2 instead of repeatedly shrinking fonts and cards.
 
-This question is part of product design, not merely a technical implementation option.
+The Design Freedom level is a product decision, not merely a technical optimization.
+
+## 8. Current reference surfaces
+
+| Surface | Freedom | Stable shape strategy |
+| --- | --- | --- |
+| Settings menu | L1 | auto/paged; circle uses fixed chord-aware frame |
+| History | L2 | circle tracked bars / pill vertical comparison / rect dashboard |
+| Health | L2 | shared metrics with full round composition on circle |
+| Workout | L2 | shared session semantics with shape-specific dashboard composition |
+| Launcher | L3 | circle honeycomb / pill list / rect grid |
+| Watchfaces | L3 | art-directed components per supported form factor |
+
+These references are examples, not a requirement that future pages copy their exact styling.
