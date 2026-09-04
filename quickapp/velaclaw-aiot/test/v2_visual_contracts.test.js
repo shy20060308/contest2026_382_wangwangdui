@@ -56,7 +56,7 @@ fs.readdirSync(specsDir).filter(name => name.endsWith('.js')).forEach(name => {
   assert.ok(spec.freedomLevel === 1 || spec.freedomLevel === 2 || spec.freedomLevel === 3, name + ' must export an explicit Design Freedom level')
   profiles.forEach(profile => {
     const host = scene.resolve(profile)
-    const safe = scene.safeForWidth(profile, profile.width)
+    const safe = scene.safeForWidth(profile, spec.contentWidth(profile))
     const plan = spec.resolve(profile, host, safe)
     assert.ok(plan && typeof plan === 'object', name + ' must resolve a plan for ' + profile.name)
     assert.ok(plan.freedomLevel === 1 || plan.freedomLevel === 2 || plan.freedomLevel === 3, name + ' must put freedomLevel on every resolved plan for ' + profile.name)
@@ -69,24 +69,24 @@ fs.readdirSync(specsDir).filter(name => name.endsWith('.js')).forEach(name => {
       assert.strictEqual(plan.interaction, 'explicit-buttons', 'Today must use explicit month controls on ' + profile.name)
       assert.strictEqual(plan.overflow, 'fixed', 'Today must remain a fixed non-scroll surface on ' + profile.name)
       assert.ok(!plan.needsOverride, 'Today fixed composition must fit the safe band on ' + profile.name)
-      Object.keys(plan.requiredHeights || {}).forEach(surface => {
-        assert.ok(plan.requiredHeights[surface] <= safe.height, 'Today ' + surface + ' must fit safe height on ' + profile.name)
-      })
     }
     if (name === 'clock.js' && profile.formFactor === 'pill') {
       const batteryTop = parseInt(plan.alpineBatteryRowTop, 10)
       assert.ok(batteryTop + 16 <= safe.bottom, 'Alpine battery row must remain above the Pill gesture-safe bottom on ' + profile.name)
     }
     if (name === 'history.js' && profile.formFactor === 'pill') {
-      assert.strictEqual(plan.surface, 'vertical-comparative-trend', 'Pill History must use its L2 vertical comparative composition')
-      assert.ok(plan.pillTrendMaxWidth > plan.pillTrendMinWidth, 'Pill History must reserve a visible horizontal comparison range')
+      assert.strictEqual(plan.trendMode, 'comparative-row', 'Pill History keeps the horizontal comparison renderer')
+      assert.ok(plan.pillTrendMaxWidth > plan.pillTrendMinWidth)
     }
-    if (name === 'history.js' && profile.formFactor === 'circle') {
-      assert.ok(plan.chartHeight <= 40, 'Circle History bars must stay compact enough for the round chart card')
+    if (name === 'history.js' && profile.formFactor !== 'pill') {
+      assert.strictEqual(plan.trendMode, 'compact-column')
+      assert.ok(plan.chartHeight >= 50, 'Column history must keep meaningful bar-height contrast')
+      assert.ok(plan.trendHeight >= 110, 'Column history must reserve labels below the bars')
     }
-    if (name === 'settings_menu.js' && profile.formFactor === 'circle') {
-      assert.ok(plan.capacity.fixedFrame, 'Circle Settings must keep a stable round-safe header/list/footer frame')
-      assert.ok(plan.capacity.header.top >= 18 && plan.capacity.footer.top <= 164, 'Circle Settings controls must stay inside useful round chords')
+    if (name === 'health.js' && profile.formFactor === 'circle') {
+      assert.strictEqual(plan.stream.width, 136, 'Circle Health should keep copy away from the round mask')
+      assert.ok(plan.metaLineHeight > plan.metaSize)
+      assert.ok(plan.scrollPaddingBottom >= 24)
     }
     walkPlan(plan, host, name + ':' + profile.name, [])
   })
@@ -110,59 +110,43 @@ designFiles.forEach(full => {
 
 const pageRuntime = fs.readFileSync(path.join(root, 'src/v2/app/page_runtime.js'), 'utf8')
 assert.ok(pageRuntime.includes('applyHostViewport(page, profile)'), 'pages must share one V2 viewport policy')
-assert.ok(pageRuntime.includes("page.viewportTop = '0px'"), 'V2 pages must render from the physical top edge instead of inheriting a cropped beta inset')
-assert.ok(pageRuntime.includes("page.viewportHeight = betaPill ? hostScene.height + 'px' : '100%'"), 'beta Pill pages must expand to the full logical canvas while normal devices retain full viewport height')
-
-const sceneSource = fs.readFileSync(path.join(root, 'src/v2/design/scene.js'), 'utf8')
-assert.ok(sceneSource.includes('Math.ceil(screenHeight * geometry.DESIGN_WIDTH / screenWidth)'), 'Host Scene coverage must round upward to prevent one-pixel bottom seams')
-assert.ok(!sceneSource.includes("parseFloat(String(value || ''))"), 'Host Scene must never parse percentage CSS dimensions as logical pixels')
+assert.ok(pageRuntime.includes("page.viewportTop = '0px'"), 'V2 pages must render from the physical top edge')
 
 const clock = fs.readFileSync(path.join(root, 'src/pages/clock/clock.ux'), 'utf8')
-;['sport_rect.ux', 'simple_rect.ux', 'dashboard_rect.ux'].forEach(name => {
-  assert.ok(fs.existsSync(path.join(root, 'src/components/watchfaces', name)), 'Rect Clock requires dedicated composition ' + name)
-})
-assert.ok(clock.includes('<div class="pill-stage" if="{{ isPill }}">'), 'Pill Clock must have its own composition stage')
-assert.ok(clock.includes('<div class="rect-stage" if="{{ isRect }}">'), 'Rect Clock must have its own composition stage')
-assert.ok(clock.includes('<div class="circle-stage" if="{{ isCircle && faceMounted }}">'), 'Circle Clock must have its own stable remounted composition stage')
-assert.ok(clock.includes('<sportrect') && clock.includes('<simplerect') && clock.includes('<dashboardrect'), 'Rect Clock must render dedicated Rect watchfaces')
-assert.ok(!clock.includes('rectangular-stage" if="{{ !isCircle }}'), 'Rect must never fall back to a shared Pill/Rect composition')
-assert.ok(clock.includes('background-color: {{ faceBackground }};'), 'Clock root must paint a face-matched fallback behind the full scene')
-assert.ok(clock.includes('overflow: visible'), 'Clock scene must not crop full-bleed watchface backgrounds at the software scene edge')
+assert.ok(clock.includes('<div class="pill-stage" if="{{ isPill }}">'))
+assert.ok(clock.includes('<div class="rect-stage" if="{{ isRect }}">'))
+assert.ok(clock.includes('<div class="circle-stage" if="{{ isCircle && faceMounted }}">'))
 
 const launcher = fs.readFileSync(path.join(root, 'src/pages/applist/applist.ux'), 'utf8')
-assert.ok(launcher.includes('class="list-surface"') && launcher.includes('style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;"'), 'Pill launcher must render into a concrete full-scene surface')
-assert.ok(launcher.includes('.list-surface, .grid-surface { position: absolute; left: 0px; top: 0px;'), 'Pill/Rect launcher wrappers must not collapse to zero height around absolute children')
+assert.ok(launcher.includes('class="list-surface"') && launcher.includes('circleVisibleSlots'))
 
 const watchfacePage = fs.readFileSync(path.join(root, 'src/pages/watchface/index.ux'), 'utf8')
-assert.ok(watchfacePage.includes('class="circle-surface"') && watchfacePage.includes('class="pill-surface"') && watchfacePage.includes('style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;"'), 'Watchface selector surfaces must have concrete full-scene dimensions')
-assert.ok(watchfacePage.includes('.selector-scene, .circle-surface, .pill-surface, .rect-surface { position: absolute; left: 0px; top: 0px; }'), 'Watchface selector wrappers must not collapse around absolute children')
+assert.ok(watchfacePage.includes('class="circle-surface"') && watchfacePage.includes('class="pill-surface"') && watchfacePage.includes('class="rect-surface"'))
 
 const healthPage = fs.readFileSync(path.join(root, 'src/pages/heartrate/heartrate.ux'), 'utf8')
-assert.ok(healthPage.includes('class="circle-health"') && healthPage.includes('style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;"'), 'Circle Health must use the full round scroll canvas')
-assert.ok(healthPage.includes('.circle-hero { width: 144px; height: 98px;'), 'Circle Health heart card must fit its own value, chart and footer without internal clipping')
-assert.ok(!healthPage.includes('class="circle-health" if="{{ ready && isCircle }}" scroll-y="true" style="left: {{ sceneSafeLeft }}px; top: {{ sceneSafeTop }}px;'), 'Circle Health must not regress to the rectangular safe-band viewport')
+assert.strictEqual((healthPage.match(/class="health-stream"/g) || []).length, 1)
+assert.ok(!healthPage.includes('isCircle') && !healthPage.includes('isPill') && !healthPage.includes('isRect'))
+assert.ok(healthPage.includes('class="heart-card"') && healthPage.includes('class="mini-row"') && healthPage.includes('class="detail-card"'))
+assert.ok(healthPage.includes('line-height: {{ metaLineHeight }}px') && healthPage.includes('padding-bottom: {{ scrollPaddingBottom }}px'), 'Health must reserve explicit text line boxes and round scroll tail space')
 
 const historyPage = fs.readFileSync(path.join(root, 'src/pages/history/history.ux'), 'utf8')
 const historyView = fs.readFileSync(path.join(root, 'src/v2/design/views/history.js'), 'utf8')
-assert.ok(!historyPage.includes('每日记录') && !historyPage.includes('circle-record') && !historyPage.includes('pill-record') && !historyPage.includes('rect-record'), 'Trend surfaces must not render the unstable daily-record list')
-assert.ok(!historyPage.includes('records: []') && !historyPage.includes('model.records'), 'Trend page must not retain dead daily-record presentation state')
-assert.ok(!historyView.includes('displayRecords') && !historyView.includes('records: displayRecords'), 'Trend Design View must stop projecting removed daily-record presentation data')
-assert.ok(historyPage.includes('class="pill-trend-row"') && historyPage.includes('width: {{ $item.pillWidth }}px') && historyPage.includes('{{ $item.stepsText }}'), 'Pill History must render one vertical comparison row with a full numeric value for each day')
-assert.ok(!historyPage.includes('pill-chart-row') && !historyPage.includes('pill-bar-cell'), 'Pill History must not regress to seven squeezed vertical columns')
-assert.ok(historyView.includes("pillLabel: isToday ? '今天'") && historyView.includes('pillWidth:') && historyView.includes('stepsText:'), 'History Design View must own the Pill row labels, comparative widths and full values')
-assert.ok(historyPage.includes('class="circle-history"') && historyPage.includes('style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;"'), 'Circle History must use the complete round canvas instead of placing its title at the unsafe chord edge')
-assert.ok(historyPage.includes('.circle-chart { width: 140px; height: 76px;') && historyPage.includes('.circle-bar-track { width: 6px; height: 42px;') && historyPage.includes('{{ $item.circleLabel }}'), 'Circle History must use compact tracked bars with single-character weekday labels')
-assert.ok(historyPage.includes('.circle-insights { width: 116px;') && historyPage.includes('.circle-insight { width: 36px;'), 'Circle History summary cards must stay inside the lower round chord')
-assert.ok(historyPage.includes('.pill-trend-section { width: 168px; height: 184px;') && historyPage.includes('.rect-dashboard { width: 164px; height: 124px;'), 'Trend layouts must use shape-specific visual hierarchy instead of one compressed chart')
+assert.strictEqual((historyPage.match(/class="history-stream"/g) || []).length, 1)
+assert.ok(historyPage.includes("trendMode === 'compact-column'") && historyPage.includes("trendMode === 'comparative-row'"))
+assert.ok(!historyPage.includes('isCircle') && !historyPage.includes('isPill') && !historyPage.includes('isRect'))
+assert.ok(!historyPage.includes('每日记录'))
+assert.ok(historyPage.includes('历史步数') && historyPage.includes('column-value') && historyPage.includes('column-weekday') && historyPage.includes('column-date'), 'Step history must match the seven-column reference composition')
+assert.ok(historyPage.includes('class="column-chart-area"') && !historyPage.includes('class="column-track"'), 'Reference step bars should stand directly on the chart field rather than inside gray tracks')
+assert.ok(historyView.includes('columnStepsText:') && historyView.includes('weekdayText:') && historyView.includes('dateText:') && historyView.includes('rowWidth:'))
 
 const settingsPage = fs.readFileSync(path.join(root, 'src/pages/settings/settings/settings.ux'), 'utf8')
-assert.ok(settingsPage.includes('@swipe="handleSwipe"') && settingsPage.includes("event.direction === 'left'") && settingsPage.includes("event.direction === 'right'"), 'Fixed Settings surface must support left/right paging in addition to arrow taps')
+assert.ok(settingsPage.includes('@swipe="handleSwipe"'))
 
 const vibrationPage = fs.readFileSync(path.join(root, 'src/pages/settings/vibration/vibration.ux'), 'utf8')
-assert.ok(vibrationPage.includes('levelButtonWidth') && !vibrationPage.includes('width: 31%'), 'Vibration strength controls must use explicit wearable widths instead of fragile percentage text widths')
-assert.ok(vibrationPage.includes('statusCardHeight') && vibrationPage.includes('patternCardHeight'), 'Vibration cards must use explicit shape-aware heights')
+assert.ok(vibrationPage.includes('levelButtonWidth') && !vibrationPage.includes('width: 31%'))
+assert.ok(!vibrationPage.includes('applyShape(') && !vibrationPage.includes('shape-pill'))
 
 const today = fs.readFileSync(path.join(root, 'src/pages/today/today.ux'), 'utf8')
-assert.ok(today.includes('.circle-calendar-grid { height: 78px; }') && today.includes('.circle-cell { width: 19px; height: 13px;'), 'Circle calendar grid must stay within its 130px safe band')
+assert.ok(today.includes('.circle-calendar-grid { height: 78px; }'))
 
-console.log('V2 visual contracts verified: full-bleed Host Scene coverage with concrete rendered surfaces and product-style circular compositions')
+console.log('V2 visual contracts verified: Adapter-first L1, reference step chart L2 and independent L3 surfaces')

@@ -61,7 +61,10 @@ assert.ok(controller.includes("data[prefix + 'Source'] === 'live'"), 'Health con
 assert.ok(!controller.includes('var heartValues = [72'), 'Health controller must not seed a fabricated trend')
 assert.ok(!controller.includes('historyRepository.loadHourlyHeartRate'), 'Health must not pull demo-backed hourly history into the official data surface')
 assert.ok(store.includes('heartRateSource: heart.source'), 'Health store must preserve capability source provenance')
-assert.ok(page.includes('.card-value-row { width: 144px;'), 'Pill Health value rows must reserve the full inner card width')
-assert.ok(page.includes('.card-value { width: 58px; height: 34px;'), 'Pill Health values must have an explicit glyph-safe width for three-digit readings')
+assert.strictEqual((page.match(/class="health-stream"/g) || []).length, 1, 'Health must have one canonical L1 stream')
+assert.ok(!page.includes('isCircle') && !page.includes('isPill') && !page.includes('isRect'), 'Health presentation must not fork by form factor')
+assert.ok(page.includes('.heart-value { width: 58px; color: #FFFFFF; }'), 'Unified Health value must reserve glyph-safe width for three-digit heart rate')
+assert.ok(page.includes('line-height: {{ metaLineHeight }}px'), 'Health metadata must use explicit glyph-safe line boxes')
+assert.ok(page.includes('padding-bottom: {{ scrollPaddingBottom }}px'), 'Round scrolling must leave enough tail space to center the final detail card')
 
 console.log('Health official-data contracts verified')

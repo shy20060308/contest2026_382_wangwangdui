@@ -1,48 +1,61 @@
 var freedom = require('../freedom')
+var adapter = require('../adapter')
 
-function contentWidth(profile) {
-  var shape = profile && profile.formFactor ? profile.formFactor : 'rect'
-  if (shape === 'circle') return 148
-  if (shape === 'pill') return 168
-  return 164
-}
+function contentWidth(profile) { return adapter.contentWidth(profile) }
 
 function resolve(profile, scene, safe) {
-  var shape = profile && profile.formFactor ? profile.formFactor : 'rect'
-  var compact = shape === 'circle' || safe.height < 170
-  var tall = shape !== 'circle' && safe.height > 250
+  var plan = adapter.createPlan(profile, scene, safe, freedom.AUTO, 'settings-stream')
+  var compact = safe.height < 170
+  var tall = safe.height > 250
   var headerHeight = compact ? 20 : (tall ? 32 : 24)
   var gap = compact ? 5 : 8
-  var header = { left: safe.left, top: safe.top, width: safe.width, height: headerHeight }
-  var streamTop = safe.top + headerHeight + gap
-  var stream = { left: safe.left, top: streamTop, width: safe.width, height: Math.max(40, safe.bottom - streamTop) }
+  var preferred = adapter.contentWidth(profile)
 
-  if (shape === 'circle') {
-    // The topmost chord is intentionally narrow on a round display. Keep the
-    // header centered in that chord, then allow the scroll stream to widen once
-    // it reaches the body of the watch. This uses the screen instead of hiding
-    // it behind large top/bottom rectangular safe bands.
-    header = { left: 36, top: 18, width: 120, height: 20 }
-    streamTop = 42
-    stream = { left: 22, top: streamTop, width: 148, height: Math.max(40, Math.min(140, scene.height - streamTop - 10)) }
-  }
+  plan.header = adapter.fitBand(profile, scene, safe, {
+    top: safe.top,
+    height: headerHeight,
+    preferredWidth: preferred,
+    minWidth: Math.min(120, preferred),
+    edgePadding: 3,
+    fit: 'edges',
+    reposition: true
+  })
 
-  return {
-    freedom: freedom.describe(freedom.AUTO),
-    freedomLevel: freedom.AUTO,
-    strategy: 'auto',
-    shape: shape,
-    surface: 'settings-stream',
-    header: header,
-    stream: stream,
-    compact: compact,
-    tall: tall,
-    titleSize: compact ? 12 : (tall ? 18 : 14),
-    cardRadius: compact ? 16 : (tall ? 22 : 18),
-    cardGap: compact ? 6 : (tall ? 10 : 8),
-    bodySize: compact ? 8 : (tall ? 11 : 9),
-    valueSize: compact ? 18 : (tall ? 28 : 22)
+  var streamTop = plan.header.top + plan.header.height + gap
+  plan.stream = adapter.fitBand(profile, scene, safe, {
+    top: streamTop,
+    height: Math.max(40, safe.bottom - streamTop),
+    preferredWidth: preferred,
+    minWidth: Math.min(140, preferred),
+    edgePadding: 2,
+    fit: 'center',
+    reposition: false
+  })
+
+  var controlScale = adapter.heightScale(safe, 170, 1, 1.28)
+  var fontScale = adapter.heightScale(safe, 170, 1, 1.12)
+  var cardGap = Math.max(6, Math.round(6 * controlScale))
+  var controlGrid = adapter.grid(plan.stream, 3, cardGap)
+
+  plan.compact = compact
+  plan.tall = tall
+  plan.titleSize = Math.round(12 * fontScale)
+  plan.cardRadius = Math.round(16 * Math.min(controlScale, 1.25))
+  plan.cardGap = cardGap
+  plan.bodySize = Math.max(7, Math.round(7 * fontScale))
+  plan.valueSize = Math.round(18 * fontScale)
+  plan.testTitleSize = Math.round(10 * fontScale)
+  plan.controls = {
+    statusCardHeight: Math.round(64 * controlScale),
+    levelRowHeight: Math.round(34 * controlScale),
+    levelButtonWidth: controlGrid.itemWidth,
+    levelButtonHeight: Math.round(34 * controlScale),
+    testCardHeight: Math.round(56 * controlScale),
+    capabilityCardHeight: Math.round(64 * controlScale),
+    patternCardHeight: Math.round(50 * controlScale),
+    pagerHeight: Math.round(30 * Math.min(controlScale, 1.12))
   }
+  return plan
 }
 
 module.exports = { freedomLevel: freedom.AUTO, contentWidth: contentWidth, resolve: resolve }
