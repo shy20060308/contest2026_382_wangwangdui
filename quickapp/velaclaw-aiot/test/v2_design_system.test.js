@@ -103,7 +103,11 @@ test('迁移不改变 History 与 Workout 的稳定关键几何', function () {
   const workoutPlan = resolved(workout, profiles[0]).plan
   assert.strictEqual(workoutPlan.metricColumns, 2)
   assert.strictEqual(workoutPlan.durationSize, 27)
+  assert.strictEqual(workoutPlan.durationLineHeight, 31)
   assert.strictEqual(workoutPlan.actionSize, 8)
+  assert.deepStrictEqual(workoutPlan.header, { left: 32, top: 24, width: 128, height: 18 })
+  assert.deepStrictEqual(workoutPlan.metrics, { left: 30, top: 97, width: 132, height: 54 })
+  assert.strictEqual(workoutPlan.metricItemWidth * 2 + workoutPlan.metricGap, workoutPlan.metrics.width)
 })
 
 test('fixed composition guard 与当前 Today 安全高度一致', function () {
