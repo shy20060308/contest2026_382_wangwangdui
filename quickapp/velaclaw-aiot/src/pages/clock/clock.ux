@@ -11,7 +11,7 @@
 <import name="dashboardrect" src="../../components/watchfaces/dashboard_rect.ux"></import>
 
 <template>
-  <stack class="clock-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};" @swipe="handleSwipe" @longpress="openFaceSelector">
+  <stack class="clock-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; background-color: {{ faceBackground }};" @swipe="handleSwipe" @longpress="openFaceSelector" @touchstart="handleTouchStart" @touchmove="handleTouchMove" @touchend="handleTouchEnd">
     <div class="clock-scene" if="{{ profileReady }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px; background-color: {{ faceBackground }};" @click="markActive">
       <div class="pill-stage" if="{{ isPill }}">
         <sportface if="{{ faceId === 'sport' }}" onopen-health="openHealth" onopen-steps="openSteps" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-minutes="{{ displayMinutes }}" display-hours="{{ displayHours }}" face-accent="{{ faceAccent }}" battery-percent="{{ batteryPercent }}" battery-width="{{ batteryWidth }}" battery-color="{{ batteryColor }}" heart-rate-data="{{ heartRateData }}" current-heart-rate="{{ currentHeartRate }}" steps-text="{{ stepsText }}" steps-goal-text="{{ stepsGoalText }}"></sportface>
@@ -53,6 +53,21 @@ import clockDesign from '../../v2/design/specs/clock'
 import clockView from '../../v2/design/views/clock'
 import notificationView from '../../v2/design/views/notification'
 
+function getGestureDirection(dx, dy) {
+  var absX = Math.abs(dx)
+  var absY = Math.abs(dy)
+  if (Math.max(absX, absY) < 36) return ''
+  if (absY > absX * 1.2) return dy < 0 ? 'up' : 'down'
+  if (absX > absY * 1.2) return dx < 0 ? 'left' : 'right'
+  return ''
+}
+
+function consumeGestureEvent(event) {
+  if (!event) return
+  if (event.preventDefault) event.preventDefault()
+  if (event.stopPropagation) event.stopPropagation()
+}
+
 export default {
   private: {
     profileReady: false, isCircle: false, isPill: false, isRect: false, notificationOverlay: false, clockPlan: null, clockModel: null,
@@ -63,14 +78,15 @@ export default {
     powerModeText: '亮屏', powerRefreshText: '实时刷新', powerDimVisible: false, powerSleepVisible: false,
     notificationVisible: false, notificationType: '', notificationAppName: '', notificationAppIcon: '/common/logo.png', notificationContent: '', notificationContact: '', notificationPhone: '', notificationHangUp: false, notificationHangUpColor: '#FFFFFF',
     alpineDataGlassTop: '319px', alpineDataRowTop: '327px', alpineBatteryRowTop: '401px',
+    touchTracking: false, touchStartX: 0, touchStartY: 0, lastGestureAt: 0, lastGestureDirection: '',
     sceneWidth: 192, sceneHeight: 192, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
   },
 
   onInit() {
     var self = this
     this.controller = createClockController(function (model) { self.acceptClockModel(model) }, function (state) { self.applyNotification(state) })
-    pageRuntime.bind(this, { contentWidth: 168 }, function (profile, scene) {
-      var plan = clockDesign.resolve(profile, scene)
+    pageRuntime.bind(this, { contentWidth: 168 }, function (profile, scene, safe) {
+      var plan = clockDesign.resolve(profile, scene, safe)
       self.clockPlan = plan
       self.isCircle = plan.shape === 'circle'
       self.isPill = plan.shape === 'pill'
@@ -87,8 +103,8 @@ export default {
   },
 
   onShow() { this.pageVisible = true; if (this.profileReady) this.controller.start() },
-  onHide() { this.pageVisible = false; if (this.controller) this.controller.stop() },
-  onDestroy() { this.pageVisible = false; if (this.controller) this.controller.stop(); this.clockModel = null; this.heartRateData = []; this.analogTicks = [] },
+  onHide() { this.pageVisible = false; this.touchTracking = false; if (this.controller) this.controller.stop() },
+  onDestroy() { this.pageVisible = false; this.touchTracking = false; if (this.controller) this.controller.stop(); this.clockModel = null; this.heartRateData = []; this.analogTicks = [] },
   onBackPress() { this.controller.markActive('back-face-switch'); this.controller.switchFace(-1); return true },
 
   acceptClockModel(model) { this.clockModel = model; if (this.clockPlan) this.applyClockState(clockView.project(model, this.clockPlan)) },
@@ -104,15 +120,59 @@ export default {
   applyNotification(state) {
     var view = notificationView.project(state)
     this.notificationVisible = view.visible; this.notificationType = view.type; this.notificationAppName = view.appName; this.notificationAppIcon = view.appIcon; this.notificationContent = view.content; this.notificationContact = view.contact; this.notificationPhone = view.phone; this.notificationHangUp = view.hangUp; this.notificationHangUpColor = view.hangUpColor
+    if (this.notificationVisible) this.touchTracking = false
+  },
+
+  routeGesture(direction) {
+    if (!direction || this.powerSleepVisible || this.notificationVisible) return
+    var now = Date.now()
+    if (direction === this.lastGestureDirection && now - this.lastGestureAt < 260) return
+    this.lastGestureAt = now
+    this.lastGestureDirection = direction
+    this.controller.markActive('swipe-' + direction)
+    if (direction === 'up') navigation.push('/pages/applist')
+    else if (direction === 'left') this.controller.switchFace(1)
+    else if (direction === 'right') this.controller.switchFace(-1)
   },
 
   handleSwipe(event) {
-    if (!event || !event.direction || this.powerSleepVisible || this.notificationVisible) return
-    this.controller.markActive('swipe-' + event.direction)
-    if (event.direction === 'up') navigation.push('/pages/applist')
-    else if (event.direction === 'left') this.controller.switchFace(1)
-    else if (event.direction === 'right') this.controller.switchFace(-1)
+    if (!event || !event.direction) return
+    consumeGestureEvent(event)
+    this.routeGesture(event.direction)
   },
+
+  handleTouchStart(event) {
+    this.touchTracking = false
+    if (this.powerSleepVisible || this.notificationVisible || !event || !event.touches || !event.touches[0]) return
+    var point = event.touches[0]
+    this.touchStartX = point.pageX
+    this.touchStartY = point.pageY
+    this.touchTracking = true
+    this.controller.markActive('touch')
+  },
+
+  handleTouchMove(event) {
+    if (!this.touchTracking || !event || !event.touches || !event.touches[0]) return
+    var point = event.touches[0]
+    var direction = getGestureDirection(point.pageX - this.touchStartX, point.pageY - this.touchStartY)
+    if (!direction) return
+    if (direction !== 'right') consumeGestureEvent(event)
+    this.touchTracking = false
+    this.routeGesture(direction)
+  },
+
+  handleTouchEnd(event) {
+    if (!this.touchTracking || !event || !event.changedTouches || !event.changedTouches[0]) {
+      this.touchTracking = false
+      return
+    }
+    var point = event.changedTouches[0]
+    var direction = getGestureDirection(point.pageX - this.touchStartX, point.pageY - this.touchStartY)
+    if (direction && direction !== 'right') consumeGestureEvent(event)
+    this.touchTracking = false
+    this.routeGesture(direction)
+  },
+
   openFaceSelector() { if (this.powerSleepVisible || this.notificationVisible) return; this.controller.markActive('longpress'); navigation.push('/pages/watchface') },
   openHealth() { this.controller.markActive('complication-health'); navigation.push('/pages/heartrate') },
   openSteps() { this.controller.markActive('complication-steps'); navigation.push('/pages/steps') },
