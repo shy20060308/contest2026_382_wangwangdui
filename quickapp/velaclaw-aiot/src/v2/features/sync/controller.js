@@ -109,7 +109,6 @@ export function createSyncController(onChange) {
       transport.disconnect()
       state.connected = false
       state.phase = 'disconnected'
-      settingsStore.update('bluetoothConnected', false)
       return emit()
     }
     if (state.connected) {
@@ -121,7 +120,6 @@ export function createSyncController(onChange) {
       state.payloadChars = 0
       state.ackSent = 0
       state.ackTotal = 0
-      settingsStore.update('bluetoothConnected', false)
       return emit()
     }
     var epoch = lifecycleEpoch
@@ -132,7 +130,6 @@ export function createSyncController(onChange) {
         if (!isLive(epoch) || state.phase !== 'connecting') return
         state.connected = true
         state.phase = 'connected'
-        settingsStore.update('bluetoothConnected', true)
         emit()
       },
       fail: function () {
@@ -181,7 +178,7 @@ export function createSyncController(onChange) {
           state.progress = 100
           state.phase = 'completed'
           state.lastSyncAt = Date.now()
-          settingsStore.updateMany({ lastSyncAt: state.lastSyncAt, bluetoothConnected: true })
+          settingsStore.update('lastSyncAt', state.lastSyncAt)
           workoutRepository.markAllSynced(function () {
             if (isLive(epoch)) collect(null, epoch)
           })
@@ -209,7 +206,6 @@ export function createSyncController(onChange) {
     state.phase = 'idle'
     state.ackSent = 0
     state.ackTotal = 0
-    settingsStore.update('bluetoothConnected', false)
   }
 
   return {
