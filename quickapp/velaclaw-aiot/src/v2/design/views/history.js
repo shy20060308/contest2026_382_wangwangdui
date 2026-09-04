@@ -8,6 +8,12 @@ function formatDay(text) {
   return String(text || '').slice(5).replace('-', '/')
 }
 
+function compactDate(text) {
+  var parts = String(text || '').split('-')
+  if (parts.length < 3) return formatDay(text).replace('/', '.')
+  return Number(parts[1]) + '.' + Number(parts[2])
+}
+
 function weekdayLabel(text) {
   var parts = String(text || '').split('-')
   if (parts.length >= 3) {
@@ -55,12 +61,15 @@ function project(model, plan) {
       circleLabel: compact,
       pillLabel: rowLabel,
       displayLabel: rowMode ? rowLabel : compact,
+      weekdayText: weekdayLabel(item.date),
+      dateText: compactDate(item.date),
+      columnStepsText: Math.round(steps).toString(),
       shortSteps: steps < 1000 ? Math.round(steps).toString() : (steps / 1000).toFixed(1).replace('.0', '') + 'k',
       stepsText: formatNumber(steps),
       height: Math.max(5, Math.round(ratio * chartHeight)),
       pillWidth: comparativeWidth,
       rowWidth: comparativeWidth,
-      color: isToday ? '#FFD60A' : '#3A7DFF',
+      color: '#32ADE6',
       isToday: isToday
     })
   }
