@@ -25,6 +25,8 @@ const circleHost = scene.resolve(circle)
 assert.strictEqual(circleHost.height, 192, 'percentage viewport height must never be parsed as 100 logical pixels')
 const circleSafe = scene.safeForWidth(circle, 136)
 assert.ok(circleSafe.top > 0 && circleSafe.bottom < 192)
+assert.ok(circleSafe.top <= 12 && circleSafe.bottom >= 180, 'circle design viewport must use the near-full display instead of an inscribed rectangular crop')
+assert.ok(circleSafe.height >= 168, 'circle design viewport must leave enough vertical room for product-style scroll surfaces')
 
 const rect = { formFactor: 'rect', logicalHeight: 228, screenWidth: 432, screenHeight: 514, viewportTop: '0px', viewportHeight: '100%' }
 assert.strictEqual(scene.resolve(rect).height, 229, 'scene coverage may round upward to avoid a one-pixel bottom seam')
