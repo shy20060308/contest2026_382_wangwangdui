@@ -2,8 +2,8 @@
   <stack class="launcher-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
     <div class="launcher-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
       <stack class="honeycomb" if="{{ surface === 'honeycomb' }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;" @touchstart="onHoneyStart" @touchmove="onHoneyMove" @touchend="onHoneyEnd">
-        <div class="honey-app" for="{{ circleSlots }}" tid="slotKey" style="left: {{ $item.left }}px; top: {{ $item.top }}px; width: {{ $item.size }}px; height: {{ $item.size }}px; opacity: {{ $item.opacity }};" @click="tapHoney($item)"><image class="honey-icon" src="{{ $item.icon }}" style="width: {{ $item.size }}px; height: {{ $item.size }}px; border-radius: {{ $item.radius }}px;"></image></div>
-        <div class="honey-label"><text class="honey-name">{{ focusedLabel }}</text><text class="honey-hint">点按打开</text></div>
+        <div class="honey-app" for="{{ circleVisibleSlots }}" tid="slotKey" style="left: {{ $item.left }}px; top: {{ $item.top }}px; width: {{ $item.size }}px; height: {{ $item.size }}px; opacity: {{ $item.opacity }};" @click="tapHoney($item)"><image class="honey-icon" src="{{ $item.icon }}" style="width: {{ $item.size }}px; height: {{ $item.size }}px; border-radius: {{ $item.radius }}px;"></image></div>
+        <div class="honey-label" style="opacity: {{ honeyLabelOpacity }};"><text class="honey-name">{{ focusedLabel }}</text></div>
       </stack>
 
       <div class="list-surface" if="{{ surface === 'paged-list' }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;" @swipe="handleListSwipe">
@@ -39,7 +39,7 @@ export default {
     surface: '', pageApps: [], gridApps: [], pageText: '1 / 1', pageProgress: '100%', previousColor: '#3A3A3C', nextColor: '#3A3A3C', hasPrevious: false, hasNext: false,
     headerLeft: 12, headerTop: 24, headerWidth: 168, headerHeight: 28, contentLeft: 12, contentTop: 60, contentWidth: 168, contentHeight: 300, pagerLeft: 12, pagerTop: 400, pagerWidth: 168, pagerHeight: 24,
     itemHeight: 62, itemGap: 8, itemWidth: 79, itemRadius: 20, titleSize: 18, nameSize: 14, arrowSize: 20, iconSize: 40, iconRadius: 20, gridGap: 6,
-    circleSlots: [], focusedLabel: '', circleFocusIndex: 0, circlePanX: 0, circlePanY: 0, circleDragX: 0, circleDragY: 0, circleTouchActive: false,
+    circleSlots: [], circleVisibleSlots: [], focusedLabel: '', honeyLabelOpacity: 1, circleFocusIndex: 0, circlePanX: 0, circlePanY: 0, circleTouchActive: false, circleVelocityX: 0, circleVelocityY: 0,
     sceneWidth: 192, sceneHeight: 192, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
   },
   onInit() {
@@ -51,8 +51,8 @@ export default {
       self.controller.configure(self.plan.appIds, self.plan.pageSize)
     })
   },
-  onHide() { this.circleTouchActive = false },
-  onDestroy() { this.circleTouchActive = false; this.circleSlots = [] },
+  onHide() { this.circleTouchActive = false; this.stopHoneycombMotion() },
+  onDestroy() { this.circleTouchActive = false; this.stopHoneycombMotion(); this.circleSlots = []; this.circleVisibleSlots = [] },
   onBackPress() { navigation.back(); return true },
 
   applyPlan(plan) {
@@ -80,43 +80,130 @@ export default {
   initHoneycomb(apps) {
     this.circleSlots = honeycomb.buildSlots(apps)
     this.circleFocusIndex = 0
-    var target = honeycomb.panForSlot(this.circleSlots[0], 74)
-    this.circlePanX = target ? target.x : 0; this.circlePanY = target ? target.y : 0
-    this.refreshHoneycomb()
+    var target = honeycomb.panForSlot(this.circleSlots[0], 82)
+    this.circlePanX = target ? target.x : 0
+    this.circlePanY = target ? target.y : 0
+    this.renderHoneycomb()
   },
 
-  refreshHoneycomb() {
-    var frame = honeycomb.layoutSlots(this.circleSlots, this.circlePanX, this.circlePanY, this.circleDragX, this.circleDragY)
-    this.circleSlots = frame.slots
-    if (frame.nearestIndex >= 0) { this.circleFocusIndex = frame.slots[frame.nearestIndex].sourceIndex; this.focusedLabel = frame.slots[frame.nearestIndex].label }
+  renderHoneycomb() {
+    if (!this.circleSlots.length) { this.circleVisibleSlots = []; return }
+    var frame = honeycomb.layoutSlots(this.circleSlots, this.circlePanX, this.circlePanY, 0, 0)
+    this.circleVisibleSlots = honeycomb.visibleSlots(frame.slots)
+    if (frame.nearestIndex >= 0) {
+      this.circleFocusIndex = frame.nearestIndex
+      this.focusedLabel = this.circleSlots[frame.nearestIndex].label
+      this.circleFocusDistance = frame.nearestDistance
+    }
+  },
+
+  scheduleHoneycombLayout() {
+    if (this.honeyLayoutTimer) return
+    var self = this
+    this.honeyLayoutTimer = setTimeout(function () {
+      self.honeyLayoutTimer = null
+      self.renderHoneycomb()
+    }, honeycomb.FRAME_MS)
+  },
+
+  stopHoneycombMotion() {
+    clearTimeout(this.honeyLayoutTimer)
+    clearTimeout(this.honeyMotionTimer)
+    this.honeyLayoutTimer = null
+    this.honeyMotionTimer = null
+    this.circleVelocityX = 0
+    this.circleVelocityY = 0
   },
 
   onHoneyStart(event) {
     if (!event.touches || !event.touches[0]) return
-    var p = event.touches[0]; this.touchStartX = p.pageX; this.touchStartY = p.pageY; this.touchLastX = p.pageX; this.touchLastY = p.pageY; this.circleTouchActive = true; this.dragMoved = false
+    this.stopHoneycombMotion()
+    var p = event.touches[0]
+    this.touchStartX = p.pageX; this.touchStartY = p.pageY; this.touchLastX = p.pageX; this.touchLastY = p.pageY; this.touchLastAt = Date.now()
+    this.circleTouchActive = true; this.dragMoved = false; this.honeyLabelOpacity = 0
   },
   onHoneyMove(event) {
     if (!this.circleTouchActive || !event.touches || !event.touches[0]) return
-    var p = event.touches[0], dx = p.pageX - this.touchLastX, dy = p.pageY - this.touchLastY
-    this.touchLastX = p.pageX; this.touchLastY = p.pageY
+    if (event.preventDefault) event.preventDefault()
+    if (event.stopPropagation) event.stopPropagation()
+    var p = event.touches[0]
+    var now = Date.now()
+    var dx = p.pageX - this.touchLastX
+    var dy = p.pageY - this.touchLastY
+    var dt = Math.max(8, now - (this.touchLastAt || now))
+    this.touchLastX = p.pageX; this.touchLastY = p.pageY; this.touchLastAt = now
     if (Math.abs(p.pageX - this.touchStartX) > 6 || Math.abs(p.pageY - this.touchStartY) > 6) this.dragMoved = true
-    this.circleDragX = honeycomb.nextDragOffset(this.circleDragX, dx); this.circleDragY = honeycomb.nextDragOffset(this.circleDragY, dy); this.refreshHoneycomb()
+    var pan = honeycomb.nextPan(this.circleSlots, this.circlePanX, this.circlePanY, dx, dy)
+    this.circlePanX = pan.x; this.circlePanY = pan.y
+    this.circleVelocityX = this.circleVelocityX * 0.45 + (dx / dt) * 0.55
+    this.circleVelocityY = this.circleVelocityY * 0.45 + (dy / dt) * 0.55
+    this.scheduleHoneycombLayout()
   },
   onHoneyEnd(event) {
     if (!this.circleTouchActive) return
+    if (event && event.preventDefault) event.preventDefault()
+    if (event && event.stopPropagation) event.stopPropagation()
     this.circleTouchActive = false
     var p = event.changedTouches && event.changedTouches[0]
-    var totalX = p ? p.pageX - this.touchStartX : 0, totalY = p ? p.pageY - this.touchStartY : 0
-    if (totalX > 58 && Math.abs(totalY) < 30 && this.touchStartX < 26) { navigation.back(); return }
-    if (!this.dragMoved) return
-    var target = this.circleSlots[this.circleFocusIndex]
-    var pan = honeycomb.panForSlot(target)
-    if (pan) { this.circlePanX = pan.x; this.circlePanY = pan.y }
-    this.circleDragX = 0; this.circleDragY = 0; this.refreshHoneycomb(); this.suppressTapUntil = Date.now() + 180
+    var totalX = p ? p.pageX - this.touchStartX : 0
+    var totalY = p ? p.pageY - this.touchStartY : 0
+    if (totalX > 58 && Math.abs(totalY) < 30 && this.touchStartX < 26) { this.stopHoneycombMotion(); navigation.back(); return }
+    if (!this.dragMoved) { this.honeyLabelOpacity = 1; this.scheduleHoneycombLayout(); return }
+    this.suppressTapUntil = Date.now() + 220
+    this.startHoneyInertia(this.circleVelocityX, this.circleVelocityY)
   },
+
+  startHoneyInertia(vx, vy) {
+    clearTimeout(this.honeyMotionTimer)
+    this.circleVelocityX = Number(vx) || 0
+    this.circleVelocityY = Number(vy) || 0
+    this.honeyLabelOpacity = 0.45
+    var self = this
+    function tick() {
+      var speed = Math.sqrt(self.circleVelocityX * self.circleVelocityX + self.circleVelocityY * self.circleVelocityY)
+      if (speed < honeycomb.MIN_VELOCITY) { self.honeyMotionTimer = null; self.settleHoneycomb(); return }
+      var pan = honeycomb.nextPan(self.circleSlots, self.circlePanX, self.circlePanY, self.circleVelocityX * honeycomb.FRAME_MS, self.circleVelocityY * honeycomb.FRAME_MS)
+      self.circlePanX = pan.x; self.circlePanY = pan.y
+      self.circleVelocityX *= honeycomb.INERTIA_DECAY
+      self.circleVelocityY *= honeycomb.INERTIA_DECAY
+      self.renderHoneycomb()
+      self.honeyMotionTimer = setTimeout(tick, honeycomb.FRAME_MS)
+    }
+    tick()
+  },
+
+  settleHoneycomb() {
+    if (!this.circleSlots.length) return
+    var strict = honeycomb.clampPan(this.circleSlots, this.circlePanX, this.circlePanY, 0)
+    var frame = honeycomb.layoutSlots(this.circleSlots, strict.x, strict.y, 0, 0)
+    var target = strict
+    if (frame.nearestIndex >= 0 && frame.nearestDistance <= honeycomb.MAGNET_DISTANCE) target = honeycomb.panForSlot(this.circleSlots[frame.nearestIndex]) || strict
+    target = honeycomb.clampPan(this.circleSlots, target.x, target.y, 0)
+    this.animateHoneyPan(target)
+  },
+
+  animateHoneyPan(target) {
+    clearTimeout(this.honeyMotionTimer)
+    var startX = this.circlePanX
+    var startY = this.circlePanY
+    var startedAt = Date.now()
+    var duration = 144
+    var self = this
+    function tick() {
+      var progress = Math.min(1, (Date.now() - startedAt) / duration)
+      var eased = 1 - Math.pow(1 - progress, 3)
+      self.circlePanX = startX + (target.x - startX) * eased
+      self.circlePanY = startY + (target.y - startY) * eased
+      self.renderHoneycomb()
+      if (progress >= 1) { self.honeyMotionTimer = null; self.honeyLabelOpacity = 1; return }
+      self.honeyMotionTimer = setTimeout(tick, honeycomb.FRAME_MS)
+    }
+    tick()
+  },
+
   tapHoney(item) {
     if (!item || Date.now() < (this.suppressTapUntil || 0)) return
-    if (!item.isCenter) { var pan = honeycomb.panForSlot(item); if (pan) { this.circlePanX = pan.x; this.circlePanY = pan.y; this.circleDragX = 0; this.circleDragY = 0; this.refreshHoneycomb() } return }
+    this.stopHoneycombMotion()
     this.openApp(item)
   },
 
@@ -149,8 +236,8 @@ export default {
 .list-surface, .grid-surface { position: absolute; left: 0px; top: 0px; background-color: #000000; }
 .honeycomb { position: absolute; left: 0px; top: 0px; background-color: #000000; }
 .honey-app { position: absolute; } .honey-icon { object-fit: cover; }
-.honey-label { position: absolute; left: 48px; top: 151px; width: 96px; height: 32px; border-radius: 16px; background-color: #111317; flex-direction: column; justify-content: center; align-items: center; }
-.honey-name { width: 90px; color: #FFFFFF; font-size: 9px; font-weight: bold; text-align: center; } .honey-hint { width: 90px; color: #636366; font-size: 5px; text-align: center; margin-top: 1px; }
+.honey-label { position: absolute; left: 54px; top: 159px; width: 84px; height: 18px; border-radius: 9px; background-color: #111317; justify-content: center; align-items: center; }
+.honey-name { width: 78px; color: #FFFFFF; font-size: 8px; font-weight: bold; text-align: center; lines: 1; }
 .launcher-header, .pill-list, .rect-grid, .pager { position: absolute; }
 .launcher-header { flex-direction: row; justify-content: space-between; align-items: center; }
 .launcher-title { color: #FFFFFF; font-weight: bold; } .page-text { color: #636366; font-size: 8px; }
