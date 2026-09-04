@@ -2,12 +2,14 @@ import deviceProfile from '../system/device_profile'
 var scene = require('../design/scene')
 
 function applyHostViewport(page, profile) {
-  page.viewportClass = profile.viewportClass || ''
-  page.viewportPosition = profile.viewportPosition || 'relative'
-  page.viewportLeft = profile.viewportLeft || '0px'
-  page.viewportTop = profile.viewportTop || '0px'
-  page.viewportWidth = profile.viewportWidth || '100%'
-  page.viewportHeight = profile.viewportHeight || '100%'
+  var hostScene = scene.resolve(profile)
+  var betaPill = !!(profile && profile.isBetaPillViewport)
+  page.viewportClass = profile && profile.viewportClass ? profile.viewportClass : ''
+  page.viewportPosition = betaPill ? 'absolute' : ((profile && profile.viewportPosition) || 'relative')
+  page.viewportLeft = betaPill ? '0px' : ((profile && profile.viewportLeft) || '0px')
+  page.viewportTop = '0px'
+  page.viewportWidth = betaPill ? hostScene.width + 'px' : ((profile && profile.viewportWidth) || '100%')
+  page.viewportHeight = betaPill ? hostScene.height + 'px' : '100%'
 }
 
 function resolveContentWidth(profile, value) {
