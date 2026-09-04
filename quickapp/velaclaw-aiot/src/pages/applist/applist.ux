@@ -6,7 +6,7 @@
         <div class="honey-label"><text class="honey-name">{{ focusedLabel }}</text><text class="honey-hint">点按打开</text></div>
       </stack>
 
-      <div class="list-surface" if="{{ surface === 'paged-list' }}" @swipe="handleListSwipe">
+      <div class="list-surface" if="{{ surface === 'paged-list' }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;" @swipe="handleListSwipe">
         <div class="launcher-header" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;"><text class="launcher-title" style="font-size: {{ titleSize }}px;">应用</text><text class="page-text">{{ pageText }}</text></div>
         <div class="pill-list" style="left: {{ contentLeft }}px; top: {{ contentTop }}px; width: {{ contentWidth }}px; height: {{ contentHeight }}px;">
           <div class="pill-app" for="{{ pageApps }}" tid="id" @click="openApp($item)" style="width: {{ contentWidth }}px; height: {{ itemHeight }}px; margin-bottom: {{ itemGap }}px; border-radius: {{ itemRadius }}px;"><image class="pill-icon" src="{{ $item.icon }}" style="width: {{ iconSize }}px; height: {{ iconSize }}px; border-radius: {{ iconRadius }}px;"></image><text class="pill-name" style="font-size: {{ nameSize }}px;">{{ $item.label }}</text><text class="pill-arrow" style="font-size: {{ arrowSize }}px;">›</text></div>
@@ -14,7 +14,7 @@
         <div class="pager" style="left: {{ pagerLeft }}px; top: {{ pagerTop }}px; width: {{ pagerWidth }}px; height: {{ pagerHeight }}px;"><text class="pager-button" style="color: {{ previousColor }};" @click="previousPage">‹</text><div class="pager-track"><div class="pager-fill" style="width: {{ pageProgress }};"></div></div><text class="pager-button" style="color: {{ nextColor }};" @click="nextPage">›</text></div>
       </div>
 
-      <div class="grid-surface" if="{{ surface === 'designed-grid' }}" @swipe="handleListSwipe">
+      <div class="grid-surface" if="{{ surface === 'designed-grid' }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;" @swipe="handleListSwipe">
         <div class="launcher-header" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;"><text class="launcher-title" style="font-size: {{ titleSize }}px;">应用</text><text class="page-text">{{ pageText }}</text></div>
         <div class="rect-grid" style="left: {{ contentLeft }}px; top: {{ contentTop }}px; width: {{ contentWidth }}px; height: {{ contentHeight }}px;">
           <div class="grid-app" for="{{ gridApps }}" tid="id" @click="openApp($item)" style="width: {{ itemWidth }}px; height: {{ itemHeight }}px; margin-right: {{ $item.marginRight }}px; margin-bottom: {{ $item.marginBottom }}px; border-radius: {{ itemRadius }}px; border-color: {{ $item.accent }};"><image class="grid-icon" src="{{ $item.icon }}" style="width: {{ iconSize }}px; height: {{ iconSize }}px; border-radius: {{ iconRadius }}px;"></image><text class="grid-name" style="font-size: {{ nameSize }}px;">{{ $item.label }}</text><div class="grid-accent" style="background-color: {{ $item.accent }};"></div></div>
@@ -146,6 +146,7 @@ export default {
 <style>
 .launcher-root, .launcher-scene { background-color: #000000; }
 .launcher-scene { position: absolute; left: 0px; top: 0px; }
+.list-surface, .grid-surface { position: absolute; left: 0px; top: 0px; background-color: #000000; }
 .honeycomb { position: absolute; left: 0px; top: 0px; background-color: #000000; }
 .honey-app { position: absolute; } .honey-icon { object-fit: cover; }
 .honey-label { position: absolute; left: 48px; top: 151px; width: 96px; height: 32px; border-radius: 16px; background-color: #111317; flex-direction: column; justify-content: center; align-items: center; }
