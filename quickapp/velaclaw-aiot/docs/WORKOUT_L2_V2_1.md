@@ -45,11 +45,26 @@ This makes pause a real product state rather than only replacing one button labe
 
 ## Form-factor policy
 
-Circle, Pill and Rect keep their existing L2 geometry from `src/v2/design/specs/workout.js`. State styling is semantic and does not alter the verified safe regions.
+Circle, Pill and Rect keep independent L2 compositions from `src/v2/design/specs/workout.js`.
 
-- Circle remains the compact focus composition.
+- Circle uses chord-aware fixed bands rather than reusing one rectangular safe width from top to bottom.
 - Pill remains the long-axis session composition.
 - Rect remains the wider dashboard composition.
+
+### Circle geometry
+
+The verified Circle composition is:
+
+- header: `32,24,128,18`;
+- timer hero: `24,45,144,48`;
+- metrics: `30,97,132,54`;
+- actions: `42,153,108,21`.
+
+The timer owns an explicit `31px` line box so large digits are not clipped by Vela text metrics.
+
+The 2×2 metrics grid has two `64px` cards per row with one `4px` horizontal gap. Only the left card in each row owns `margin-right`; giving both cards a right margin makes the row wider than 132px and forces the cards into a single vertical column.
+
+Workout History also uses a real round-screen title chord: `32,24,128,20`. The title and Back action use the full header line-height instead of starting at the generic near-edge safe top.
 
 ## Validation
 
@@ -67,4 +82,6 @@ Smoke test all three form factors with this sequence:
 2. verify heart rate stays `--` until the official health service supplies a sample;
 3. pause and confirm duration/metrics stop updating and the UI changes to the paused visual state;
 4. resume and confirm runtime resources and live values continue;
-5. finish and verify history receives the real average heart rate when available, otherwise `--`.
+5. finish and verify history receives the real average heart rate when available, otherwise `--`;
+6. on Circle, verify the mode/status header, full timer digits, four metric cards and bottom actions are all visible;
+7. on Circle Workout History, verify `运动记录 / 返回` is not clipped by the upper arc.
