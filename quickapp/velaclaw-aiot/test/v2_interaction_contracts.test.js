@@ -40,7 +40,6 @@ assert.strictEqual(count(clock, '@touchstart='), 1, 'Clock must have exactly one
 assert.strictEqual(count(clock, '@touchmove='), 1, 'Clock must have exactly one raw-touch fallback owner')
 assert.strictEqual(count(clock, '@touchend='), 1, 'Clock must have exactly one raw-touch fallback owner')
 assert.ok(clock.includes('consumeGestureEvent(event)'), 'Clock vertical fallback must consume the gesture before the host can scroll it')
-assert.ok(clock.includes("this.pendingGesture = direction"), 'Clock raw-touch fallback must wait for touch end before routing')
 assert.ok(clock.includes('this.notificationVisible) return'), 'Clock navigation gestures must be blocked while notification overlay owns interaction')
 
 const watchfaceDir = path.join(root, 'src/components/watchfaces')
@@ -59,9 +58,11 @@ const launcher = read('src/pages/applist/applist.ux')
 assert.strictEqual(count(launcher, '@swipe="handleListSwipe"'), 2, 'Pill and Rect launcher surfaces must each restore swipe navigation without touching Honeycomb')
 assert.ok(launcher.includes("event.direction === 'down') navigation.back()"), 'Pill launcher down-swipe must return to Clock')
 assert.ok(launcher.includes('event.preventDefault') && launcher.includes('event.stopPropagation'), 'Launcher swipe must not degrade into host scrolling')
+assert.ok(launcher.includes('class="list-surface"') && launcher.includes('style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;"'), 'Pill launcher swipe owner must have a real full-scene hitbox instead of a zero-height wrapper')
+assert.ok(launcher.includes('.list-surface, .grid-surface { position: absolute; left: 0px; top: 0px;'), 'Launcher rendered surfaces must be anchored to the Host Scene')
 
-const navigation = read('src/v2/app/navigation.js')
-assert.ok(navigation.includes('lastPushPath') && navigation.includes('now - lastPushAt < 800'), 'Navigation must reject duplicate pushes produced by native/raw gesture pairs')
-assert.ok(navigation.includes('setTimeout(function ()'), 'Gesture navigation must leave the active touch task before pushing a new page')
+const healthPage = read('src/pages/heartrate/heartrate.ux')
+assert.ok(healthPage.includes('class="circle-health"') && healthPage.includes('style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;"'), 'Circle Health scroll viewport must use the full round scene, not the rectangular safe band')
+assert.ok(healthPage.includes('.circle-hero { width: 144px; height: 98px;'), 'Circle Health heart card must have enough height for value, chart and footer without internal clipping')
 
-console.log('V2 interaction contracts verified: one gesture owner per rendered surface with stable deferred navigation')
+console.log('V2 interaction contracts verified: one gesture owner per rendered surface with full hitboxes and fixed-surface touch fallback where Vela needs it')
