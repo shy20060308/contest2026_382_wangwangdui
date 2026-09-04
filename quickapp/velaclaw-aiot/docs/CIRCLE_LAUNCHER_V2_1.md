@@ -19,13 +19,13 @@ Circle Launcher 是 L3 Free surface。它可以针对圆屏采用二维蜂窝交
 - ring 2：12 个格；
 - 后续每一环增加 `6 * ring` 个格。
 
-`buildSlots(apps)` 必须为每个 App 生成唯一 `gridX/gridY`。禁止通过 `% coords.length` 循环复用固定坐标。当前 12 个应用因此不会再让第 12 个图标复用中心格，解决“运动 / 今日概况”重合。
+`buildSlots(apps)` 必须为每个 App 生成唯一 `gridX/gridY`。禁止通过 `% coords.length` 循环复用固定坐标。
 
 ## 渲染效率
 
 ### Frame-throttled layout
 
-`touchmove` 只更新 pan / velocity，并请求下一次 layout。一个 frame window 内重复 touchmove 合并为一次 `layoutSlots()`。当前 frame cadence 为 24ms，目标是稳定的 wearable 交互，而不是让输入事件频率直接驱动渲染频率。
+`touchmove` 只更新 pan / velocity，并请求下一次 layout。一个 frame window 内重复 touchmove 合并为一次 `layoutSlots()`。
 
 ### Visible-slot culling
 
@@ -39,7 +39,7 @@ Circle Launcher 是 L3 Free surface。它可以针对圆屏采用二维蜂窝交
 
 ### Drag
 
-拖动使用阻尼后的二维 pan。越过可用网格边界时进入有限 rubber-band 区域。
+拖动使用阻尼后的二维 pan。越过可用内容边界时进入有限 rubber-band 区域。
 
 ### Release
 
@@ -53,28 +53,20 @@ Circle Launcher 是 L3 Free surface。它可以针对圆屏采用二维蜂窝交
 
 只要没有被刚结束的拖动 suppress，任意可见 App 单击直接路由打开。中心放大仅表示视觉焦点，不是打开 App 的前置条件。
 
-Tap 路径在 `touchend` 中不会调用 `preventDefault()`；只有已经确认的 drag 或 edge-back 才消费事件，避免父级 raw-touch 识别器吞掉子图标 click。
-
 ### Back
 
 Honeycomb 为二维自由拖动 surface，因此普通 up/down/left/right drag 都属于浏览。只有从左边缘开始的明确右滑手势触发 Back。
-
-## 焦点标签
-
-永久的“点按打开”提示已经删除。底部只保留当前最近 App 名称，并在拖动时隐藏、惯性时弱化，避免提示条长期占据视觉注意力。
 
 ## 生命周期
 
 `onHide/onDestroy` 必须取消 layout timer 与 inertia timer。页面对象仍存在时不得清空 pan，所以从 App 返回 Launcher 应恢复此前位置。
 
-## 验证
+## Smoke test
 
-`npm run honeycomb:logic` / `npm run check` 覆盖：
+Circle Launcher 验证时至少检查：
 
-- 1/7/19/37 动态 hex ring；
-- 12 个 App 唯一坐标；
-- 最小图标间隙；
-- visible-slot culling；
-- bounded rubber-band；
-- wearable frame/inertia 参数；
-- 单击直接打开与 edge-back 交互 contract。
+- 12 个现有 App 坐标唯一，`运动` 与 `今日概况` 不再重合；
+- 任意可见 App 一次点击即可打开；
+- 快速拖动有短惯性，慢拖不被强制吸附；
+- 左边缘右滑返回，普通二维拖动不触发 Back；
+- 打开 Workout 后返回，Launcher pan 不主动重置。
