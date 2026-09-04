@@ -1,11 +1,11 @@
 <template>
   <stack class="steps-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
     <div class="steps-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
-      <text class="steps-title" style="left: {{ sceneSafeLeft }}px; top: {{ sceneSafeTop }}px; width: {{ contentWidth }}px; font-size: {{ titleSize }}px;">运动</text>
-      <div class="history-entry" @click="goToHistory" style="left: {{ sceneSafeLeft }}px; top: {{ historyTop }}px; width: {{ contentWidth }}px; height: {{ historyHeight }}px; border-radius: {{ historyRadius }}px;">
+      <text class="steps-title" style="left: {{ titleLeft }}px; top: {{ titleTop }}px; width: {{ contentWidth }}px; font-size: {{ titleSize }}px;">运动</text>
+      <div class="history-entry" @click="goToHistory" style="left: {{ historyLeft }}px; top: {{ historyTop }}px; width: {{ contentWidth }}px; height: {{ historyHeight }}px; border-radius: {{ historyRadius }}px;">
         <text class="history-title" style="font-size: {{ historyTitleSize }}px;">7日趋势</text><text class="history-sub" style="font-size: {{ historySubSize }}px;">查看历史记录 ›</text>
       </div>
-      <scroll class="metric-scroll" scroll-y="true" style="left: {{ sceneSafeLeft }}px; top: {{ streamTop }}px; width: {{ contentWidth }}px; height: {{ streamHeight }}px;">
+      <scroll class="metric-scroll" scroll-y="true" style="left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ contentWidth }}px; height: {{ streamHeight }}px;">
         <div class="metric-card" for="{{ metrics }}" tid="id" style="width: {{ contentWidth }}px; min-height: {{ metricHeight }}px; margin-bottom: {{ metricGap }}px; border-radius: {{ metricRadius }}px;">
           <div class="metric-head"><text class="metric-name" style="font-size: {{ labelSize }}px; color: {{ $item.color }};">{{ $item.name }}</text><text class="metric-goal" style="font-size: {{ goalSize }}px;">目标 {{ $item.goal }} {{ $item.unit }}</text></div>
           <text class="metric-value" style="font-size: {{ valueSize }}px; color: {{ $item.color }};">{{ $item.current }}</text>
@@ -25,44 +25,25 @@
 import pageRuntime from '../../v2/app/page_runtime'
 import navigation from '../../v2/app/navigation'
 import { createActivityController } from '../../v2/features/activity/controller'
+import activityDesign from '../../v2/design/specs/activity'
 var activityView = require('../../v2/design/views/activity')
-
-function clamp(value, min, max) { return Math.max(min, Math.min(max, value)) }
 
 export default {
   private: {
     metrics: [], contentWidth: 148,
-    titleSize: 14, historyTop: 52, historyHeight: 34, historyRadius: 17, historyTitleSize: 9, historySubSize: 7,
-    streamTop: 92, streamHeight: 80, metricHeight: 118, metricGap: 9, metricRadius: 18,
+    titleLeft: 22, titleTop: 35, titleSize: 14,
+    historyLeft: 22, historyTop: 52, historyHeight: 34, historyRadius: 17, historyTitleSize: 9, historySubSize: 7,
+    streamLeft: 22, streamTop: 92, streamHeight: 80, metricHeight: 118, metricGap: 9, metricRadius: 18,
     labelSize: 9, goalSize: 7, valueSize: 24, chartHeight: 52, barColumnWidth: 18, barWidth: 10, tickSize: 6,
-    sceneWidth: 192, sceneHeight: 192, sceneSafeLeft: 22, sceneSafeTop: 35, sceneSafeHeight: 120,
+    sceneWidth: 192, sceneHeight: 192,
     viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
   },
   onInit() {
     var self = this
     this.controller = createActivityController(function (metrics) { self.applyMetrics(metrics) })
-    pageRuntime.bind(this, { contentWidth: function (profile) { return profile.formFactor === 'circle' ? 148 : (profile.formFactor === 'rect' ? 164 : 168) } }, function (profile, scene, safe) {
-      self.contentWidth = safe.width
-      var tall = safe.height > 250
-      var compact = safe.height < 170
-      self.titleSize = compact ? 13 : (tall ? 17 : 15)
-      self.historyHeight = compact ? 30 : (tall ? 42 : 34)
-      self.historyRadius = Math.round(self.historyHeight / 2)
-      self.historyTitleSize = compact ? 8 : (tall ? 11 : 9)
-      self.historySubSize = compact ? 6 : (tall ? 9 : 7)
-      self.historyTop = safe.top + (compact ? 24 : 30)
-      self.streamTop = self.historyTop + self.historyHeight + (compact ? 5 : 8)
-      self.streamHeight = Math.max(40, safe.bottom - self.streamTop)
-      self.metricHeight = compact ? 100 : (tall ? 142 : 118)
-      self.metricGap = compact ? 6 : 10
-      self.metricRadius = compact ? 15 : 20
-      self.labelSize = compact ? 8 : (tall ? 11 : 9)
-      self.goalSize = compact ? 6 : (tall ? 9 : 7)
-      self.valueSize = compact ? 20 : (tall ? 30 : 24)
-      self.chartHeight = clamp(Math.round(self.metricHeight * 0.42), 40, 62)
-      self.barColumnWidth = Math.round((self.contentWidth / 8) * 100) / 100
-      self.barWidth = clamp(Math.round(self.barColumnWidth * 0.55), 9, 13)
-      self.tickSize = compact ? 5 : 7
+    pageRuntime.bind(this, { contentWidth: function (profile) { return activityDesign.contentWidth(profile) } }, function (profile, scene, safe) {
+      var plan = activityDesign.resolve(profile, scene, safe)
+      self.applyPlan(plan)
       self.controller.start()
     })
   },
@@ -70,6 +51,14 @@ export default {
   onHide() { this.metrics = [] },
   onDestroy() { this.metrics = [] },
   onBackPress() { navigation.back(); return true },
+  applyPlan(plan) {
+    this.contentWidth = plan.stream.width
+    this.titleLeft = plan.title.left; this.titleTop = plan.title.top; this.titleSize = plan.titleSize
+    this.historyLeft = plan.history.left; this.historyTop = plan.history.top; this.historyHeight = plan.history.height; this.historyRadius = plan.historyRadius; this.historyTitleSize = plan.historyTitleSize; this.historySubSize = plan.historySubSize
+    this.streamLeft = plan.stream.left; this.streamTop = plan.stream.top; this.streamHeight = plan.stream.height
+    this.metricHeight = plan.metricHeight; this.metricGap = plan.metricGap; this.metricRadius = plan.metricRadius
+    this.labelSize = plan.labelSize; this.goalSize = plan.goalSize; this.valueSize = plan.valueSize; this.chartHeight = plan.chartHeight; this.barColumnWidth = plan.barColumnWidth; this.barWidth = plan.barWidth; this.tickSize = plan.tickSize
+  },
   applyMetrics(metrics) { this.metrics = activityView.present(metrics, this.chartHeight) },
   goToHistory() { navigation.push('/pages/history') }
 }
