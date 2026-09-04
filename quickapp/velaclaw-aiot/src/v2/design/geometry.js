@@ -1,6 +1,7 @@
 var DESIGN_WIDTH = 192
 var PILL_GESTURE_BAR = 36
 var COMFORT_PADDING = 2
+var CIRCLE_EDGE_MARGIN = 8
 
 function positive(value, fallback) {
   var number = Number(value)
@@ -44,9 +45,13 @@ function safe(profile, contentWidth, padding) {
 
   if (shape === 'circle') {
     var circleWidth = positive(contentWidth, 136)
-    var band = circleBand(circleWidth)
-    var top = band.top + comfort
-    var bottom = Math.max(top, band.bottom - comfort)
+    // A circular watch is not an inscribed rectangle. Keep the scroll/design
+    // viewport almost full height and let the physical round mask trim only the
+    // extreme corners. Individual compositions still control horizontal width.
+    // This avoids the large artificial black bands produced by circleBand().
+    var edge = CIRCLE_EDGE_MARGIN + comfort
+    var top = Math.min(DESIGN_WIDTH / 2, edge)
+    var bottom = Math.max(top, DESIGN_WIDTH - edge)
     return { shape: shape, contentWidth: circleWidth, left: Math.round((DESIGN_WIDTH - circleWidth) / 2), top: top, bottom: bottom, height: bottom - top, gestureBar: 0 }
   }
 
@@ -66,6 +71,7 @@ module.exports = {
   DESIGN_WIDTH: DESIGN_WIDTH,
   PILL_GESTURE_BAR: PILL_GESTURE_BAR,
   COMFORT_PADDING: COMFORT_PADDING,
+  CIRCLE_EDGE_MARGIN: CIRCLE_EDGE_MARGIN,
   logicalHeight: logicalHeight,
   circleBand: circleBand,
   capsuleInset: capsuleInset,
