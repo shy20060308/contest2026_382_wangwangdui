@@ -1,13 +1,8 @@
 var freedom = require('../freedom')
+var assisted = require('../assisted')
 
-function region(left, top, width, height) { return { left: left, top: top, width: width, height: height } }
-
-function contentWidth(profile) {
-  var shape = profile && profile.formFactor ? profile.formFactor : 'rect'
-  if (shape === 'circle') return 148
-  if (shape === 'pill') return 168
-  return 164
-}
+function region(left, top, width, height) { return assisted.region(left, top, width, height) }
+function contentWidth(profile) { return assisted.contentWidth(profile) }
 
 function finalize(plan) {
   plan.metricItemWidth = Math.floor((plan.metrics.width - plan.metricGap * (plan.metricColumns - 1)) / plan.metricColumns)
@@ -15,19 +10,12 @@ function finalize(plan) {
   return plan
 }
 
-function base(shape) {
-  return {
-    freedom: freedom.describe(freedom.ASSISTED),
-    freedomLevel: freedom.ASSISTED,
-    strategy: 'assisted',
-    shape: shape,
-    surface: 'rect-dashboard'
-  }
-}
-
 function resolve(profile, scene, safe) {
-  var shape = profile && profile.formFactor ? profile.formFactor : 'rect'
-  var plan = base(shape)
+  var plan = assisted.createPlan(profile, safe, {
+    circle: 'circle-focus',
+    pill: 'pill-session',
+    rect: 'rect-dashboard'
+  })
   plan.header = region(safe.left, safe.top, safe.width, 24)
   plan.hero = region(safe.left, safe.top + 30, safe.width, 64)
   plan.metrics = region(safe.left, safe.top + 100, safe.width, 66)
@@ -46,8 +34,7 @@ function resolve(profile, scene, safe) {
   plan.actionSize = 11
   plan.radius = 14
 
-  if (shape === 'circle') {
-    plan.surface = 'circle-focus'
+  if (plan.shape === 'circle') {
     plan.header = region(safe.left, safe.top, safe.width, 18)
     plan.hero = region(safe.left + 9, safe.top + 20, safe.width - 18, 42)
     plan.metrics = region(safe.left, safe.top + 65, safe.width, 58)
@@ -68,10 +55,9 @@ function resolve(profile, scene, safe) {
     return finalize(plan)
   }
 
-  if (shape === 'pill') {
+  if (plan.shape === 'pill') {
     var contentTop = safe.top
     var actionsHeight = 48
-    plan.surface = 'pill-session'
     plan.header = region(safe.left, contentTop, safe.width, 32)
     plan.hero = region(safe.left, contentTop + 42, safe.width, 108)
     plan.metrics = region(safe.left, contentTop + 164, safe.width, 166)
