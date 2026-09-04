@@ -48,6 +48,7 @@ function project(model, plan) {
     var ratio = Math.max(0, Math.min(1, steps / maxSteps))
     var isToday = i === records.length - 1
     bars.push({
+      date: String(item.date || i),
       label: formatDay(item.date),
       pillLabel: isToday ? '今天' : weekdayLabel(item.date),
       shortSteps: compactSteps(steps),
