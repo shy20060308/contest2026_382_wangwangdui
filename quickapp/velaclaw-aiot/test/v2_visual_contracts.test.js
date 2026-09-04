@@ -7,10 +7,10 @@ const root = path.resolve(__dirname, '..')
 const specsDir = path.join(root, 'src/v2/design/specs')
 
 const profiles = [
-  { name: 'circle-192', formFactor: 'circle', logicalHeight: 192, viewportTop: '0px', viewportHeight: '192px', width: 148 },
-  { name: 'rect-228', formFactor: 'rect', logicalHeight: 228, viewportTop: '0px', viewportHeight: '228px', width: 164 },
-  { name: 'band9-pill', formFactor: 'pill', logicalHeight: 490, viewportTop: '24px', viewportHeight: '466px', width: 168 },
-  { name: 'band10-pill', formFactor: 'pill', logicalHeight: 471, viewportTop: '24px', viewportHeight: '447px', width: 168 }
+  { name: 'circle-192', formFactor: 'circle', logicalHeight: 192, screenWidth: 466, screenHeight: 466, viewportTop: '0px', viewportHeight: '100%', width: 148 },
+  { name: 'rect-228', formFactor: 'rect', logicalHeight: 228, screenWidth: 432, screenHeight: 514, viewportTop: '0px', viewportHeight: '100%', width: 164 },
+  { name: 'band9-pill', formFactor: 'pill', logicalHeight: 490, screenWidth: 192, screenHeight: 490, viewportTop: '24px', viewportHeight: '466px', width: 168 },
+  { name: 'band10-pill', formFactor: 'pill', logicalHeight: 471, screenWidth: 212, screenHeight: 520, viewportTop: '24px', viewportHeight: '447px', width: 168 }
 ]
 
 function validateBox(box, host, label) {
@@ -35,14 +35,15 @@ profiles.forEach(profile => {
   const host = scene.resolve(profile)
   const safe = scene.safeForWidth(profile, profile.width)
   assert.strictEqual(host.width, 192, profile.name + ' must use the 192 logical design width')
-  assert.ok(host.height > 0, profile.name + ' Host Scene must have positive height')
+  assert.ok(host.height >= profile.logicalHeight, profile.name + ' Host Scene must cover the full logical display')
+  assert.strictEqual(host.hostTop, 0, profile.name + ' Host Scene must start at the physical top edge')
   assert.ok(safe.left >= 0 && safe.left + safe.width <= host.width, profile.name + ' safe width must stay inside Host Scene')
   assert.ok(safe.top >= 0 && safe.bottom <= host.height, profile.name + ' safe vertical band must stay inside Host Scene')
   assert.ok(safe.height > 0, profile.name + ' must retain a usable safe region')
   if (profile.formFactor === 'circle') assert.ok(safe.top > 0 && safe.bottom < host.height, 'circle content must respect curved caps')
   if (profile.formFactor === 'pill') {
     assert.strictEqual(safe.gestureBar, 36, profile.name + ' must reserve the Pill gesture area')
-    assert.ok(safe.bottom <= host.height - 12, profile.name + ' must keep content away from the bottom gesture edge')
+    assert.ok(safe.top > 0 && safe.bottom < host.height, profile.name + ' safe content must stay away from both capsule caps')
   }
 })
 
@@ -69,6 +70,10 @@ fs.readdirSync(specsDir).filter(name => name.endsWith('.js')).forEach(name => {
         assert.ok(plan.requiredHeights[surface] <= safe.height, 'Today ' + surface + ' must fit safe height on ' + profile.name)
       })
     }
+    if (name === 'clock.js' && profile.formFactor === 'pill') {
+      const batteryTop = parseInt(plan.alpineBatteryRowTop, 10)
+      assert.ok(batteryTop + 16 <= safe.bottom, 'Alpine battery row must remain above the Pill gesture-safe bottom on ' + profile.name)
+    }
     walkPlan(plan, host, name + ':' + profile.name, [])
   })
 })
@@ -90,8 +95,13 @@ designFiles.forEach(full => {
 })
 
 const pageRuntime = fs.readFileSync(path.join(root, 'src/v2/app/page_runtime.js'), 'utf8')
-assert.ok(pageRuntime.includes('applyHostViewport(page, profile)'), 'pages must render inside the Host Scene supplied by Vela')
-assert.ok(!pageRuntime.includes('applyDesign') && !pageRuntime.includes('viewportHeight = profile.logicalHeight'), 'Design Engine must never enlarge the host viewport to make a composition fit')
+assert.ok(pageRuntime.includes('applyHostViewport(page, profile)'), 'pages must share one V2 viewport policy')
+assert.ok(pageRuntime.includes("page.viewportTop = '0px'"), 'V2 pages must render from the physical top edge instead of inheriting a cropped beta inset')
+assert.ok(pageRuntime.includes("page.viewportHeight = betaPill ? hostScene.height + 'px' : '100%'"), 'beta Pill pages must expand to the full logical canvas while normal devices retain full viewport height')
+
+const sceneSource = fs.readFileSync(path.join(root, 'src/v2/design/scene.js'), 'utf8')
+assert.ok(sceneSource.includes('Math.ceil(screenHeight * geometry.DESIGN_WIDTH / screenWidth)'), 'Host Scene coverage must round upward to prevent one-pixel bottom seams')
+assert.ok(!sceneSource.includes("parseFloat(String(value || ''))"), 'Host Scene must never parse percentage CSS dimensions as logical pixels')
 
 const clock = fs.readFileSync(path.join(root, 'src/pages/clock/clock.ux'), 'utf8')
 ;['sport_rect.ux', 'simple_rect.ux', 'dashboard_rect.ux'].forEach(name => {
@@ -102,8 +112,9 @@ assert.ok(clock.includes('<div class="rect-stage" if="{{ isRect }}">'), 'Rect Cl
 assert.ok(clock.includes('<div class="circle-stage" if="{{ isCircle }}">'), 'Circle Clock must have its own composition stage')
 assert.ok(clock.includes('<sportrect') && clock.includes('<simplerect') && clock.includes('<dashboardrect'), 'Rect Clock must render dedicated Rect watchfaces')
 assert.ok(!clock.includes('rectangular-stage" if="{{ !isCircle }}'), 'Rect must never fall back to a shared Pill/Rect composition')
+assert.ok(clock.includes('background-color: {{ faceBackground }};'), 'Clock root must paint a face-matched fallback behind the full scene')
 
 const today = fs.readFileSync(path.join(root, 'src/pages/today/today.ux'), 'utf8')
 assert.ok(today.includes('.circle-calendar-grid { height: 78px; }') && today.includes('.circle-cell { width: 19px; height: 13px;'), 'Circle calendar grid must stay within its 130px safe band')
 
-console.log('V2 visual contracts verified: Host Scene bounds and every composition declares explicit Design Freedom/strategy/shape/surface')
+console.log('V2 visual contracts verified: full-bleed Host Scene coverage with safe content bounds on every composition')
