@@ -10,6 +10,7 @@ const settingsDetail = require('../src/v2/design/specs/settings_detail')
 const settingsMenu = require('../src/v2/design/specs/settings_menu')
 const health = require('../src/v2/design/specs/health')
 const history = require('../src/v2/design/specs/history')
+const historyView = require('../src/v2/design/views/history')
 const launcher = require('../src/v2/design/specs/launcher')
 
 const circleProfile = { formFactor: 'circle', logicalHeight: 192 }
@@ -48,18 +49,36 @@ assert.ok(!vibrationPage.includes('shape-pill'), 'Vibration styling must consume
 
 const healthSpecSource = read('src/v2/design/specs/health.js')
 const healthPage = read('src/pages/heartrate/heartrate.ux')
+const circleHealth = health.resolve(circleProfile, circleScene, circleSafe)
 assert.strictEqual(health.freedomLevel, freedom.AUTO)
 assert.ok(!healthSpecSource.includes("plan.shape ==="), 'Health L1 spec must not choose three product surfaces')
 assert.ok(!healthPage.includes('isCircle') && !healthPage.includes('isPill') && !healthPage.includes('isRect'), 'Health must render one canonical component tree')
 assert.strictEqual((healthPage.match(/class="health-stream"/g) || []).length, 1, 'Health should have one L1 stream')
+assert.strictEqual(circleHealth.stream.width, 136, 'Circle Health should use one narrower canonical stream rather than letting text hit the round mask')
+assert.ok(circleHealth.detailHeight >= circleHealth.cardPaddingY * 2 + circleHealth.labelLineHeight + circleHealth.chartHeight + circleHealth.metaLineHeight + 8, 'Health detail cards must reserve a complete footer line box')
+assert.ok(circleHealth.scrollPaddingBottom >= 24, 'Health scroll tail must let a round-screen footer move into a readable chord')
 
 const historyPage = read('src/pages/history/history.ux')
 const historySpec = history.resolve(pillProfile, pillScene, pillSafe)
+const circleHistory = history.resolve(circleProfile, circleScene, circleSafe)
 assert.strictEqual(history.freedomLevel, freedom.ASSISTED)
 assert.strictEqual(historySpec.trendMode, 'comparative-row')
+assert.strictEqual(circleHistory.trendMode, 'compact-column')
+assert.ok(circleHistory.chartHeight >= 50, 'The reference step chart needs a real vertical comparison area')
+assert.ok(circleHistory.trendHeight >= 110, 'The column chart must reserve value, weekday and date labels under every bar')
 assert.strictEqual((historyPage.match(/class="history-stream"/g) || []).length, 1, 'History shell must be shared')
 assert.ok(historyPage.includes("trendMode === 'compact-column'") && historyPage.includes("trendMode === 'comparative-row'"), 'Only the local trend renderer should vary at L2')
+assert.ok(historyPage.includes('历史步数') && historyPage.includes('column-value') && historyPage.includes('column-weekday') && historyPage.includes('column-date'), 'Compact trend must match the requested seven-bar step history composition')
 assert.ok(!historyPage.includes('isCircle') && !historyPage.includes('isPill') && !historyPage.includes('isRect'), 'History must not duplicate whole-page templates')
+
+const projected = historyView.project({ records: [
+  { date: '2026-08-10', steps: 1037 },
+  { date: '2026-08-11', steps: 4953 }
+] }, circleHistory)
+assert.strictEqual(projected.bars[0].columnStepsText, '1037')
+assert.strictEqual(projected.bars[0].weekdayText, '周一')
+assert.strictEqual(projected.bars[0].dateText, '8.10')
+assert.strictEqual(projected.bars[0].color, '#32ADE6')
 
 assert.strictEqual(settingsMenu.freedomLevel, freedom.AUTO, 'Settings menu remains L1')
 assert.strictEqual(launcher.freedomLevel, freedom.FREE, 'Launcher remains L3 because its interaction model differs by form factor')
