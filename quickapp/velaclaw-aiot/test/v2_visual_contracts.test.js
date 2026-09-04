@@ -118,7 +118,16 @@ assert.ok(!clock.includes('rectangular-stage" if="{{ !isCircle }}'), 'Rect must 
 assert.ok(clock.includes('background-color: {{ faceBackground }};'), 'Clock root must paint a face-matched fallback behind the full scene')
 assert.ok(clock.includes('overflow: visible'), 'Clock scene must not crop full-bleed watchface backgrounds at the software scene edge')
 
+const launcher = fs.readFileSync(path.join(root, 'src/pages/applist/applist.ux'), 'utf8')
+assert.ok(launcher.includes('class="list-surface"') && launcher.includes('style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;"'), 'Pill launcher must render into a concrete full-scene surface')
+assert.ok(launcher.includes('.list-surface, .grid-surface { position: absolute; left: 0px; top: 0px;'), 'Pill/Rect launcher wrappers must not collapse to zero height around absolute children')
+
+const healthPage = fs.readFileSync(path.join(root, 'src/pages/heartrate/heartrate.ux'), 'utf8')
+assert.ok(healthPage.includes('class="circle-health"') && healthPage.includes('style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;"'), 'Circle Health must use the full round scroll canvas')
+assert.ok(healthPage.includes('.circle-hero { width: 144px; height: 98px;'), 'Circle Health heart card must fit its own value, chart and footer without internal clipping')
+assert.ok(!healthPage.includes('class="circle-health" if="{{ ready && isCircle }}" scroll-y="true" style="left: {{ sceneSafeLeft }}px; top: {{ sceneSafeTop }}px;'), 'Circle Health must not regress to the rectangular safe-band viewport')
+
 const today = fs.readFileSync(path.join(root, 'src/pages/today/today.ux'), 'utf8')
 assert.ok(today.includes('.circle-calendar-grid { height: 78px; }') && today.includes('.circle-cell { width: 19px; height: 13px;'), 'Circle calendar grid must stay within its 130px safe band')
 
-console.log('V2 visual contracts verified: full-bleed Host Scene coverage with product-style circular surfaces')
+console.log('V2 visual contracts verified: full-bleed Host Scene coverage with concrete rendered surfaces and product-style circular compositions')
