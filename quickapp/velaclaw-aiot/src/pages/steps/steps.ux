@@ -30,7 +30,7 @@ var activityView = require('../../v2/design/views/activity')
 
 export default {
   private: {
-    metrics: [], contentWidth: 148,
+    ready: false, metrics: [], contentWidth: 148,
     titleLeft: 22, titleTop: 35, titleSize: 14,
     historyLeft: 22, historyTop: 52, historyHeight: 34, historyRadius: 17, historyTitleSize: 9, historySubSize: 7,
     streamLeft: 22, streamTop: 92, streamHeight: 80, metricHeight: 118, metricGap: 9, metricRadius: 18,
@@ -40,16 +40,18 @@ export default {
   },
   onInit() {
     var self = this
+    this.pageVisible = false
     this.controller = createActivityController(function (metrics) { self.applyMetrics(metrics) })
     pageRuntime.bind(this, { contentWidth: function (profile) { return activityDesign.contentWidth(profile) } }, function (profile, scene, safe) {
       var plan = activityDesign.resolve(profile, scene, safe)
       self.applyPlan(plan)
-      self.controller.start()
+      self.ready = true
+      if (self.pageVisible) self.controller.start()
     })
   },
-  onShow() { if (this.controller) this.controller.refresh() },
-  onHide() { this.metrics = [] },
-  onDestroy() { this.metrics = [] },
+  onShow() { this.pageVisible = true; if (this.ready && this.controller) this.controller.start() },
+  onHide() { this.pageVisible = false; if (this.controller) this.controller.stop(); this.metrics = [] },
+  onDestroy() { this.pageVisible = false; if (this.controller) this.controller.stop(); this.metrics = [] },
   onBackPress() { navigation.back(); return true },
   applyPlan(plan) {
     this.contentWidth = plan.stream.width
