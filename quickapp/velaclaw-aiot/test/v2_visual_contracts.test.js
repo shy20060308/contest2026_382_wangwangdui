@@ -81,6 +81,13 @@ fs.readdirSync(specsDir).filter(name => name.endsWith('.js')).forEach(name => {
       assert.strictEqual(plan.surface, 'vertical-comparative-trend', 'Pill History must use its L2 vertical comparative composition')
       assert.ok(plan.pillTrendMaxWidth > plan.pillTrendMinWidth, 'Pill History must reserve a visible horizontal comparison range')
     }
+    if (name === 'history.js' && profile.formFactor === 'circle') {
+      assert.ok(plan.chartHeight <= 40, 'Circle History bars must stay compact enough for the round chart card')
+    }
+    if (name === 'settings_menu.js' && profile.formFactor === 'circle') {
+      assert.ok(plan.capacity.fixedFrame, 'Circle Settings must keep a stable round-safe header/list/footer frame')
+      assert.ok(plan.capacity.header.top >= 18 && plan.capacity.footer.top <= 164, 'Circle Settings controls must stay inside useful round chords')
+    }
     walkPlan(plan, host, name + ':' + profile.name, [])
   })
 })
@@ -126,6 +133,10 @@ const launcher = fs.readFileSync(path.join(root, 'src/pages/applist/applist.ux')
 assert.ok(launcher.includes('class="list-surface"') && launcher.includes('style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;"'), 'Pill launcher must render into a concrete full-scene surface')
 assert.ok(launcher.includes('.list-surface, .grid-surface { position: absolute; left: 0px; top: 0px;'), 'Pill/Rect launcher wrappers must not collapse to zero height around absolute children')
 
+const watchfacePage = fs.readFileSync(path.join(root, 'src/pages/watchface/index.ux'), 'utf8')
+assert.ok(watchfacePage.includes('class="circle-surface"') && watchfacePage.includes('class="pill-surface"') && watchfacePage.includes('style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;"'), 'Watchface selector surfaces must have concrete full-scene dimensions')
+assert.ok(watchfacePage.includes('.selector-scene, .circle-surface, .pill-surface, .rect-surface { position: absolute; left: 0px; top: 0px; }'), 'Watchface selector wrappers must not collapse around absolute children')
+
 const healthPage = fs.readFileSync(path.join(root, 'src/pages/heartrate/heartrate.ux'), 'utf8')
 assert.ok(healthPage.includes('class="circle-health"') && healthPage.includes('style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;"'), 'Circle Health must use the full round scroll canvas')
 assert.ok(healthPage.includes('.circle-hero { width: 144px; height: 98px;'), 'Circle Health heart card must fit its own value, chart and footer without internal clipping')
@@ -139,7 +150,16 @@ assert.ok(!historyView.includes('displayRecords') && !historyView.includes('reco
 assert.ok(historyPage.includes('class="pill-trend-row"') && historyPage.includes('width: {{ $item.pillWidth }}px') && historyPage.includes('{{ $item.stepsText }}'), 'Pill History must render one vertical comparison row with a full numeric value for each day')
 assert.ok(!historyPage.includes('pill-chart-row') && !historyPage.includes('pill-bar-cell'), 'Pill History must not regress to seven squeezed vertical columns')
 assert.ok(historyView.includes("pillLabel: isToday ? '今天'") && historyView.includes('pillWidth:') && historyView.includes('stepsText:'), 'History Design View must own the Pill row labels, comparative widths and full values')
-assert.ok(historyPage.includes('.circle-chart { width: 148px; height: 88px;') && historyPage.includes('.pill-trend-section { width: 168px; height: 184px;') && historyPage.includes('.rect-dashboard { width: 164px; height: 124px;'), 'Trend layouts must use shape-specific visual hierarchy instead of one compressed chart')
+assert.ok(historyPage.includes('class="circle-history"') && historyPage.includes('style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;"'), 'Circle History must use the complete round canvas instead of placing its title at the unsafe chord edge')
+assert.ok(historyPage.includes('.circle-chart { width: 140px; height: 76px;') && historyPage.includes('.circle-bar-track { width: 6px; height: 42px;') && historyPage.includes('{{ $item.circleLabel }}'), 'Circle History must use compact tracked bars with single-character weekday labels')
+assert.ok(historyPage.includes('.pill-trend-section { width: 168px; height: 184px;') && historyPage.includes('.rect-dashboard { width: 164px; height: 124px;'), 'Trend layouts must use shape-specific visual hierarchy instead of one compressed chart')
+
+const settingsPage = fs.readFileSync(path.join(root, 'src/pages/settings/settings/settings.ux'), 'utf8')
+assert.ok(settingsPage.includes('@swipe="handleSwipe"') && settingsPage.includes("event.direction === 'left'") && settingsPage.includes("event.direction === 'right'"), 'Fixed Settings surface must support left/right paging in addition to arrow taps')
+
+const vibrationPage = fs.readFileSync(path.join(root, 'src/pages/settings/vibration/vibration.ux'), 'utf8')
+assert.ok(vibrationPage.includes('levelButtonWidth') && !vibrationPage.includes('width: 31%'), 'Vibration strength controls must use explicit wearable widths instead of fragile percentage text widths')
+assert.ok(vibrationPage.includes('statusCardHeight') && vibrationPage.includes('patternCardHeight'), 'Vibration cards must use explicit shape-aware heights')
 
 const today = fs.readFileSync(path.join(root, 'src/pages/today/today.ux'), 'utf8')
 assert.ok(today.includes('.circle-calendar-grid { height: 78px; }') && today.includes('.circle-cell { width: 19px; height: 13px;'), 'Circle calendar grid must stay within its 130px safe band')
