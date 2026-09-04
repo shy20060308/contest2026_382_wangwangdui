@@ -10,6 +10,7 @@ export function createHealthController(onChange) {
   var stressValues = [18, 22, 28, 25, 31, 27, 24, 28]
   var latest = null
   var started = false
+  var lifecycleGeneration = 0
 
   function emit() {
     var data = latest || healthStore.getSnapshot()
@@ -58,7 +59,9 @@ export function createHealthController(onChange) {
     start: function () {
       if (started) { emit(); return }
       started = true
+      var generation = ++lifecycleGeneration
       historyRepository.loadHourlyHeartRate(function (hourly) {
+        if (!started || generation !== lifecycleGeneration) return
         if (hourly && hourly.length) {
           heartValues = []
           dailyMin = hourly[0].min
@@ -76,6 +79,7 @@ export function createHealthController(onChange) {
     stop: function () {
       if (!started) return
       started = false
+      lifecycleGeneration++
       healthStore.unsubscribe(onHealth)
     },
     refresh: emit
