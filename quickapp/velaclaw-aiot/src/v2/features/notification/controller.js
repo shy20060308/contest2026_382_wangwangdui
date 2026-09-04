@@ -7,6 +7,7 @@ var notificationFactory = require('../../../domain/notification/factory')
 var EVENT_NAME = 'band.demo.notification'
 var AUTO_DISMISS_MS = 10000
 var HANGUP_DELAY_MS = 400
+var HAPTIC_OWNER = 'notification'
 
 function normalizeExternal(value) {
   var source = value
@@ -44,13 +45,13 @@ export function createNotificationController(onChange) {
 
   function vibrate() {
     var settings = settingsStore.getSnapshot()
-    if (!settings.vibrationEnabled) return
-    haptics.play(settings.vibrationPattern, settings.vibrationLevel)
+    if (!settings.vibrationEnabled) return false
+    return haptics.play(settings.vibrationPattern, settings.vibrationLevel, HAPTIC_OWNER)
   }
 
   function dismiss() {
     clearTimers()
-    haptics.stop()
+    haptics.stop(HAPTIC_OWNER)
     state.visible = false
     state.hangUp = false
     emit()
