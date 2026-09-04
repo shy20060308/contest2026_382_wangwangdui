@@ -5,7 +5,12 @@
         <div class="circle-date-row"><div class="circle-day"><text class="circle-day-value">{{ dayText }}</text><text class="circle-month">{{ monthText }}</text></div><div class="circle-date-copy"><text class="circle-weekday">{{ weekdayText }}</text><text class="circle-lunar">{{ lunarText }}</text></div></div>
         <div class="circle-goal-row"><text class="circle-title">今日</text><text class="circle-goal">{{ goalPercent }}%</text></div>
         <div class="circle-goal-track"><div class="circle-goal-fill" style="width: {{ goalWidth }};"></div></div>
-        <div class="circle-metrics"><text class="circle-metric">步 {{ stepsText }}</text><text class="circle-metric">卡 {{ caloriesText }}</text><text class="circle-metric">心 {{ heartText }}</text><text class="circle-metric">站 {{ standText }}h</text></div>
+        <div class="circle-metrics">
+          <div class="circle-metric-card circle-steps"><text class="circle-metric-label steps-text">步数</text><text class="circle-metric-value">{{ stepsText }}</text></div>
+          <div class="circle-metric-card circle-calories"><text class="circle-metric-label calories-text">热量</text><text class="circle-metric-value">{{ caloriesText }}</text></div>
+          <div class="circle-metric-card circle-heart"><text class="circle-metric-label heart-text">心率</text><text class="circle-metric-value">{{ heartText }}</text></div>
+          <div class="circle-metric-card circle-stand"><text class="circle-metric-label stand-text">站立</text><text class="circle-metric-value">{{ standText }}h</text></div>
+        </div>
         <div class="circle-action" @click="openCalendar"><text class="circle-action-text">月历</text></div>
       </div>
 
@@ -100,7 +105,10 @@ export default {
 .circle-goal-row { width: 130px; height: 12px; margin-top: 3px; flex-direction: row; justify-content: space-between; } .circle-title { font-size: 8px; color: #FFFFFF; font-weight: bold; } .circle-goal { font-size: 6px; color: #30D158; }
 .circle-goal-track { width: 130px; height: 3px; border-radius: 2px; background-color: #242426; } .circle-goal-fill { height: 3px; border-radius: 2px; background-color: #30D158; }
 .circle-metrics { width: 130px; height: 42px; margin-top: 4px; flex-direction: row; flex-wrap: wrap; justify-content: space-between; }
-.circle-metric { width: 63px; height: 19px; border-radius: 9px; background-color: #15171B; font-size: 7px; color: #FFFFFF; text-align: center; padding-top: 5px; margin-bottom: 3px; }
+.circle-metric-card { width: 63px; height: 19px; border-radius: 9px; padding-left: 6px; padding-right: 6px; margin-bottom: 3px; flex-direction: row; justify-content: space-between; align-items: center; }
+.circle-steps { background-color: #101D2B; } .circle-calories { background-color: #2A1B0B; } .circle-heart { background-color: #2B1117; } .circle-stand { background-color: #10251A; }
+.circle-metric-label { width: 18px; font-size: 6px; font-weight: bold; } .steps-text { color: #64D2FF; } .calories-text { color: #FF9F0A; } .heart-text { color: #FF375F; } .stand-text { color: #30D158; }
+.circle-metric-value { width: 33px; font-size: 7px; color: #FFFFFF; font-weight: bold; text-align: right; lines: 1; }
 .circle-action { width: 74px; height: 20px; margin-top: 2px; border-radius: 10px; background-color: #222226; justify-content: center; align-items: center; } .circle-action-text { font-size: 7px; color: #FF375F; }
 .circle-calendar-head { width: 136px; height: 18px; flex-direction: row; justify-content: space-between; align-items: center; } .circle-calendar-title { width: 92px; font-size: 9px; color: #FFFFFF; text-align: center; font-weight: bold; }
 .circle-nav { width: 20px; height: 18px; justify-content: center; align-items: center; } .circle-nav-text { font-size: 15px; color: #FF375F; }
