@@ -14,9 +14,11 @@ function resolve(profile, scene, safe) {
     freedomLevel: freedom.ASSISTED,
     strategy: 'assisted',
     shape: shape,
-    surface: shape === 'circle' ? 'compact-chart-stream' : (shape === 'pill' ? 'vertical-insight-stream' : 'dashboard-stream'),
+    surface: shape === 'circle' ? 'compact-chart-stream' : (shape === 'pill' ? 'vertical-comparative-trend' : 'dashboard-stream'),
     stream: { left: safe.left, top: safe.top, width: safe.width, height: safe.height },
-    chartHeight: shape === 'pill' ? 88 : (shape === 'rect' ? 64 : 52)
+    chartHeight: shape === 'pill' ? 10 : (shape === 'rect' ? 64 : 40),
+    pillTrendMinWidth: shape === 'pill' ? 14 : 0,
+    pillTrendMaxWidth: shape === 'pill' ? 70 : 0
   }
 }
 

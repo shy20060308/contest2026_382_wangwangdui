@@ -20,7 +20,7 @@ function dots(pageCount, pageIndex) {
 
 function project(designPlan, pageIndex) {
   var state = pager.resolve(designPlan.itemIds, pageIndex, designPlan.capacity.pageSize)
-  var plan = pagedStack.reflow(designPlan.capacity, state.items.length)
+  var plan = designPlan.capacity.fixedFrame ? designPlan.capacity : pagedStack.reflow(designPlan.capacity, state.items.length)
   var scale = plan.visualScale || 1
   var iconSize = Math.round(30 * Math.min(1.35, scale))
   return {

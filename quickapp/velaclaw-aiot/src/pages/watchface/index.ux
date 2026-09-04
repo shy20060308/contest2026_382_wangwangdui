@@ -1,7 +1,7 @@
 <template>
   <stack class="selector-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
     <div class="selector-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
-      <div class="circle-surface" if="{{ surface === 'preview-swiper' }}">
+      <div class="circle-surface" if="{{ surface === 'preview-swiper' }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
         <div class="header" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;"><text class="title" style="font-size: {{ titleSize }}px;">表盘库</text><text class="back" @click="goBack">返回</text></div>
         <swiper class="circle-swiper" index="{{ selectedIndex }}" indicator="true" @change="onCircleChange" style="left: {{ previewLeft }}px; top: {{ previewTop }}px; width: {{ previewWidth }}px; height: {{ previewHeight }}px;">
           <div class="circle-slide" for="{{ faces }}" tid="id" @click="selectFace($item)">
@@ -11,7 +11,7 @@
         <text class="circle-footer" style="left: {{ footerLeft }}px; top: {{ footerTop }}px; width: {{ footerWidth }}px; height: {{ footerHeight }}px;">{{ previewName }} · 点按应用</text>
       </div>
 
-      <div class="pill-surface" if="{{ surface === 'cards-pager' }}">
+      <div class="pill-surface" if="{{ surface === 'cards-pager' }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
         <div class="header" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;"><text class="title" style="font-size: {{ titleSize }}px;">表盘库</text><text class="back" @click="goBack">返回</text></div>
         <div class="pill-cards" style="left: {{ contentLeft }}px; top: {{ contentTop }}px; width: {{ contentWidth }}px; height: {{ contentHeight }}px;">
           <div class="face-card" for="{{ visibleFaces }}" tid="id" @click="selectFace($item)" style="width: {{ contentWidth }}px; height: {{ cardHeight }}px; margin-bottom: {{ cardGap }}px; border-color: {{ $item.borderColor }};">
@@ -22,7 +22,7 @@
         <div class="pager" style="left: {{ pagerLeft }}px; top: {{ pagerTop }}px; width: {{ pagerWidth }}px; height: {{ pagerHeight }}px;"><text class="pager-button" @click="previousPage">‹</text><text class="pager-text">{{ pageText }}</text><text class="pager-button" @click="nextPage">›</text></div>
       </div>
 
-      <div class="rect-surface" if="{{ surface === 'preview-grid' }}">
+      <div class="rect-surface" if="{{ surface === 'preview-grid' }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
         <div class="header" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;"><text class="title" style="font-size: {{ titleSize }}px;">表盘库</text><text class="back" @click="goBack">返回</text></div>
         <div class="rect-grid" style="left: {{ contentLeft }}px; top: {{ contentTop }}px; width: {{ contentWidth }}px; height: {{ contentHeight }}px;">
           <div class="rect-card" for="{{ rectFaces }}" tid="id" @click="selectFace($item)" style="width: {{ cardWidth }}px; height: {{ cardHeight }}px; margin-right: {{ $item.marginRight }}px; margin-bottom: {{ $item.marginBottom }}px; border-color: {{ $item.borderColor }};"><div class="rect-preview" style="background-color: {{ $item.background }};"><text class="rect-time" style="font-size: {{ previewTimeSize }}px; color: {{ $item.accent }};">08:32</text><div class="rect-accent" style="background-color: {{ $item.accent }};"></div></div><text class="rect-name" style="font-size: {{ nameSize }}px;">{{ $item.name }}</text><text class="rect-selected" if="{{ $item.selected }}" style="color: {{ $item.accent }};">已选</text></div>
@@ -96,8 +96,8 @@ export default {
 </script>
 
 <style>
-.selector-root, .selector-scene { background-color: #000000; }
-.selector-scene { position: absolute; left: 0px; top: 0px; }
+.selector-root, .selector-scene, .circle-surface, .pill-surface, .rect-surface { background-color: #000000; }
+.selector-scene, .circle-surface, .pill-surface, .rect-surface { position: absolute; left: 0px; top: 0px; }
 .header, .circle-swiper, .circle-footer, .pill-cards, .pager, .rect-grid { position: absolute; }
 .header { flex-direction: row; justify-content: space-between; align-items: center; }
 .title { color: #FFFFFF; font-weight: bold; } .back { color: #8E8E93; font-size: 8px; text-align: right; }

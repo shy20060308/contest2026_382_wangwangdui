@@ -22,18 +22,34 @@ function resolveRelative(owner, request) {
   return [target, target + '.js', target + '.ux', path.join(target, 'index.js')].some(fs.existsSync)
 }
 
+function dependencyRequests(source) {
+  const requests = []
+  const patterns = [
+    /(?:from\s+|require\(\s*)['"]([^'"]+)['"]/g,
+    /<import\b[^>]*\bsrc=['"]([^'"]+)['"][^>]*>/g
+  ]
+  patterns.forEach(pattern => {
+    let match
+    while ((match = pattern.exec(source))) requests.push(match[1])
+  })
+  return requests
+}
+
+function dependsOn(source, fragment) {
+  return dependencyRequests(source).some(request => request.includes(fragment))
+}
+
 function validateRelativeImports(full, source) {
-  const pattern = /(?:from\s+|require\(\s*)['"](\.{1,2}\/[^'"]+)['"]/g
-  let match
-  while ((match = pattern.exec(source))) {
-    assert.ok(resolveRelative(full, match[1]), path.relative(root, full) + ' has unresolved relative dependency ' + match[1])
-  }
+  dependencyRequests(source).forEach(request => {
+    if (!/^\.{1,2}\//.test(request)) return
+    assert.ok(resolveRelative(full, request), path.relative(root, full) + ' has unresolved relative dependency ' + request)
+  })
 }
 
 function assertSemanticFeature(relative) {
   const source = read(relative)
-  assert.ok(!source.includes('/presentation/'), relative + ' semantic Feature must never depend on Presentation')
-  assert.ok(!source.includes('/design/'), relative + ' semantic Feature must never depend on Design')
+  assert.ok(!dependsOn(source, '/presentation/'), relative + ' semantic Feature must never depend on Presentation')
+  assert.ok(!dependsOn(source, '/design/'), relative + ' semantic Feature must never depend on Design')
   assert.ok(!/#[0-9A-Fa-f]{6}\b/.test(source), relative + ' semantic Feature must not own visual color tokens')
 }
 
@@ -46,13 +62,13 @@ Object.keys(manifest.router.pages || {}).forEach(route => {
   const full = path.join(root, relative)
   assert.ok(fs.existsSync(full), 'missing routed page: ' + relative)
   const source = fs.readFileSync(full, 'utf8')
-  assert.ok(source.includes('/v2/'), relative + ' must enter the V2 application architecture')
-  assert.ok(!source.includes('/common/'), relative + ' must not depend on legacy common code modules')
-  assert.ok(!source.includes('/presentation/'), relative + ' must not depend on legacy Presentation; active UI belongs to V2 Design')
+  assert.ok(dependsOn(source, '/v2/'), relative + ' must enter the V2 application architecture')
+  assert.ok(!dependsOn(source, '/common/'), relative + ' must not depend on legacy common code modules')
+  assert.ok(!dependsOn(source, '/presentation/'), relative + ' must not depend on legacy Presentation; active UI belongs to V2 Design')
   assert.ok(!source.includes('pageViewport') && !source.includes('pageMotion') && !source.includes('watchData'), relative + ' must not regain legacy page/runtime bridges')
-  assert.ok(!source.includes('/capabilities/'), relative + ' Page must not consume Capability directly')
-  assert.ok(!source.includes('@service.'), relative + ' must not access service APIs directly')
-  assert.ok(!source.includes('@system.'), relative + ' must not access system APIs directly; framework boundaries belong to V2 app/runtime')
+  assert.ok(!dependsOn(source, '/capabilities/'), relative + ' Page must not consume Capability directly')
+  assert.ok(!dependsOn(source, '@service.'), relative + ' must not access service APIs directly')
+  assert.ok(!dependsOn(source, '@system.'), relative + ' must not access system APIs directly; framework boundaries belong to V2 app/runtime')
   validateRelativeImports(full, source)
 })
 
@@ -61,11 +77,11 @@ walk(path.join(root, 'src/v2'), v2Files)
 v2Files.filter(name => name.endsWith('.js')).forEach(full => {
   const relative = path.relative(root, full).replace(/\\/g, '/')
   const source = fs.readFileSync(full, 'utf8')
-  assert.ok(!source.includes('/common/'), relative + ' must not depend on legacy common code modules')
-  assert.ok(!source.includes('/presentation/'), relative + ' must not depend on legacy Presentation')
-  assert.ok(!source.includes('@service.'), relative + ' must not access Vela services directly')
-  if (relative !== 'src/v2/app/navigation.js') assert.ok(!source.includes('@system.'), relative + ' must not access Vela system APIs directly')
-  else assert.ok(source.includes("@system.router"), 'V2 navigation is the sole framework-router boundary')
+  assert.ok(!dependsOn(source, '/common/'), relative + ' must not depend on legacy common code modules')
+  assert.ok(!dependsOn(source, '/presentation/'), relative + ' must not depend on legacy Presentation')
+  assert.ok(!dependsOn(source, '@service.'), relative + ' must not access Vela services directly')
+  if (relative !== 'src/v2/app/navigation.js') assert.ok(!dependsOn(source, '@system.'), relative + ' must not access Vela system APIs directly')
+  else assert.ok(dependsOn(source, '@system.router'), 'V2 navigation is the sole framework-router boundary')
   validateRelativeImports(full, source)
 })
 
@@ -74,9 +90,9 @@ walk(path.join(root, 'src/v2/features'), featureFiles)
 featureFiles.filter(name => name.endsWith('.js')).forEach(full => {
   const relative = path.relative(root, full).replace(/\\/g, '/')
   const source = fs.readFileSync(full, 'utf8')
-  assert.ok(!source.includes('/pages/') && !source.includes('/components/'), relative + ' Feature must never depend on Page or Component')
-  assert.ok(!source.includes('/presentation/'), relative + ' Feature must never depend on Presentation')
-  assert.ok(!source.includes('/design/'), relative + ' Feature must never depend upward on Design')
+  assert.ok(!dependsOn(source, '/pages/') && !dependsOn(source, '/components/'), relative + ' Feature must never depend on Page or Component')
+  assert.ok(!dependsOn(source, '/presentation/'), relative + ' Feature must never depend on Presentation')
+  assert.ok(!dependsOn(source, '/design/'), relative + ' Feature must never depend upward on Design')
   const shapeBranch = /\b(isCircle|isPill|isRect)\b|\bformFactor\s*===|===\s*['"](?:circle|pill|rect)['"]|\bshape\s*===\s*['"](?:circle|pill|rect)['"]/
   assert.ok(!shapeBranch.test(source), relative + ' Feature must not branch on screen shape; screen differences belong to Design')
 })
@@ -105,7 +121,7 @@ walk(path.join(root, 'src/domain'), domainFiles)
 domainFiles.filter(name => name.endsWith('.js')).forEach(full => {
   const relative = path.relative(root, full).replace(/\\/g, '/')
   const source = fs.readFileSync(full, 'utf8')
-  assert.ok(!source.includes('/v2/features/') && !source.includes('/v2/design/') && !source.includes('/pages/') && !source.includes('/components/'), relative + ' Domain must not depend upward on Feature, Design or UI')
+  assert.ok(!dependsOn(source, '/v2/features/') && !dependsOn(source, '/v2/design/') && !dependsOn(source, '/pages/') && !dependsOn(source, '/components/'), relative + ' Domain must not depend upward on Feature, Design or UI')
 })
 
 const calendarDomain = read('src/domain/calendar/index.js')
@@ -131,8 +147,8 @@ assert.ok(workoutDistance.includes('acceptedSegment') && workoutDistance.include
 const watchfaceDir = path.join(root, 'src/components/watchfaces')
 fs.readdirSync(watchfaceDir).filter(name => name.endsWith('.ux')).forEach(name => {
   const source = fs.readFileSync(path.join(watchfaceDir, name), 'utf8')
-  assert.ok(!source.includes('@system.router'), name + ' must be a presentation component, not a navigation owner')
-  assert.ok(!source.includes('/common/health_metrics'), name + ' must not depend on legacy presentation bridges')
+  assert.ok(!dependsOn(source, '@system.router'), name + ' must be a presentation component, not a navigation owner')
+  assert.ok(!dependsOn(source, '/common/health_metrics'), name + ' must not depend on legacy presentation bridges')
   validateRelativeImports(path.join(watchfaceDir, name), source)
 })
 
@@ -155,10 +171,11 @@ const settings = read('src/pages/settings/settings/settings.ux')
 
 assert.ok(pageRuntime.includes("../system/device_profile"), 'V2 runtime must resolve its own device profile')
 assert.ok(pageRuntime.includes('../design/scene'), 'all pages must share the Host Scene contract')
-assert.ok(!pageRuntime.includes('applyDesign') && !pageRuntime.includes('layoutRuntime'), 'V2 runtime must never resize the host viewport to fit design math')
+assert.ok(!pageRuntime.includes('applyDesign') && !pageRuntime.includes('layoutRuntime'), 'V2 runtime must never depend on legacy viewport/layout bridges')
+assert.ok(pageRuntime.includes("page.viewportTop = '0px'"), 'V2 runtime must paint from the physical top edge')
 assert.ok(scene.includes("require('./geometry')"), 'V2 scene must own wearable geometry')
-assert.ok(scene.includes('globalSafe.top - host.hostTop'), 'safe geometry must be projected into Host Scene coordinates')
-assert.ok(scene.includes('globalSafe.bottom - host.hostTop'), 'safe bottom must be projected into Host Scene coordinates')
+assert.ok(scene.includes('coverageHeight') && scene.includes('hostTop: 0'), 'V2 Host Scene must be a full-bleed logical canvas')
+assert.ok(scene.includes('globalSafe.top') && !scene.includes('globalSafe.top - host.hostTop'), 'safe geometry must remain global inside the full-bleed Host Scene')
 assert.ok(geometry.includes('PILL_GESTURE_BAR = 36') && geometry.includes('capsuleInset'), 'V2 geometry must model pill caps and gesture area')
 assert.ok(deviceProfile.includes("../../capabilities/device"), 'V2 device profile must consume the device capability gateway')
 
@@ -166,7 +183,7 @@ assert.ok(clock.includes("../../v2/features/clock/controller"), 'Clock must be a
 assert.ok(clock.includes("../../v2/design/specs/clock") && clock.includes("../../v2/design/views/clock"), 'Clock must bind Feature state through Design')
 assert.ok(clock.includes("../../v2/design/views/notification"), 'Clock and notification demo must share notification Design projection')
 assert.ok(clock.includes('configureFaces(plan.faceIds)'), 'Clock page must inject the Design-selected face set into the Feature')
-assert.ok(!clockFeature.includes('/design/') && !clockFeature.includes('analog') && !clockFeature.includes('batteryColor'), 'Clock Feature must remain presentation-free')
+assert.ok(!dependsOn(clockFeature, '/design/') && !clockFeature.includes('analog') && !clockFeature.includes('batteryColor'), 'Clock Feature must remain presentation-free')
 assert.ok(clockDesign.includes("faceIds = ['sport', 'simple', 'dashboard', 'mechanical']") && clockDesign.includes("faceIds = ['sport', 'simple', 'dashboard', 'alpine']"), 'Clock Design must own shape-specific face availability')
 assert.ok(!clock.includes('notificationManager') && !clock.includes('deviceSettings') && !clock.includes('faceRegistry'), 'Clock must not regain legacy orchestration')
 
