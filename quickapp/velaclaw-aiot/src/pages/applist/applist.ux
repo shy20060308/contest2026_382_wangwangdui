@@ -124,8 +124,6 @@ export default {
   },
   onHoneyMove(event) {
     if (!this.circleTouchActive || !event.touches || !event.touches[0]) return
-    if (event.preventDefault) event.preventDefault()
-    if (event.stopPropagation) event.stopPropagation()
     var p = event.touches[0]
     var now = Date.now()
     var dx = p.pageX - this.touchLastX
@@ -133,6 +131,10 @@ export default {
     var dt = Math.max(8, now - (this.touchLastAt || now))
     this.touchLastX = p.pageX; this.touchLastY = p.pageY; this.touchLastAt = now
     if (Math.abs(p.pageX - this.touchStartX) > 6 || Math.abs(p.pageY - this.touchStartY) > 6) this.dragMoved = true
+    if (this.dragMoved) {
+      if (event.preventDefault) event.preventDefault()
+      if (event.stopPropagation) event.stopPropagation()
+    }
     var pan = honeycomb.nextPan(this.circleSlots, this.circlePanX, this.circlePanY, dx, dy)
     this.circlePanX = pan.x; this.circlePanY = pan.y
     this.circleVelocityX = this.circleVelocityX * 0.45 + (dx / dt) * 0.55
@@ -141,14 +143,18 @@ export default {
   },
   onHoneyEnd(event) {
     if (!this.circleTouchActive) return
-    if (event && event.preventDefault) event.preventDefault()
-    if (event && event.stopPropagation) event.stopPropagation()
     this.circleTouchActive = false
     var p = event.changedTouches && event.changedTouches[0]
     var totalX = p ? p.pageX - this.touchStartX : 0
     var totalY = p ? p.pageY - this.touchStartY : 0
-    if (totalX > 58 && Math.abs(totalY) < 30 && this.touchStartX < 26) { this.stopHoneycombMotion(); navigation.back(); return }
+    if (totalX > 58 && Math.abs(totalY) < 30 && this.touchStartX < 26) {
+      if (event && event.preventDefault) event.preventDefault()
+      if (event && event.stopPropagation) event.stopPropagation()
+      this.stopHoneycombMotion(); navigation.back(); return
+    }
     if (!this.dragMoved) { this.honeyLabelOpacity = 1; this.scheduleHoneycombLayout(); return }
+    if (event && event.preventDefault) event.preventDefault()
+    if (event && event.stopPropagation) event.stopPropagation()
     this.suppressTapUntil = Date.now() + 220
     this.startHoneyInertia(this.circleVelocityX, this.circleVelocityY)
   },
