@@ -1,5 +1,6 @@
 const assert = require('assert')
-const metrics = require('../src/common/health_metrics')
+const metrics = require('../src/domain/health/metrics')
+const healthView = require('../src/v2/design/views/health')
 
 let passed = 0
 
@@ -35,32 +36,40 @@ test('统计最低平均最高', function () {
   assert.deepStrictEqual(metrics.stats([]), { min: 0, avg: 0, max: 0 })
 })
 
-test('自适应柱高保持起伏', function () {
-  const heights = metrics.barHeights([80, 82, 84, 81], 4, 28, 8)
-  assert.strictEqual(heights.length, 4)
-  assert.ok(heights[2] > heights[1])
-  assert.ok(heights[1] > heights[0])
-  assert.ok(Math.max.apply(null, heights) - Math.min.apply(null, heights) >= 10)
+test('健康展示只由 V2 Design View 投影', function () {
+  const view = healthView.project({
+    heartRate: 105,
+    spo2: 93,
+    stress: 82,
+    heartZone: 'elevated',
+    spo2Zone: 'attention',
+    stressZone: 'high',
+    dailyMin: 58,
+    dailyMax: 112,
+    stressMin: 20,
+    stressAvg: 45,
+    stressMax: 82,
+    heartSource: { live: true, errorCode: 0 },
+    spo2Source: { live: false, errorCode: 203 },
+    stressSource: { live: false, errorCode: 1 },
+    anyLive: true,
+    updatedAt: new Date(2026, 0, 2, 8, 5, 0).getTime(),
+    heartValues: [70, 80, 100],
+    spo2Values: [96, 97, 98],
+    stressValues: [20, 40, 80]
+  }, { chartHeight: 30 })
+
+  assert.strictEqual(view.heartStatus, '偏高')
+  assert.strictEqual(view.spo2Status, '请关注')
+  assert.strictEqual(view.stressStatus, '较高')
+  assert.strictEqual(view.heartSource, '实时')
+  assert.strictEqual(view.spo2Source, '不支持')
+  assert.strictEqual(view.stressSource, '异常')
+  assert.strictEqual(view.sourceText, '设备实时数据')
+  assert.strictEqual(view.updatedAtText, '08:05')
+  assert.strictEqual(view.heartBars.length, 3)
+  assert.strictEqual(view.heartBars[2].height, 30)
+  assert.ok(view.heartBars[1].height > view.heartBars[0].height)
 })
 
-test('语义样本在组件侧保持原柱高映射', function () {
-  const samples = [65, 82, 71, 95, 78, 88].map(function (value) {
-    return { value: value }
-  })
-  const tall = samples.map(function (_, index) {
-    return metrics.sampleBarHeight(samples, index, 4, 28, 8)
-  })
-  const compact = samples.map(function (_, index) {
-    return metrics.sampleBarHeight(samples, index, 4, 18, 8)
-  })
-  assert.deepStrictEqual(tall, [4, 18, 9, 28, 14, 22])
-  assert.deepStrictEqual(compact, [4, 12, 7, 18, 10, 15])
-})
-
-test('格式化和错误码', function () {
-  assert.strictEqual(metrics.formatValue(97.6, 'SPO2'), '98%')
-  assert.strictEqual(metrics.formatValue(null, 'SPO2'), '--')
-  assert.strictEqual(metrics.codeMessage(203), '设备暂不支持')
-})
-
-console.log('\n健康逻辑测试通过：' + passed + ' 项')
+console.log('\n健康 Domain / Design View 测试通过：' + passed + ' 项')
