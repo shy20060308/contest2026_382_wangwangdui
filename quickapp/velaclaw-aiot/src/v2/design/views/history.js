@@ -20,6 +20,12 @@ function weekdayLabel(text) {
   return formatDay(text)
 }
 
+function circleLabel(text, isToday) {
+  if (isToday) return '今'
+  var label = weekdayLabel(text)
+  return label.indexOf('周') === 0 ? label.slice(1) : label.slice(0, 1)
+}
+
 function compactSteps(value) {
   var steps = Math.max(0, Number(value) || 0)
   if (steps < 1000) return Math.round(steps).toString()
@@ -50,6 +56,7 @@ function project(model, plan) {
     bars.push({
       date: String(item.date || i),
       label: formatDay(item.date),
+      circleLabel: circleLabel(item.date, isToday),
       pillLabel: isToday ? '今天' : weekdayLabel(item.date),
       shortSteps: compactSteps(steps),
       stepsText: formatNumber(steps),
