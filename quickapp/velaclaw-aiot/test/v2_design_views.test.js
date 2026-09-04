@@ -15,18 +15,33 @@ const read = name => fs.readFileSync(path.join(root, name), 'utf8')
 let passed = 0
 function test(name, callback) { callback(); passed++; console.log('通过 - ' + name) }
 
-test('Activity View 独占名称、单位、格式和趋势投影', function () {
+test('Activity View 独占名称、单位、格式和真实目标进度投影', function () {
   const view = activityView.present([
     { id: 'steps', current: 12345, goal: 6000 },
     { id: 'calories', current: 180, goal: 300 }
-  ], 40)
+  ], 120)
   assert.strictEqual(view[0].name, '步数')
   assert.strictEqual(view[0].unit, '步')
   assert.strictEqual(view[0].current, '12,345')
-  assert.strictEqual(view[0].bars.length, 8)
-  assert.strictEqual(Math.max.apply(null, view[0].bars.map(function (bar) { return bar.h })), 40)
+  assert.strictEqual(view[0].progressText, '206%')
+  assert.strictEqual(view[0].progressWidth, 120)
+  assert.strictEqual(view[0].goalText, '目标 6,000 步')
+  assert.strictEqual(view[0].statusText, '超额 6,345')
+  assert.strictEqual(view[0].isComplete, true)
+  assert.ok(!Object.prototype.hasOwnProperty.call(view[0], 'bars'))
   assert.strictEqual(view[1].name, '卡路里')
   assert.strictEqual(view[1].unit, 'kcal')
+  assert.strictEqual(view[1].progressText, '60%')
+  assert.strictEqual(view[1].progressWidth, 72)
+  assert.strictEqual(view[1].statusText, '还差 120')
+})
+
+test('Activity 未设置目标时不伪造进度', function () {
+  const view = activityView.present([{ id: 'stand', current: 5, goal: 0 }], 100)
+  assert.strictEqual(view[0].progressText, '--')
+  assert.strictEqual(view[0].progressWidth, 0)
+  assert.strictEqual(view[0].goalText, '未设置目标')
+  assert.strictEqual(view[0].statusText, '等待目标')
 })
 
 test('Motion View 独占数值格式、强度文案和倒计时展示', function () {
@@ -160,7 +175,7 @@ test('对应 Feature 不重复生成展示格式', function () {
   const hapticDomain = read('src/domain/haptics/patterns.js')
   const notificationDomain = read('src/domain/notification/factory.js')
 
-  assert.ok(!activityFeature.includes("name: '步数'") && !activityFeature.includes('unit:') && !activityFeature.includes('trend:') && !activityFeature.includes('#FFD60A'))
+  assert.ok(!activityFeature.includes("name: '步数'") && !activityFeature.includes('unit:') && !activityFeature.includes('progressText') && !activityFeature.includes('#FFD60A'))
   assert.ok(!motionFeature.includes('.toFixed(') && !motionFeature.includes('强烈') && !motionFeature.includes('轻微'))
   assert.ok(!syncFeature.includes("+ '%'") && !syncFeature.includes('已连接') && !syncFeature.includes('未同步'))
   assert.ok(!vibrationFeature.includes('倒计时') && !vibrationFeature.includes('已播放'))

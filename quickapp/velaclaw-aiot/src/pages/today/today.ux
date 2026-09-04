@@ -1,7 +1,7 @@
 <template>
   <stack class="today-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
     <stack class="today-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
-      <div class="circle-surface" if="{{ ready && isCircle && pageIndex === 0 }}" style="left: {{ sceneSafeLeft }}px; top: {{ sceneSafeTop }}px; height: {{ sceneSafeHeight }}px;">
+      <div class="circle-surface" if="{{ ready && isCircle && pageIndex === 0 }}" style="left: {{ circleFrameLeft }}px; top: {{ circleFrameTop }}px; height: {{ circleFrameHeight }}px;">
         <div class="circle-date-row"><div class="circle-day"><text class="circle-day-value">{{ dayText }}</text><text class="circle-month">{{ monthText }}</text></div><div class="circle-date-copy"><text class="circle-weekday">{{ weekdayText }}</text><text class="circle-lunar">{{ lunarText }}</text></div></div>
         <div class="circle-goal-row"><text class="circle-title">今日</text><text class="circle-goal">{{ goalPercent }}%</text></div>
         <div class="circle-goal-track"><div class="circle-goal-fill" style="width: {{ goalWidth }};"></div></div>
@@ -9,7 +9,7 @@
         <div class="circle-action" @click="openCalendar"><text class="circle-action-text">月历</text></div>
       </div>
 
-      <div class="circle-surface" if="{{ ready && isCircle && pageIndex === 1 }}" style="left: {{ sceneSafeLeft }}px; top: {{ sceneSafeTop }}px; height: {{ sceneSafeHeight }}px;">
+      <div class="circle-surface" if="{{ ready && isCircle && pageIndex === 1 }}" style="left: {{ circleFrameLeft }}px; top: {{ circleFrameTop }}px; height: {{ circleFrameHeight }}px;">
         <div class="circle-calendar-head"><div class="circle-nav" @click="previousMonth"><text class="circle-nav-text">‹</text></div><text class="circle-calendar-title">{{ calendarTitle }}</text><div class="circle-nav" @click="nextMonth"><text class="circle-nav-text">›</text></div></div>
         <div class="circle-week-row"><text class="circle-week">日</text><text class="circle-week">一</text><text class="circle-week">二</text><text class="circle-week">三</text><text class="circle-week">四</text><text class="circle-week">五</text><text class="circle-week">六</text></div>
         <div class="circle-calendar-grid"><div class="circle-cell" for="{{ calendarCells }}" tid="key"><text class="circle-cell-text" style="color: {{ $item.textColor }}; background-color: {{ $item.backgroundColor }};">{{ $item.day }}</text></div></div>
@@ -54,6 +54,7 @@ export default {
   private: {
     ready: false, pageVisible: false, isCircle: false, isPill: false, isRect: false, pageIndex: 0, designPlan: null, todayModel: null,
     sceneWidth: 192, sceneHeight: 192, sceneSafeLeft: 0, sceneSafeTop: 0, sceneSafeHeight: 192,
+    circleFrameLeft: 28, circleFrameTop: 30, circleFrameHeight: 128,
     viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%',
     yearText: '', monthText: '', monthNumberText: '', dayText: '', weekdayText: '', lunarText: '',
     stepsText: '0', caloriesText: '0', standText: '0', heartText: '--', goalPercent: 0, goalWidth: '0%', calendarTitle: '', calendarCells: []
@@ -64,6 +65,11 @@ export default {
     pageRuntime.bind(this, { contentWidth: function (profile) { return todayDesign.contentWidth(profile) } }, function (profile, scene, safe) {
       var plan = todayDesign.resolve(profile, scene, safe)
       self.designPlan = plan
+      if (plan.circleFrame) {
+        self.circleFrameLeft = plan.circleFrame.left
+        self.circleFrameTop = plan.circleFrame.top
+        self.circleFrameHeight = plan.circleFrame.height
+      }
       self.isCircle = plan.shape === 'circle'; self.isPill = plan.shape === 'pill'; self.isRect = plan.shape === 'rect'; self.ready = true
       if (self.todayModel) self.applyModel(todayView.project(self.todayModel, plan))
       if (self.pageVisible) self.controller.start()
