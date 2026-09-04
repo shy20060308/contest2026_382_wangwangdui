@@ -20,7 +20,6 @@ function project(model, plan) {
   var chartHeight = Math.max(24, Math.round(Number(plan && plan.chartHeight) || 52))
   var maxSteps = 1
   var bars = []
-  var displayRecords = []
   var i
 
   for (i = 0; i < records.length; i++) {
@@ -36,13 +35,6 @@ function project(model, plan) {
       height: Math.max(5, Math.round((steps / maxSteps) * chartHeight)),
       color: i === records.length - 1 ? '#FFD60A' : '#3A7DFF'
     })
-    displayRecords.unshift({
-      date: formatDay(item.date),
-      stepsText: formatNumber(item.steps),
-      caloriesText: formatNumber(item.calories),
-      heartText: (Number(item.avgHeartRate) || 0) + ' bpm',
-      goalText: (Number(item.goalPercent) || 0) + '%'
-    })
   }
 
   return {
@@ -52,8 +44,7 @@ function project(model, plan) {
     bestDayText: source.bestDate ? formatDay(source.bestDate) : '--',
     avgHeartText: source.avgHeartRate ? Math.round(source.avgHeartRate) + ' bpm' : '--',
     goalText: (Number(source.goalPercent) || 0) + '%',
-    bars: bars,
-    records: displayRecords
+    bars: bars
   }
 }
 
