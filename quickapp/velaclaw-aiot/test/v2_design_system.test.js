@@ -28,10 +28,13 @@ function resolved(spec, profile) {
   return { host, safe, plan: spec.resolve(profile, host, safe) }
 }
 
-test('v2.2 保留统一内容宽度，但 L1 Adapter 与旧 L2 helper 分工清晰', function () {
-  ;['circle', 'pill', 'rect'].forEach(function (shape) {
-    assert.strictEqual(adapter.contentWidth({ formFactor: shape }), assisted.contentWidth({ formFactor: shape }))
-  })
+test('v2.2 保留统一 Adapter API，允许页面声明轻量 L1 宽度 override', function () {
+  assert.strictEqual(adapter.contentWidth({ formFactor: 'circle' }), assisted.contentWidth({ formFactor: 'circle' }))
+  assert.strictEqual(adapter.contentWidth({ formFactor: 'pill' }), assisted.contentWidth({ formFactor: 'pill' }))
+  assert.strictEqual(adapter.contentWidth({ formFactor: 'rect' }), assisted.contentWidth({ formFactor: 'rect' }))
+  assert.strictEqual(health.contentWidth({ formFactor: 'circle' }), 136)
+  assert.strictEqual(health.contentWidth({ formFactor: 'pill' }), 168)
+  assert.strictEqual(health.contentWidth({ formFactor: 'rect' }), 164)
   assert.strictEqual(adapter.VERSION, '2.2')
   assert.strictEqual(freedom.describe(freedom.AUTO).adapter, 'adaptive-geometry')
   assert.strictEqual(freedom.describe(freedom.ASSISTED).adapter, 'local-expression')
@@ -65,15 +68,18 @@ test('Health 已收敛为 L1，History 只在趋势局部保留 L2', function ()
   })
 })
 
-test('L1 圆屏通过圆弦自动重选位置，不需要第二套页面', function () {
+test('L1 圆屏通过圆弦自动重选位置并保留文字安全行高', function () {
   const result = resolved(health, profiles[0])
   assert.ok(result.plan.header.top > result.safe.top, 'circle header should move away from the narrow cap')
   assert.ok(result.plan.header.width >= 116, 'header should retain useful semantic width')
-  assert.strictEqual(result.plan.stream.width, 148)
+  assert.strictEqual(result.plan.stream.width, 136)
   assert.ok(result.plan.stream.top >= result.safe.top)
+  assert.ok(result.plan.metaLineHeight > result.plan.metaSize, 'metadata needs a glyph-safe line box')
+  assert.ok(result.plan.detailHeight >= result.plan.cardPaddingY * 2 + result.plan.labelLineHeight + result.plan.chartHeight + result.plan.metaLineHeight + 8)
+  assert.ok(result.plan.scrollPaddingBottom >= 24)
 })
 
-test('History 的 L2 差异只体现在 trendMode', function () {
+test('History 的 L2 差异只体现在 trendMode，竖柱遵循参考图信息结构', function () {
   const circle = resolved(history, profiles[0]).plan
   const rect = resolved(history, profiles[1]).plan
   const pill = resolved(history, profiles[3]).plan
@@ -83,6 +89,10 @@ test('History 的 L2 差异只体现在 trendMode', function () {
   assert.strictEqual(pill.chartHeight, 10)
   assert.strictEqual(pill.pillTrendMinWidth, 14)
   assert.strictEqual(pill.pillTrendMaxWidth, 70)
+  assert.ok(circle.chartHeight >= 50)
+  assert.ok(circle.trendHeight >= 110)
+  assert.ok(circle.columnBarWidth >= 7 && circle.columnBarWidth <= 10)
+  assert.ok(circle.columnCellWidth * 7 <= circle.stream.width)
 })
 
 test('Today 现有圆屏固定组合暂不在本次 Adapter-first 迁移范围', function () {
