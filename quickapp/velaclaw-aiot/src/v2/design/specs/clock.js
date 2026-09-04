@@ -1,8 +1,9 @@
 var freedom = require('../freedom')
 
-function resolve(profile, scene) {
+function resolve(profile, scene, safe) {
   var shape = profile && profile.formFactor ? profile.formFactor : 'rect'
   var height = Math.max(1, Number(scene && scene.height) || 192)
+  var safeBottom = Math.max(1, Number(safe && safe.bottom) || height)
   var faceIds = ['sport', 'simple', 'dashboard']
   var surface = 'rect-face-stage'
 
@@ -22,9 +23,9 @@ function resolve(profile, scene) {
     surface: surface,
     faceIds: faceIds,
     notificationOverlay: shape === 'pill',
-    alpineDataGlassTop: Math.max(244, height - 128) + 'px',
-    alpineDataRowTop: Math.max(252, height - 120) + 'px',
-    alpineBatteryRowTop: Math.max(326, height - 46) + 'px'
+    alpineDataGlassTop: Math.max(244, safeBottom - 100) + 'px',
+    alpineDataRowTop: Math.max(252, safeBottom - 92) + 'px',
+    alpineBatteryRowTop: Math.max(326, safeBottom - 18) + 'px'
   }
 }
 
