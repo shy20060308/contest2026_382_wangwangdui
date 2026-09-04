@@ -56,6 +56,8 @@ The previous daily-record presentation was intentionally removed because it dupl
 
 `Activity` now follows a data-honesty rule as well. The Activity Feature only owns current values and goals, so the page must not invent an hourly histogram from the total. The L2 Activity surface therefore uses **real goal progress**: current value, exact target, percentage, remaining/over-target text and a bounded progress bar. The seven-day entry remains the route to the real historical trend surface.
 
+`Today` uses the same product-minded approach on Circle. When a 2×2 summary grid has enough room for full labels, use `步数 / 热量 / 心率 / 站立` with metric-specific tonal surfaces instead of cryptic one-character abbreviations. Compactness should not come at the cost of legibility or visual identity.
+
 #### L2 Design System v2.1
 
 L2 v2.1 adds one shared assisted-design foundation in `src/v2/design/assisted.js`. It does **not** replace shape-specific composition. Instead it removes repeated infrastructure decisions that were previously copied into every L2 Spec.
@@ -175,7 +177,6 @@ Examples:
 - formatted step values;
 - `今天` / weekday labels;
 - comparative bar widths;
-- goal progress percentages and remaining/over-target copy;
 - selected state colors;
 - capability/status text.
 
@@ -225,7 +226,6 @@ The Design Freedom level is a product decision, not merely a technical optimizat
 | Surface | Freedom | Stable shape strategy |
 | --- | --- | --- |
 | Settings menu | L1 | auto/paged; circle uses fixed chord-aware frame |
-| Activity | L2 | exact goal progress; compact circle / vertical pill / balanced rect |
 | History | L2 | circle tracked bars / pill vertical comparison / rect dashboard |
 | Health | L2 | shared metrics with full round composition on circle |
 | Workout | L2 | shared session semantics with shape-specific dashboard composition |
