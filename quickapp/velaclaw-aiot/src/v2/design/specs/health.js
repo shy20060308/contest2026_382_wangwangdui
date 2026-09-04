@@ -1,23 +1,16 @@
 var freedom = require('../freedom')
+var assisted = require('../assisted')
 
-function contentWidth(profile) {
-  var shape = profile && profile.formFactor ? profile.formFactor : 'rect'
-  if (shape === 'circle') return 148
-  if (shape === 'pill') return 168
-  return 164
-}
+function contentWidth(profile) { return assisted.contentWidth(profile) }
 
 function resolve(profile, scene, safe) {
-  var shape = profile && profile.formFactor ? profile.formFactor : 'rect'
-  return {
-    freedom: freedom.describe(freedom.ASSISTED),
-    freedomLevel: freedom.ASSISTED,
-    strategy: 'assisted',
-    shape: shape,
-    surface: shape === 'circle' ? 'compact-vitals-stream' : (shape === 'pill' ? 'vertical-vitals-stream' : 'vitals-dashboard'),
-    content: { left: safe.left, top: safe.top, width: safe.width, height: safe.height },
-    chartHeight: shape === 'pill' ? 42 : (shape === 'rect' ? 30 : 24)
-  }
+  var plan = assisted.createPlan(profile, safe, {
+    circle: 'compact-vitals-stream',
+    pill: 'vertical-vitals-stream',
+    rect: 'vitals-dashboard'
+  })
+  plan.chartHeight = plan.shape === 'pill' ? 42 : (plan.shape === 'rect' ? 30 : 24)
+  return plan
 }
 
 module.exports = {

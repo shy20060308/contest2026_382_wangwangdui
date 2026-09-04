@@ -54,6 +54,39 @@ The previous daily-record presentation was intentionally removed because it dupl
 
 `Health` follows the same principle: a circular screen may use the full 192×192 scroll canvas with chord-aware sections rather than being reduced to an inscribed rectangle.
 
+#### L2 Design System v2.1
+
+L2 v2.1 adds one shared assisted-design foundation in `src/v2/design/assisted.js`. It does **not** replace shape-specific composition. Instead it removes repeated infrastructure decisions that were previously copied into every L2 Spec.
+
+The shared layer owns:
+
+- normalized `circle` / `pill` / `rect` shape resolution;
+- default content widths (`148 / 168 / 164` logical px);
+- baseline density, rhythm, card-gap and radius tokens per form factor;
+- a versioned plan identity: `designSystem: 'l2-v2.1'`;
+- the common L2 freedom/strategy metadata;
+- safe-content frame creation and simple fixed-height overflow guards.
+
+A resolved L2 plan now starts with a stable contract:
+
+```js
+{
+  designSystem: 'l2-v2.1',
+  designSystemVersion: '2.1',
+  freedomLevel: 2,
+  strategy: 'assisted',
+  shape: 'circle' | 'pill' | 'rect',
+  surface: '...',
+  density: 'compact' | 'vertical' | 'balanced',
+  tokens: { ... },
+  content: { left, top, width, height }
+}
+```
+
+The Design Spec still owns product-specific art direction. For example, `History` keeps its pill comparison bars, `Workout` keeps distinct session geometry, and `Today` may override the shared circle content width to 136px for calendar legibility. Shared tokens are a baseline, not a reason to make all shapes look alike.
+
+The first v2.1 migration covers `Activity`, `Health`, `History`, `Today` and `Workout`. Run `npm run v2:design-system` to validate the shared contract and stable key geometry across the four reference profiles used by the visual test suite.
+
 ### L3 — Free
 
 Use L3 when the interaction or visual model itself is a major part of the product.

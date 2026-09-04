@@ -1,16 +1,15 @@
 var freedom = require('../freedom')
+var assisted = require('../assisted')
 
 function clamp(value, min, max) { return Math.max(min, Math.min(max, value)) }
-
-function contentWidth(profile) {
-  var shape = profile && profile.formFactor ? profile.formFactor : 'rect'
-  if (shape === 'circle') return 148
-  if (shape === 'pill') return 168
-  return 164
-}
+function contentWidth(profile) { return assisted.contentWidth(profile) }
 
 function resolve(profile, scene, safe) {
-  var shape = profile && profile.formFactor ? profile.formFactor : 'rect'
+  var plan = assisted.createPlan(profile, safe, {
+    circle: 'compact-activity-stream',
+    pill: 'vertical-activity-stream',
+    rect: 'activity-dashboard-stream'
+  })
   var tall = safe.height > 250
   var compact = safe.height < 170
   var historyHeight = compact ? 30 : (tall ? 42 : 34)
@@ -19,30 +18,24 @@ function resolve(profile, scene, safe) {
   var metricHeight = compact ? 100 : (tall ? 142 : 118)
   var barColumnWidth = Math.round((safe.width / 8) * 100) / 100
 
-  return {
-    freedom: freedom.describe(freedom.ASSISTED),
-    freedomLevel: freedom.ASSISTED,
-    strategy: 'assisted',
-    shape: shape,
-    surface: shape === 'circle' ? 'compact-activity-stream' : (shape === 'pill' ? 'vertical-activity-stream' : 'activity-dashboard-stream'),
-    title: { left: safe.left, top: safe.top, width: safe.width, height: 22 },
-    history: { left: safe.left, top: historyTop, width: safe.width, height: historyHeight },
-    stream: { left: safe.left, top: streamTop, width: safe.width, height: Math.max(40, safe.bottom - streamTop) },
-    titleSize: compact ? 13 : (tall ? 17 : 15),
-    historyRadius: Math.round(historyHeight / 2),
-    historyTitleSize: compact ? 8 : (tall ? 11 : 9),
-    historySubSize: compact ? 6 : (tall ? 9 : 7),
-    metricHeight: metricHeight,
-    metricGap: compact ? 6 : 10,
-    metricRadius: compact ? 15 : 20,
-    labelSize: compact ? 8 : (tall ? 11 : 9),
-    goalSize: compact ? 6 : (tall ? 9 : 7),
-    valueSize: compact ? 20 : (tall ? 30 : 24),
-    chartHeight: clamp(Math.round(metricHeight * 0.42), 40, 62),
-    barColumnWidth: barColumnWidth,
-    barWidth: clamp(Math.round(barColumnWidth * 0.55), 9, 13),
-    tickSize: compact ? 5 : 7
-  }
+  plan.title = assisted.region(safe.left, safe.top, safe.width, 22)
+  plan.history = assisted.region(safe.left, historyTop, safe.width, historyHeight)
+  plan.stream = assisted.region(safe.left, streamTop, safe.width, Math.max(40, safe.bottom - streamTop))
+  plan.titleSize = compact ? 13 : (tall ? 17 : 15)
+  plan.historyRadius = Math.round(historyHeight / 2)
+  plan.historyTitleSize = compact ? 8 : (tall ? 11 : 9)
+  plan.historySubSize = compact ? 6 : (tall ? 9 : 7)
+  plan.metricHeight = metricHeight
+  plan.metricGap = compact ? 6 : 10
+  plan.metricRadius = compact ? 15 : 20
+  plan.labelSize = compact ? 8 : (tall ? 11 : 9)
+  plan.goalSize = compact ? 6 : (tall ? 9 : 7)
+  plan.valueSize = compact ? 20 : (tall ? 30 : 24)
+  plan.chartHeight = clamp(Math.round(metricHeight * 0.42), 40, 62)
+  plan.barColumnWidth = barColumnWidth
+  plan.barWidth = clamp(Math.round(barColumnWidth * 0.55), 9, 13)
+  plan.tickSize = compact ? 5 : 7
+  return plan
 }
 
 module.exports = { freedomLevel: freedom.ASSISTED, contentWidth: contentWidth, resolve: resolve }
