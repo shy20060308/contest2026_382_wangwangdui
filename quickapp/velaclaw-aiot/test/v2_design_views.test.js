@@ -7,6 +7,7 @@ const motionView = require('../src/v2/design/views/motion')
 const syncView = require('../src/v2/design/views/sync')
 const notificationView = require('../src/v2/design/views/notification')
 const vibrationView = require('../src/v2/design/views/settings_vibration')
+const historyView = require('../src/v2/design/views/history')
 
 const root = path.resolve(__dirname, '..')
 const read = name => fs.readFileSync(path.join(root, name), 'utf8')
@@ -109,6 +110,24 @@ test('Vibration pattern 中文名称只存在于 Design View', function () {
   assert.strictEqual(view.levelText, '强')
   assert.strictEqual(view.patternText, '倒计时')
   assert.strictEqual(view.feedbackText, '倒计时 · 已播放')
+})
+
+test('Trend View 保留七日柱状趋势但不再投影每日记录列表', function () {
+  const view = historyView.project({
+    todaySteps: 6000,
+    avgSteps: 5400,
+    bestSteps: 7200,
+    bestDate: '2026-09-03',
+    avgHeartRate: 76,
+    goalPercent: 100,
+    records: [
+      { date: '2026-09-02', steps: 4800 },
+      { date: '2026-09-03', steps: 7200 }
+    ]
+  }, { chartHeight: 52 })
+  assert.strictEqual(view.bars.length, 2)
+  assert.strictEqual(view.bestDayText, '09/03')
+  assert.ok(!Object.prototype.hasOwnProperty.call(view, 'records'))
 })
 
 test('对应 Feature 不重复生成展示格式', function () {
