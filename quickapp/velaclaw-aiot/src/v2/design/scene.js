@@ -1,21 +1,28 @@
 var geometry = require('./geometry')
 
-function px(value, fallback) {
-  if (typeof value === 'number') return value
-  var number = parseFloat(String(value || ''))
-  return isFinite(number) ? number : (fallback || 0)
+function positive(value, fallback) {
+  var number = Number(value)
+  return isFinite(number) && number > 0 ? number : (fallback || 0)
+}
+
+function coverageHeight(profile) {
+  var logicalHeight = positive(profile && profile.logicalHeight, geometry.DESIGN_WIDTH)
+  var screenWidth = positive(profile && profile.screenWidth, 0)
+  var screenHeight = positive(profile && profile.screenHeight, 0)
+  if (screenWidth && screenHeight) {
+    var physicalCoverage = Math.ceil(screenHeight * geometry.DESIGN_WIDTH / screenWidth)
+    if (physicalCoverage > logicalHeight) logicalHeight = physicalCoverage
+  }
+  return logicalHeight
 }
 
 function resolve(profile) {
-  var logicalHeight = Number(profile && profile.logicalHeight) || geometry.DESIGN_WIDTH
-  var hostTop = px(profile && profile.viewportTop, 0)
-  var hostHeight = px(profile && profile.viewportHeight, 0)
-  if (!hostHeight) hostHeight = Math.max(1, logicalHeight - hostTop)
+  var height = coverageHeight(profile)
   return {
     width: geometry.DESIGN_WIDTH,
-    height: hostHeight,
-    hostTop: hostTop,
-    hostBottom: hostTop + hostHeight,
+    height: height,
+    hostTop: 0,
+    hostBottom: height,
     shape: profile && profile.formFactor ? profile.formFactor : 'rect'
   }
 }
@@ -23,9 +30,8 @@ function resolve(profile) {
 function safeForWidth(profile, contentWidth, comfort) {
   var host = resolve(profile)
   var globalSafe = geometry.safe(profile, contentWidth, comfort)
-  var top = Math.max(0, globalSafe.top - host.hostTop)
-  var bottom = Math.min(host.height, globalSafe.bottom - host.hostTop)
-  if (bottom < top) bottom = top
+  var top = Math.max(0, Math.min(host.height, globalSafe.top))
+  var bottom = Math.max(top, Math.min(host.height, globalSafe.bottom))
   return {
     left: globalSafe.left,
     top: top,
@@ -38,5 +44,6 @@ function safeForWidth(profile, contentWidth, comfort) {
 
 module.exports = {
   resolve: resolve,
-  safeForWidth: safeForWidth
+  safeForWidth: safeForWidth,
+  coverageHeight: coverageHeight
 }
