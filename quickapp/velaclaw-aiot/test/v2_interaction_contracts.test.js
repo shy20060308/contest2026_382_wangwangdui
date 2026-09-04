@@ -67,6 +67,8 @@ assert.ok(launcher.includes('startHoneyInertia(') && launcher.includes('settleHo
 assert.ok(launcher.includes('this.openApp(item)') && !launcher.includes("if (!item.isCenter)"), 'any visible Circle app must open with one tap instead of requiring center-then-tap')
 assert.ok(launcher.includes('this.touchStartX < 26'), 'two-dimensional Honeycomb must keep an explicit edge-back gesture instead of stealing vertical drag')
 assert.ok(!launcher.includes('circleDragX') && !launcher.includes('circleDragY'), 'Circle pan must be persistent instead of temporary drag offsets that force a snap')
+const tapPath = launcher.slice(launcher.indexOf('onHoneyEnd(event)'), launcher.indexOf('startHoneyInertia(vx, vy)'))
+assert.ok(tapPath.indexOf("if (!this.dragMoved)") < tapPath.indexOf('event.preventDefault'), 'a stationary Honeycomb tap must return before drag event consumption so child click can open the app')
 
 const healthPage = read('src/pages/heartrate/heartrate.ux')
 assert.ok(healthPage.includes('class="circle-health"') && healthPage.includes('style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;"'), 'Circle Health scroll viewport must use the full round scene, not the rectangular safe band')
