@@ -2,6 +2,7 @@ const assert = require('assert')
 const fs = require('fs')
 const path = require('path')
 
+const activityView = require('../src/v2/design/views/activity')
 const motionView = require('../src/v2/design/views/motion')
 const syncView = require('../src/v2/design/views/sync')
 const notificationView = require('../src/v2/design/views/notification')
@@ -12,6 +13,20 @@ const read = name => fs.readFileSync(path.join(root, name), 'utf8')
 
 let passed = 0
 function test(name, callback) { callback(); passed++; console.log('通过 - ' + name) }
+
+test('Activity View 独占名称、单位、格式和趋势投影', function () {
+  const view = activityView.present([
+    { id: 'steps', current: 12345, goal: 6000 },
+    { id: 'calories', current: 180, goal: 300 }
+  ], 40)
+  assert.strictEqual(view[0].name, '步数')
+  assert.strictEqual(view[0].unit, '步')
+  assert.strictEqual(view[0].current, '12,345')
+  assert.strictEqual(view[0].bars.length, 8)
+  assert.strictEqual(Math.max.apply(null, view[0].bars.map(function (bar) { return bar.h })), 40)
+  assert.strictEqual(view[1].name, '卡路里')
+  assert.strictEqual(view[1].unit, 'kcal')
+})
 
 test('Motion View 独占数值格式、强度文案和倒计时展示', function () {
   const view = motionView.project({
@@ -97,6 +112,7 @@ test('Vibration pattern 中文名称只存在于 Design View', function () {
 })
 
 test('对应 Feature 不重复生成展示格式', function () {
+  const activityFeature = read('src/v2/features/activity/controller.js')
   const motionFeature = read('src/v2/features/settings/motion_controller.js')
   const syncFeature = read('src/v2/features/sync/controller.js')
   const vibrationFeature = read('src/v2/features/settings/vibration_controller.js')
@@ -104,6 +120,7 @@ test('对应 Feature 不重复生成展示格式', function () {
   const hapticDomain = read('src/domain/haptics/patterns.js')
   const notificationDomain = read('src/domain/notification/factory.js')
 
+  assert.ok(!activityFeature.includes("name: '步数'") && !activityFeature.includes('unit:') && !activityFeature.includes('trend:') && !activityFeature.includes('#FFD60A'))
   assert.ok(!motionFeature.includes('.toFixed(') && !motionFeature.includes('强烈') && !motionFeature.includes('轻微'))
   assert.ok(!syncFeature.includes("+ '%'") && !syncFeature.includes('已连接') && !syncFeature.includes('未同步'))
   assert.ok(!vibrationFeature.includes('倒计时') && !vibrationFeature.includes('已播放'))
