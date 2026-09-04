@@ -7,6 +7,8 @@ export function createHealthController(onChange) {
   var stressValues = []
   var latest = null
   var started = false
+  var lifecycleGeneration = 0
+  var activeGeneration = 0
 
   function official(data, prefix) {
     return !!(data && data[prefix + 'Live'] && data[prefix + 'Source'] === 'live')
@@ -62,6 +64,8 @@ export function createHealthController(onChange) {
   }
 
   function onHealth(data) {
+    var generation = activeGeneration
+    if (!started || generation !== lifecycleGeneration) return
     latest = data
     seedCurrent(data)
     heartValues = updateWindow(heartValues, data.heartRateChanged, data.heartRate, official(data, 'heartRate'))
@@ -74,11 +78,13 @@ export function createHealthController(onChange) {
     start: function () {
       if (started) { emit(); return }
       started = true
+      activeGeneration = ++lifecycleGeneration
       healthStore.subscribeAll(onHealth)
     },
     stop: function () {
       if (!started) return
       started = false
+      lifecycleGeneration++
       healthStore.unsubscribe(onHealth)
     },
     refresh: emit
