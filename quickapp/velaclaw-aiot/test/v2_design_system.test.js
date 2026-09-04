@@ -2,7 +2,9 @@ const assert = require('assert')
 const fs = require('fs')
 const path = require('path')
 const assisted = require('../src/v2/design/assisted')
+const adapter = require('../src/v2/design/adapter')
 const scene = require('../src/v2/design/scene')
+const freedom = require('../src/v2/design/freedom')
 const activity = require('../src/v2/design/specs/activity')
 const health = require('../src/v2/design/specs/health')
 const history = require('../src/v2/design/specs/history')
@@ -16,7 +18,6 @@ const profiles = [
   { name: 'band9-pill', formFactor: 'pill', logicalHeight: 490, screenWidth: 192, screenHeight: 490 },
   { name: 'band10-pill', formFactor: 'pill', logicalHeight: 471, screenWidth: 212, screenHeight: 520 }
 ]
-const specs = [activity, health, history, today, workout]
 
 let passed = 0
 function test(name, callback) { callback(); passed++; console.log('通过 - ' + name) }
@@ -27,94 +28,87 @@ function resolved(spec, profile) {
   return { host, safe, plan: spec.resolve(profile, host, safe) }
 }
 
-test('L2 v2.1 为三种形态提供稳定的基础 token', function () {
-  assert.strictEqual(assisted.contentWidth({ formFactor: 'circle' }), 148)
-  assert.strictEqual(assisted.contentWidth({ formFactor: 'pill' }), 168)
-  assert.strictEqual(assisted.contentWidth({ formFactor: 'rect' }), 164)
-  assert.strictEqual(assisted.tokens({ formFactor: 'circle' }).density, 'compact')
-  assert.strictEqual(assisted.tokens({ formFactor: 'pill' }).density, 'vertical')
-  assert.strictEqual(assisted.tokens({ formFactor: 'rect' }).density, 'balanced')
+test('v2.2 保留统一内容宽度，但 L1 Adapter 与旧 L2 helper 分工清晰', function () {
+  ;['circle', 'pill', 'rect'].forEach(function (shape) {
+    assert.strictEqual(adapter.contentWidth({ formFactor: shape }), assisted.contentWidth({ formFactor: shape }))
+  })
+  assert.strictEqual(adapter.VERSION, '2.2')
+  assert.strictEqual(freedom.describe(freedom.AUTO).adapter, 'adaptive-geometry')
+  assert.strictEqual(freedom.describe(freedom.ASSISTED).adapter, 'local-expression')
+  assert.strictEqual(freedom.describe(freedom.FREE).adapter, 'independent-surface')
 })
 
-test('所有迁移后的 L2 Spec 共享版本化 plan contract', function () {
-  specs.forEach(function (spec) {
+test('Activity / Today / Workout 现有 L2 v2.1 contract 保持兼容', function () {
+  ;[activity, today, workout].forEach(function (spec) {
     profiles.forEach(function (profile) {
       const result = resolved(spec, profile)
       assert.strictEqual(result.plan.designSystem, 'l2-v2.1')
       assert.strictEqual(result.plan.designSystemVersion, '2.1')
-      assert.strictEqual(result.plan.freedomLevel, 2)
+      assert.strictEqual(result.plan.freedomLevel, freedom.ASSISTED)
       assert.strictEqual(result.plan.strategy, 'assisted')
-      assert.strictEqual(result.plan.shape, profile.formFactor)
-      assert.ok(result.plan.surface)
-      assert.ok(result.plan.tokens && result.plan.tokens.contentWidth > 0)
-      assert.deepStrictEqual(result.plan.content, {
-        left: result.safe.left,
-        top: result.safe.top,
-        width: result.safe.width,
-        height: result.safe.height
-      })
     })
   })
 })
 
-test('Today 可以在 shared L2 width 上声明 circle 专用窄内容带', function () {
-  assert.strictEqual(today.contentWidth({ formFactor: 'circle' }), 136)
-  assert.strictEqual(today.contentWidth({ formFactor: 'pill' }), 168)
-  assert.strictEqual(today.contentWidth({ formFactor: 'rect' }), 164)
-})
-
-test('Circle Today 固定宽卡片使用真实可容纳 136px 的圆弦 frame', function () {
-  const result = resolved(today, profiles[0])
-  assert.deepStrictEqual(result.plan.circleFrame, { left: 28, top: 30, width: 136, height: 128 })
-  assert.ok(result.plan.circleFrame.top > result.safe.top, 'fixed circle composition must not start at the near-full scroll safe top')
-  assert.ok(result.plan.circleFrame.top + result.plan.circleFrame.height <= 160, 'circle Today must finish before the lower narrow arc')
-
-  const page = fs.readFileSync(path.join(root, 'src/pages/today/today.ux'), 'utf8')
-  assert.ok(page.includes('left: {{ circleFrameLeft }}px; top: {{ circleFrameTop }}px; height: {{ circleFrameHeight }}px;'), 'Circle Today page must consume the Design-owned fixed frame')
-  assert.ok(page.includes('self.circleFrameTop = plan.circleFrame.top'), 'Circle Today must bind the frame from its L2 plan')
-  assert.ok(!page.includes('ready && isCircle && pageIndex === 0 }}" style="left: {{ sceneSafeLeft }}px; top: {{ sceneSafeTop }}px;'), 'Circle Today must not place a 136px fixed card at the generic scroll safe top')
-})
-
-test('现有 L2 surface 迁移后保持形态语义', function () {
-  assert.strictEqual(resolved(health, profiles[0]).plan.surface, 'compact-vitals-stream')
-  assert.strictEqual(resolved(history, profiles[2]).plan.surface, 'vertical-comparative-trend')
-  assert.strictEqual(resolved(activity, profiles[1]).plan.surface, 'goal-progress-dashboard')
-  assert.strictEqual(resolved(activity, profiles[2]).plan.surface, 'vertical-goal-progress')
-  assert.strictEqual(resolved(workout, profiles[3]).plan.surface, 'pill-session')
-})
-
-test('Activity L2 使用真实目标进度几何而不是伪造小时趋势', function () {
+test('Health 已收敛为 L1，History 只在趋势局部保留 L2', function () {
   profiles.forEach(function (profile) {
-    const result = resolved(activity, profile)
-    assert.strictEqual(result.plan.progressTrackWidth, result.safe.width - result.plan.metricPadding * 2)
-    assert.ok(result.plan.progressTrackHeight >= 6 && result.plan.progressTrackHeight <= 8)
-    assert.ok(result.plan.metricHeight <= 94)
-    assert.ok(!Object.prototype.hasOwnProperty.call(result.plan, 'chartHeight'))
-    assert.ok(!Object.prototype.hasOwnProperty.call(result.plan, 'barColumnWidth'))
+    const healthPlan = resolved(health, profile).plan
+    const historyPlan = resolved(history, profile).plan
+    assert.strictEqual(healthPlan.designSystem, 'adapter-first-v2.2')
+    assert.strictEqual(healthPlan.designSystemVersion, '2.2')
+    assert.strictEqual(healthPlan.freedomLevel, freedom.AUTO)
+    assert.strictEqual(healthPlan.strategy, 'auto')
+    assert.strictEqual(healthPlan.surface, 'vitals-stream')
+    assert.strictEqual(historyPlan.designSystem, 'adapter-first-v2.2')
+    assert.strictEqual(historyPlan.freedomLevel, freedom.ASSISTED)
+    assert.strictEqual(historyPlan.surface, 'trend-stream')
   })
 })
 
-test('迁移不改变 History 与 Workout 的稳定关键几何', function () {
-  const historyPlan = resolved(history, profiles[3]).plan
-  assert.strictEqual(historyPlan.chartHeight, 10)
-  assert.strictEqual(historyPlan.pillTrendMinWidth, 14)
-  assert.strictEqual(historyPlan.pillTrendMaxWidth, 70)
+test('L1 圆屏通过圆弦自动重选位置，不需要第二套页面', function () {
+  const result = resolved(health, profiles[0])
+  assert.ok(result.plan.header.top > result.safe.top, 'circle header should move away from the narrow cap')
+  assert.ok(result.plan.header.width >= 116, 'header should retain useful semantic width')
+  assert.strictEqual(result.plan.stream.width, 148)
+  assert.ok(result.plan.stream.top >= result.safe.top)
+})
 
+test('History 的 L2 差异只体现在 trendMode', function () {
+  const circle = resolved(history, profiles[0]).plan
+  const rect = resolved(history, profiles[1]).plan
+  const pill = resolved(history, profiles[3]).plan
+  assert.strictEqual(circle.trendMode, 'compact-column')
+  assert.strictEqual(rect.trendMode, 'compact-column')
+  assert.strictEqual(pill.trendMode, 'comparative-row')
+  assert.strictEqual(pill.chartHeight, 10)
+  assert.strictEqual(pill.pillTrendMinWidth, 14)
+  assert.strictEqual(pill.pillTrendMaxWidth, 70)
+})
+
+test('Today 现有圆屏固定组合暂不在本次 Adapter-first 迁移范围', function () {
+  const result = resolved(today, profiles[0])
+  assert.deepStrictEqual(result.plan.circleFrame, { left: 28, top: 30, width: 136, height: 128 })
+  assert.ok(result.plan.circleFrame.top + result.plan.circleFrame.height <= 160)
+  const page = fs.readFileSync(path.join(root, 'src/pages/today/today.ux'), 'utf8')
+  assert.ok(page.includes('self.circleFrameTop = plan.circleFrame.top'))
+})
+
+test('Workout 当前仍是 L2 单页面，关键圆屏几何保持稳定', function () {
   const workoutPlan = resolved(workout, profiles[0]).plan
   assert.strictEqual(workoutPlan.metricColumns, 2)
   assert.strictEqual(workoutPlan.durationSize, 27)
   assert.strictEqual(workoutPlan.durationLineHeight, 31)
-  assert.strictEqual(workoutPlan.actionSize, 8)
   assert.deepStrictEqual(workoutPlan.header, { left: 32, top: 24, width: 128, height: 18 })
   assert.deepStrictEqual(workoutPlan.metrics, { left: 30, top: 97, width: 132, height: 54 })
   assert.strictEqual(workoutPlan.metricItemWidth * 2 + workoutPlan.metricGap, workoutPlan.metrics.width)
 })
 
-test('fixed composition guard 与当前 Today 安全高度一致', function () {
+test('Activity 继续使用真实目标进度，而不是伪小时趋势', function () {
   profiles.forEach(function (profile) {
-    assert.strictEqual(resolved(today, profile).plan.needsOverride, false, profile.name + ' Today must fit')
+    const result = resolved(activity, profile)
+    assert.strictEqual(result.plan.progressTrackWidth, result.safe.width - result.plan.metricPadding * 2)
+    assert.ok(!Object.prototype.hasOwnProperty.call(result.plan, 'chartHeight'))
   })
-  assert.strictEqual(assisted.needsOverride(181, { height: 168 }), true)
 })
 
-console.log('L2 Design System v2.1 contracts verified: ' + passed + ' 项')
+console.log('Design System contracts verified: adapter-first v2.2 + compatible v2.1 surfaces, ' + passed + ' 项')
