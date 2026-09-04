@@ -1,9 +1,9 @@
 <template>
   <stack class="history-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
     <stack class="history-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
-      <scroll class="circle-history" if="{{ ready && isCircle }}" scroll-y="true" style="left: {{ sceneSafeLeft }}px; top: {{ sceneSafeTop }}px; width: {{ contentWidth }}px; height: {{ sceneSafeHeight }}px;">
+      <scroll class="circle-history" if="{{ ready && isCircle }}" scroll-y="true" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
         <div class="circle-head"><text class="circle-title">7日趋势</text><text class="circle-today">今日 {{ todayStepsText }}</text></div>
-        <div class="circle-chart"><div class="chart-row circle-chart-row"><div class="bar-cell circle-bar-cell" for="{{ bars }}" tid="date"><div class="bar-space circle-bar-space"><div class="step-bar" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div><text class="bar-small">{{ $item.shortSteps }}</text><text class="bar-label">{{ $item.label }}</text></div></div></div>
+        <div class="circle-chart"><div class="circle-chart-row"><div class="circle-bar-cell" for="{{ bars }}" tid="date"><div class="circle-bar-track"><div class="circle-step-bar" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div><text class="circle-bar-label {{ $item.isToday ? 'circle-today-label' : '' }}">{{ $item.circleLabel }}</text></div></div></div>
         <div class="circle-insights"><div class="circle-insight"><text class="insight-label">最佳</text><text class="insight-value">{{ bestStepsText }}</text></div><div class="circle-insight"><text class="insight-label">心率</text><text class="insight-value heart">{{ avgHeartText }}</text></div><div class="circle-insight"><text class="insight-label">达成</text><text class="insight-value yellow">{{ goalText }}</text></div></div>
       </scroll>
 
@@ -67,23 +67,25 @@ export default {
 <style>
 .history-root, .history-scene { background-color: #000000; } .history-scene { position: absolute; left: 0px; top: 0px; }
 .circle-history, .pill-history, .rect-history { position: absolute; flex-direction: column; }
-.chart-row { flex-direction: row; align-items: flex-end; justify-content: space-between; } .bar-cell { flex-direction: column; align-items: center; } .bar-space { flex-direction: column; justify-content: flex-end; align-items: center; } .step-bar { width: 7px; border-radius: 4px; } .bar-label { color: #636366; text-align: center; } .bar-small { color: #8E8E93; text-align: center; }
+.chart-row { flex-direction: row; align-items: flex-end; justify-content: space-between; } .bar-cell { flex-direction: column; align-items: center; } .bar-space { flex-direction: column; justify-content: flex-end; align-items: center; } .step-bar { width: 7px; border-radius: 4px; } .bar-label { color: #636366; text-align: center; }
 .heart { color: #FF375F; } .yellow { color: #FFD60A; } .blue { color: #64D2FF; }
 .insight-label { color: #8E8E93; } .insight-value { color: #FFFFFF; font-weight: bold; } .insight-detail { color: #636366; }
 
-.circle-head { width: 148px; height: 26px; flex-direction: row; justify-content: space-between; align-items: center; }
-.circle-title { font-size: 13px; color: #FFFFFF; font-weight: bold; }
-.circle-today { font-size: 7px; color: #FFD60A; }
-.circle-chart { width: 148px; height: 88px; border-radius: 21px; background-color: #101215; padding: 8px; }
-.circle-chart-row { width: 132px; height: 72px; }
-.circle-bar-cell { width: 18px; }
-.circle-bar-space { width: 18px; height: 56px; }
-.circle-bar-cell .bar-small { width: 18px; font-size: 5px; margin-top: 2px; }
-.circle-bar-cell .bar-label { width: 18px; font-size: 5px; margin-top: 1px; }
-.circle-insights { width: 148px; height: 44px; margin-top: 8px; flex-direction: row; justify-content: space-between; }
-.circle-insight { width: 46px; height: 44px; border-radius: 13px; background-color: #15171B; padding: 7px 6px; flex-direction: column; justify-content: center; }
+.circle-history { left: 0px; top: 0px; align-items: center; padding-top: 20px; padding-bottom: 18px; background-color: #000000; }
+.circle-head { width: 120px; height: 28px; flex-direction: column; align-items: center; justify-content: center; }
+.circle-title { width: 120px; font-size: 13px; color: #FFFFFF; font-weight: bold; text-align: center; }
+.circle-today { width: 120px; font-size: 6px; color: #FFD60A; text-align: center; margin-top: 2px; }
+.circle-chart { width: 140px; height: 76px; margin-top: 4px; border-radius: 22px; background-color: #101215; padding: 8px; flex-direction: column; justify-content: center; }
+.circle-chart-row { width: 124px; height: 60px; flex-direction: row; align-items: flex-end; justify-content: space-between; }
+.circle-bar-cell { width: 16px; height: 58px; flex-direction: column; align-items: center; justify-content: flex-end; }
+.circle-bar-track { width: 6px; height: 42px; border-radius: 3px; background-color: #252830; flex-direction: column; justify-content: flex-end; align-items: center; overflow: hidden; }
+.circle-step-bar { width: 6px; border-radius: 3px; }
+.circle-bar-label { width: 16px; height: 10px; margin-top: 4px; color: #73757D; font-size: 6px; text-align: center; }
+.circle-today-label { color: #FFD60A; font-weight: bold; }
+.circle-insights { width: 126px; height: 38px; margin-top: 6px; flex-direction: row; justify-content: space-between; }
+.circle-insight { width: 40px; height: 38px; border-radius: 12px; background-color: #15171B; padding: 6px; flex-direction: column; justify-content: center; }
 .circle-insight .insight-label { font-size: 5px; }
-.circle-insight .insight-value { font-size: 8px; margin-top: 4px; }
+.circle-insight .insight-value { font-size: 7px; margin-top: 3px; }
 
 .pill-head { width: 168px; height: 42px; flex-direction: row; justify-content: space-between; align-items: center; }
 .pill-title { font-size: 19px; color: #FFFFFF; font-weight: bold; }
