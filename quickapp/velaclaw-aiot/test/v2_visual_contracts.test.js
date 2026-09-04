@@ -127,6 +127,13 @@ assert.ok(healthPage.includes('class="circle-health"') && healthPage.includes('s
 assert.ok(healthPage.includes('.circle-hero { width: 144px; height: 98px;'), 'Circle Health heart card must fit its own value, chart and footer without internal clipping')
 assert.ok(!healthPage.includes('class="circle-health" if="{{ ready && isCircle }}" scroll-y="true" style="left: {{ sceneSafeLeft }}px; top: {{ sceneSafeTop }}px;'), 'Circle Health must not regress to the rectangular safe-band viewport')
 
+const historyPage = fs.readFileSync(path.join(root, 'src/pages/history/history.ux'), 'utf8')
+const historyView = fs.readFileSync(path.join(root, 'src/v2/design/views/history.js'), 'utf8')
+assert.ok(!historyPage.includes('每日记录') && !historyPage.includes('circle-record') && !historyPage.includes('pill-record') && !historyPage.includes('rect-record'), 'Trend surfaces must not render the unstable daily-record list')
+assert.ok(!historyPage.includes('records: []') && !historyPage.includes('model.records'), 'Trend page must not retain dead daily-record presentation state')
+assert.ok(!historyView.includes('displayRecords') && !historyView.includes('records: displayRecords'), 'Trend Design View must stop projecting removed daily-record presentation data')
+assert.ok(historyPage.includes('.circle-chart { width: 148px; height: 88px;') && historyPage.includes('.pill-chart { width: 168px; height: 140px;') && historyPage.includes('.rect-dashboard { width: 164px; height: 124px;'), 'Trend layouts must redistribute the freed space into the chart and insight hierarchy')
+
 const today = fs.readFileSync(path.join(root, 'src/pages/today/today.ux'), 'utf8')
 assert.ok(today.includes('.circle-calendar-grid { height: 78px; }') && today.includes('.circle-cell { width: 19px; height: 13px;'), 'Circle calendar grid must stay within its 130px safe band')
 
