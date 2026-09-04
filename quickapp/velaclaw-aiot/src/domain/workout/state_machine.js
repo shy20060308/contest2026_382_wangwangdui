@@ -4,16 +4,12 @@ var MODE_RULES = {
   walk: {
     stepsPerSecond: 1.5,
     strideMeters: 0.7,
-    caloriesPerStep: 0.04,
-    initialHeartRate: 86,
-    heartRateSpan: 10
+    caloriesPerStep: 0.04
   },
   run: {
     stepsPerSecond: 2.5,
     strideMeters: 0.9,
-    caloriesPerStep: 0.06,
-    initialHeartRate: 118,
-    heartRateSpan: 12
+    caloriesPerStep: 0.06
   }
 }
 
@@ -45,9 +41,6 @@ function updateRunning(session, now) {
   session.estimatedDistanceMeters = Math.round(session.steps * rule.strideMeters)
   session.distanceMeters = session.gpsDistanceMeters > 0 ? session.gpsDistanceMeters : session.estimatedDistanceMeters
   session.calories = Math.round(session.steps * rule.caloriesPerStep)
-  session.currentHeartRate = rule.initialHeartRate + (session.steps % rule.heartRateSpan)
-  session.heartTotal += session.currentHeartRate
-  session.heartSamples += 1
   session.lastUpdateAt = current
   return session
 }
@@ -67,7 +60,8 @@ function rawRecord(session, endTime) {
     gpsPoint: clone(session.gpsPoint),
     avgHeartRate: session.heartSamples > 0
       ? Math.round(session.heartTotal / session.heartSamples)
-      : session.currentHeartRate,
+      : null,
+    heartSource: session.heartSamples > 0 && session.heartSource === 'official' ? 'official' : 'none',
     synced: false
   }
 }
@@ -79,14 +73,25 @@ export default {
 
   restore: function (session) {
     activeSession = session && session.id ? clone(session) : null
-    if (activeSession) updateRunning(activeSession)
+    if (activeSession) {
+      if (activeSession.heartSource === 'official') {
+        if (activeSession.currentHeartRate === undefined) activeSession.currentHeartRate = null
+        activeSession.heartTotal = Number(activeSession.heartTotal) || 0
+        activeSession.heartSamples = Number(activeSession.heartSamples) || 0
+      } else {
+        activeSession.currentHeartRate = null
+        activeSession.heartTotal = 0
+        activeSession.heartSamples = 0
+        activeSession.heartSource = null
+      }
+      updateRunning(activeSession)
+    }
     return clone(activeSession)
   },
 
   start: function (type, now) {
     var startedAt = now || Date.now()
     var normalized = normalizeType(type)
-    var rule = ruleFor(normalized)
     activeSession = {
       id: 'workout_' + startedAt,
       type: normalized,
@@ -102,9 +107,10 @@ export default {
       gpsDistanceMeters: 0,
       gpsStatus: 'locating',
       gpsPoint: null,
-      currentHeartRate: rule.initialHeartRate,
-      heartTotal: rule.initialHeartRate,
-      heartSamples: 1
+      currentHeartRate: null,
+      heartTotal: 0,
+      heartSamples: 0,
+      heartSource: null
     }
     return clone(activeSession)
   },
@@ -143,6 +149,18 @@ export default {
       activeSession.gpsDistanceMeters = Math.round(data.distanceMeters)
       if (activeSession.gpsDistanceMeters > 0) activeSession.distanceMeters = activeSession.gpsDistanceMeters
     }
+    return clone(activeSession)
+  },
+
+  updateHeartRate: function (value) {
+    if (!activeSession) return null
+    var number = Number(value)
+    if (!isFinite(number) || number <= 0) return clone(activeSession)
+    var heartRate = Math.round(number)
+    activeSession.currentHeartRate = heartRate
+    activeSession.heartTotal += heartRate
+    activeSession.heartSamples += 1
+    activeSession.heartSource = 'official'
     return clone(activeSession)
   },
 

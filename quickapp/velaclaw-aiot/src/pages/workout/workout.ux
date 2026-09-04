@@ -3,21 +3,21 @@
     <div class="workout-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
       <div class="workout-header" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;">
         <text class="mode-name" style="font-size: {{ titleSize }}px; color: {{ accentColor }};">{{ modeName }}</text>
-        <text class="status-text" style="font-size: {{ statusSize }}px;">{{ statusText }}</text>
+        <div class="status-chip" style="background-color: {{ statusSurface }};"><div class="status-dot" style="background-color: {{ statusColor }};"></div><text class="status-text" style="font-size: {{ statusSize }}px; color: {{ statusColor }};">{{ statusText }}</text></div>
       </div>
-      <div class="hero" style="left: {{ heroLeft }}px; top: {{ heroTop }}px; width: {{ heroWidth }}px; height: {{ heroHeight }}px;">
+      <div class="hero" style="left: {{ heroLeft }}px; top: {{ heroTop }}px; width: {{ heroWidth }}px; height: {{ heroHeight }}px; border-radius: {{ radius }}px; background-color: {{ heroBackground }};">
         <text class="duration" style="font-size: {{ durationSize }}px;">{{ durationText }}</text>
-        <text class="duration-label" style="font-size: {{ durationLabelSize }}px;">运动时长</text>
+        <text class="duration-label" style="font-size: {{ durationLabelSize }}px;">{{ durationLabelText }}</text>
         <text class="gps-status" style="font-size: {{ gpsSize }}px; color: {{ gpsColor }};">{{ gpsText }}</text>
       </div>
-      <div class="metric-grid" style="left: {{ metricsLeft }}px; top: {{ metricsTop }}px; width: {{ metricsWidth }}px; height: {{ metricsHeight }}px;">
+      <div class="metric-grid" style="left: {{ metricsLeft }}px; top: {{ metricsTop }}px; width: {{ metricsWidth }}px; height: {{ metricsHeight }}px; opacity: {{ metricOpacity }};">
         <div class="metric-card" style="width: {{ metricItemWidth }}px; height: {{ metricHeight }}px; margin-right: {{ metricGap }}px; margin-bottom: {{ metricGap }}px; border-radius: {{ radius }}px;"><text class="metric-value steps-color" style="font-size: {{ metricValueSize }}px;">{{ stepsText }}</text><text class="metric-label" style="font-size: {{ metricLabelSize }}px;">步数</text></div>
         <div class="metric-card" style="width: {{ metricItemWidth }}px; height: {{ metricHeight }}px; margin-right: {{ metricGap }}px; margin-bottom: {{ metricGap }}px; border-radius: {{ radius }}px;"><text class="metric-value calorie-color" style="font-size: {{ metricValueSize }}px;">{{ caloriesText }}</text><text class="metric-label" style="font-size: {{ metricLabelSize }}px;">千卡</text></div>
         <div class="metric-card" style="width: {{ metricItemWidth }}px; height: {{ metricHeight }}px; margin-right: {{ metricGap }}px; border-radius: {{ radius }}px;"><text class="metric-value distance-color" style="font-size: {{ metricValueSize }}px;">{{ distanceText }}</text><text class="metric-label" style="font-size: {{ metricLabelSize }}px;">距离</text></div>
-        <div class="metric-card" style="width: {{ metricItemWidth }}px; height: {{ metricHeight }}px; border-radius: {{ radius }}px;"><text class="metric-value heart-color" style="font-size: {{ metricValueSize }}px;">{{ heartRateText }}</text><text class="metric-label" style="font-size: {{ metricLabelSize }}px;">心率 bpm</text></div>
+        <div class="metric-card" style="width: {{ metricItemWidth }}px; height: {{ metricHeight }}px; border-radius: {{ radius }}px;"><text class="metric-value heart-color" style="font-size: {{ metricValueSize }}px;">{{ heartRateText }}</text><text class="metric-label" style="font-size: {{ metricLabelSize }}px;">{{ heartRateLabel }}</text></div>
       </div>
       <div class="actions" style="left: {{ actionsLeft }}px; top: {{ actionsTop }}px; width: {{ actionsWidth }}px; height: {{ actionsHeight }}px;">
-        <text class="action pause-action" @click="togglePause" style="width: {{ actionWidth }}px; height: {{ actionsHeight }}px; margin-right: {{ actionGap }}px; border-radius: {{ radius }}px; font-size: {{ actionSize }}px;">{{ pauseButtonText }}</text>
+        <text class="action pause-action" @click="togglePause" style="width: {{ actionWidth }}px; height: {{ actionsHeight }}px; margin-right: {{ actionGap }}px; border-radius: {{ radius }}px; font-size: {{ actionSize }}px; background-color: {{ pauseButtonBackground }}; color: {{ pauseButtonColor }};">{{ pauseButtonText }}</text>
         <text class="action finish-action" @click="requestFinish" style="width: {{ actionWidth }}px; height: {{ actionsHeight }}px; border-radius: {{ radius }}px; font-size: {{ actionSize }}px;">结束</text>
       </div>
       <div class="confirm-cover" if="{{ confirmVisible }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
@@ -43,7 +43,7 @@ function applyRegion(page, prefix, value) {
 
 export default {
   private: {
-    sessionStatus: '', modeName: '运动', accentColor: '#30D158', statusText: '准备中', durationText: '00:00', stepsText: '0', caloriesText: '0', distanceText: '0 m', heartRateText: '--', gpsText: '正在定位', gpsColor: '#8E8E93', pauseButtonText: '暂停', confirmVisible: false,
+    sessionStatus: '', modeName: '运动', accentColor: '#30D158', statusText: '准备中', statusColor: '#8E8E93', statusSurface: '#15171B', durationText: '00:00', durationLabelText: '运动时长', stepsText: '0', caloriesText: '0', distanceText: '0 m', heartRateText: '--', heartRateLabel: '等待心率', gpsText: '正在定位', gpsColor: '#8E8E93', pauseButtonText: '暂停', pauseButtonBackground: '#2C2C2E', pauseButtonColor: '#FFFFFF', heroBackground: '#10151A', metricOpacity: 1, confirmVisible: false,
     headerLeft: 22, headerTop: 24, headerWidth: 148, headerHeight: 22, heroLeft: 22, heroTop: 52, heroWidth: 148, heroHeight: 70, metricsLeft: 22, metricsTop: 130, metricsWidth: 148, metricsHeight: 60, actionsLeft: 30, actionsTop: 160, actionsWidth: 132, actionsHeight: 24,
     metricItemWidth: 70, metricHeight: 28, metricGap: 4, actionWidth: 62, actionGap: 8, titleSize: 12, statusSize: 7, durationSize: 30, durationLabelSize: 7, gpsSize: 7, metricValueSize: 12, metricLabelSize: 6, actionSize: 9, radius: 14,
     sceneWidth: 192, sceneHeight: 192, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
@@ -53,7 +53,7 @@ export default {
     this.controller = createWorkoutController(function (session) { self.acceptSession(session) })
     pageRuntime.bind(this, { contentWidth: function (profile) { return workoutDesign.contentWidth(profile) } }, function (profile, scene, safe) { self.applyPlan(workoutDesign.resolve(profile, scene, safe)) })
   },
-  onShow() { var self = this; this.controller.loadActive(function (session) { if (!session) navigation.back() }) },
+  onShow() { this.controller.loadActive(function (session) { if (!session) navigation.back() }) },
   onHide() { if (this.controller) this.controller.stop() },
   onDestroy() { if (this.controller) this.controller.stop() },
   onBackPress() { return true },
@@ -69,8 +69,10 @@ export default {
   },
   applySession(view) {
     if (!view) return
-    this.modeName = view.modeName; this.accentColor = view.accentColor; this.statusText = view.statusText; this.durationText = view.durationText; this.stepsText = view.stepsText; this.caloriesText = view.caloriesText; this.distanceText = view.distanceText
-    this.heartRateText = view.heartRateText; this.gpsText = view.gpsText; this.gpsColor = view.gpsColor; this.pauseButtonText = view.pauseButtonText
+    this.modeName = view.modeName; this.accentColor = view.accentColor; this.statusText = view.statusText; this.statusColor = view.statusColor; this.statusSurface = view.statusSurface
+    this.durationText = view.durationText; this.durationLabelText = view.durationLabelText; this.stepsText = view.stepsText; this.caloriesText = view.caloriesText; this.distanceText = view.distanceText
+    this.heartRateText = view.heartRateText; this.heartRateLabel = view.heartRateLabel; this.gpsText = view.gpsText; this.gpsColor = view.gpsColor; this.pauseButtonText = view.pauseButtonText
+    this.pauseButtonBackground = view.pauseButtonBackground; this.pauseButtonColor = view.pauseButtonColor; this.heroBackground = view.heroBackground; this.metricOpacity = view.metricOpacity
   },
   togglePause() { if (!this.controller) return; if (this.sessionStatus === 'running') this.controller.pause(); else if (this.sessionStatus === 'paused') this.controller.resume() },
   requestFinish() { this.confirmVisible = true },
@@ -84,7 +86,10 @@ export default {
 .workout-scene { position: absolute; left: 0px; top: 0px; }
 .workout-header, .hero, .metric-grid, .actions { position: absolute; }
 .workout-header { flex-direction: row; justify-content: space-between; align-items: center; }
-.mode-name { font-weight: bold; } .status-text { color: #8E8E93; text-align: right; }
+.mode-name { font-weight: bold; }
+.status-chip { height: 18px; min-width: 48px; border-radius: 9px; padding-left: 7px; padding-right: 7px; flex-direction: row; justify-content: center; align-items: center; }
+.status-dot { width: 5px; height: 5px; border-radius: 3px; margin-right: 5px; }
+.status-text { font-weight: bold; text-align: right; }
 .hero { flex-direction: column; justify-content: center; align-items: center; }
 .duration { width: 100%; color: #FFFFFF; font-weight: bold; text-align: center; }
 .duration-label { color: #8E8E93; margin-top: 2px; } .gps-status { margin-top: 4px; }
@@ -93,7 +98,7 @@ export default {
 .metric-value { width: 100%; font-weight: bold; text-align: center; lines: 1; } .metric-label { color: #8E8E93; margin-top: 2px; }
 .steps-color { color: #FFD60A; } .calorie-color { color: #FF9F0A; } .distance-color { color: #30D158; } .heart-color { color: #FF375F; }
 .actions { flex-direction: row; align-items: center; }
-.action { color: #FFFFFF; font-weight: bold; text-align: center; } .pause-action { background-color: #2C2C2E; } .finish-action { background-color: #C83245; }
+.action { font-weight: bold; text-align: center; } .finish-action { background-color: #C83245; color: #FFFFFF; }
 .confirm-cover { position: absolute; left: 0px; top: 0px; background-color: #000000; opacity: 0.97; justify-content: center; align-items: center; }
 .confirm-box { width: 158px; min-height: 134px; border-radius: 24px; background-color: #17191D; padding: 16px 12px; flex-direction: column; align-items: center; }
 .confirm-title { font-size: 15px; color: #FFFFFF; font-weight: bold; }
