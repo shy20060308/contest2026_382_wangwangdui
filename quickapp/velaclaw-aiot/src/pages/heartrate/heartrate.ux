@@ -1,44 +1,44 @@
 <template>
   <stack class="health-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
     <stack class="health-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
-      <scroll class="health-stream" if="{{ ready }}" scroll-y="true" style="left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ streamWidth }}px; height: {{ streamHeight }}px;">
+      <scroll class="health-stream" if="{{ ready }}" scroll-y="true" style="left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ streamWidth }}px; height: {{ streamHeight }}px; padding-bottom: {{ scrollPaddingBottom }}px;">
         <div class="health-head" style="width: {{ headerWidth }}px; height: {{ headerHeight }}px;">
-          <div class="health-head-copy"><text class="health-title" style="font-size: {{ titleSize }}px;">健康</text><text class="health-subtitle" style="font-size: {{ subtitleSize }}px;">心率 · 血氧 · 压力</text></div>
-          <div class="health-head-state"><text class="summary" style="font-size: {{ subtitleSize }}px; color: {{ summaryColor }};">{{ summaryText }}</text><text class="source" style="font-size: {{ metaSize }}px;">{{ sourceText }}</text></div>
+          <div class="health-head-copy" style="width: {{ headCopyWidth }}px;"><text class="health-title" style="height: {{ titleLineHeight }}px; line-height: {{ titleLineHeight }}px; font-size: {{ titleSize }}px;">健康</text><text class="health-subtitle" style="height: {{ subtitleLineHeight }}px; line-height: {{ subtitleLineHeight }}px; font-size: {{ subtitleSize }}px;">心率 · 血氧 · 压力</text></div>
+          <div class="health-head-state" style="width: {{ headStateWidth }}px;"><text class="summary" style="height: {{ subtitleLineHeight }}px; line-height: {{ subtitleLineHeight }}px; font-size: {{ subtitleSize }}px; color: {{ summaryColor }};">{{ summaryText }}</text><text class="source" style="height: {{ metaLineHeight }}px; line-height: {{ metaLineHeight }}px; font-size: {{ metaSize }}px;">{{ sourceText }}</text></div>
         </div>
 
-        <div class="heart-card" style="width: {{ streamWidth }}px; height: {{ heroHeight }}px; border-radius: {{ cardRadius }}px; margin-top: {{ cardGap }}px;">
-          <div class="card-head"><text class="card-label heart-color" style="font-size: {{ labelSize }}px;">心率</text><text class="card-meta" style="font-size: {{ metaSize }}px;">{{ heartSource }} · {{ heartTrendText }}</text></div>
-          <div class="value-row"><text class="heart-value" style="font-size: {{ valueSize }}px;">{{ heartRate }}</text><text class="unit" style="font-size: {{ metaSize }}px;">bpm</text><text class="status" style="font-size: {{ metaSize }}px; color: {{ heartStatusColor }};">{{ heartStatus }}</text></div>
+        <div class="heart-card" style="width: {{ streamWidth }}px; height: {{ heroHeight }}px; padding: {{ cardPaddingY }}px {{ cardPaddingX }}px; border-radius: {{ cardRadius }}px; margin-top: {{ cardGap }}px;">
+          <div class="card-head" style="height: {{ labelLineHeight }}px;"><text class="card-label heart-color" style="height: {{ labelLineHeight }}px; line-height: {{ labelLineHeight }}px; font-size: {{ labelSize }}px;">心率</text><text class="card-meta" style="height: {{ metaLineHeight }}px; line-height: {{ metaLineHeight }}px; font-size: {{ metaSize }}px;">{{ heartSource }} · {{ heartTrendText }}</text></div>
+          <div class="value-row" style="height: {{ valueLineHeight }}px;"><text class="heart-value" style="height: {{ valueLineHeight }}px; line-height: {{ valueLineHeight }}px; font-size: {{ valueSize }}px;">{{ heartRate }}</text><text class="unit" style="height: {{ metaLineHeight }}px; line-height: {{ metaLineHeight }}px; font-size: {{ metaSize }}px;">bpm</text><text class="status" style="height: {{ metaLineHeight }}px; line-height: {{ metaLineHeight }}px; font-size: {{ metaSize }}px; color: {{ heartStatusColor }};">{{ heartStatus }}</text></div>
           <div class="trend-row" style="height: {{ chartHeight }}px;"><div class="trend-bar" for="{{ heartBars }}" tid="index" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div>
-          <text class="foot" style="font-size: {{ metaSize }}px;">{{ heartRangeText }}</text>
+          <text class="foot" style="height: {{ metaLineHeight }}px; line-height: {{ metaLineHeight }}px; font-size: {{ metaSize }}px;">{{ heartRangeText }}</text>
         </div>
 
         <div class="mini-row" style="width: {{ streamWidth }}px; height: {{ miniHeight }}px; margin-top: {{ cardGap }}px;">
-          <div class="mini-card spo2-card" style="width: {{ miniWidth }}px; height: {{ miniHeight }}px; border-radius: {{ cardRadius }}px;">
-            <div class="mini-head"><text class="card-label spo2-color" style="font-size: {{ labelSize }}px;">血氧</text><text class="card-meta" style="font-size: {{ metaSize }}px;">{{ spo2Source }}</text></div>
-            <text class="mini-value spo2-color" style="font-size: {{ miniValueSize }}px;">{{ spo2 }}%</text>
-            <text class="status" style="font-size: {{ metaSize }}px; color: {{ spo2StatusColor }};">{{ spo2Status }}</text>
+          <div class="mini-card spo2-card" style="width: {{ miniWidth }}px; height: {{ miniHeight }}px; padding: {{ cardPaddingY }}px {{ cardPaddingX }}px; border-radius: {{ cardRadius }}px;">
+            <div class="mini-head" style="height: {{ labelLineHeight }}px;"><text class="card-label spo2-color" style="height: {{ labelLineHeight }}px; line-height: {{ labelLineHeight }}px; font-size: {{ labelSize }}px;">血氧</text><text class="card-meta" style="height: {{ metaLineHeight }}px; line-height: {{ metaLineHeight }}px; font-size: {{ metaSize }}px;">{{ spo2Source }}</text></div>
+            <text class="mini-value spo2-color" style="height: {{ miniValueLineHeight }}px; line-height: {{ miniValueLineHeight }}px; font-size: {{ miniValueSize }}px;">{{ spo2 }}%</text>
+            <text class="status mini-status" style="height: {{ metaLineHeight }}px; line-height: {{ metaLineHeight }}px; font-size: {{ metaSize }}px; color: {{ spo2StatusColor }};">{{ spo2Status }}</text>
           </div>
-          <div class="mini-card stress-card" style="width: {{ miniWidth }}px; height: {{ miniHeight }}px; border-radius: {{ cardRadius }}px;">
-            <div class="mini-head"><text class="card-label stress-color" style="font-size: {{ labelSize }}px;">压力</text><text class="card-meta" style="font-size: {{ metaSize }}px;">{{ stressSource }}</text></div>
-            <text class="mini-value stress-color" style="font-size: {{ miniValueSize }}px;">{{ stress }}</text>
-            <text class="status" style="font-size: {{ metaSize }}px; color: {{ stressStatusColor }};">{{ stressStatus }}</text>
+          <div class="mini-card stress-card" style="width: {{ miniWidth }}px; height: {{ miniHeight }}px; padding: {{ cardPaddingY }}px {{ cardPaddingX }}px; border-radius: {{ cardRadius }}px;">
+            <div class="mini-head" style="height: {{ labelLineHeight }}px;"><text class="card-label stress-color" style="height: {{ labelLineHeight }}px; line-height: {{ labelLineHeight }}px; font-size: {{ labelSize }}px;">压力</text><text class="card-meta" style="height: {{ metaLineHeight }}px; line-height: {{ metaLineHeight }}px; font-size: {{ metaSize }}px;">{{ stressSource }}</text></div>
+            <text class="mini-value stress-color" style="height: {{ miniValueLineHeight }}px; line-height: {{ miniValueLineHeight }}px; font-size: {{ miniValueSize }}px;">{{ stress }}</text>
+            <text class="status mini-status" style="height: {{ metaLineHeight }}px; line-height: {{ metaLineHeight }}px; font-size: {{ metaSize }}px; color: {{ stressStatusColor }};">{{ stressStatus }}</text>
           </div>
         </div>
 
-        <div class="detail-card" style="width: {{ streamWidth }}px; height: {{ detailHeight }}px; border-radius: {{ cardRadius }}px; margin-top: {{ cardGap }}px;">
-          <div class="card-head"><text class="card-label spo2-color" style="font-size: {{ labelSize }}px;">血氧变化</text><text class="card-meta" style="font-size: {{ metaSize }}px;">{{ spo2TrendText }}</text></div>
+        <div class="detail-card" style="width: {{ streamWidth }}px; height: {{ detailHeight }}px; padding: {{ cardPaddingY }}px {{ cardPaddingX }}px; border-radius: {{ cardRadius }}px; margin-top: {{ cardGap }}px;">
+          <div class="card-head" style="height: {{ labelLineHeight }}px;"><text class="card-label spo2-color" style="height: {{ labelLineHeight }}px; line-height: {{ labelLineHeight }}px; font-size: {{ labelSize }}px;">血氧变化</text><text class="card-meta" style="height: {{ metaLineHeight }}px; line-height: {{ metaLineHeight }}px; font-size: {{ metaSize }}px;">{{ spo2TrendText }}</text></div>
           <div class="trend-row detail-trend" style="height: {{ chartHeight }}px;"><div class="trend-bar" for="{{ spo2Bars }}" tid="index" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div>
-          <text class="foot" style="font-size: {{ metaSize }}px;">{{ spo2RangeText }} · 参考 95–100%</text>
+          <text class="foot" style="height: {{ metaLineHeight }}px; line-height: {{ metaLineHeight }}px; font-size: {{ metaSize }}px;">{{ spo2RangeText }} · 参考 95–100%</text>
         </div>
 
-        <div class="detail-card" style="width: {{ streamWidth }}px; height: {{ detailHeight }}px; border-radius: {{ cardRadius }}px; margin-top: {{ cardGap }}px;">
-          <div class="card-head"><text class="card-label stress-color" style="font-size: {{ labelSize }}px;">压力变化</text><text class="card-meta" style="font-size: {{ metaSize }}px;">{{ stressTrendText }}</text></div>
+        <div class="detail-card" style="width: {{ streamWidth }}px; height: {{ detailHeight }}px; padding: {{ cardPaddingY }}px {{ cardPaddingX }}px; border-radius: {{ cardRadius }}px; margin-top: {{ cardGap }}px;">
+          <div class="card-head" style="height: {{ labelLineHeight }}px;"><text class="card-label stress-color" style="height: {{ labelLineHeight }}px; line-height: {{ labelLineHeight }}px; font-size: {{ labelSize }}px;">压力变化</text><text class="card-meta" style="height: {{ metaLineHeight }}px; line-height: {{ metaLineHeight }}px; font-size: {{ metaSize }}px;">{{ stressTrendText }}</text></div>
           <div class="trend-row detail-trend" style="height: {{ chartHeight }}px;"><div class="trend-bar" for="{{ stressBars }}" tid="index" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div>
-          <text class="foot" style="font-size: {{ metaSize }}px;">{{ stressRangeText }}</text>
+          <text class="foot" style="height: {{ metaLineHeight }}px; line-height: {{ metaLineHeight }}px; font-size: {{ metaSize }}px;">{{ stressRangeText }}</text>
         </div>
-        <text class="updated" style="font-size: {{ metaSize }}px;">更新于 {{ updatedAtText }}</text>
+        <text class="updated" style="height: {{ metaLineHeight }}px; line-height: {{ metaLineHeight }}px; font-size: {{ metaSize }}px;">更新于 {{ updatedAtText }}</text>
       </scroll>
     </stack>
   </stack>
@@ -54,9 +54,10 @@ import healthView from '../../v2/design/views/health'
 export default {
   private: {
     ready: false, pageVisible: false, designPlan: null, healthModel: null,
-    streamLeft: 22, streamTop: 18, streamWidth: 148, streamHeight: 174, headerWidth: 120, headerHeight: 30,
-    cardGap: 6, cardRadius: 18, heroHeight: 94, miniHeight: 54, detailHeight: 64, chartHeight: 24, miniWidth: 71,
+    streamLeft: 28, streamTop: 20, streamWidth: 136, streamHeight: 162, headerWidth: 116, headerHeight: 30, headCopyWidth: 76, headStateWidth: 40,
+    cardGap: 6, cardRadius: 18, cardPaddingY: 9, cardPaddingX: 9, heroHeight: 104, miniHeight: 65, detailHeight: 70, chartHeight: 24, miniWidth: 65, scrollPaddingBottom: 24,
     titleSize: 13, subtitleSize: 7, valueSize: 25, miniValueSize: 16, labelSize: 8, metaSize: 6,
+    titleLineHeight: 18, subtitleLineHeight: 10, labelLineHeight: 11, metaLineHeight: 9, valueLineHeight: 33, miniValueLineHeight: 22,
     sceneWidth: 192, sceneHeight: 192, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%',
     heartRate: '--', spo2: '--', stress: '--', dailyMin: 0, dailyMax: 0,
     heartStatus: '等待', heartStatusColor: '#8E8E93', spo2Status: '等待', spo2StatusColor: '#8E8E93', stressStatus: '等待', stressStatusColor: '#8E8E93',
@@ -71,9 +72,11 @@ export default {
       var plan = healthDesign.resolve(profile, scene, safe)
       self.designPlan = plan
       self.streamLeft = plan.stream.left; self.streamTop = plan.stream.top; self.streamWidth = plan.stream.width; self.streamHeight = plan.stream.height
-      self.headerWidth = plan.headerWidth; self.headerHeight = plan.headerHeight; self.cardGap = plan.cardGap; self.cardRadius = plan.cardRadius
-      self.heroHeight = plan.heroHeight; self.miniHeight = plan.miniHeight; self.detailHeight = plan.detailHeight; self.chartHeight = plan.chartHeight; self.miniWidth = plan.miniWidth
+      self.headerWidth = plan.headerWidth; self.headerHeight = plan.headerHeight; self.headCopyWidth = plan.headCopyWidth; self.headStateWidth = plan.headStateWidth
+      self.cardGap = plan.cardGap; self.cardRadius = plan.cardRadius; self.cardPaddingY = plan.cardPaddingY; self.cardPaddingX = plan.cardPaddingX
+      self.heroHeight = plan.heroHeight; self.miniHeight = plan.miniHeight; self.detailHeight = plan.detailHeight; self.chartHeight = plan.chartHeight; self.miniWidth = plan.miniWidth; self.scrollPaddingBottom = plan.scrollPaddingBottom
       self.titleSize = plan.titleSize; self.subtitleSize = plan.subtitleSize; self.valueSize = plan.valueSize; self.miniValueSize = plan.miniValueSize; self.labelSize = plan.labelSize; self.metaSize = plan.metaSize
+      self.titleLineHeight = plan.titleLineHeight; self.subtitleLineHeight = plan.subtitleLineHeight; self.labelLineHeight = plan.labelLineHeight; self.metaLineHeight = plan.metaLineHeight; self.valueLineHeight = plan.valueLineHeight; self.miniValueLineHeight = plan.miniValueLineHeight
       self.ready = true
       if (self.pageVisible) self.controller.start()
     })
@@ -96,32 +99,34 @@ export default {
 <style>
 .health-root, .health-scene, .health-stream { background-color: #000000; }
 .health-scene, .health-stream { position: absolute; }
-.health-stream { flex-direction: column; align-items: center; padding-bottom: 18px; }
+.health-stream { flex-direction: column; align-items: center; }
 .health-head { flex-direction: row; justify-content: space-between; align-items: center; }
 .health-head-copy, .health-head-state { flex-direction: column; }
 .health-head-state { align-items: flex-end; }
-.health-title { color: #FFFFFF; font-weight: bold; }
+.health-title { width: 100%; color: #FFFFFF; font-weight: bold; }
 .health-subtitle, .source, .card-meta, .foot, .updated { color: #8E8E93; }
+.health-subtitle, .source, .summary { width: 100%; }
 .summary { font-weight: bold; text-align: right; }
-.heart-card, .mini-card, .detail-card { padding: 9px 10px; flex-direction: column; }
+.source { text-align: right; }
+.heart-card, .mini-card, .detail-card { flex-direction: column; }
 .heart-card { background-color: #211015; }
 .spo2-card { background-color: #102129; }
 .stress-card { background-color: #211226; }
 .detail-card { background-color: #111317; }
 .card-head, .mini-head { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
 .card-label, .heart-value, .mini-value { font-weight: bold; }
+.card-label, .card-meta { lines: 1; }
 .heart-color { color: #FF375F; } .spo2-color { color: #64D2FF; } .stress-color { color: #BF5AF2; }
-.value-row { width: 100%; height: 31px; flex-direction: row; align-items: flex-end; }
-.heart-value { color: #FFFFFF; min-width: 58px; }
+.value-row { width: 100%; flex-direction: row; align-items: flex-end; }
+.heart-value { width: 58px; color: #FFFFFF; }
 .unit { color: #8E8E93; margin-left: 4px; margin-bottom: 4px; }
 .status { margin-left: 7px; margin-bottom: 4px; }
 .trend-row { width: 100%; flex-direction: row; align-items: flex-end; justify-content: space-between; margin-top: 3px; }
 .trend-bar { width: 6px; border-radius: 3px; }
-.foot { width: 100%; margin-top: 3px; }
+.foot { width: 100%; margin-top: 3px; lines: 1; }
 .mini-row { flex-direction: row; justify-content: space-between; }
-.mini-head { height: 12px; }
-.mini-value { margin-top: 5px; }
-.mini-card .status { margin-left: 0px; margin-bottom: 0px; margin-top: 3px; }
+.mini-value { width: 100%; margin-top: 4px; lines: 1; }
+.mini-status { width: 100%; margin-left: 0px; margin-bottom: 0px; margin-top: 3px; lines: 1; }
 .detail-trend { margin-top: 5px; }
 .updated { width: 100%; text-align: center; margin-top: 8px; margin-bottom: 12px; }
 </style>
