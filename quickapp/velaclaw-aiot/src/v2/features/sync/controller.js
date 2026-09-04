@@ -3,11 +3,12 @@ import healthStore from '../../../domain/health/store'
 import historyRepository from '../../../domain/history/repository'
 import workoutRepository from '../../../domain/workout/repository'
 import settingsStore from '../../../domain/settings/store'
-import transport from './mock_transport'
+import transportFactory from './mock_transport'
 var protocol = require('./protocol')
 
 export function createSyncController(onChange) {
-  var capability = transport.capability()
+  var capability = transportFactory.capability()
+  var transport = transportFactory.create()
   var active = false
   var lifecycleEpoch = 0
   var state = {
