@@ -77,6 +77,10 @@ fs.readdirSync(specsDir).filter(name => name.endsWith('.js')).forEach(name => {
       const batteryTop = parseInt(plan.alpineBatteryRowTop, 10)
       assert.ok(batteryTop + 16 <= safe.bottom, 'Alpine battery row must remain above the Pill gesture-safe bottom on ' + profile.name)
     }
+    if (name === 'history.js' && profile.formFactor === 'pill') {
+      assert.strictEqual(plan.surface, 'vertical-comparative-trend', 'Pill History must use its L2 vertical comparative composition')
+      assert.ok(plan.pillTrendMaxWidth > plan.pillTrendMinWidth, 'Pill History must reserve a visible horizontal comparison range')
+    }
     walkPlan(plan, host, name + ':' + profile.name, [])
   })
 })
@@ -132,7 +136,10 @@ const historyView = fs.readFileSync(path.join(root, 'src/v2/design/views/history
 assert.ok(!historyPage.includes('每日记录') && !historyPage.includes('circle-record') && !historyPage.includes('pill-record') && !historyPage.includes('rect-record'), 'Trend surfaces must not render the unstable daily-record list')
 assert.ok(!historyPage.includes('records: []') && !historyPage.includes('model.records'), 'Trend page must not retain dead daily-record presentation state')
 assert.ok(!historyView.includes('displayRecords') && !historyView.includes('records: displayRecords'), 'Trend Design View must stop projecting removed daily-record presentation data')
-assert.ok(historyPage.includes('.circle-chart { width: 148px; height: 88px;') && historyPage.includes('.pill-chart { width: 168px; height: 140px;') && historyPage.includes('.rect-dashboard { width: 164px; height: 124px;'), 'Trend layouts must redistribute the freed space into the chart and insight hierarchy')
+assert.ok(historyPage.includes('class="pill-trend-row"') && historyPage.includes('width: {{ $item.pillWidth }}px') && historyPage.includes('{{ $item.stepsText }}'), 'Pill History must render one vertical comparison row with a full numeric value for each day')
+assert.ok(!historyPage.includes('pill-chart-row') && !historyPage.includes('pill-bar-cell'), 'Pill History must not regress to seven squeezed vertical columns')
+assert.ok(historyView.includes("pillLabel: isToday ? '今天'") && historyView.includes('pillWidth:') && historyView.includes('stepsText:'), 'History Design View must own the Pill row labels, comparative widths and full values')
+assert.ok(historyPage.includes('.circle-chart { width: 148px; height: 88px;') && historyPage.includes('.pill-trend-section { width: 168px; height: 184px;') && historyPage.includes('.rect-dashboard { width: 164px; height: 124px;'), 'Trend layouts must use shape-specific visual hierarchy instead of one compressed chart')
 
 const today = fs.readFileSync(path.join(root, 'src/pages/today/today.ux'), 'utf8')
 assert.ok(today.includes('.circle-calendar-grid { height: 78px; }') && today.includes('.circle-cell { width: 19px; height: 13px;'), 'Circle calendar grid must stay within its 130px safe band')
