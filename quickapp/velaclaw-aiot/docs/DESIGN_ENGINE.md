@@ -54,6 +54,10 @@ The previous daily-record presentation was intentionally removed because it dupl
 
 `Health` follows the same principle: a circular screen may use the full 192×192 scroll canvas with chord-aware sections rather than being reduced to an inscribed rectangle.
 
+`Activity` now follows a data-honesty rule as well. The Activity Feature only owns current values and goals, so the page must not invent an hourly histogram from the total. The L2 Activity surface therefore uses **real goal progress**: current value, exact target, percentage, remaining/over-target text and a bounded progress bar. The seven-day entry remains the route to the real historical trend surface.
+
+`Today` uses the same product-minded approach on Circle. When a 2×2 summary grid has enough room for full labels, use `步数 / 热量 / 心率 / 站立` with metric-specific tonal surfaces instead of cryptic one-character abbreviations. Compactness should not come at the cost of legibility or visual identity.
+
 #### L2 Design System v2.1
 
 L2 v2.1 adds one shared assisted-design foundation in `src/v2/design/assisted.js`. It does **not** replace shape-specific composition. Instead it removes repeated infrastructure decisions that were previously copied into every L2 Spec.

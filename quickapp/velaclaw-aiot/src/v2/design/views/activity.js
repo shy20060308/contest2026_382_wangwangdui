@@ -1,5 +1,3 @@
-var LABELS = ['0', '3', '6', '9', '12', '15', '18', '21']
-var RATIOS = [0.05, 0.11, 0.18, 0.26, 0.22, 0.14, 0.09, 0.04]
 var META = {
   steps: { name: '步数', unit: '步', color: '#FFD60A' },
   calories: { name: '卡路里', unit: 'kcal', color: '#FF9F0A' },
@@ -10,36 +8,49 @@ function formatNumber(value) {
   return Number(value || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
-function trendValues(total) {
-  var value = Math.max(0, Number(total) || 0)
-  var result = []
-  for (var i = 0; i < RATIOS.length; i++) result.push(Math.max(1, Math.round(value * RATIOS[i])))
-  return result
+function withUnit(value, unit) {
+  var text = formatNumber(value)
+  return unit ? text + ' ' + unit : text
 }
 
-function bars(total, color, chartHeight) {
-  var source = trendValues(total)
-  var height = Math.max(24, Math.round(Number(chartHeight) || 54))
-  var max = 1
-  for (var i = 0; i < source.length; i++) if (source[i] > max) max = source[i]
-  var result = []
-  for (var index = 0; index < LABELS.length; index++) {
-    var current = Number(source[index]) || 0
-    result.push({
-      t: LABELS[index],
-      h: Math.max(3, Math.round((current / max) * height)),
-      color: color
-    })
+function progress(current, goal, trackWidth, unit, color) {
+  var now = Math.max(0, Number(current) || 0)
+  var target = Math.max(0, Number(goal) || 0)
+  var width = Math.max(0, Math.round(Number(trackWidth) || 0))
+  if (!target) {
+    return {
+      progressText: '--',
+      progressWidth: 0,
+      goalText: '未设置目标',
+      statusText: '等待目标',
+      statusColor: '#8E8E93',
+      isComplete: false
+    }
   }
-  return result
+
+  var ratio = now / target
+  var percent = Math.max(0, Math.round(ratio * 100))
+  var displayPercent = percent > 999 ? '999%+' : percent + '%'
+  var complete = now >= target
+  var remaining = Math.max(0, target - now)
+  var extra = Math.max(0, now - target)
+  return {
+    progressText: displayPercent,
+    progressWidth: Math.round(Math.max(0, Math.min(1, ratio)) * width),
+    goalText: '目标 ' + withUnit(target, unit),
+    statusText: complete ? (extra > 0 ? '超额 ' + formatNumber(extra) : '已达成') : '还差 ' + formatNumber(remaining),
+    statusColor: complete ? color : '#8E8E93',
+    isComplete: complete
+  }
 }
 
-function present(metrics, chartHeight) {
+function present(metrics, trackWidth) {
   var source = metrics || []
   var result = []
   for (var i = 0; i < source.length; i++) {
     var item = source[i]
     var meta = META[item.id] || { name: item.id || '', unit: '', color: '#FFFFFF' }
+    var state = progress(item.current, item.goal, trackWidth, meta.unit, meta.color)
     result.push({
       id: item.id,
       name: meta.name,
@@ -47,10 +58,15 @@ function present(metrics, chartHeight) {
       goal: formatNumber(item.goal),
       unit: meta.unit,
       color: meta.color,
-      bars: bars(item.current, meta.color, chartHeight)
+      progressText: state.progressText,
+      progressWidth: state.progressWidth,
+      goalText: state.goalText,
+      statusText: state.statusText,
+      statusColor: state.statusColor,
+      isComplete: state.isComplete
     })
   }
   return result
 }
 
-module.exports = { present: present }
+module.exports = { present: present, progress: progress }

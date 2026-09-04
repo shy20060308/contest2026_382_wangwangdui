@@ -3,17 +3,24 @@
     <div class="steps-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
       <text class="steps-title" style="left: {{ titleLeft }}px; top: {{ titleTop }}px; width: {{ contentWidth }}px; font-size: {{ titleSize }}px;">运动</text>
       <div class="history-entry" @click="goToHistory" style="left: {{ historyLeft }}px; top: {{ historyTop }}px; width: {{ contentWidth }}px; height: {{ historyHeight }}px; border-radius: {{ historyRadius }}px;">
-        <text class="history-title" style="font-size: {{ historyTitleSize }}px;">7日趋势</text><text class="history-sub" style="font-size: {{ historySubSize }}px;">查看历史记录 ›</text>
+        <text class="history-title" style="font-size: {{ historyTitleSize }}px;">7日趋势</text><text class="history-sub" style="font-size: {{ historySubSize }}px;">查看趋势 ›</text>
       </div>
       <scroll class="metric-scroll" scroll-y="true" style="left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ contentWidth }}px; height: {{ streamHeight }}px;">
-        <div class="metric-card" for="{{ metrics }}" tid="id" style="width: {{ contentWidth }}px; min-height: {{ metricHeight }}px; margin-bottom: {{ metricGap }}px; border-radius: {{ metricRadius }}px;">
-          <div class="metric-head"><text class="metric-name" style="font-size: {{ labelSize }}px; color: {{ $item.color }};">{{ $item.name }}</text><text class="metric-goal" style="font-size: {{ goalSize }}px;">目标 {{ $item.goal }} {{ $item.unit }}</text></div>
-          <text class="metric-value" style="font-size: {{ valueSize }}px; color: {{ $item.color }};">{{ $item.current }}</text>
-          <div class="chart-row">
-            <div class="bar-column" for="{{ $item.bars }}" tid="t" style="width: {{ barColumnWidth }}px;">
-              <div class="bar-space" style="height: {{ chartHeight }}px; width: {{ barColumnWidth }}px;"><div class="bar" style="height: {{ $item.h }}px; width: {{ barWidth }}px; background-color: {{ $item.color }};"></div></div>
-              <text class="bar-label" style="width: {{ barColumnWidth }}px; font-size: {{ tickSize }}px;">{{ $item.t }}</text>
-            </div>
+        <div class="metric-card" for="{{ metrics }}" tid="id" style="width: {{ contentWidth }}px; min-height: {{ metricHeight }}px; margin-bottom: {{ metricGap }}px; border-radius: {{ metricRadius }}px; padding: {{ metricPadding }}px;">
+          <div class="metric-head">
+            <text class="metric-name" style="font-size: {{ labelSize }}px; color: {{ $item.color }};">{{ $item.name }}</text>
+            <text class="metric-progress" style="font-size: {{ progressTextSize }}px; color: {{ $item.color }};">{{ $item.progressText }}</text>
+          </div>
+          <div class="metric-value-row">
+            <text class="metric-value" style="font-size: {{ valueSize }}px; color: {{ $item.color }};">{{ $item.current }}</text>
+            <text class="metric-unit" style="font-size: {{ unitSize }}px;">{{ $item.unit }}</text>
+          </div>
+          <div class="progress-track" style="width: {{ progressTrackWidth }}px; height: {{ progressTrackHeight }}px; border-radius: {{ progressTrackRadius }}px; margin-top: {{ progressGap }}px;">
+            <div class="progress-fill" style="width: {{ $item.progressWidth }}px; height: {{ progressTrackHeight }}px; border-radius: {{ progressTrackRadius }}px; background-color: {{ $item.color }};"></div>
+          </div>
+          <div class="metric-foot" style="width: {{ progressTrackWidth }}px;">
+            <text class="metric-goal" style="font-size: {{ footerSize }}px;">{{ $item.goalText }}</text>
+            <text class="metric-status" style="font-size: {{ footerSize }}px; color: {{ $item.statusColor }};">{{ $item.statusText }}</text>
           </div>
         </div>
       </scroll>
@@ -33,8 +40,9 @@ export default {
     ready: false, metrics: [], contentWidth: 148,
     titleLeft: 22, titleTop: 35, titleSize: 14,
     historyLeft: 22, historyTop: 52, historyHeight: 34, historyRadius: 17, historyTitleSize: 9, historySubSize: 7,
-    streamLeft: 22, streamTop: 92, streamHeight: 80, metricHeight: 118, metricGap: 9, metricRadius: 18,
-    labelSize: 9, goalSize: 7, valueSize: 24, chartHeight: 52, barColumnWidth: 18, barWidth: 10, tickSize: 6,
+    streamLeft: 22, streamTop: 92, streamHeight: 80, metricHeight: 91, metricGap: 7, metricRadius: 16, metricPadding: 9,
+    labelSize: 9, valueSize: 24, unitSize: 7, progressTextSize: 8,
+    progressTrackWidth: 130, progressTrackHeight: 7, progressTrackRadius: 4, footerSize: 7, progressGap: 7,
     sceneWidth: 192, sceneHeight: 192,
     viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
   },
@@ -58,10 +66,11 @@ export default {
     this.titleLeft = plan.title.left; this.titleTop = plan.title.top; this.titleSize = plan.titleSize
     this.historyLeft = plan.history.left; this.historyTop = plan.history.top; this.historyHeight = plan.history.height; this.historyRadius = plan.historyRadius; this.historyTitleSize = plan.historyTitleSize; this.historySubSize = plan.historySubSize
     this.streamLeft = plan.stream.left; this.streamTop = plan.stream.top; this.streamHeight = plan.stream.height
-    this.metricHeight = plan.metricHeight; this.metricGap = plan.metricGap; this.metricRadius = plan.metricRadius
-    this.labelSize = plan.labelSize; this.goalSize = plan.goalSize; this.valueSize = plan.valueSize; this.chartHeight = plan.chartHeight; this.barColumnWidth = plan.barColumnWidth; this.barWidth = plan.barWidth; this.tickSize = plan.tickSize
+    this.metricHeight = plan.metricHeight; this.metricGap = plan.metricGap; this.metricRadius = plan.metricRadius; this.metricPadding = plan.metricPadding
+    this.labelSize = plan.labelSize; this.valueSize = plan.valueSize; this.unitSize = plan.unitSize; this.progressTextSize = plan.progressTextSize
+    this.progressTrackWidth = plan.progressTrackWidth; this.progressTrackHeight = plan.progressTrackHeight; this.progressTrackRadius = plan.progressTrackRadius; this.footerSize = plan.footerSize; this.progressGap = plan.progressGap
   },
-  applyMetrics(metrics) { this.metrics = activityView.present(metrics, this.chartHeight) },
+  applyMetrics(metrics) { this.metrics = activityView.present(metrics, this.progressTrackWidth) },
   goToHistory() { navigation.push('/pages/history') }
 }
 </script>
@@ -73,13 +82,14 @@ export default {
 .history-entry { position: absolute; background-color: #15171B; flex-direction: row; justify-content: space-between; align-items: center; padding-left: 12px; padding-right: 12px; }
 .history-title { color: #FFFFFF; font-weight: bold; } .history-sub { color: #8E8E93; }
 .metric-scroll { position: absolute; flex-direction: column; }
-.metric-card { background-color: #101215; padding: 12px; flex-direction: column; }
-.metric-head { width: 100%; height: 18px; flex-direction: row; justify-content: space-between; align-items: center; }
-.metric-name { font-weight: bold; } .metric-goal { color: #8E8E93; }
-.metric-value { height: 34px; font-weight: bold; margin-top: 2px; }
-.chart-row { width: 100%; flex-direction: row; justify-content: center; align-items: flex-start; margin-top: 4px; }
-.bar-column { flex-direction: column; align-items: center; }
-.bar-space { flex-direction: column; align-items: center; justify-content: flex-end; }
-.bar { border-radius: 3px; }
-.bar-label { color: #636366; text-align: center; margin-top: 2px; }
+.metric-card { background-color: #101215; flex-direction: column; }
+.metric-head { width: 100%; height: 14px; flex-direction: row; justify-content: space-between; align-items: center; }
+.metric-name, .metric-progress { font-weight: bold; }
+.metric-value-row { width: 100%; height: 28px; flex-direction: row; align-items: flex-end; }
+.metric-value { font-weight: bold; }
+.metric-unit { color: #8E8E93; margin-left: 4px; margin-bottom: 4px; }
+.progress-track { background-color: #24262C; overflow: hidden; flex-direction: row; align-items: center; }
+.metric-foot { height: 12px; margin-top: 5px; flex-direction: row; justify-content: space-between; align-items: center; }
+.metric-goal { color: #8E8E93; }
+.metric-status { text-align: right; }
 </style>
