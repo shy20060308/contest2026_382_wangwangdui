@@ -15,9 +15,9 @@ function circleCapacity() {
     pageSize: 2,
     itemHeight: 52,
     itemGap: 7,
-    header: { left: 36, top: 20, width: 120, height: 18 },
+    header: { left: 40, top: 22, width: 112, height: 18 },
     list: { left: 22, top: 45, width: 148, height: 111 },
-    footer: { left: 40, top: 162, width: 112, height: 18 },
+    footer: { left: 46, top: 157, width: 100, height: 16 },
     visualScale: 1.05,
     capacityReduced: true,
     fixedFrame: true
