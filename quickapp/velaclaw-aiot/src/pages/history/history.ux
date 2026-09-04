@@ -1,505 +1,130 @@
 <template>
-  <scroll class="history-page {{ viewportClass }}" scroll-y="true" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; opacity: {{ pageOpacity }}; margin-left: {{ pageOffset }}px;" @swipe="handleSwipe">
-    <div class="top-row">
-      <text class="page-title" static>7日趋势</text>
-      <text class="back-text" @click="goBack">返回</text>
-    </div>
+  <stack class="history-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
+    <stack class="history-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
+      <scroll class="circle-history" if="{{ ready && isCircle }}" scroll-y="true" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
+        <div class="circle-head"><text class="circle-title">7日趋势</text><text class="circle-today">今日 {{ todayStepsText }}</text></div>
+        <div class="circle-chart"><div class="circle-chart-row"><div class="circle-bar-cell" for="{{ bars }}" tid="date"><div class="circle-bar-track"><div class="circle-step-bar" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div><text class="circle-bar-label {{ $item.isToday ? 'circle-today-label' : '' }}">{{ $item.circleLabel }}</text></div></div></div>
+        <div class="circle-insights"><div class="circle-insight"><text class="insight-label">最佳</text><text class="insight-value">{{ bestStepsText }}</text></div><div class="circle-insight"><text class="insight-label">心率</text><text class="insight-value heart">{{ avgHeartText }}</text></div><div class="circle-insight"><text class="insight-label">达成</text><text class="insight-value yellow">{{ goalText }}</text></div></div>
+      </scroll>
 
-    <text if="{{ loading }}" class="loading-text">加载中...</text>
-
-    <div class="summary-row" if="{{!loading}}">
-      <div class="summary-item">
-        <text class="summary-value step-color">{{ todayStepsText }}</text>
-        <text class="summary-label" static>今日步数</text>
-      </div>
-      <div class="summary-item">
-        <text class="summary-value blue-color">{{ avgStepsText }}</text>
-        <text class="summary-label" static>日均步数</text>
-      </div>
-    </div>
-
-    <div class="chart-card" if="{{!loading}}">
-      <text class="section-title" static>步数趋势</text>
-      <div class="chart-row">
-        <div class="bar-cell" for="{{ stepBars }}" tid="label">
-          <div class="bar-space">
-            <div class="step-bar" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div>
+      <scroll class="pill-history" if="{{ ready && isPill }}" scroll-y="true" style="left: {{ sceneSafeLeft }}px; top: {{ sceneSafeTop }}px; width: {{ contentWidth }}px; height: {{ sceneSafeHeight }}px;">
+        <div class="pill-head"><div><text class="pill-title">7日趋势</text><text class="pill-subtitle">活动与健康摘要</text></div><text class="pill-goal">{{ goalText }}</text></div>
+        <div class="pill-summary"><div class="summary-card"><text class="summary-label">今日步数</text><text class="summary-value yellow">{{ todayStepsText }}</text></div><div class="summary-card"><text class="summary-label">日均步数</text><text class="summary-value blue">{{ avgStepsText }}</text></div></div>
+        <div class="pill-trend-section">
+          <div class="pill-trend-head"><text class="section-title">步数趋势</text><text class="trend-caption">近7日</text></div>
+          <div class="pill-trend-list">
+            <div class="pill-trend-row" for="{{ bars }}" tid="date">
+              <text class="pill-trend-label {{ $item.isToday ? 'today-text' : '' }}">{{ $item.pillLabel }}</text>
+              <div class="pill-trend-track"><div class="pill-trend-fill" style="width: {{ $item.pillWidth }}px; background-color: {{ $item.color }};"></div></div>
+              <text class="pill-trend-value {{ $item.isToday ? 'today-text' : '' }}">{{ $item.stepsText }}</text>
+            </div>
           </div>
-          <text class="bar-steps">{{ $item.shortSteps }}</text>
-          <text class="bar-label">{{ $item.label }}</text>
         </div>
-      </div>
-    </div>
+        <div class="pill-insights"><div class="pill-insight"><text class="insight-label">最佳</text><text class="insight-value">{{ bestStepsText }}</text><text class="insight-detail">{{ bestDayText }}</text></div><div class="pill-insight"><text class="insight-label">平均心率</text><text class="insight-value heart">{{ avgHeartText }}</text><text class="insight-detail">7日</text></div><div class="pill-insight"><text class="insight-label">今日达成</text><text class="insight-value yellow">{{ goalText }}</text><text class="insight-detail">目标</text></div></div>
+      </scroll>
 
-    <div class="insight-row" if="{{!loading}}">
-      <div class="insight-item">
-        <text class="insight-label" static>最佳</text>
-        <text class="insight-value">{{ bestStepsText }}</text>
-        <text class="insight-small">{{ bestDayText }}</text>
-      </div>
-      <div class="insight-item">
-        <text class="insight-label" static>心率</text>
-        <text class="insight-value heart-color">{{ avgHeartText }}</text>
-        <text class="insight-small" static>7日平均</text>
-      </div>
-      <div class="insight-item">
-        <text class="insight-label" static>达成</text>
-        <text class="insight-value step-color">{{ goalText }}</text>
-        <text class="insight-small" static>今日目标</text>
-      </div>
-    </div>
-
-    <div class="record-scroll" if="{{!loading}}">
-      <div class="record-item" for="{{ records }}" tid="date">
-        <text class="record-date">{{ $item.date }}</text>
-        <div class="record-values">
-          <text class="record-main">{{ $item.stepsText }} 步</text>
-          <text class="record-sub">{{ $item.caloriesText }} kcal  {{ $item.heartText }}</text>
-        </div>
-        <text class="record-goal">{{ $item.goalText }}</text>
-      </div>
-    </div>
-  </scroll>
+      <scroll class="rect-history" if="{{ ready && isRect }}" scroll-y="true" style="left: {{ sceneSafeLeft }}px; top: {{ sceneSafeTop }}px; width: {{ contentWidth }}px; height: {{ sceneSafeHeight }}px;">
+        <div class="rect-head"><text class="rect-title">7日趋势</text><div class="rect-head-values"><text class="rect-head-label">今日</text><text class="rect-head-value">{{ todayStepsText }}</text><text class="rect-head-label">日均</text><text class="rect-head-value blue">{{ avgStepsText }}</text></div></div>
+        <div class="rect-dashboard"><div class="rect-chart"><div class="chart-row rect-chart-row"><div class="bar-cell rect-bar-cell" for="{{ bars }}" tid="date"><div class="bar-space rect-bar-space"><div class="step-bar" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div><text class="bar-label">{{ $item.label }}</text></div></div></div><div class="rect-insight-column"><div class="rect-insight"><text class="insight-label">最佳</text><text class="insight-value">{{ bestStepsText }}</text></div><div class="rect-insight"><text class="insight-label">心率</text><text class="insight-value heart">{{ avgHeartText }}</text></div><div class="rect-insight"><text class="insight-label">达成</text><text class="insight-value yellow">{{ goalText }}</text></div></div></div>
+      </scroll>
+    </stack>
+  </stack>
 </template>
 
 <script>
-import router from '@system.router'
-import watchData from '../../common/watch_data'
-import pageMotion from '../../common/page_motion'
-import pageViewport from '../../common/page_viewport'
+import pageRuntime from '../../v2/app/page_runtime'
+import navigation from '../../v2/app/navigation'
+import { createHistoryController } from '../../v2/features/history/controller'
+import historyDesign from '../../v2/design/specs/history'
+import historyView from '../../v2/design/views/history'
 
 export default {
   private: {
-    loading: true,
-    todayStepsText: '0',
-    avgStepsText: '0',
-    bestStepsText: '0',
-    bestDayText: '--',
-    avgHeartText: '--',
-    totalCaloriesText: '0',
-    goalText: '0%',
-    stepBars: [],
-    records: [],
-    pageOpacity: 1,
-    pageOffset: 0,
-    viewportClass: '',
-    viewportPosition: 'relative',
-    viewportLeft: '0px',
-    viewportWidth: '100%',
-    viewportHeight: '100%',
-    viewportTop: '0px'
+    ready: false, isCircle: false, isPill: false, isRect: false, contentWidth: 148, designPlan: null, historyModel: null,
+    sceneWidth: 192, sceneHeight: 192, sceneSafeLeft: 22, sceneSafeTop: 35, sceneSafeHeight: 120,
+    viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%',
+    todayStepsText: '0', avgStepsText: '0', bestStepsText: '0', bestDayText: '--', avgHeartText: '--', goalText: '0%', bars: []
   },
-
   onInit() {
-    pageViewport.bind(this)
-  },
-
-  onShow() {
-    this.pageVisible = true
-    this.loading = true
-    pageMotion.enter(this)
-    this.loadHistory()
-  },
-
-  onHide() {
-    this.pageVisible = false
-    pageMotion.clear(this)
-    this.releaseHistoryData()
-  },
-
-  onDestroy() {
-    this.pageVisible = false
-    pageMotion.clear(this)
-    this.releaseHistoryData()
-  },
-
-  loadHistory() {
-    // Data is refreshed in onShow so the page always reflects the latest saved day.
-    watchData.getHistorySummary((summary) => {
-      if (!this.pageVisible) {
-        return
-      }
-      this.todayStepsText = summary.todayStepsText
-      this.avgStepsText = summary.avgStepsText
-      this.bestStepsText = summary.bestStepsText
-      this.bestDayText = summary.bestDayText
-      this.avgHeartText = summary.avgHeartText
-      this.totalCaloriesText = summary.totalCaloriesText
-      this.goalText = summary.goalText
-      this.stepBars = summary.stepBars
-      this.records = summary.records
-      this.loading = false
+    var self = this
+    this.controller = createHistoryController(function (model) { self.acceptModel(model) })
+    pageRuntime.bind(this, { contentWidth: function (profile) { return historyDesign.contentWidth(profile) } }, function (profile, scene, safe) {
+      var plan = historyDesign.resolve(profile, scene, safe)
+      self.designPlan = plan; self.contentWidth = safe.width
+      self.isCircle = plan.shape === 'circle'; self.isPill = plan.shape === 'pill'; self.isRect = plan.shape === 'rect'; self.ready = true
+      self.controller.load()
     })
   },
-
-  releaseHistoryData() {
-    // Free chart/list references while the page is cached in the navigation stack.
-    this.stepBars = []
-    this.records = []
-  },
-
-  goBack() {
-    pageMotion.back(this, router)
-  },
-
-  handleSwipe(e) {
-    if (e.direction === 'down' || e.direction === 'right') {
-      pageMotion.back(this, router)
-    }
-  }
+  onShow() { if (this.ready && this.controller) this.controller.load() },
+  onHide() { this.bars = [] },
+  onDestroy() { this.historyModel = null; this.bars = [] },
+  onBackPress() { navigation.back(); return true },
+  acceptModel(model) { this.historyModel = model; if (this.designPlan) this.applyModel(historyView.project(model, this.designPlan)) },
+  applyModel(model) { this.todayStepsText = model.todayStepsText; this.avgStepsText = model.avgStepsText; this.bestStepsText = model.bestStepsText; this.bestDayText = model.bestDayText; this.avgHeartText = model.avgHeartText; this.goalText = model.goalText; this.bars = model.bars }
 }
 </script>
 
 <style>
-.history-page {
-  flex-direction: column;
-  align-items: center;
-  background-color: #000000;
-  width: 100%;
-  height: 100%;
-  padding-top: 30px;
-}
+.history-root, .history-scene { background-color: #000000; } .history-scene { position: absolute; left: 0px; top: 0px; }
+.circle-history, .pill-history, .rect-history { position: absolute; flex-direction: column; }
+.chart-row { flex-direction: row; align-items: flex-end; justify-content: space-between; } .bar-cell { flex-direction: column; align-items: center; } .bar-space { flex-direction: column; justify-content: flex-end; align-items: center; } .step-bar { width: 7px; border-radius: 4px; } .bar-label { color: #636366; text-align: center; }
+.heart { color: #FF375F; } .yellow { color: #FFD60A; } .blue { color: #64D2FF; }
+.insight-label { color: #8E8E93; } .insight-value { color: #FFFFFF; font-weight: bold; } .insight-detail { color: #636366; }
 
-.top-row {
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  width: 128px;
-  height: 28px;
-}
+.circle-history { left: 0px; top: 0px; align-items: center; padding-top: 20px; padding-bottom: 18px; background-color: #000000; }
+.circle-head { width: 116px; height: 28px; flex-direction: column; align-items: center; justify-content: center; }
+.circle-title { width: 116px; font-size: 13px; color: #FFFFFF; font-weight: bold; text-align: center; }
+.circle-today { width: 116px; font-size: 6px; color: #FFD60A; text-align: center; margin-top: 2px; }
+.circle-chart { width: 140px; height: 76px; margin-top: 4px; border-radius: 22px; background-color: #101215; padding: 8px; flex-direction: column; justify-content: center; }
+.circle-chart-row { width: 124px; height: 60px; flex-direction: row; align-items: flex-end; justify-content: space-between; }
+.circle-bar-cell { width: 16px; height: 58px; flex-direction: column; align-items: center; justify-content: flex-end; }
+.circle-bar-track { width: 6px; height: 42px; border-radius: 3px; background-color: #252830; flex-direction: column; justify-content: flex-end; align-items: center; overflow: hidden; }
+.circle-step-bar { width: 6px; border-radius: 3px; }
+.circle-bar-label { width: 16px; height: 10px; margin-top: 4px; color: #73757D; font-size: 6px; text-align: center; }
+.circle-today-label { color: #FFD60A; font-weight: bold; }
+.circle-insights { width: 116px; height: 38px; margin-top: 6px; flex-direction: row; justify-content: space-between; }
+.circle-insight { width: 36px; height: 38px; border-radius: 12px; background-color: #15171B; padding: 5px; flex-direction: column; justify-content: center; }
+.circle-insight .insight-label { font-size: 5px; }
+.circle-insight .insight-value { font-size: 7px; margin-top: 3px; }
 
-.page-title {
-  font-size: 18px;
-  font-weight: bold;
-  color: #FFFFFF;
-}
+.pill-head { width: 168px; height: 42px; flex-direction: row; justify-content: space-between; align-items: center; }
+.pill-title { font-size: 19px; color: #FFFFFF; font-weight: bold; }
+.pill-subtitle { font-size: 8px; color: #636366; margin-top: 2px; }
+.pill-goal { font-size: 17px; color: #30D158; font-weight: bold; }
+.pill-summary { width: 168px; height: 62px; flex-direction: row; justify-content: space-between; }
+.summary-card { width: 80px; height: 62px; border-radius: 19px; background-color: #15171B; padding: 10px 11px; flex-direction: column; justify-content: center; }
+.summary-label { font-size: 8px; color: #8E8E93; }
+.summary-value { font-size: 20px; font-weight: bold; margin-top: 6px; }
+.pill-trend-section { width: 168px; height: 184px; margin-top: 8px; border-radius: 24px; background-color: #101215; padding: 10px; flex-direction: column; }
+.pill-trend-head { width: 148px; height: 14px; flex-direction: row; justify-content: space-between; align-items: center; }
+.section-title { font-size: 10px; color: #FFFFFF; font-weight: bold; }
+.trend-caption { font-size: 6px; color: #636366; }
+.pill-trend-list { width: 148px; height: 150px; margin-top: 4px; flex-direction: column; justify-content: space-between; }
+.pill-trend-row { width: 148px; height: 20px; flex-direction: row; align-items: center; }
+.pill-trend-label { width: 28px; font-size: 7px; color: #8E8E93; }
+.pill-trend-track { width: 70px; height: 10px; margin-left: 3px; border-radius: 5px; background-color: #24262C; overflow: hidden; }
+.pill-trend-fill { height: 10px; border-radius: 5px; }
+.pill-trend-value { width: 44px; margin-left: 3px; font-size: 8px; color: #FFFFFF; font-weight: bold; text-align: right; }
+.today-text { color: #FFD60A; }
+.pill-insights { width: 168px; height: 64px; margin-top: 8px; flex-direction: row; justify-content: space-between; }
+.pill-insight { width: 52px; height: 64px; border-radius: 18px; background-color: #15171B; padding: 8px 9px; flex-direction: column; justify-content: center; }
+.pill-insight .insight-label { font-size: 7px; }
+.pill-insight .insight-value { font-size: 11px; margin-top: 6px; }
+.pill-insight .insight-detail { font-size: 6px; margin-top: 4px; }
 
-.back-text {
-  font-size: 10px;
-  color: #8E8E93;
-}
-
-.summary-row {
-  flex-direction: row;
-  justify-content: space-between;
-  width: 156px;
-  height: 54px;
-  margin-top: 6px;
-}
-
-.summary-item {
-  flex-direction: column;
-  justify-content: center;
-  width: 74px;
-  height: 52px;
-  background-color: #14181F;
-  border-radius: 8px;
-  padding-left: 7px;
-}
-
-.summary-value {
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.summary-label {
-  font-size: 11px;
-  color: #8E8E93;
-  margin-top: 3px;
-}
-
-.chart-card {
-  flex-direction: column;
-  width: 156px;
-  height: 146px;
-  background-color: #111317;
-  border-radius: 8px;
-  padding: 8px;
-  margin-top: 6px;
-}
-
-.section-title {
-  font-size: 13px;
-  color: #D1D1D6;
-  font-weight: bold;
-}
-
-.chart-row {
-  flex-direction: row;
-  align-items: flex-end;
-  width: 140px;
-  height: 112px;
-  margin-top: 4px;
-}
-
-.bar-cell {
-  flex-direction: column;
-  align-items: center;
-  width: 20px;
-}
-
-.bar-space {
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: center;
-  width: 20px;
-  height: 84px;
-}
-
-.step-bar {
-  width: 12px;
-  border-radius: 4px;
-}
-
-.bar-steps {
-  width: 20px;
-  font-size: 9px;
-  color: #8E8E93;
-  text-align: center;
-  margin-top: 2px;
-}
-
-.chart-label-row {
-  flex-direction: row;
-  width: 140px;
-  height: 16px;
-}
-
-.bar-label {
-  width: 20px;
-  font-size: 8px;
-  color: #6E6E73;
-  text-align: center;
-  margin-top: 2px;
-}
-
-.insight-row {
-  flex-direction: row;
-  justify-content: space-between;
-  width: 156px;
-  height: 56px;
-  margin-top: 8px;
-}
-
-.insight-item {
-  flex-direction: column;
-  align-items: center;
-  width: 48px;
-  height: 54px;
-  background-color: #14181F;
-  border-radius: 8px;
-  padding-top: 5px;
-}
-
-.insight-label {
-  font-size: 10px;
-  color: #8E8E93;
-}
-
-.insight-value {
-  font-size: 13px;
-  color: #FFFFFF;
-  font-weight: bold;
-  margin-top: 3px;
-}
-
-.insight-small {
-  font-size: 8px;
-  color: #6E6E73;
-  margin-top: 2px;
-}
-
-.record-scroll {
-  width: 156px;
-  height: 144px;
-  margin-top: 8px;
-}
-
-.record-item {
-  flex-direction: row;
-  align-items: center;
-  width: 156px;
-  height: 44px;
-  background-color: #101214;
-  border-radius: 8px;
-  padding-left: 8px;
-  padding-right: 8px;
-  margin-bottom: 6px;
-}
-
-.record-date {
-  width: 34px;
-  font-size: 10px;
-  color: #8E8E93;
-}
-
-.record-values {
-  flex-direction: column;
-  width: 82px;
-}
-
-.record-main {
-  font-size: 13px;
-  color: #FFFFFF;
-  font-weight: bold;
-}
-
-.record-sub {
-  font-size: 9px;
-  color: #8E8E93;
-  margin-top: 2px;
-}
-
-.record-goal {
-  width: 24px;
-  font-size: 12px;
-  color: #FFD60A;
-  text-align: right;
-  font-weight: bold;
-}
-
-.step-color {
-  color: #FFD60A;
-}
-
-.blue-color {
-  color: #3A7DFF;
-}
-
-.heart-color {
-  color: #FF375F;
-}
-
-.loading-text {
-  text-align: center;
-  color: #8E8E93;
-  font-size: 14px;
-  margin-top: 40px;
-}
-
-@media (shape: circle) {
-  .history-page {
-    padding-top: 18px;
-    padding-bottom: 28px;
-  }
-
-  .top-row {
-    width: 118px;
-    height: 22px;
-    margin-top: 8px;
-  }
-
-  .page-title {
-    font-size: 13px;
-  }
-
-  .back-text {
-    font-size: 7px;
-  }
-
-  .summary-row,
-  .insight-row,
-  .chart-card,
-  .record-scroll,
-  .record-item {
-    width: 148px;
-  }
-
-  .summary-row {
-    height: 46px;
-    margin-top: 5px;
-  }
-
-  .summary-item {
-    width: 71px;
-    height: 44px;
-    border-radius: 12px;
-  }
-
-  .summary-value {
-    font-size: 14px;
-  }
-
-  .summary-label {
-    font-size: 7px;
-  }
-
-  .chart-card {
-    height: 116px;
-    border-radius: 13px;
-  }
-
-  .section-title {
-    font-size: 9px;
-  }
-
-  .chart-row {
-    width: 132px;
-    height: 86px;
-  }
-
-  .bar-cell,
-  .bar-space,
-  .bar-steps,
-  .bar-label {
-    width: 18px;
-  }
-
-  .bar-space {
-    height: 61px;
-  }
-
-  .step-bar {
-    width: 9px;
-  }
-
-  .bar-steps,
-  .bar-label {
-    font-size: 6px;
-  }
-
-  .insight-row {
-    height: 47px;
-    margin-top: 6px;
-  }
-
-  .insight-item {
-    width: 46px;
-    height: 45px;
-    border-radius: 12px;
-  }
-
-  .insight-label,
-  .insight-small {
-    font-size: 6px;
-  }
-
-  .insight-value {
-    font-size: 10px;
-  }
-
-  .record-scroll {
-    height: 350px;
-    margin-top: 6px;
-  }
-
-  .record-item {
-    height: 42px;
-    border-radius: 12px;
-  }
-
-  .record-values {
-    width: 75px;
-  }
-
-  .record-main {
-    font-size: 10px;
-  }
-
-  .record-date,
-  .record-sub,
-  .record-goal {
-    font-size: 7px;
-  }
-}
+.rect-head { width: 164px; height: 42px; flex-direction: row; justify-content: space-between; align-items: center; }
+.rect-title { font-size: 16px; color: #FFFFFF; font-weight: bold; }
+.rect-head-values { flex-direction: row; align-items: center; }
+.rect-head-label { font-size: 6px; color: #8E8E93; margin-left: 6px; }
+.rect-head-value { font-size: 9px; color: #FFD60A; margin-left: 3px; }
+.rect-dashboard { width: 164px; height: 124px; margin-top: 8px; flex-direction: row; justify-content: space-between; }
+.rect-chart { width: 112px; height: 124px; border-radius: 19px; background-color: #101215; padding: 8px; }
+.rect-chart-row { width: 96px; height: 108px; }
+.rect-bar-cell { width: 13px; }
+.rect-bar-space { width: 13px; height: 94px; }
+.rect-bar-cell .bar-label { width: 13px; font-size: 5px; margin-top: 2px; }
+.rect-insight-column { width: 46px; height: 124px; flex-direction: column; justify-content: space-between; }
+.rect-insight { width: 46px; height: 37px; border-radius: 11px; background-color: #15171B; padding: 6px; flex-direction: column; justify-content: center; }
+.rect-insight .insight-label { font-size: 5px; }
+.rect-insight .insight-value { font-size: 7px; margin-top: 3px; }
 </style>

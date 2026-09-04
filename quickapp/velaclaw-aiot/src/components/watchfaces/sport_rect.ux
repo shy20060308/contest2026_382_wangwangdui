@@ -1,0 +1,33 @@
+<template>
+  <div class="rect-sport-face">
+    <div class="rect-head"><text class="rect-date" style="color: {{ faceAccent }};">{{ displayMonth }} {{ displayDate }}</text><text class="rect-battery" style="color: {{ batteryColor }};">{{ batteryPercent }}%</text></div>
+    <text class="rect-time">{{ displayHours }}:{{ displayMinutes }}</text>
+    <div class="rect-accent" style="background-color: {{ faceAccent }};"></div>
+    <div class="rect-metric-row">
+      <div class="rect-metric" @click="openSteps"><text class="rect-metric-label">STEPS</text><text class="rect-metric-value steps">{{ stepsText }}</text><text class="rect-metric-sub">目标 {{ stepsGoalText }}</text></div>
+      <div class="rect-metric" @click="openHealth"><text class="rect-metric-label">HEART</text><text class="rect-metric-value heart">{{ currentHeartRate }}</text><text class="rect-metric-sub">bpm</text></div>
+    </div>
+    <div class="rect-battery-track"><div class="rect-battery-fill" style="width: {{ batteryWidth }}; background-color: {{ batteryColor }};"></div></div>
+  </div>
+</template>
+
+<script>
+export default {
+  props: ['displayMonth','displayDate','displayMinutes','displayHours','faceAccent','batteryPercent','batteryWidth','batteryColor','currentHeartRate','stepsText','stepsGoalText'],
+  openHealth() { this.$emit('openHealth') },
+  openSteps() { this.$emit('openSteps') }
+}
+</script>
+
+<style>
+.rect-sport-face { width: 192px; height: 100%; flex-direction: column; align-items: center; background-color: #050607; }
+.rect-head { width: 164px; height: 28px; margin-top: 16px; flex-direction: row; justify-content: space-between; align-items: center; }
+.rect-date { font-size: 10px; font-weight: bold; } .rect-battery { font-size: 9px; font-weight: bold; }
+.rect-time { width: 164px; height: 58px; font-size: 46px; color: #FFFFFF; font-weight: bold; text-align: center; margin-top: 4px; }
+.rect-accent { width: 54px; height: 4px; border-radius: 2px; }
+.rect-metric-row { width: 164px; height: 78px; margin-top: 14px; flex-direction: row; justify-content: space-between; }
+.rect-metric { width: 78px; height: 78px; border-radius: 18px; background-color: #12161D; padding: 10px; flex-direction: column; }
+.rect-metric-label { font-size: 7px; color: #8E8E93; } .rect-metric-value { font-size: 23px; font-weight: bold; margin-top: 5px; } .steps { color: #FFD60A; } .heart { color: #FF375F; }
+.rect-metric-sub { font-size: 7px; color: #636366; margin-top: 4px; }
+.rect-battery-track { width: 164px; height: 5px; border-radius: 3px; background-color: #242426; margin-top: 12px; } .rect-battery-fill { height: 5px; border-radius: 3px; }
+</style>
