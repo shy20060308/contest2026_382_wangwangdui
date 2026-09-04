@@ -64,7 +64,7 @@ The timer owns an explicit `31px` line box so large digits are not clipped by Ve
 
 The 2×2 metrics grid has two `64px` cards per row with one `4px` horizontal gap. Only the left card in each row owns `margin-right`; giving both cards a right margin makes the row wider than 132px and forces the cards into a single vertical column.
 
-Workout History also uses a real round-screen title chord: `32,24,128,20`. The title and Back action use the full header line-height instead of starting at the generic near-edge safe top.
+Workout History uses a separate round-screen title chord: `32,24,128,20`. Both `运动记录` and `返回` own the complete 20px line box, preventing the upper arc and text metrics from clipping the title.
 
 ## Validation
 
