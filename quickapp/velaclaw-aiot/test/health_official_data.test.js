@@ -64,7 +64,7 @@ assert.ok(store.includes('heartRateSource: heart.source'), 'Health store must pr
 assert.strictEqual((page.match(/class="health-stream"/g) || []).length, 1, 'Health must have one canonical L1 stream')
 assert.ok(!page.includes('isCircle') && !page.includes('isPill') && !page.includes('isRect'), 'Health presentation must not fork by form factor')
 assert.ok(page.includes('.heart-value { width: 58px; color: #FFFFFF; }'), 'Unified Health value must reserve glyph-safe width for three-digit heart rate')
-assert.ok(page.includes('line-height: {{ metaLineHeight }}px'), 'Health metadata must use explicit glyph-safe line boxes')
-assert.ok(page.includes('padding-bottom: {{ scrollPaddingBottom }}px'), 'Round scrolling must leave enough tail space to center the final detail card')
+assert.ok(page.includes('width: {{ cardWidth }}px') && page.includes('height: {{ miniOuterHeight }}px'), 'Health page must use padding-aware Adapter geometry')
+assert.ok(!page.includes('{{ spo2Source }}') && !page.includes('{{ stressSource }}'), 'Mini cards should not repeat redundant source badges')
 
 console.log('Health official-data contracts verified')

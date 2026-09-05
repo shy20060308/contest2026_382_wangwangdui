@@ -105,6 +105,15 @@ function grid(regionValue, columns, gap) {
   }
 }
 
+function contentBoxSize(outerWidth, outerHeight, paddingX, paddingY) {
+  var horizontal = Math.max(0, Number(paddingX) || 0)
+  var vertical = Math.max(0, Number(paddingY) || 0)
+  return {
+    width: Math.max(1, Math.round(Number(outerWidth) || 0) - horizontal * 2),
+    height: Math.max(1, Math.round(Number(outerHeight) || 0) - vertical * 2)
+  }
+}
+
 function heightScale(safe, baseline, min, max) {
   var base = Math.max(1, Number(baseline) || 192)
   var ratio = Math.sqrt(Math.max(1, Number(safe && safe.height) || base) / base)
@@ -142,6 +151,7 @@ module.exports = {
   availableBandWidth: availableBandWidth,
   fitBand: fitBand,
   grid: grid,
+  contentBoxSize: contentBoxSize,
   heightScale: heightScale,
   createPlan: createPlan,
   clamp: clamp

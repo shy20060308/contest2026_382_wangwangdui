@@ -22,7 +22,7 @@ function resolve(profile, scene, safe) {
   plan.subtitleLineHeight = Math.max(9, Math.round(plan.subtitleSize * 1.35))
   plan.labelLineHeight = Math.max(10, Math.round(plan.labelSize * 1.35))
   plan.metaLineHeight = Math.max(8, Math.round(plan.metaSize * 1.42))
-  plan.valueLineHeight = Math.max(30, Math.round(plan.valueSize * 1.28))
+  plan.valueLineHeight = Math.max(29, Math.round(plan.valueSize * 1.26))
   plan.miniValueLineHeight = Math.max(19, Math.round(plan.miniValueSize * 1.34))
 
   plan.headerHeight = plan.titleLineHeight + plan.subtitleLineHeight + 2
@@ -51,20 +51,31 @@ function resolve(profile, scene, safe) {
   plan.headSourceWidth = Math.max(44, Math.round(plan.header.width * 0.38))
   plan.headSubtitleWidth = Math.max(48, plan.header.width - plan.headSourceWidth - plan.headGap)
 
-  plan.cardGap = Math.max(5, Math.round(6 * widthRatio))
+  plan.cardGap = Math.max(4, Math.round(5 * widthRatio))
   plan.cardRadius = Math.max(14, Math.round(17 * compactness))
-  plan.cardPaddingY = Math.max(7, Math.round(9 * widthRatio))
-  plan.cardPaddingX = Math.max(8, Math.round(10 * widthRatio))
-  plan.chartHeight = Math.max(19, Math.round(24 * widthRatio * Math.min(heightScale, 1.15)))
+  plan.cardPaddingY = Math.max(6, Math.round(7 * widthRatio))
+  plan.cardPaddingX = Math.max(7, Math.round(8 * widthRatio))
+  plan.miniPaddingY = Math.max(6, Math.round(6 * widthRatio))
+  plan.miniPaddingX = Math.max(6, Math.round(6 * widthRatio))
+  plan.chartHeight = Math.max(18, Math.round(22 * widthRatio * Math.min(heightScale, 1.12)))
   plan.trendMinHeight = Math.max(5, Math.round(6 * fontScale))
 
-  plan.heroHeight = plan.cardPaddingY * 2 + plan.labelLineHeight + plan.valueLineHeight + plan.chartHeight + plan.metaLineHeight + 6
-  plan.miniHeight = plan.cardPaddingY * 2 + plan.labelLineHeight + plan.miniValueLineHeight + plan.metaLineHeight + 4
-  plan.detailHeight = plan.cardPaddingY * 2 + plan.labelLineHeight + plan.chartHeight + plan.metaLineHeight + 5
-  plan.scrollPaddingBottom = Math.max(22, Math.round(22 * Math.min(heightScale, 1.15)))
+  plan.cardOuterWidth = plan.stream.width
+  plan.cardWidth = adapter.contentBoxSize(plan.cardOuterWidth, 1, plan.cardPaddingX, 0).width
+
+  plan.heroHeight = plan.labelLineHeight + plan.valueLineHeight + plan.chartHeight + plan.metaLineHeight + 6
+  plan.heroOuterHeight = plan.heroHeight + plan.cardPaddingY * 2
+  plan.detailHeight = plan.labelLineHeight + plan.chartHeight + plan.metaLineHeight + 5
+  plan.detailOuterHeight = plan.detailHeight + plan.cardPaddingY * 2
 
   plan.miniGap = plan.cardGap
-  plan.miniWidth = adapter.grid(plan.stream, 2, plan.miniGap).itemWidth
+  var miniGrid = adapter.grid(plan.stream, 2, plan.miniGap)
+  plan.miniOuterWidth = miniGrid.itemWidth
+  plan.miniWidth = adapter.contentBoxSize(plan.miniOuterWidth, 1, plan.miniPaddingX, 0).width
+  plan.miniHeight = plan.labelLineHeight + plan.miniValueLineHeight + plan.metaLineHeight + 4
+  plan.miniOuterHeight = plan.miniHeight + plan.miniPaddingY * 2
+
+  plan.scrollPaddingBottom = Math.max(22, Math.round(22 * Math.min(heightScale, 1.15)))
   return plan
 }
 

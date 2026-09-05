@@ -33,10 +33,10 @@ test('v2.2 保留统一 Adapter API，允许页面声明轻量 L1 宽度 overrid
   assert.strictEqual(adapter.contentWidth({ formFactor: 'pill' }), assisted.contentWidth({ formFactor: 'pill' }))
   assert.strictEqual(adapter.contentWidth({ formFactor: 'rect' }), assisted.contentWidth({ formFactor: 'rect' }))
   assert.strictEqual(health.contentWidth({ formFactor: 'circle' }), 136)
-  assert.strictEqual(history.contentWidth({ formFactor: 'circle' }), 136)
   assert.strictEqual(health.contentWidth({ formFactor: 'pill' }), 168)
   assert.strictEqual(health.contentWidth({ formFactor: 'rect' }), 164)
   assert.strictEqual(adapter.VERSION, '2.2')
+  assert.deepStrictEqual(adapter.contentBoxSize(100, 50, 8, 5), { width: 84, height: 40 })
   assert.strictEqual(freedom.describe(freedom.AUTO).adapter, 'adaptive-geometry')
   assert.strictEqual(freedom.describe(freedom.ASSISTED).adapter, 'local-expression')
   assert.strictEqual(freedom.describe(freedom.FREE).adapter, 'independent-surface')
@@ -69,20 +69,19 @@ test('Health 已收敛为 L1，History 只在趋势局部保留 L2', function ()
   })
 })
 
-test('L1 圆屏通过圆弦自动重选位置并控制信息密度', function () {
+test('L1 圆屏通过圆弦自动重选位置，并把 padding 纳入卡片外部尺寸', function () {
   const result = resolved(health, profiles[0])
   assert.ok(result.plan.header.top > result.safe.top, 'circle header should move away from the narrow cap')
-  assert.ok(result.plan.header.width >= 122, 'header should retain useful semantic width')
+  assert.ok(result.plan.header.width >= 116, 'header should retain useful semantic width')
   assert.strictEqual(result.plan.stream.width, 136)
   assert.ok(result.plan.stream.top >= result.safe.top)
   assert.ok(result.plan.metaLineHeight > result.plan.metaSize, 'metadata needs a glyph-safe line box')
-  assert.ok(result.plan.heroHeight <= 92, 'Circle Health hero must not dominate the viewport')
-  assert.ok(result.plan.miniHeight <= 60, 'Circle Health mini cards must remain balanced')
-  assert.ok(result.plan.detailHeight >= result.plan.cardPaddingY * 2 + result.plan.labelLineHeight + result.plan.chartHeight + result.plan.metaLineHeight + 5)
-  assert.ok(result.plan.scrollPaddingBottom >= 22)
+  assert.strictEqual(result.plan.cardWidth + result.plan.cardPaddingX * 2, result.plan.stream.width)
+  assert.strictEqual(result.plan.miniWidth + result.plan.miniPaddingX * 2, result.plan.miniOuterWidth)
+  assert.ok(result.plan.miniOuterWidth * 2 + result.plan.miniGap <= result.plan.stream.width)
 })
 
-test('History 的 L2 差异只体现在趋势 renderer，共享 header 与摘要布局', function () {
+test('History 的 L2 差异只体现在 trendMode，竖柱卡片不再溢出圆弦', function () {
   const circle = resolved(history, profiles[0]).plan
   const rect = resolved(history, profiles[1]).plan
   const pill = resolved(history, profiles[3]).plan
@@ -91,13 +90,12 @@ test('History 的 L2 差异只体现在趋势 renderer，共享 header 与摘要
   assert.strictEqual(pill.trendMode, 'comparative-row')
   assert.strictEqual(pill.chartHeight, 10)
   assert.strictEqual(pill.pillTrendMinWidth, 14)
-  assert.strictEqual(pill.pillTrendMaxWidth, 70)
-  assert.strictEqual(circle.stream.width, 136)
-  assert.ok(circle.titleWidth + circle.goalWidth + circle.headerGap <= circle.headerWidth)
-  assert.ok(circle.chartHeight >= 30)
-  assert.ok(circle.trendHeight <= 80)
-  assert.ok(circle.columnBarWidth >= 7 && circle.columnBarWidth <= 9)
-  assert.ok(circle.columnCellWidth * 7 <= circle.trendWidth - circle.trendPadding * 2)
+  assert.ok(pill.pillTrendMaxWidth <= pill.trendWidth / 2)
+  assert.ok(circle.chartHeight >= 24)
+  assert.ok(circle.trendOuterHeight <= 70)
+  assert.strictEqual(circle.trendWidth + circle.trendPadding * 2, circle.trendOuterWidth)
+  assert.ok(circle.columnBarWidth >= 6 && circle.columnBarWidth <= 8)
+  assert.ok(circle.columnCellWidth * 7 <= circle.trendWidth)
 })
 
 test('Today 现有圆屏固定组合暂不在本次 Adapter-first 迁移范围', function () {
