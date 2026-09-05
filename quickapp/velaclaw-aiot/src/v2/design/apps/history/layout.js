@@ -1,7 +1,7 @@
 module.exports = {
   level: 2,
-  surface: 'trend-stream',
   base: {
+    surface: 'trend-stream',
     contentWidth: 164,
     streamTop: 0,
     headerWidth: 156,
