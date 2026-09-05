@@ -23,27 +23,32 @@ function resolve(profile) {
     height: height,
     hostTop: 0,
     hostBottom: height,
-    shape: profile && profile.formFactor ? profile.formFactor : 'rect'
+    shape: geometry.shapeOf(profile)
   }
 }
 
-function safeForWidth(profile, contentWidth, comfort) {
+function safe(profile) {
   var host = resolve(profile)
-  var globalSafe = geometry.safe(profile, contentWidth, comfort)
-  var top = Math.max(0, Math.min(host.height, globalSafe.top))
-  var bottom = Math.max(top, Math.min(host.height, globalSafe.bottom))
+  var inset = geometry.insets(profile)
+  var left = Math.min(host.width, inset.left)
+  var right = Math.min(host.width, inset.right)
+  var top = Math.min(host.height, inset.top)
+  var bottomInset = Math.min(host.height, inset.bottom)
+  var width = Math.max(0, host.width - left - right)
+  var bottom = Math.max(top, host.height - bottomInset)
   return {
-    left: globalSafe.left,
+    left: left,
     top: top,
+    right: left + width,
     bottom: bottom,
-    width: globalSafe.contentWidth,
-    height: bottom - top,
-    gestureBar: globalSafe.gestureBar
+    width: width,
+    height: Math.max(0, bottom - top),
+    gestureBar: inset.gestureBar
   }
 }
 
 module.exports = {
   resolve: resolve,
-  safeForWidth: safeForWidth,
+  safe: safe,
   coverageHeight: coverageHeight
 }
