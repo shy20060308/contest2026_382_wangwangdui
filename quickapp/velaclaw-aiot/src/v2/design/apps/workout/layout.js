@@ -5,7 +5,6 @@ module.exports = {
     header: { top: 0, width: 164, height: 24 },
     hero: { top: 30, width: 164, height: 64 },
     metrics: { top: 100, width: 164, height: 66 },
-    actions: { topFromBottom: 42, width: 164, height: 38 },
     metricColumns: 4,
     metricGap: 4,
     metricHeight: 60,
@@ -65,5 +64,9 @@ module.exports = {
     actionSize: 15,
     radius: 20
   },
-  rect: { contentWidth: 164, surface: 'rect-dashboard' }
+  rect: {
+    contentWidth: 164,
+    surface: 'rect-dashboard',
+    actions: { topFromBottom: 42, width: 164, height: 38 }
+  }
 }
