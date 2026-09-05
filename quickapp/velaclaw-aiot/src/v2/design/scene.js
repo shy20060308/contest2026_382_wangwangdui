@@ -1,54 +1,43 @@
-var geometry = require('./geometry')
+var DESIGN_WIDTH = 192
 
-function positive(value, fallback) {
-  var number = Number(value)
-  return isFinite(number) && number > 0 ? number : (fallback || 0)
+function number(value, fallback) {
+  var next = Number(value)
+  return isFinite(next) ? next : (fallback || 0)
+}
+
+function shapeOf(profile) {
+  var shape = profile && profile.formFactor ? String(profile.formFactor) : 'rect'
+  return shape === 'circle' || shape === 'pill' || shape === 'rect' ? shape : 'rect'
 }
 
 function coverageHeight(profile) {
-  var logicalHeight = positive(profile && profile.logicalHeight, geometry.DESIGN_WIDTH)
-  var screenWidth = positive(profile && profile.screenWidth, 0)
-  var screenHeight = positive(profile && profile.screenHeight, 0)
-  if (screenWidth && screenHeight) {
-    var physicalCoverage = Math.ceil(screenHeight * geometry.DESIGN_WIDTH / screenWidth)
-    if (physicalCoverage > logicalHeight) logicalHeight = physicalCoverage
-  }
-  return logicalHeight
+  if (shapeOf(profile) === 'circle') return DESIGN_WIDTH
+  var width = number(profile && profile.screenWidth, DESIGN_WIDTH)
+  var height = number(profile && profile.screenHeight, DESIGN_WIDTH)
+  return Math.ceil(height * DESIGN_WIDTH / width)
 }
 
 function resolve(profile) {
   var height = coverageHeight(profile)
-  return {
-    width: geometry.DESIGN_WIDTH,
-    height: height,
-    hostTop: 0,
-    hostBottom: height,
-    shape: geometry.shapeOf(profile)
-  }
+  return { width: DESIGN_WIDTH, height: height, hostTop: 0, hostBottom: height, shape: shapeOf(profile) }
 }
 
-function safe(profile) {
-  var host = resolve(profile)
-  var inset = geometry.insets(profile)
-  var left = Math.min(host.width, inset.left)
-  var right = Math.min(host.width, inset.right)
-  var top = Math.min(host.height, inset.top)
-  var bottomInset = Math.min(host.height, inset.bottom)
-  var width = Math.max(0, host.width - left - right)
-  var bottom = Math.max(top, host.height - bottomInset)
+function safe(profile, hostScene) {
+  var host = hostScene || resolve(profile)
+  var inset = profile && profile.safeInsets ? profile.safeInsets : {}
+  var left = number(inset.left, 0)
+  var top = number(inset.top, 0)
+  var right = host.width - number(inset.right, 0)
+  var bottom = host.height - number(inset.bottom, 0)
   return {
     left: left,
     top: top,
-    right: left + width,
+    right: right,
     bottom: bottom,
-    width: width,
-    height: Math.max(0, bottom - top),
-    gestureBar: inset.gestureBar
+    width: right - left,
+    height: bottom - top,
+    gestureBar: number(inset.gestureBar, 0)
   }
 }
 
-module.exports = {
-  resolve: resolve,
-  safe: safe,
-  coverageHeight: coverageHeight
-}
+module.exports = { DESIGN_WIDTH: DESIGN_WIDTH, resolve: resolve, safe: safe, coverageHeight: coverageHeight, shapeOf: shapeOf }

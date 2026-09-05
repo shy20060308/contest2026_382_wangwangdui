@@ -22,9 +22,9 @@ module.exports = {
   },
   circle: {
     contentWidth: 136,
-    title: { top: 14, width: 120, height: 22, circleFit: 'edges' },
-    history: { top: 39, width: 136, height: 30, circleFit: 'center' },
-    stream: { top: 74, width: 136, circleFit: 'none' },
+    title: { top: 14, width: 120, height: 22 },
+    history: { top: 39, width: 136, height: 30 },
+    stream: { top: 74, width: 136 },
     titleSize: 13,
     historyTitleSize: 8,
     historySubSize: 6,

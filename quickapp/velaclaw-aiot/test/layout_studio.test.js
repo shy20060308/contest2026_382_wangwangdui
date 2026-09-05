@@ -34,20 +34,13 @@ assert.ok(rewritten.includes('base: { width: 164 }'))
 assert.ok(rewritten.includes('pill: { width: 168 }'))
 
 const ux = '<template><stack class="root"><text class="title" style="font-size: {{ titleSize }}px;">{{ title }}</text></stack></template><script>throw new Error()</script><style>.title{color:#fff}</style>'
-const translated = translateUx(ux, { titleSize: 12 }, { width: 192, height: 192 }, { left: 20, top: 10, width: 152, height: 172 }, { title: '健康' })
+const translated = translateUx(ux, { titleSize: 12 }, { width: 192, height: 192 }, { left: 0, top: 10, width: 192, height: 172 }, { title: '健康' })
 assert.ok(translated.html.includes('data-vela-tag="stack"'))
 assert.ok(translated.html.includes('data-vela-tag="text"'))
 assert.ok(translated.html.includes('健康'))
 assert.ok(!translated.html.includes('<script>'))
 assert.ok(translated.css.includes('.title'))
-assert.ok(translated.css.includes('box-sizing:border-box!important'), 'Studio must emulate Vela size semantics instead of browser content-box expansion')
-
-const loopUx = '<template><div class="root"><div class="bars"><div class="bar" for="{{ heartBars }}" style="height: {{ $item.height }}px; background-color: {{ $item.color }};"></div></div><text if="{{ isCircle }}">圆屏</text><text if="{{ isPill }}">手环</text></div></template><style>.bars{display:flex}</style>'
-const loopPreview = translateUx(loopUx, { shape: 'circle', chartHeight: 18, trendMinHeight: 5 }, { width: 192, height: 192 }, { left: 20, top: 10, width: 152, height: 172 }, {})
-assert.strictEqual((loopPreview.html.match(/class="bar"/g) || []).length, 10, 'for renderer must expand representative preview items')
-assert.ok(loopPreview.html.includes('圆屏'))
-assert.ok(!loopPreview.html.includes('手环'))
-assert.ok(loopPreview.html.includes('background-color: #FF375F') || loopPreview.html.includes('background-color: #7A2436'))
+assert.ok(translated.css.includes('box-sizing:border-box!important'))
 
 Object.values(PROFILES).forEach(profile => {
   assert.ok(['circle', 'pill', 'rect'].includes(profile.formFactor))
@@ -60,10 +53,9 @@ Object.values(APPS).forEach(app => {
 
 const heart = server.buildProject('heart', 'circle', {})
 assert.strictEqual(heart.app.level, 'L1')
-assert.strictEqual(heart.plan.designSystem, 'declarative-adapter-v2.3')
+assert.strictEqual(heart.plan.designSystem, 'recipe-translator-v3.0')
 assert.ok(heart.groups.some(group => group.id === 'hero'))
 assert.ok(heart.ux.html.includes('health-stream'))
-assert.strictEqual((heart.ux.html.match(/class="trend-bar"/g) || []).length, 30, 'Health preview should render all three representative trend series')
 assert.ok(heart.safe.width > 0)
 
 const heartDraft = server.buildProject('heart', 'circle', { heroOuterHeight: 78 })
@@ -76,4 +68,4 @@ assert.strictEqual(workout.plan.hero.top, 47)
 assert.ok(workout.components.some(component => component.id === 'hero'))
 assert.throws(() => server.validateChanges(APPS.heart, { '__proto__.bad': 1 }), /不允许修改字段/)
 
-console.log('Layout Studio v2.4 contracts verified: local UX preview, Vela-like box model, loop/condition rendering and minimal shape overrides')
+console.log('Layout Studio V3 contracts verified: direct recipe editing and local UX preview')

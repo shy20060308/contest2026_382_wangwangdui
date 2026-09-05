@@ -1,40 +1,30 @@
 import deviceProfile from '../system/device_profile'
 var scene = require('../design/scene')
 
-function applyHostViewport(page, profile) {
-  var hostScene = scene.resolve(profile)
-  var betaPill = !!(profile && profile.isBetaPillViewport)
-  page.viewportClass = profile && profile.viewportClass ? profile.viewportClass : ''
-  page.viewportPosition = betaPill ? 'absolute' : ((profile && profile.viewportPosition) || 'relative')
-  page.viewportLeft = betaPill ? '0px' : ((profile && profile.viewportLeft) || '0px')
-  page.viewportTop = '0px'
-  page.viewportWidth = betaPill ? hostScene.width + 'px' : ((profile && profile.viewportWidth) || '100%')
-  page.viewportHeight = betaPill ? hostScene.height + 'px' : '100%'
-}
-
-function applyScene(page, profile) {
-  var hostScene = scene.resolve(profile)
-  var safe = scene.safe(profile)
-  page.sceneWidth = hostScene.width
-  page.sceneHeight = hostScene.height
-  page.sceneShape = hostScene.shape
-  page.sceneSafeLeft = safe.left
-  page.sceneSafeTop = safe.top
-  page.sceneSafeBottom = safe.bottom
-  page.sceneSafeHeight = safe.height
-  return { scene: hostScene, safe: safe }
-}
-
 function bind(page, callback) {
+  if (!page || typeof callback !== 'function') return
   deviceProfile.resolve(page, function (profile) {
-    applyHostViewport(page, profile)
-    var result = applyScene(page, profile)
-    if (typeof callback === 'function') callback(profile, result.scene, result.safe)
+    var host = scene.resolve(profile)
+    var safe = scene.safe(profile, host)
+    var betaPill = !!(profile && profile.isBetaPillViewport)
+
+    page.viewportClass = betaPill ? 'beta-pill-viewport-' + profile.screenWidth : ''
+    page.viewportPosition = betaPill ? 'absolute' : 'relative'
+    page.viewportLeft = '0px'
+    page.viewportTop = '0px'
+    page.viewportWidth = betaPill ? host.width + 'px' : '100%'
+    page.viewportHeight = betaPill ? host.height + 'px' : '100%'
+
+    page.sceneWidth = host.width
+    page.sceneHeight = host.height
+    page.sceneShape = host.shape
+    page.sceneSafeLeft = safe.left
+    page.sceneSafeTop = safe.top
+    page.sceneSafeBottom = safe.bottom
+    page.sceneSafeHeight = safe.height
+
+    callback(profile, host, safe)
   })
 }
 
-export default {
-  bind: bind,
-  applyHostViewport: applyHostViewport,
-  applyScene: applyScene
-}
+export default { bind: bind }

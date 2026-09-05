@@ -1,5 +1,11 @@
 import device from '../../capabilities/device'
-var geometry = require('../design/geometry')
+
+var DESIGN_WIDTH = 192
+var SAFE_INSETS = {
+  circle: { left: 0, top: 10, right: 0, bottom: 10, gestureBar: 0 },
+  pill: { left: 0, top: 52, right: 0, bottom: 52, gestureBar: 36 },
+  rect: { left: 0, top: 2, right: 0, bottom: 2, gestureBar: 0 }
+}
 
 var cached = null
 var pending = []
@@ -11,14 +17,11 @@ function number(value) {
 }
 
 function text(value) { return value === undefined || value === null ? '' : String(value) }
-
 function contextDevice(context) { return context && context.$device ? context.$device : {} }
-
 function pick(info, fallback, key) {
   if (info && info[key] !== undefined && info[key] !== null && info[key] !== '') return info[key]
   return fallback && fallback[key]
 }
-
 function pickViewport(info, fallback, key) {
   if (fallback && fallback[key] !== undefined && fallback[key] !== null && fallback[key] !== '') return fallback[key]
   return info && info[key]
@@ -43,6 +46,16 @@ function family(shape, width, height) {
   if (shape === 'circle' && size === '466x466') return 'xiaomi_round_466'
   if (shape === 'circle' && size === '480x480') return 'xiaomi_round_480'
   return shape + '_generic'
+}
+
+function logicalHeight(width, height, factor) {
+  if (factor === 'circle') return DESIGN_WIDTH
+  return Math.ceil(height * DESIGN_WIDTH / width)
+}
+
+function declaredInsets(factor) {
+  var source = SAFE_INSETS[factor] || SAFE_INSETS.rect
+  return { left: source.left, top: source.top, right: source.right, bottom: source.bottom, gestureBar: source.gestureBar }
 }
 
 function make(info, context) {
@@ -73,11 +86,6 @@ function make(info, context) {
   }
 
   var factor = formFactor(shapeText, width, height)
-  var logicalHeight = factor === 'circle' ? geometry.DESIGN_WIDTH : geometry.logicalHeight(width, height)
-  var betaPill = model === 'Emulator-Vela' && platformVersionCode === 1200 && factor === 'pill' && (width === 192 || width === 212)
-  var hostTop = betaPill ? 24 : 0
-  var hostHeight = betaPill ? Math.max(1, logicalHeight - hostTop) : logicalHeight
-
   return {
     shape: shapeText,
     formFactor: factor,
@@ -86,18 +94,13 @@ function make(info, context) {
     isRect: factor === 'rect',
     screenWidth: width,
     screenHeight: height,
-    logicalHeight: logicalHeight,
+    logicalHeight: logicalHeight(width, height, factor),
+    safeInsets: declaredInsets(factor),
     deviceFamily: family(factor, width, height),
     model: model,
     platformVersionCode: platformVersionCode,
-    viewportClass: betaPill ? 'beta-pill-viewport-' + width : '',
-    viewportPosition: betaPill ? 'absolute' : 'relative',
-    viewportLeft: '0px',
-    viewportTop: hostTop + 'px',
-    viewportWidth: betaPill ? geometry.DESIGN_WIDTH + 'px' : '100%',
-    viewportHeight: betaPill ? hostHeight + 'px' : '100%',
-    isBetaPillViewport: betaPill,
-    source: 'v2.capability.device'
+    isBetaPillViewport: model === 'Emulator-Vela' && platformVersionCode === 1200 && factor === 'pill' && (width === 192 || width === 212),
+    source: 'v3.capability.device'
   }
 }
 
@@ -120,8 +123,4 @@ function resolve(context, callback) {
   })
 }
 
-export default {
-  resolve: resolve,
-  makeProfile: make,
-  clearCache: function () { cached = null }
-}
+export default { resolve: resolve, makeProfile: make, clearCache: function () { cached = null } }
