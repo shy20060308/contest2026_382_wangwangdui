@@ -1,15 +1,15 @@
 {
   "name": "vela_band",
-  "version": "2.0.0",
+  "version": "2.3.0",
   "private": true,
-  "description": "VelaClaw wearable reference app built on the V2 Design Engine and Capability Runtime.",
+  "description": "VelaClaw wearable reference app built on the V2.3 Declarative Adapter and Capability Runtime.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/shy20060308/contest2026_382_wangwangdui.git"
   },
   "homepage": "https://github.com/shy20060308/contest2026_382_wangwangdui",
-  "keywords": ["openvela", "vela", "quick-app", "smart-band", "smart-watch", "design-engine"],
+  "keywords": ["openvela", "vela", "quick-app", "smart-band", "smart-watch", "declarative-adapter"],
   "engines": { "node": ">=18" },
   "scripts": {
     "start": "aiot start --watch",
@@ -24,7 +24,7 @@
     "v2:interaction": "node test/v2_interaction_contracts.test.js",
     "v2:design-views": "node test/v2_design_views.test.js",
     "v2:design-system": "node test/v2_design_system.test.js",
-    "v2:adapter-first": "node test/v2_adapter_first.test.js",
+    "v2:declarative": "node test/v2_declarative_adapter.test.js",
     "capabilities:check": "node test/capability_runtime.test.js",
     "power:logic": "node test/power_state_machine.test.js",
     "power:runtime": "node test/power_runtime.test.js",
@@ -42,7 +42,7 @@
     "check:legacy": "node test/architecture_guard.test.js && node test/layout_adapter.test.js && node scripts/check-multiscreen.js",
     "icons:render": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-icons.ps1 && python scripts/render-soft-icons.py",
     "backgrounds:render": "python scripts/fade-watchface-background.py --input assets/watchfaces/alpine_night_source.jpg --output src/common/watchfaces/alpine_night.jpg",
-    "check": "npm run lint && npm run v2:scene && npm run v2:architecture && npm run v2:runtime && npm run v2:visual && npm run v2:interaction && npm run v2:design-views && npm run v2:design-system && npm run v2:adapter-first && npm run capabilities:check && npm run power:logic && npm run power:runtime && npm run health:logic && npm run health:official && npm run workout:experience && npm run activity:persistence && npm run settings:store && npm run motion:logic && npm run haptics:logic && npm run haptics:runtime && npm run calendar:logic && npm run analog:logic && npm run honeycomb:logic && npm run docs:check"
+    "check": "npm run lint && npm run v2:scene && npm run v2:architecture && npm run v2:runtime && npm run v2:visual && npm run v2:interaction && npm run v2:design-views && npm run v2:design-system && npm run v2:declarative && npm run capabilities:check && npm run power:logic && npm run power:runtime && npm run health:logic && npm run health:official && npm run workout:experience && npm run activity:persistence && npm run settings:store && npm run motion:logic && npm run haptics:logic && npm run haptics:runtime && npm run calendar:logic && npm run analog:logic && npm run honeycomb:logic && npm run docs:check"
   },
   "lint-staged": {
     "*.{ux,js}": ["prettier --write", "node scripts/lint.js", "git add"],
