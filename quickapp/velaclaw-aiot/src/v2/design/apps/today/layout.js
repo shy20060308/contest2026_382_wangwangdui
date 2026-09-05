@@ -3,8 +3,7 @@ module.exports = {
     contentWidth: 164,
     surface: 'calendar-dashboard',
     interaction: 'explicit-buttons',
-    overflow: 'fixed',
-    requiredHeights: { dashboard: 211 }
+    overflow: 'fixed'
   },
   circle: {
     contentWidth: 136,
@@ -19,6 +18,7 @@ module.exports = {
   },
   rect: {
     contentWidth: 164,
-    surface: 'calendar-dashboard'
+    surface: 'calendar-dashboard',
+    requiredHeights: { dashboard: 211 }
   }
 }
