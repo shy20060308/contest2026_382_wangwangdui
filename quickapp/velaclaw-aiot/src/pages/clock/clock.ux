@@ -49,9 +49,9 @@
 import pageRuntime from '../../v2/app/page_runtime'
 import navigation from '../../v2/app/navigation'
 import { createClockController } from '../../v2/features/clock/controller'
-import clockDesign from '../../v2/design/specs/clock'
-import clockView from '../../v2/design/views/clock'
-import notificationView from '../../v2/design/views/notification'
+import clockDesign from '../../v2/design/apps/clock'
+import clockView from '../../v2/design/apps/clock/view'
+import notificationView from '../../v2/design/apps/notification/view'
 
 function getGestureDirection(dx, dy) {
   var absX = Math.abs(dx)
@@ -85,7 +85,7 @@ export default {
   onInit() {
     var self = this
     this.controller = createClockController(function (model) { self.acceptClockModel(model) }, function (state) { self.applyNotification(state) })
-    pageRuntime.bind(this, { contentWidth: 168 }, function (profile, scene, safe) {
+    pageRuntime.bind(this, function (profile, scene, safe) {
       var plan = clockDesign.resolve(profile, scene, safe)
       self.clockPlan = plan
       self.isCircle = plan.shape === 'circle'
