@@ -12,16 +12,9 @@ function applyHostViewport(page, profile) {
   page.viewportHeight = betaPill ? hostScene.height + 'px' : '100%'
 }
 
-function resolveContentWidth(profile, value) {
-  var next = typeof value === 'function' ? value(profile) : value
-  var number = Number(next)
-  if (!isFinite(number) || number <= 0) number = 168
-  return Math.max(48, Math.min(192, Math.round(number)))
-}
-
-function applyScene(page, profile, contentWidth) {
+function applyScene(page, profile) {
   var hostScene = scene.resolve(profile)
-  var safe = scene.safeForWidth(profile, contentWidth || 168)
+  var safe = scene.safe(profile)
   page.sceneWidth = hostScene.width
   page.sceneHeight = hostScene.height
   page.sceneShape = hostScene.shape
@@ -32,12 +25,10 @@ function applyScene(page, profile, contentWidth) {
   return { scene: hostScene, safe: safe }
 }
 
-function bind(page, options, callback) {
-  var config = options || {}
+function bind(page, callback) {
   deviceProfile.resolve(page, function (profile) {
     applyHostViewport(page, profile)
-    var width = resolveContentWidth(profile, config.contentWidth)
-    var result = applyScene(page, profile, width)
+    var result = applyScene(page, profile)
     if (typeof callback === 'function') callback(profile, result.scene, result.safe)
   })
 }
