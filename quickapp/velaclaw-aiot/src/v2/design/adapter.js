@@ -1,12 +1,7 @@
 var freedom = require('./freedom')
 
-var SYSTEM_ID = 'declarative-adapter-v2.3'
-var VERSION = '2.3'
-var SHAPES = {
-  circle: { contentWidth: 148, density: 'compact', radius: 14, rhythm: 4 },
-  pill: { contentWidth: 168, density: 'vertical', radius: 20, rhythm: 8 },
-  rect: { contentWidth: 164, density: 'balanced', radius: 16, rhythm: 6 }
-}
+var SYSTEM_ID = 'recipe-translator-v3.0'
+var VERSION = '3.0'
 
 function clamp(value, min, max) {
   var number = Number(value)
@@ -16,11 +11,11 @@ function clamp(value, min, max) {
 
 function shapeOf(profile) {
   var shape = profile && profile.formFactor ? String(profile.formFactor) : 'rect'
-  return SHAPES[shape] ? shape : 'rect'
+  return shape === 'circle' || shape === 'pill' || shape === 'rect' ? shape : 'rect'
 }
 
 function clone(value) {
-  if (Array.isArray(value)) return value.slice()
+  if (Array.isArray(value)) return value.map(clone)
   if (!value || typeof value !== 'object') return value
   var result = {}
   for (var key in value) result[key] = clone(value[key])
@@ -45,14 +40,10 @@ function select(recipe, profile) {
   return merge(source.base || {}, source[shapeOf(profile)] || {})
 }
 
-function contentWidth(profile, recipeOrOverrides) {
-  var shape = shapeOf(profile)
-  if (recipeOrOverrides && (recipeOrOverrides.base || recipeOrOverrides.circle || recipeOrOverrides.pill || recipeOrOverrides.rect)) {
-    var selected = select(recipeOrOverrides, profile)
-    if (Number(selected.contentWidth) > 0) return Number(selected.contentWidth)
-  }
-  if (recipeOrOverrides && Number(recipeOrOverrides[shape]) > 0) return Number(recipeOrOverrides[shape])
-  return SHAPES[shape].contentWidth
+function contentWidth(profile, recipe) {
+  var config = recipe && (recipe.base || recipe.circle || recipe.pill || recipe.rect) ? select(recipe, profile) : (recipe || {})
+  var width = Number(config.contentWidth)
+  return isFinite(width) && width > 0 ? width : 192
 }
 
 function region(left, top, width, height) {
@@ -64,57 +55,34 @@ function region(left, top, width, height) {
   }
 }
 
-function circleChordWidth(scene, y, edgePadding) {
-  var width = Math.max(1, Number(scene && scene.width) || 192)
-  var height = Math.max(1, Number(scene && scene.height) || 192)
-  var radius = Math.min(width, height) / 2 - Math.max(0, Number(edgePadding) || 0)
-  var dy = Math.abs(Number(y) - height / 2)
-  if (radius <= 0 || dy >= radius) return 0
-  return 2 * Math.sqrt(radius * radius - dy * dy)
+function boundsOf(scene, safe, mode) {
+  if (mode === 'scene') return region(0, 0, scene && scene.width, scene && scene.height)
+  return region(safe && safe.left, safe && safe.top, safe && safe.width, safe && safe.height)
 }
 
-function circleBandWidth(scene, top, height, edgePadding, mode) {
-  var start = Number(top) || 0
-  var size = Math.max(1, Number(height) || 1)
-  if (mode === 'none') return Math.max(1, Number(scene && scene.width) || 192)
-  if (mode === 'center') return circleChordWidth(scene, start + size / 2, edgePadding)
-  var inset = Math.max(1, Number(edgePadding) || 0)
-  return Math.min(
-    circleChordWidth(scene, start + inset, edgePadding),
-    circleChordWidth(scene, start + size - inset, edgePadding)
-  )
-}
-
-// Recipes decide where a band belongs. Adapter only clamps it to the scene and,
-// when explicitly requested, caps its width to the available round-screen chord.
-// It never scans for a prettier position and never changes design proportions.
+// v3 Adapter is a translator. Recipes choose dimensions and placement;
+// Adapter only converts safe-relative coordinates into a concrete rectangle
+// and clips impossible values to the declared rectangular bounds.
 function placeBand(profile, scene, safe, spec) {
   var config = spec || {}
-  var shape = shapeOf(profile)
-  var sceneWidth = Math.max(1, Number(scene && scene.width) || 192)
-  var sceneHeight = Math.max(1, Number(scene && scene.height) || 192)
-  var safeTop = Math.max(0, Number(safe && safe.top) || 0)
-  var safeBottom = Math.min(sceneHeight, Number(safe && safe.bottom) || sceneHeight)
-  var safeLeft = Math.max(0, Number(safe && safe.left) || 0)
-  var safeWidth = Math.max(1, Number(safe && safe.width) || sceneWidth)
+  var bounds = boundsOf(scene, safe, config.bounds)
+  var width = Math.max(1, Number(config.width) || bounds.width || 1)
   var height = Math.max(1, Number(config.height) || 1)
-  var top = config.absoluteTop === true ? Number(config.top) || 0 : safeTop + (Number(config.top) || 0)
-  top = clamp(top, 0, Math.max(0, sceneHeight - height))
-  if (config.keepInsideSafe !== false) top = clamp(top, safeTop, Math.max(safeTop, safeBottom - height))
+  width = Math.min(width, bounds.width)
+  height = Math.min(height, bounds.height)
 
-  var width = Math.min(Math.max(1, Number(config.width) || safeWidth), sceneWidth)
-  if (config.keepInsideSafe !== false) width = Math.min(width, safeWidth)
-  var circleFit = config.circleFit || 'none'
-  if (shape === 'circle' && circleFit !== 'none') {
-    width = Math.min(width, Math.max(1, Math.floor(circleBandWidth(scene, top, height, Number(config.edgePadding) || 0, circleFit))))
-  }
+  var top = config.absoluteTop === true
+    ? Number(config.top) || 0
+    : bounds.top + (Number(config.top) || 0)
 
   var left
   if (config.absoluteLeft === true) left = Number(config.left) || 0
-  else if (config.align === 'left') left = safeLeft + (Number(config.left) || 0)
-  else if (config.align === 'right') left = safeLeft + safeWidth - width - (Number(config.right) || 0)
-  else left = (sceneWidth - width) / 2 + (Number(config.offsetX) || 0)
-  left = clamp(left, 0, Math.max(0, sceneWidth - width))
+  else if (config.align === 'left') left = bounds.left + (Number(config.left) || 0)
+  else if (config.align === 'right') left = bounds.left + bounds.width - width - (Number(config.right) || 0)
+  else left = bounds.left + (bounds.width - width) / 2 + (Number(config.offsetX) || 0)
+
+  left = clamp(left, bounds.left, bounds.left + bounds.width - width)
+  top = clamp(top, bounds.top, bounds.top + bounds.height - height)
   return region(left, top, width, height)
 }
 
@@ -129,9 +97,8 @@ function grid(regionValue, columns, gap) {
   }
 }
 
-// Vela uses content-box-like sizing for these components: padding grows the
-// rendered box. Recipes describe the desired OUTER box; this helper returns the
-// width/height that should be assigned to the element before padding is applied.
+// Recipes describe outer size. Vela element width/height are translated to
+// content size here so padding does not silently change the declared design.
 function contentBox(outerWidth, outerHeight, paddingX, paddingY) {
   var px = Math.max(0, Number(paddingX) || 0)
   var py = Math.max(0, Number(paddingY) || 0)
@@ -142,17 +109,14 @@ function contentBox(outerWidth, outerHeight, paddingX, paddingY) {
 }
 
 function createPlan(profile, scene, safe, level, surface) {
-  var shape = shapeOf(profile)
-  var tokens = SHAPES[shape]
   return {
     designSystem: SYSTEM_ID,
     designSystemVersion: VERSION,
     freedom: freedom.describe(level || freedom.AUTO),
     freedomLevel: level || freedom.AUTO,
     strategy: level === freedom.FREE ? 'free' : (level === freedom.ASSISTED ? 'assisted' : 'auto'),
-    shape: shape,
-    surface: surface || 'adaptive-surface',
-    tokens: clone(tokens),
+    shape: shapeOf(profile),
+    surface: surface || 'surface',
     content: region(safe && safe.left, safe && safe.top, safe && safe.width, safe && safe.height)
   }
 }
@@ -166,8 +130,6 @@ module.exports = {
   contentWidth: contentWidth,
   region: region,
   placeBand: placeBand,
-  circleChordWidth: circleChordWidth,
-  circleBandWidth: circleBandWidth,
   grid: grid,
   contentBox: contentBox,
   createPlan: createPlan,
