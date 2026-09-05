@@ -136,8 +136,8 @@ assert.ok(historyPage.includes('步数趋势') && historyPage.includes('column-l
 assert.ok(!historyPage.includes('column-date') && !historyPage.includes('column-weekday'), 'Circle trend keeps the compact one-line weekday expression')
 
 const pillFaces = resolve(apps.faces, profiles[1]).plan
-assert.deepStrictEqual(pillFaces.content, { left: 12, top: 94, width: 168, height: 233 }, 'Pill face content must fill the declared top/bottom band instead of collapsing to 1px')
-assert.ok(pillFaces.content.height > pillFaces.cardHeight, 'Pill face selector needs usable content height for its cards')
+assert.deepStrictEqual(pillFaces.content, { left: 12, top: 94, width: 168, height: 275 }, 'Pill face content must preserve the declared top band and enough room for two cards')
+assert.ok(pillFaces.content.height >= pillFaces.cardHeight * pillFaces.pageSize + pillFaces.cardGap, 'Pill face selector must fit a complete page of cards')
 
 const circleWorkout = resolve(apps.workout, profiles[0]).plan
 assert.deepStrictEqual(circleWorkout.header, { left: 32, top: 24, width: 128, height: 18 })

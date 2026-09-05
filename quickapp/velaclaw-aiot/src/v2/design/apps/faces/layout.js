@@ -29,7 +29,7 @@ module.exports = {
     faceIds: ['sport', 'simple', 'dashboard', 'alpine'],
     pageSize: 2,
     header: { top: 0, width: 168, height: 30 },
-    content: { top: 42, width: 168, bottomInset: 92 },
+    content: { top: 42, width: 168, bottomInset: 50 },
     pager: { bottomInset: 30, width: 168, height: 24 },
     cardHeight: 126,
     cardGap: 12,
