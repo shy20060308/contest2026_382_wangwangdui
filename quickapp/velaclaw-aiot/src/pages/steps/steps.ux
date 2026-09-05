@@ -32,8 +32,8 @@
 import pageRuntime from '../../v2/app/page_runtime'
 import navigation from '../../v2/app/navigation'
 import { createActivityController } from '../../v2/features/activity/controller'
-import activityDesign from '../../v2/design/specs/activity'
-var activityView = require('../../v2/design/views/activity')
+import activityDesign from '../../v2/design/apps/steps'
+var activityView = require('../../v2/design/apps/steps/view')
 
 export default {
   private: {
@@ -50,7 +50,7 @@ export default {
     var self = this
     this.pageVisible = false
     this.controller = createActivityController(function (metrics) { self.applyMetrics(metrics) })
-    pageRuntime.bind(this, { contentWidth: function (profile) { return activityDesign.contentWidth(profile) } }, function (profile, scene, safe) {
+    pageRuntime.bind(this, function (profile, scene, safe) {
       var plan = activityDesign.resolve(profile, scene, safe)
       self.applyPlan(plan)
       self.ready = true
