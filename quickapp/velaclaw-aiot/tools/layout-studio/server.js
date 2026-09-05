@@ -15,6 +15,11 @@ const { translateUx } = require('./lib/ux_translator')
 const PROJECT_ROOT = path.resolve(__dirname, '../..')
 const WEB_ROOT = path.join(__dirname, 'web')
 const DEFAULT_PORT = Number(process.env.LAYOUT_STUDIO_PORT) || 4174
+const PROFILE_INSETS = {
+  circle: { left: 0, top: 10, right: 0, bottom: 10, gestureBar: 0 },
+  pill: { left: 0, top: 52, right: 0, bottom: 52, gestureBar: 36 },
+  rect: { left: 0, top: 2, right: 0, bottom: 2, gestureBar: 0 }
+}
 
 function safeApp(id) {
   const app = APPS[id]
@@ -23,9 +28,10 @@ function safeApp(id) {
 }
 
 function safeProfile(id) {
-  const profile = PROFILES[id]
+  const profile = clone(PROFILES[id])
   if (!profile) throw new Error('未知设备：' + id)
-  return clone(profile)
+  profile.safeInsets = clone(PROFILE_INSETS[profile.formFactor] || PROFILE_INSETS.rect)
+  return profile
 }
 
 function layoutPath(app) { return path.join(PROJECT_ROOT, app.appDir, 'layout.js') }
@@ -71,8 +77,7 @@ function resolveWithLayout(app, profile, draftLayout) {
   replaceObject(exportedLayout, draftLayout)
   const design = require(designFile)
   const host = scene.resolve(profile)
-  const width = typeof design.contentWidth === 'function' ? design.contentWidth(profile) : adapter.contentWidth(profile, draftLayout)
-  const safe = scene.safeForWidth(profile, width)
+  const safe = scene.safe(profile, host)
   const plan = design.resolve(profile, host, safe)
   delete require.cache[require.resolve(designFile)]
   delete require.cache[require.resolve(layoutFile)]
@@ -95,10 +100,9 @@ function fieldModel(layout, draftLayout, shape, app) {
     geometry: group.geometry,
     fields: (group.fields || []).map(field => {
       const original = inheritedSource(layout, shape, field.path)
-      const draftOwn = hasPath((draftLayout[shape] || {}), field.path)
-      const resolvedValue = getPath(resolved, field.path)
+      const draftOwn = hasPath(draftLayout[shape] || {}, field.path)
       return Object.assign({}, field, {
-        value: resolvedValue,
+        value: getPath(resolved, field.path),
         source: draftOwn ? 'override' : (hasPath(draftLayout.base || {}, field.path) ? 'inherited' : 'missing'),
         originalSource: original.kind,
         originalValue: original.value
@@ -114,34 +118,17 @@ function autoGroups(layout, draftLayout, shape) {
     const value = resolved[key]
     if (typeof value === 'number') fields.push({ path: key, label: key, type: 'number', step: 1, min: 0, max: 600, unit: 'px', value, source: hasPath(draftLayout[shape] || {}, key) ? 'override' : 'inherited' })
   })
-  return [{ id: 'quick', label: '常用参数', hint: '此页面暂未配置专用组件面板，先提供所有顶层数字参数的快捷调整。', planKey: null, geometry: null, fields }]
-}
-
-function getPlanBox(plan, keyPath) {
-  const box = getPath(plan, keyPath)
-  if (!box || typeof box !== 'object') return null
-  if (![box.left, box.top, box.width, box.height].every(value => typeof value === 'number' && isFinite(value))) return null
-  return box
+  return [{ id: 'quick', label: '常用参数', hint: '直接修改 Recipe 顶层数字参数。', planKey: null, geometry: null, fields }]
 }
 
 function componentBoxes(groups, plan) {
   return groups.map(group => {
     if (!group.planKey) return null
-    const box = getPlanBox(plan, group.planKey)
-    if (!box) return null
+    const box = getPath(plan, group.planKey)
+    if (!box || typeof box !== 'object') return null
+    if (![box.left, box.top, box.width, box.height].every(value => typeof value === 'number' && isFinite(value))) return null
     return { id: group.id, label: group.label, box, geometry: group.geometry || {} }
   }).filter(Boolean)
-}
-
-function collectWarnings(host, safe, plan, components) {
-  const warnings = []
-  components.forEach(component => {
-    const box = component.box
-    if (box.left < 0 || box.top < 0 || box.left + box.width > host.width || box.top + box.height > host.height) warnings.push({ level: 'error', component: component.label, text: '组件超出 Host Scene，请检查配置。' })
-  })
-  if (plan && plan.needsOverride) warnings.push({ level: 'warn', component: '页面', text: '当前设计声明需要形态覆盖，请检查该设备的 Recipe。' })
-  if (!warnings.length) warnings.push({ level: 'ok', component: '安全检查', text: '当前几何未发现越界。' })
-  return warnings
 }
 
 function buildProject(appId, profileId, changes) {
@@ -166,7 +153,7 @@ function buildProject(appId, profileId, changes) {
     safe: result.safe,
     plan: result.plan,
     ux,
-    warnings: collectWarnings(result.host, result.safe, result.plan, components),
+    warnings: [],
     changes: clone(cleanChanges),
     files: { layout: path.relative(PROJECT_ROOT, layoutPath(app)).replace(/\\/g, '/'), page: app.page }
   }
@@ -187,9 +174,7 @@ function saveChanges(appId, profileId, changes) {
   return buildProject(appId, profileId, {})
 }
 
-function listApps() {
-  return Object.values(APPS).map(app => ({ id: app.id, name: app.name, level: app.level, page: app.page }))
-}
+function listApps() { return Object.values(APPS).map(app => ({ id: app.id, name: app.name, level: app.level, page: app.page })) }
 
 function json(res, status, body) {
   const data = JSON.stringify(body)
@@ -205,7 +190,7 @@ function readJson(req) {
       if (body.length > 65536) { reject(new Error('请求过大')); req.destroy() }
     })
     req.on('end', () => {
-      try { resolve(body ? JSON.parse(body) : {}) } catch (error) { reject(new Error('JSON 格式错误')) }
+      try { resolve(body ? JSON.parse(body) : {}) } catch (_) { reject(new Error('JSON 格式错误')) }
     })
     req.on('error', reject)
   })
@@ -216,10 +201,9 @@ function staticFile(res, pathname) {
   const file = path.resolve(WEB_ROOT, relative)
   if (!file.startsWith(WEB_ROOT + path.sep) && file !== path.join(WEB_ROOT, 'index.html')) return false
   if (!fs.existsSync(file) || !fs.statSync(file).isFile()) return false
-  const ext = path.extname(file)
   const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml' }
   const data = fs.readFileSync(file)
-  res.writeHead(200, { 'Content-Type': types[ext] || 'application/octet-stream', 'Content-Length': data.length, 'Cache-Control': 'no-store' })
+  res.writeHead(200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream', 'Content-Length': data.length, 'Cache-Control': 'no-store' })
   res.end(data)
   return true
 }
@@ -229,15 +213,9 @@ async function handler(req, res) {
   try {
     if (req.method === 'GET' && url.pathname === '/api/apps') return json(res, 200, { apps: listApps(), profiles: Object.values(PROFILES) })
     if (req.method === 'GET' && url.pathname === '/api/project') return json(res, 200, buildProject(url.searchParams.get('app') || 'heart', url.searchParams.get('profile') || 'circle', {}))
-    if (req.method === 'POST' && url.pathname === '/api/preview') {
-      const body = await readJson(req)
-      return json(res, 200, buildProject(body.app || 'heart', body.profile || 'circle', body.changes || {}))
-    }
-    if (req.method === 'POST' && url.pathname === '/api/save') {
-      const body = await readJson(req)
-      return json(res, 200, { saved: true, project: saveChanges(body.app || 'heart', body.profile || 'circle', body.changes || {}) })
-    }
-    if (req.method === 'GET' && url.pathname === '/api/health') return json(res, 200, { ok: true, projectRoot: PROJECT_ROOT, version: '2.4' })
+    if (req.method === 'POST' && url.pathname === '/api/preview') { const body = await readJson(req); return json(res, 200, buildProject(body.app || 'heart', body.profile || 'circle', body.changes || {})) }
+    if (req.method === 'POST' && url.pathname === '/api/save') { const body = await readJson(req); return json(res, 200, { saved: true, project: saveChanges(body.app || 'heart', body.profile || 'circle', body.changes || {}) }) }
+    if (req.method === 'GET' && url.pathname === '/api/health') return json(res, 200, { ok: true, projectRoot: PROJECT_ROOT, version: '3.0' })
     if (req.method === 'GET' && staticFile(res, url.pathname)) return
     json(res, 404, { error: '未找到资源' })
   } catch (error) {
@@ -252,10 +230,7 @@ function openBrowser(url) {
   if (process.platform === 'win32') { command = 'cmd'; args = ['/c', 'start', '', url] }
   else if (process.platform === 'darwin') { command = 'open'; args = [url] }
   else { command = 'xdg-open'; args = [url] }
-  try {
-    const child = spawn(command, args, { detached: true, stdio: 'ignore' })
-    child.unref()
-  } catch (_) {}
+  try { const child = spawn(command, args, { detached: true, stdio: 'ignore' }); child.unref() } catch (_) {}
 }
 
 function start(port) {
@@ -263,7 +238,7 @@ function start(port) {
   const listenPort = port || DEFAULT_PORT
   server.listen(listenPort, '127.0.0.1', () => {
     const url = 'http://127.0.0.1:' + listenPort
-    console.log('\nVela Layout Studio v2.4 已启动')
+    console.log('\nVela Layout Studio V3 已启动')
     console.log('地址：' + url)
     console.log('说明：只监听本机；点击“保存到本地”才会修改 layout.js。')
     console.log('停止：Ctrl + C\n')
@@ -273,5 +248,4 @@ function start(port) {
 }
 
 if (require.main === module) start()
-
 module.exports = { PROJECT_ROOT, listApps, validateChanges, buildProject, saveChanges, handler, start }
