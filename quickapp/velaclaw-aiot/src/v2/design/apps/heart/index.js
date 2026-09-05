@@ -4,6 +4,10 @@ var layout = require('./layout')
 
 function contentWidth(profile) { return adapter.contentWidth(profile, layout) }
 
+function centeredBox(stream, top, width, height) {
+  return adapter.region(stream.left + Math.max(0, Math.round((stream.width - width) / 2)), top, width, height)
+}
+
 function resolve(profile, scene, safe) {
   var config = adapter.select(layout, profile)
   var plan = adapter.createPlan(profile, scene, safe, freedom.AUTO, config.surface)
@@ -44,6 +48,13 @@ function resolve(profile, scene, safe) {
 
   var detail = adapter.contentBox(plan.stream.width, config.detailOuterHeight, plan.cardPaddingX, plan.cardPaddingY)
   plan.detailHeight = detail.height
+
+  // These boxes describe the actual Vela elements produced by the page after
+  // contentBox translation. They are metadata for tooling/diagnostics only;
+  // the page remains a single L1 flow and does not position these absolutely.
+  plan.headerBox = centeredBox(plan.stream, plan.stream.top, plan.headerWidth, plan.headerHeight)
+  plan.heroBox = centeredBox(plan.stream, plan.stream.top + plan.headerHeight + plan.cardGap, plan.cardWidth, plan.heroHeight)
+  plan.miniBox = adapter.region(plan.stream.left, plan.heroBox.top + plan.heroBox.height + plan.cardGap, plan.stream.width, plan.miniRowHeight)
 
   plan.titleSize = config.titleSize
   plan.subtitleSize = config.subtitleSize
