@@ -8,9 +8,14 @@ function block(source, tag) {
 }
 
 function flattenPlan(plan, scene, safe, mock) {
+  const shape = plan && plan.shape ? plan.shape : 'rect'
   const values = Object.assign({
     ready: true,
     pageVisible: true,
+    faceMounted: true,
+    isCircle: shape === 'circle',
+    isPill: shape === 'pill',
+    isRect: shape === 'rect',
     sceneWidth: scene && scene.width || 192,
     sceneHeight: scene && scene.height || 192,
     viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
@@ -44,9 +49,42 @@ function replaceBindings(text, values) {
   })
 }
 
+function literal(value) {
+  const source = String(value || '').trim()
+  if ((source[0] === "'" && source[source.length - 1] === "'") || (source[0] === '"' && source[source.length - 1] === '"')) return source.slice(1, -1)
+  if (source === 'true') return true
+  if (source === 'false') return false
+  if (/^-?\d+(?:\.\d+)?$/.test(source)) return Number(source)
+  return undefined
+}
+
+function atom(expression, values) {
+  const source = String(expression || '').trim()
+  if (!source) return false
+  if (source[0] === '!') return !atom(source.slice(1), values)
+  const comparison = /^([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\s*(===|!==|==|!=)\s*(.+)$/.exec(source)
+  if (comparison) {
+    const left = getPath(values, comparison[1])
+    const rightLiteral = literal(comparison[3])
+    const right = rightLiteral !== undefined ? rightLiteral : getPath(values, comparison[3].trim())
+    return comparison[2] === '===' || comparison[2] === '==' ? left === right : left !== right
+  }
+  if (/^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/.test(source)) return !!getPath(values, source)
+  const direct = literal(source)
+  return direct === undefined ? false : !!direct
+}
+
+function condition(expression, values) {
+  const orParts = String(expression || '').split(/\s*\|\|\s*/)
+  return orParts.some(orPart => orPart.split(/\s*&&\s*/).every(andPart => atom(andPart, values)))
+}
+
 function translateTemplate(template, values) {
   let html = template || ''
-  html = html.replace(/\s+(?:if|for|tid|show|elif|else|@[-\w]+)="[^"]*"/g, '')
+  html = html.replace(/\s+if="\{\{\s*([^{}]+?)\s*\}\}"/g, function (_, expression) {
+    return condition(expression, values) ? '' : ' hidden'
+  })
+  html = html.replace(/\s+(?:for|tid|show|elif|else|@[-\w]+)="[^"]*"/g, '')
   html = replaceBindings(html, values)
   const tags = ['stack', 'scroll', 'swiper', 'div']
   tags.forEach(tag => {
@@ -72,4 +110,4 @@ function translateUx(source, plan, scene, safe, mock) {
   }
 }
 
-module.exports = { block, flattenPlan, replaceBindings, translateTemplate, translateUx }
+module.exports = { block, flattenPlan, replaceBindings, condition, translateTemplate, translateUx }
