@@ -11,7 +11,7 @@
           <div class="info-row"><text class="info-label">形态</text><text class="info-value">{{ formFactor }}</text></div>
           <div class="info-row"><text class="info-label">平台</text><text class="info-value">{{ platformText }}</text></div>
           <div class="info-row"><text class="info-label">视口策略</text><text class="info-value accent">{{ viewportMode }}</text></div>
-          <text class="device-tip">V2 页面只消费 Host Scene 与我们自己的 Capability API；原生设备接口不会泄漏到页面。</text>
+          <text class="device-tip">V3 页面只消费 Host Scene 与 Capability API；原生设备接口不会泄漏到页面。</text>
         </div>
 
         <div class="capability-list" if="{{ pageIndex > 0 }}">
@@ -31,8 +31,8 @@
 import pageRuntime from '../../../v2/app/page_runtime'
 import navigation from '../../../v2/app/navigation'
 import { createDiagnosticsController } from '../../../v2/features/settings/diagnostics_controller'
-import detailDesign from '../../../v2/design/specs/settings_detail'
-import diagnosticsView from '../../../v2/design/views/diagnostics'
+import detailDesign from '../../../v2/design/apps/diagnostics'
+import diagnosticsView from '../../../v2/design/apps/diagnostics/view'
 
 export default {
   private: {
@@ -45,7 +45,7 @@ export default {
   onInit() {
     var self = this
     this.controller = createDiagnosticsController(function (model) { self.applyModel(model) })
-    pageRuntime.bind(this, { contentWidth: function (profile) { return detailDesign.contentWidth(profile) } }, function (profile, scene, safe) {
+    pageRuntime.bind(this, function (profile, scene, safe) {
       var plan = detailDesign.resolve(profile, scene, safe)
       self.headerLeft = plan.header.left; self.headerTop = plan.header.top; self.headerWidth = plan.header.width; self.headerHeight = plan.header.height
       self.streamLeft = plan.stream.left; self.streamTop = plan.stream.top; self.streamWidth = plan.stream.width
