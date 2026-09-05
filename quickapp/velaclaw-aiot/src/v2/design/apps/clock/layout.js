@@ -14,12 +14,9 @@ module.exports = {
     faceIds: ['sport', 'simple', 'dashboard', 'alpine'],
     notificationOverlay: true,
     alpine: {
-      dataGlassBottomInset: 100,
-      dataGlassMinTop: 244,
-      dataRowBottomInset: 92,
-      dataRowMinTop: 252,
-      batteryBottomInset: 18,
-      batteryMinTop: 326
+      dataGlassTop: 319,
+      dataRowTop: 327,
+      batteryTop: 401
     }
   },
   rect: {
