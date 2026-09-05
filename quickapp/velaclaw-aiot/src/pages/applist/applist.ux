@@ -30,8 +30,8 @@ import pageRuntime from '../../v2/app/page_runtime'
 import navigation from '../../v2/app/navigation'
 import appRoutes from '../../v2/app/app_routes'
 import { createLauncherController } from '../../v2/features/launcher/controller'
-import launcherDesign from '../../v2/design/specs/launcher'
-import launcherView from '../../v2/design/views/launcher'
+import launcherDesign from '../../v2/design/apps/launcher'
+import launcherView from '../../v2/design/apps/launcher/view'
 import honeycomb from '../../v2/design/engines/honeycomb'
 
 export default {
@@ -45,7 +45,7 @@ export default {
   onInit() {
     var self = this
     this.controller = createLauncherController(function (state) { self.applyState(state) })
-    pageRuntime.bind(this, { contentWidth: function (profile) { return launcherDesign.contentWidth(profile) } }, function (profile, scene, safe) {
+    pageRuntime.bind(this, function (profile, scene, safe) {
       self.plan = launcherDesign.resolve(profile, scene, safe)
       self.applyPlan(self.plan)
       self.controller.configure(self.plan.appIds, self.plan.pageSize)
