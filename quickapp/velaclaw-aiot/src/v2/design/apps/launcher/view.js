@@ -1,4 +1,4 @@
-var apps = require('../catalogs/apps')
+var apps = require('../../catalogs/apps')
 
 function decorateGrid(items, gap) {
   var source = apps.list(items)

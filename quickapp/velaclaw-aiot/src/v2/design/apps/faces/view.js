@@ -1,4 +1,4 @@
-var visuals = require('../watchface_catalog')
+var visuals = require('../../watchface_catalog')
 
 function decorate(face, selectedId) {
   var style = visuals.get(face && face.id)

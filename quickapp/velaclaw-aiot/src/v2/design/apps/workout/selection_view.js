@@ -1,4 +1,4 @@
-var catalog = require('../workout_catalog')
+var catalog = require('../../workout_catalog')
 
 function project(model) {
   var source = model || {}

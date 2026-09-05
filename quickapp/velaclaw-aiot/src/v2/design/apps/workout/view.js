@@ -1,4 +1,4 @@
-var catalog = require('../workout_catalog')
+var catalog = require('../../workout_catalog')
 
 function pad2(value) { return value < 10 ? '0' + value : '' + value }
 

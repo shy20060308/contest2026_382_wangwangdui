@@ -1,5 +1,5 @@
-var catalog = require('../workout_catalog')
-var workoutView = require('./workout')
+var catalog = require('../../workout_catalog')
+var workoutView = require('./view')
 
 function pad2(value) { return value < 10 ? '0' + value : '' + value }
 function formatNumber(value) { return Number(value || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') }

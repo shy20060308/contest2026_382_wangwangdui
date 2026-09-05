@@ -6,7 +6,7 @@ function contentWidth(profile) { return adapter.contentWidth(profile, layout) }
 
 function resolve(profile, scene, safe) {
   var config = adapter.select(layout, profile)
-  var plan = adapter.createPlan(profile, scene, safe, freedom.AUTO, layout.surface)
+  var plan = adapter.createPlan(profile, scene, safe, freedom.AUTO, config.surface)
   var streamHeight = Math.max(40, safe.bottom - (safe.top + config.streamTop))
   plan.stream = adapter.placeBand(profile, scene, safe, {
     top: config.streamTop,

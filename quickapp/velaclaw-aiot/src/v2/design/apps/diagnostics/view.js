@@ -1,4 +1,4 @@
-var pager = require('../pager')
+var pager = require('../../pager')
 
 function capability(entry) {
   var source = entry || {}

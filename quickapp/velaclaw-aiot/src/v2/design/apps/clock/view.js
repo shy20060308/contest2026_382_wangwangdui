@@ -1,5 +1,5 @@
-var analog = require('../analog')
-var faceVisuals = require('../watchface_catalog')
+var analog = require('../../analog')
+var faceVisuals = require('../../watchface_catalog')
 
 var MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
 var WEEKS = ['SUN','MON','TUE','WED','THU','FRI','SAT']

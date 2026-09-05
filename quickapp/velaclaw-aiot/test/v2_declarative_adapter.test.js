@@ -10,6 +10,8 @@ const read = name => fs.readFileSync(path.join(root, name), 'utf8')
 const exists = name => fs.existsSync(path.join(root, name))
 
 const apps = {
+  index: require('../src/v2/design/apps/index'),
+  detail: require('../src/v2/design/apps/detail'),
   steps: require('../src/v2/design/apps/steps'),
   heart: require('../src/v2/design/apps/heart'),
   history: require('../src/v2/design/apps/history'),
@@ -70,7 +72,7 @@ assert.ok(adapterSource.includes('function placeBand') && adapterSource.includes
 const selected = adapter.select({ base: { width: 100, gap: 6 }, circle: { width: 88 } }, { formFactor: 'circle' })
 assert.deepStrictEqual(selected, { width: 88, gap: 6 })
 
-const appFolders = ['steps','heart','history','launcher','clock','faces','notification','settings','sync','brightness','vibration','motion','diagnostics','today','workout']
+const appFolders = ['index','detail','steps','heart','history','launcher','clock','faces','notification','settings','sync','brightness','vibration','motion','diagnostics','today','workout']
 appFolders.forEach(name => {
   assert.ok(exists('src/v2/design/apps/' + name + '/layout.js'), name + ' must own a layout recipe')
   assert.ok(exists('src/v2/design/apps/' + name + '/index.js'), name + ' must own its resolver entry')
@@ -99,6 +101,8 @@ profiles.forEach(profile => {
   })
 })
 
+assert.strictEqual(apps.index.freedomLevel, freedom.AUTO)
+assert.strictEqual(apps.detail.freedomLevel, freedom.AUTO)
 assert.strictEqual(apps.steps.freedomLevel, freedom.AUTO)
 assert.strictEqual(apps.heart.freedomLevel, freedom.AUTO)
 assert.strictEqual(apps.history.freedomLevel, freedom.ASSISTED)
@@ -108,6 +112,7 @@ assert.strictEqual(apps.clock.freedomLevel, freedom.FREE)
 assert.strictEqual(apps.faces.freedomLevel, freedom.FREE)
 
 const circleHeart = resolve(apps.heart, profiles[0]).plan
+assert.strictEqual(circleHeart.surface, 'vitals-stream')
 assert.strictEqual(circleHeart.stream.width, 136)
 assert.strictEqual(circleHeart.cardWidth + circleHeart.cardPaddingX * 2, circleHeart.stream.width)
 assert.strictEqual(circleHeart.miniWidth + circleHeart.cardPaddingX * 2, circleHeart.miniOuterWidth)
@@ -119,6 +124,7 @@ assert.ok(!healthPage.includes('{{ spo2Source }}') && !healthPage.includes('{{ s
 
 const circleHistory = resolve(apps.history, profiles[0]).plan
 const pillHistory = resolve(apps.history, profiles[1]).plan
+assert.strictEqual(circleHistory.surface, 'trend-stream')
 assert.strictEqual(circleHistory.trendMode, 'compact-column')
 assert.strictEqual(pillHistory.trendMode, 'comparative-row')
 assert.strictEqual(circleHistory.trendWidth + circleHistory.trendPaddingX * 2, circleHistory.trendOuterWidth)
@@ -128,6 +134,10 @@ assert.ok(historyPage.includes("../../v2/design/apps/history"))
 assert.ok(historyPage.includes("trendMode === 'compact-column'") && historyPage.includes("trendMode === 'comparative-row'"))
 assert.ok(historyPage.includes('步数趋势') && historyPage.includes('column-label'))
 assert.ok(!historyPage.includes('column-date') && !historyPage.includes('column-weekday'), 'Circle trend keeps the compact one-line weekday expression')
+
+const pillFaces = resolve(apps.faces, profiles[1]).plan
+assert.deepStrictEqual(pillFaces.content, { left: 12, top: 94, width: 168, height: 233 }, 'Pill face content must fill the declared top/bottom band instead of collapsing to 1px')
+assert.ok(pillFaces.content.height > pillFaces.cardHeight, 'Pill face selector needs usable content height for its cards')
 
 const circleWorkout = resolve(apps.workout, profiles[0]).plan
 assert.deepStrictEqual(circleWorkout.header, { left: 32, top: 24, width: 128, height: 18 })

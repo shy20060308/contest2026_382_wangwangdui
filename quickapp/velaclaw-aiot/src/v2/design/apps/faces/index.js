@@ -7,11 +7,13 @@ function contentWidth(profile) { return adapter.contentWidth(profile, layout) }
 function band(profile, scene, safe, spec) {
   if (!spec) return null
   var copy = adapter.merge({}, spec)
+  var relativeTop = Number(copy.top) || 0
+  var bottomInset = copy.bottomInset === undefined ? 0 : Number(copy.bottomInset) || 0
+  if (copy.height === undefined) copy.height = Math.max(1, safe.height - relativeTop - bottomInset)
   if (copy.bottomInset !== undefined) {
     copy.absoluteTop = true
-    copy.top = safe.bottom - Number(copy.bottomInset) - Number(copy.height || 0)
+    copy.top = safe.bottom - bottomInset - Number(copy.height || 0)
   }
-  if (copy.height === undefined) copy.height = Math.max(1, safe.height - Number(copy.top || 0) - Number(copy.bottomInset || 0))
   return adapter.placeBand(profile, scene, safe, copy)
 }
 
