@@ -31,8 +31,8 @@
 import pageRuntime from '../../v2/app/page_runtime'
 import navigation from '../../v2/app/navigation'
 import { createWorkoutController } from '../../v2/features/workout/controller'
-import workoutDesign from '../../v2/design/specs/workout'
-import workoutView from '../../v2/design/views/workout'
+import workoutDesign from '../../v2/design/apps/workout'
+import workoutView from '../../v2/design/apps/workout/view'
 
 function applyRegion(page, prefix, value) {
   page[prefix + 'Left'] = value.left
@@ -51,7 +51,7 @@ export default {
   onInit() {
     var self = this
     this.controller = createWorkoutController(function (session) { self.acceptSession(session) })
-    pageRuntime.bind(this, { contentWidth: function (profile) { return workoutDesign.contentWidth(profile) } }, function (profile, scene, safe) { self.applyPlan(workoutDesign.resolve(profile, scene, safe)) })
+    pageRuntime.bind(this, function (profile, scene, safe) { self.applyPlan(workoutDesign.resolve(profile, scene, safe)) })
   },
   onShow() { this.controller.loadActive(function (session) { if (!session) navigation.back() }) },
   onHide() { if (this.controller) this.controller.stop() },
