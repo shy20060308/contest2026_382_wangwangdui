@@ -3,7 +3,7 @@
     <div class="index-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
       <div class="content" style="left: {{ contentLeft }}px; top: {{ contentTop }}px; width: {{ contentWidth }}px; height: {{ contentHeight }}px;">
         <text class="title" style="font-size: {{ titleSize }}px;">欢迎打开 VelaClaw</text>
-        <text class="subtitle">V2.3 Declarative Adapter</text>
+        <text class="subtitle">V3 Recipe Translator</text>
         <text class="action" @click="routeDetail" style="height: {{ buttonHeight }}px; border-radius: {{ radius }}px;">打开详情页</text>
       </div>
     </div>
@@ -22,7 +22,7 @@ export default {
   },
   onInit() {
     var self = this
-    pageRuntime.bind(this, { contentWidth: function (profile) { return indexDesign.contentWidth(profile) } }, function (profile, scene, safe) {
+    pageRuntime.bind(this, function (profile, scene, safe) {
       var plan = indexDesign.resolve(profile, scene, safe)
       self.contentLeft = plan.region.left; self.contentTop = plan.region.top; self.contentWidth = plan.region.width; self.contentHeight = plan.region.height
       self.titleSize = plan.titleSize; self.buttonHeight = plan.buttonHeight; self.radius = plan.radius
