@@ -25,8 +25,8 @@
 import pageRuntime from '../../../v2/app/page_runtime'
 import navigation from '../../../v2/app/navigation'
 import { createMotionController } from '../../../v2/features/settings/motion_controller'
-import detailDesign from '../../../v2/design/specs/settings_detail'
-import motionView from '../../../v2/design/views/motion'
+import detailDesign from '../../../v2/design/apps/motion'
+import motionView from '../../../v2/design/apps/motion/view'
 
 export default {
   private: {
@@ -37,7 +37,7 @@ export default {
   onInit() {
     var self = this
     this.controller = createMotionController(function (model) { self.applyModel(model) })
-    pageRuntime.bind(this, { contentWidth: function (profile) { return detailDesign.contentWidth(profile) } }, function (profile, scene, safe) {
+    pageRuntime.bind(this, function (profile, scene, safe) {
       var plan = detailDesign.resolve(profile, scene, safe)
       self.headerLeft = plan.header.left; self.headerTop = plan.header.top; self.headerWidth = plan.header.width; self.headerHeight = plan.header.height
       self.streamLeft = plan.stream.left; self.streamTop = plan.stream.top; self.streamWidth = plan.stream.width; self.streamHeight = plan.stream.height
