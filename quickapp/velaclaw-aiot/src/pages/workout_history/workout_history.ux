@@ -23,8 +23,8 @@
 import pageRuntime from '../../v2/app/page_runtime'
 import navigation from '../../v2/app/navigation'
 import { createWorkoutHistoryController } from '../../v2/features/workout/history_controller'
-import workoutHistoryDesign from '../../v2/design/specs/workout_history'
-import workoutHistoryView from '../../v2/design/views/workout_history'
+import workoutHistoryDesign from '../../v2/design/apps/workout/history'
+import workoutHistoryView from '../../v2/design/apps/workout/history_view'
 
 function applyRegion(page, prefix, value) {
   page[prefix + 'Left'] = value.left; page[prefix + 'Top'] = value.top; page[prefix + 'Width'] = value.width; page[prefix + 'Height'] = value.height
@@ -40,7 +40,7 @@ export default {
   onInit() {
     var self = this
     this.controller = createWorkoutHistoryController(function (model) { self.applyView(workoutHistoryView.project(model)) })
-    pageRuntime.bind(this, { contentWidth: function (profile) { return workoutHistoryDesign.contentWidth(profile) } }, function (profile, scene, safe) { self.applyPlan(workoutHistoryDesign.resolve(profile, scene, safe)) })
+    pageRuntime.bind(this, function (profile, scene, safe) { self.applyPlan(workoutHistoryDesign.resolve(profile, scene, safe)) })
   },
   onShow() { this.controller.refresh() },
   onHide() { this.records = [] },
