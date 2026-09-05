@@ -6,8 +6,10 @@ function contentWidth(profile) { return adapter.contentWidth(profile, { circle: 
 function resolve(profile, scene, safe) {
   var plan = adapter.createPlan(profile, scene, safe, freedom.AUTO, 'vitals-stream')
   var preferred = contentWidth(profile)
-  var scale = adapter.heightScale(safe, 170, 1, 1.24)
-  var fontScale = adapter.heightScale(safe, 170, 1, 1.12)
+  var heightScale = adapter.heightScale(safe, 170, 0.96, 1.18)
+  var widthRatio = adapter.clamp(preferred / 168, 0.80, 1)
+  var compactness = Math.sqrt(widthRatio)
+  var fontScale = adapter.clamp(Math.min(heightScale, 1.12) * compactness, 0.90, 1.12)
 
   plan.titleSize = Math.round(13 * fontScale)
   plan.subtitleSize = Math.max(6, Math.round(7 * fontScale))
@@ -16,19 +18,19 @@ function resolve(profile, scene, safe) {
   plan.labelSize = Math.max(7, Math.round(8 * fontScale))
   plan.metaSize = Math.max(5, Math.round(6 * fontScale))
 
-  plan.titleLineHeight = Math.max(17, Math.round(plan.titleSize * 1.35))
+  plan.titleLineHeight = Math.max(16, Math.round(plan.titleSize * 1.32))
   plan.subtitleLineHeight = Math.max(9, Math.round(plan.subtitleSize * 1.35))
   plan.labelLineHeight = Math.max(10, Math.round(plan.labelSize * 1.35))
-  plan.metaLineHeight = Math.max(8, Math.round(plan.metaSize * 1.45))
-  plan.valueLineHeight = Math.max(33, Math.round(plan.valueSize * 1.3))
-  plan.miniValueLineHeight = Math.max(21, Math.round(plan.miniValueSize * 1.35))
+  plan.metaLineHeight = Math.max(8, Math.round(plan.metaSize * 1.42))
+  plan.valueLineHeight = Math.max(30, Math.round(plan.valueSize * 1.28))
+  plan.miniValueLineHeight = Math.max(19, Math.round(plan.miniValueSize * 1.34))
 
   plan.headerHeight = plan.titleLineHeight + plan.subtitleLineHeight + 2
   plan.header = adapter.fitBand(profile, scene, safe, {
     top: safe.top,
     height: plan.headerHeight,
-    preferredWidth: Math.min(120, preferred),
-    minWidth: Math.min(116, preferred),
+    preferredWidth: Math.min(128, preferred),
+    minWidth: Math.min(122, preferred),
     edgePadding: 3,
     fit: 'edges',
     reposition: true
@@ -43,19 +45,23 @@ function resolve(profile, scene, safe) {
   })
 
   plan.headerWidth = plan.header.width
-  plan.headCopyWidth = Math.min(plan.header.width - 42, Math.max(76, Math.round(plan.header.width * 0.58)))
-  plan.headStateWidth = Math.max(40, plan.header.width - plan.headCopyWidth)
-  plan.cardGap = Math.max(6, Math.round(6 * scale))
-  plan.cardRadius = Math.round(18 * Math.min(scale, 1.2))
-  plan.cardPaddingY = Math.max(9, Math.round(9 * Math.min(scale, 1.15)))
-  plan.cardPaddingX = Math.max(9, Math.round(10 * Math.min(scale, 1.12)))
-  plan.chartHeight = Math.round(24 * Math.min(scale, 1.75))
-  plan.trendMinHeight = Math.max(6, Math.round(6 * fontScale))
+  plan.headGap = 4
+  plan.headSummaryWidth = Math.max(54, Math.round(plan.header.width * 0.48))
+  plan.headTitleWidth = Math.max(32, plan.header.width - plan.headSummaryWidth - plan.headGap)
+  plan.headSourceWidth = Math.max(44, Math.round(plan.header.width * 0.38))
+  plan.headSubtitleWidth = Math.max(48, plan.header.width - plan.headSourceWidth - plan.headGap)
 
-  plan.heroHeight = plan.cardPaddingY * 2 + plan.labelLineHeight + plan.valueLineHeight + plan.chartHeight + plan.metaLineHeight + 11
-  plan.miniHeight = plan.cardPaddingY * 2 + plan.labelLineHeight + plan.miniValueLineHeight + plan.metaLineHeight + 7
-  plan.detailHeight = plan.cardPaddingY * 2 + plan.labelLineHeight + plan.chartHeight + plan.metaLineHeight + 8
-  plan.scrollPaddingBottom = Math.max(24, Math.round(24 * scale))
+  plan.cardGap = Math.max(5, Math.round(6 * widthRatio))
+  plan.cardRadius = Math.max(14, Math.round(17 * compactness))
+  plan.cardPaddingY = Math.max(7, Math.round(9 * widthRatio))
+  plan.cardPaddingX = Math.max(8, Math.round(10 * widthRatio))
+  plan.chartHeight = Math.max(19, Math.round(24 * widthRatio * Math.min(heightScale, 1.15)))
+  plan.trendMinHeight = Math.max(5, Math.round(6 * fontScale))
+
+  plan.heroHeight = plan.cardPaddingY * 2 + plan.labelLineHeight + plan.valueLineHeight + plan.chartHeight + plan.metaLineHeight + 6
+  plan.miniHeight = plan.cardPaddingY * 2 + plan.labelLineHeight + plan.miniValueLineHeight + plan.metaLineHeight + 4
+  plan.detailHeight = plan.cardPaddingY * 2 + plan.labelLineHeight + plan.chartHeight + plan.metaLineHeight + 5
+  plan.scrollPaddingBottom = Math.max(22, Math.round(22 * Math.min(heightScale, 1.15)))
 
   plan.miniGap = plan.cardGap
   plan.miniWidth = adapter.grid(plan.stream, 2, plan.miniGap).itemWidth

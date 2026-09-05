@@ -3,8 +3,14 @@
     <stack class="health-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
       <scroll class="health-stream" if="{{ ready }}" scroll-y="true" style="left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ streamWidth }}px; height: {{ streamHeight }}px; padding-bottom: {{ scrollPaddingBottom }}px;">
         <div class="health-head" style="width: {{ headerWidth }}px; height: {{ headerHeight }}px;">
-          <div class="health-head-copy" style="width: {{ headCopyWidth }}px;"><text class="health-title" style="height: {{ titleLineHeight }}px; line-height: {{ titleLineHeight }}px; font-size: {{ titleSize }}px;">健康</text><text class="health-subtitle" style="height: {{ subtitleLineHeight }}px; line-height: {{ subtitleLineHeight }}px; font-size: {{ subtitleSize }}px;">心率 · 血氧 · 压力</text></div>
-          <div class="health-head-state" style="width: {{ headStateWidth }}px;"><text class="summary" style="height: {{ subtitleLineHeight }}px; line-height: {{ subtitleLineHeight }}px; font-size: {{ subtitleSize }}px; color: {{ summaryColor }};">{{ summaryText }}</text><text class="source" style="height: {{ metaLineHeight }}px; line-height: {{ metaLineHeight }}px; font-size: {{ metaSize }}px;">{{ sourceText }}</text></div>
+          <div class="health-head-primary" style="width: {{ headerWidth }}px; height: {{ titleLineHeight }}px;">
+            <text class="health-title" style="width: {{ headTitleWidth }}px; height: {{ titleLineHeight }}px; line-height: {{ titleLineHeight }}px; font-size: {{ titleSize }}px;">健康</text>
+            <text class="summary" style="width: {{ headSummaryWidth }}px; height: {{ titleLineHeight }}px; line-height: {{ titleLineHeight }}px; font-size: {{ subtitleSize }}px; color: {{ summaryColor }};">{{ summaryText }}</text>
+          </div>
+          <div class="health-head-secondary" style="width: {{ headerWidth }}px; height: {{ subtitleLineHeight }}px;">
+            <text class="health-subtitle" style="width: {{ headSubtitleWidth }}px; height: {{ subtitleLineHeight }}px; line-height: {{ subtitleLineHeight }}px; font-size: {{ subtitleSize }}px;">心率 · 血氧 · 压力</text>
+            <text class="source" style="width: {{ headSourceWidth }}px; height: {{ subtitleLineHeight }}px; line-height: {{ subtitleLineHeight }}px; font-size: {{ metaSize }}px;">{{ sourceText }}</text>
+          </div>
         </div>
 
         <div class="heart-card" style="width: {{ streamWidth }}px; height: {{ heroHeight }}px; padding: {{ cardPaddingY }}px {{ cardPaddingX }}px; border-radius: {{ cardRadius }}px; margin-top: {{ cardGap }}px;">
@@ -54,10 +60,11 @@ import healthView from '../../v2/design/views/health'
 export default {
   private: {
     ready: false, pageVisible: false, designPlan: null, healthModel: null,
-    streamLeft: 28, streamTop: 20, streamWidth: 136, streamHeight: 162, headerWidth: 116, headerHeight: 30, headCopyWidth: 76, headStateWidth: 40,
-    cardGap: 6, cardRadius: 18, cardPaddingY: 9, cardPaddingX: 9, heroHeight: 104, miniHeight: 65, detailHeight: 70, chartHeight: 24, miniWidth: 65, scrollPaddingBottom: 24,
-    titleSize: 13, subtitleSize: 7, valueSize: 25, miniValueSize: 16, labelSize: 8, metaSize: 6,
-    titleLineHeight: 18, subtitleLineHeight: 10, labelLineHeight: 11, metaLineHeight: 9, valueLineHeight: 33, miniValueLineHeight: 22,
+    streamLeft: 28, streamTop: 22, streamWidth: 136, streamHeight: 160, headerWidth: 122, headerHeight: 27,
+    headTitleWidth: 58, headSummaryWidth: 60, headSubtitleWidth: 72, headSourceWidth: 46,
+    cardGap: 5, cardRadius: 15, cardPaddingY: 7, cardPaddingX: 8, heroHeight: 87, miniHeight: 56, detailHeight: 56, chartHeight: 19, miniWidth: 65, scrollPaddingBottom: 22,
+    titleSize: 12, subtitleSize: 6, valueSize: 23, miniValueSize: 14, labelSize: 7, metaSize: 5,
+    titleLineHeight: 16, subtitleLineHeight: 9, labelLineHeight: 10, metaLineHeight: 8, valueLineHeight: 30, miniValueLineHeight: 19,
     sceneWidth: 192, sceneHeight: 192, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%',
     heartRate: '--', spo2: '--', stress: '--', dailyMin: 0, dailyMax: 0,
     heartStatus: '等待', heartStatusColor: '#8E8E93', spo2Status: '等待', spo2StatusColor: '#8E8E93', stressStatus: '等待', stressStatusColor: '#8E8E93',
@@ -72,7 +79,8 @@ export default {
       var plan = healthDesign.resolve(profile, scene, safe)
       self.designPlan = plan
       self.streamLeft = plan.stream.left; self.streamTop = plan.stream.top; self.streamWidth = plan.stream.width; self.streamHeight = plan.stream.height
-      self.headerWidth = plan.headerWidth; self.headerHeight = plan.headerHeight; self.headCopyWidth = plan.headCopyWidth; self.headStateWidth = plan.headStateWidth
+      self.headerWidth = plan.headerWidth; self.headerHeight = plan.headerHeight
+      self.headTitleWidth = plan.headTitleWidth; self.headSummaryWidth = plan.headSummaryWidth; self.headSubtitleWidth = plan.headSubtitleWidth; self.headSourceWidth = plan.headSourceWidth
       self.cardGap = plan.cardGap; self.cardRadius = plan.cardRadius; self.cardPaddingY = plan.cardPaddingY; self.cardPaddingX = plan.cardPaddingX
       self.heroHeight = plan.heroHeight; self.miniHeight = plan.miniHeight; self.detailHeight = plan.detailHeight; self.chartHeight = plan.chartHeight; self.miniWidth = plan.miniWidth; self.scrollPaddingBottom = plan.scrollPaddingBottom
       self.titleSize = plan.titleSize; self.subtitleSize = plan.subtitleSize; self.valueSize = plan.valueSize; self.miniValueSize = plan.miniValueSize; self.labelSize = plan.labelSize; self.metaSize = plan.metaSize
@@ -100,17 +108,16 @@ export default {
 .health-root, .health-scene, .health-stream { background-color: #000000; }
 .health-scene, .health-stream { position: absolute; }
 .health-stream { flex-direction: column; align-items: center; }
-.health-head { flex-direction: row; justify-content: space-between; align-items: center; }
-.health-head-copy, .health-head-state { flex-direction: column; }
-.health-head-state { align-items: flex-end; }
-.health-title { width: 100%; color: #FFFFFF; font-weight: bold; }
+.health-head { flex-direction: column; }
+.health-head-primary, .health-head-secondary { flex-direction: row; justify-content: space-between; align-items: center; }
+.health-title { color: #FFFFFF; font-weight: bold; lines: 1; }
 .health-subtitle, .source, .card-meta, .foot, .updated { color: #8E8E93; }
-.health-subtitle, .source, .summary { width: 100%; }
+.health-subtitle, .source, .summary { lines: 1; }
 .summary { font-weight: bold; text-align: right; }
 .source { text-align: right; }
 .heart-card, .mini-card, .detail-card { flex-direction: column; }
-.heart-card { background-color: #211015; }
-.spo2-card { background-color: #102129; }
+.heart-card { background-color: #1D1014; }
+.spo2-card { background-color: #102029; }
 .stress-card { background-color: #211226; }
 .detail-card { background-color: #111317; }
 .card-head, .mini-head { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
@@ -119,14 +126,15 @@ export default {
 .heart-color { color: #FF375F; } .spo2-color { color: #64D2FF; } .stress-color { color: #BF5AF2; }
 .value-row { width: 100%; flex-direction: row; align-items: flex-end; }
 .heart-value { width: 58px; color: #FFFFFF; }
-.unit { color: #8E8E93; margin-left: 4px; margin-bottom: 4px; }
-.status { margin-left: 7px; margin-bottom: 4px; }
-.trend-row { width: 100%; flex-direction: row; align-items: flex-end; justify-content: space-between; margin-top: 3px; }
-.trend-bar { width: 6px; border-radius: 3px; }
-.foot { width: 100%; margin-top: 3px; lines: 1; }
+.unit { color: #8E8E93; margin-left: 3px; margin-bottom: 2px; }
+.status { margin-left: 6px; margin-bottom: 2px; }
+.trend-row { width: 100%; flex-direction: row; align-items: flex-end; justify-content: space-between; margin-top: 2px; }
+.trend-bar { width: 5px; border-radius: 3px; }
+.foot { width: 100%; margin-top: 2px; lines: 1; }
 .mini-row { flex-direction: row; justify-content: space-between; }
-.mini-value { width: 100%; margin-top: 4px; lines: 1; }
-.mini-status { width: 100%; margin-left: 0px; margin-bottom: 0px; margin-top: 3px; lines: 1; }
-.detail-trend { margin-top: 5px; }
-.updated { width: 100%; text-align: center; margin-top: 8px; margin-bottom: 12px; }
+.mini-head { width: 100%; }
+.mini-value { margin-top: 2px; }
+.mini-status { margin-left: 0px; margin-bottom: 0px; margin-top: 1px; }
+.detail-trend { margin-top: 3px; }
+.updated { width: 100%; text-align: center; margin-top: 6px; margin-bottom: 10px; }
 </style>

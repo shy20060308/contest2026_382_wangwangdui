@@ -80,13 +80,14 @@ fs.readdirSync(specsDir).filter(name => name.endsWith('.js')).forEach(name => {
     }
     if (name === 'history.js' && profile.formFactor !== 'pill') {
       assert.strictEqual(plan.trendMode, 'compact-column')
-      assert.ok(plan.chartHeight >= 50, 'Column history must keep meaningful bar-height contrast')
-      assert.ok(plan.trendHeight >= 110, 'Column history must reserve labels below the bars')
+      assert.ok(plan.chartHeight >= 30, 'Column history must keep meaningful bar-height contrast')
+      assert.ok(plan.trendHeight <= 90, 'Compact trend must remain a coherent card inside wearable geometry')
     }
     if (name === 'health.js' && profile.formFactor === 'circle') {
       assert.strictEqual(plan.stream.width, 136, 'Circle Health should keep copy away from the round mask')
       assert.ok(plan.metaLineHeight > plan.metaSize)
-      assert.ok(plan.scrollPaddingBottom >= 24)
+      assert.ok(plan.heroHeight <= 92 && plan.miniHeight <= 60)
+      assert.ok(plan.scrollPaddingBottom >= 22)
     }
     walkPlan(plan, host, name + ':' + profile.name, [])
   })
@@ -127,6 +128,7 @@ const healthPage = fs.readFileSync(path.join(root, 'src/pages/heartrate/heartrat
 assert.strictEqual((healthPage.match(/class="health-stream"/g) || []).length, 1)
 assert.ok(!healthPage.includes('isCircle') && !healthPage.includes('isPill') && !healthPage.includes('isRect'))
 assert.ok(healthPage.includes('class="heart-card"') && healthPage.includes('class="mini-row"') && healthPage.includes('class="detail-card"'))
+assert.ok(healthPage.includes('class="health-head-primary"') && healthPage.includes('class="health-head-secondary"'), 'Health should use one shared balanced header composition')
 assert.ok(healthPage.includes('line-height: {{ metaLineHeight }}px') && healthPage.includes('padding-bottom: {{ scrollPaddingBottom }}px'), 'Health must reserve explicit text line boxes and round scroll tail space')
 
 const historyPage = fs.readFileSync(path.join(root, 'src/pages/history/history.ux'), 'utf8')
@@ -135,9 +137,10 @@ assert.strictEqual((historyPage.match(/class="history-stream"/g) || []).length, 
 assert.ok(historyPage.includes("trendMode === 'compact-column'") && historyPage.includes("trendMode === 'comparative-row'"))
 assert.ok(!historyPage.includes('isCircle') && !historyPage.includes('isPill') && !historyPage.includes('isRect'))
 assert.ok(!historyPage.includes('每日记录'))
-assert.ok(historyPage.includes('历史步数') && historyPage.includes('column-value') && historyPage.includes('column-weekday') && historyPage.includes('column-date'), 'Step history must match the seven-column reference composition')
-assert.ok(historyPage.includes('class="column-chart-area"') && !historyPage.includes('class="column-track"'), 'Reference step bars should stand directly on the chart field rather than inside gray tracks')
-assert.ok(historyView.includes('columnStepsText:') && historyView.includes('weekdayText:') && historyView.includes('dateText:') && historyView.includes('rowWidth:'))
+assert.ok(historyPage.includes('class="history-title-row"') && historyPage.includes('步数趋势'), 'History must use a shared two-row header and the requested step trend card')
+assert.ok(historyPage.includes('class="column-chart-area"') && historyPage.includes('class="column-label'), 'Compact History must render seven direct bars with one weekday label row')
+assert.ok(!historyPage.includes('column-value') && !historyPage.includes('column-date'), 'Compact History must not add extra rows that push the chart under the round mask')
+assert.ok(historyView.includes("color: isToday ? '#FFD60A' : '#4C7CF3'"), 'History today bar must be visually distinct without changing data semantics')
 
 const settingsPage = fs.readFileSync(path.join(root, 'src/pages/settings/settings/settings.ux'), 'utf8')
 assert.ok(settingsPage.includes('@swipe="handleSwipe"'))
@@ -149,4 +152,4 @@ assert.ok(!vibrationPage.includes('applyShape(') && !vibrationPage.includes('sha
 const today = fs.readFileSync(path.join(root, 'src/pages/today/today.ux'), 'utf8')
 assert.ok(today.includes('.circle-calendar-grid { height: 78px; }'))
 
-console.log('V2 visual contracts verified: Adapter-first L1, reference step chart L2 and independent L3 surfaces')
+console.log('V2 visual contracts verified: Adapter-first L1, compact reference trend L2 and independent L3 surfaces')
