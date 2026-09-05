@@ -1,7 +1,7 @@
 module.exports = {
   level: 1,
-  surface: 'vitals-stream',
   base: {
+    surface: 'vitals-stream',
     contentWidth: 164,
     streamTop: 0,
     headerWidth: 156,
