@@ -37,8 +37,8 @@
 import pageRuntime from '../../v2/app/page_runtime'
 import navigation from '../../v2/app/navigation'
 import { createWatchfaceController } from '../../v2/features/watchface/controller'
-import selectorDesign from '../../v2/design/specs/watchface_selector'
-import selectorView from '../../v2/design/views/watchface_selector'
+import selectorDesign from '../../v2/design/apps/faces'
+import selectorView from '../../v2/design/apps/faces/view'
 import pager from '../../v2/design/pager'
 
 export default {
@@ -52,7 +52,7 @@ export default {
   onInit() {
     var self = this
     this.controller = createWatchfaceController(function (state) { self.applyState(state) })
-    pageRuntime.bind(this, { contentWidth: function (profile) { return selectorDesign.contentWidth(profile) } }, function (profile, scene, safe) {
+    pageRuntime.bind(this, function (profile, scene, safe) {
       self.plan = selectorDesign.resolve(profile, scene, safe)
       self.applyPlan(self.plan)
       self.controller.configure(self.plan.faceIds)
