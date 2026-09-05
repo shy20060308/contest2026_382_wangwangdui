@@ -65,7 +65,7 @@ export default {
   onInit() {
     var self = this
     this.controller = createHistoryController(function (model) { self.acceptModel(model) })
-    pageRuntime.bind(this, { contentWidth: function (profile) { return historyDesign.contentWidth(profile) } }, function (profile, scene, safe) {
+    pageRuntime.bind(this, function (profile, scene, safe) {
       var plan = historyDesign.resolve(profile, scene, safe)
       self.designPlan = plan; self.trendMode = plan.trendMode
       self.streamLeft = plan.stream.left; self.streamTop = plan.stream.top; self.streamWidth = plan.stream.width; self.streamHeight = plan.stream.height
