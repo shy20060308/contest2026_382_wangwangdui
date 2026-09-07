@@ -14,6 +14,7 @@ module.exports = {
     chrome: {
       headerBackSize: 8,
       rect: {
+        cardBorderWidth: 1,
         cardRadius: 14,
         cardPadding: 7,
         previewHeight: 42,
