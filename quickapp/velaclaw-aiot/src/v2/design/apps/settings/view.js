@@ -18,24 +18,12 @@ function dots(pageCount, pageIndex) {
 }
 
 function project(designPlan, pageIndex) {
-  var state = pager.resolve(designPlan.itemIds, pageIndex, designPlan.capacity.pageSize)
-  var plan = designPlan.capacity
-  var visual = designPlan.visual || {}
-  var iconSize = Number(visual.iconSize) || 30
+  var state = pager.resolve(designPlan.itemIds, pageIndex, designPlan.pageSize)
   return {
     pageIndex: state.pageIndex,
     pageText: state.pageText,
-    pageItems: decorate(state.items, plan.itemGap),
-    dots: dots(state.pageCount, state.pageIndex),
-    plan: plan,
-    itemRadius: Number(visual.itemRadius) || 16,
-    itemPadding: Number(visual.itemPadding) || 7,
-    iconSize: iconSize,
-    iconRadius: Math.round(iconSize / 2),
-    titleSize: Number(visual.titleSize) || 12,
-    itemNameSize: Number(visual.itemNameSize) || 10,
-    itemDescSize: Number(visual.itemDescSize) || 6,
-    arrowSize: Number(visual.arrowSize) || 13
+    pageItems: decorate(state.items, designPlan.itemGap),
+    dots: dots(state.pageCount, state.pageIndex)
   }
 }
 
