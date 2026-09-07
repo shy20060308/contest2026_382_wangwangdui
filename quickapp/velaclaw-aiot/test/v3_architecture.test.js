@@ -18,6 +18,28 @@ function filesUnder(relative, result) {
   return result
 }
 
+function relativeDependencies(source) {
+  const dependencies = []
+  const patterns = [
+    /\bfrom\s+['"]([^'"]+)['"]/g,
+    /\brequire\(\s*['"]([^'"]+)['"]\s*\)/g,
+    /\bimport\s+['"]([^'"]+)['"]/g,
+    /<import\b[^>]*\bsrc=['"]([^'"]+)['"]/g
+  ]
+  patterns.forEach(function (pattern) {
+    let match
+    while ((match = pattern.exec(source)) !== null) {
+      if (match[1] && match[1][0] === '.') dependencies.push(match[1])
+    }
+  })
+  return dependencies
+}
+
+function dependencyExists(file, dependency) {
+  const base = path.resolve(path.dirname(path.join(root, file)), dependency)
+  return [base, base + '.js', base + '.ux', path.join(base, 'index.js'), path.join(base, 'index.ux')].some(fs.existsSync)
+}
+
 assert.strictEqual(exists('src/presentation'), false, 'V3 must not keep the retired presentation system')
 assert.strictEqual(exists('src/v2/design/specs'), false, 'V3 must not keep design spec compatibility bridges')
 assert.strictEqual(exists('src/v2/design/views'), false, 'V3 must not keep design view compatibility bridges')
@@ -30,6 +52,9 @@ sources.forEach(function (file) {
   const source = read(file)
   assert.ok(!source.includes('/design/specs/') && !source.includes('/design/views/'), file + ' must consume app-owned V3 design directly')
   assert.ok(!source.includes('../presentation/') && !source.includes('/presentation/'), file + ' must not depend on retired presentation code')
+  relativeDependencies(source).forEach(function (dependency) {
+    assert.ok(dependencyExists(file, dependency), file + ' has unresolved dependency ' + dependency)
+  })
 })
 
 filesUnder('src/pages', []).forEach(function (file) {
@@ -52,8 +77,18 @@ const pkg = JSON.parse(read('package.json'))
 assert.strictEqual(pkg.version, '3.0.0')
 assert.ok(pkg.scripts['v3:architecture'] && pkg.scripts['v3:design'])
 assert.strictEqual(Object.keys(pkg.scripts).some(name => name.startsWith('v2:') || name === 'check:legacy'), false, 'V3 must not expose old validation entry points')
+
 const manifest = JSON.parse(read('src/manifest.json'))
 assert.strictEqual(manifest.versionName, '3.0.0')
 assert.strictEqual(manifest.versionCode, 30)
+assert.ok(manifest.router.pages[manifest.router.entry], 'manifest entry must point to a registered page')
+Object.keys(manifest.router.pages).forEach(function (route) {
+  const component = manifest.router.pages[route].component
+  assert.ok(exists('src/' + route + '/' + component + '.ux'), route + ' must point to an existing UX component')
+})
 
-console.log('V3 architecture verified: one design runtime, no compatibility bridge, no adaptive safety solver')
+const guard = read('src/pages/clock_guard/clock_guard.ux')
+assert.ok(!guard.includes('page_runtime'), 'clock guard must not wait for the layout runtime before redirecting')
+assert.ok(guard.includes("navigation.push('/pages/clock')"), 'clock guard must always restore the clock surface')
+
+console.log('V3 architecture verified: runnable routes and dependencies, one design runtime, no adaptive safety solver')
