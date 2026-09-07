@@ -1,33 +1,33 @@
 <template>
-  <div class="rect-simple-face">
-    <div class="simple-head"><text class="simple-week" style="color: {{ faceAccent }};">{{ displayWeek }}</text><text class="simple-date">{{ displayMonth }} {{ displayDate }}</text></div>
-    <text class="simple-time">{{ displayHours }}:{{ displayMinutes }}</text>
-    <div class="goal-row"><text class="goal-label">DAILY GOAL</text><text class="goal-value" style="color: {{ faceAccent }};">{{ goalPercent }}%</text></div>
-    <div class="goal-track"><div class="goal-fill" style="width: {{ goalPercent }}%; background-color: {{ faceAccent }};"></div></div>
-    <div class="simple-metrics">
-      <div class="simple-metric" @click="openSteps"><text class="simple-value steps">{{ stepsText }}</text><text class="simple-label">步数</text></div>
-      <div class="simple-metric" @click="openHealth"><text class="simple-value heart">{{ currentHeartRate }}</text><text class="simple-label">心率</text></div>
-      <div class="simple-metric"><text class="simple-value" style="color: {{ batteryColor }};">{{ batteryPercent }}%</text><text class="simple-label">电量</text></div>
+  <div class="rect-simple-face" style="width: {{ faceLayout.root.width }}px;">
+    <div class="simple-head" style="width: {{ faceLayout.head.width }}px; height: {{ faceLayout.head.height }}px; margin-top: {{ faceLayout.head.marginTop }}px;"><text class="simple-week" style="font-size: {{ faceLayout.week.fontSize }}px; color: {{ faceAccent }};">{{ displayWeek }}</text><text class="simple-date" style="font-size: {{ faceLayout.date.fontSize }}px;">{{ displayMonth }} {{ displayDate }}</text></div>
+    <text class="simple-time" style="width: {{ faceLayout.time.width }}px; height: {{ faceLayout.time.height }}px; font-size: {{ faceLayout.time.fontSize }}px; margin-top: {{ faceLayout.time.marginTop }}px;">{{ displayHours }}:{{ displayMinutes }}</text>
+    <div class="goal-row" style="width: {{ faceLayout.goalRow.width }}px; height: {{ faceLayout.goalRow.height }}px; margin-top: {{ faceLayout.goalRow.marginTop }}px;"><text class="goal-label" style="font-size: {{ faceLayout.goalLabel.fontSize }}px;">DAILY GOAL</text><text class="goal-value" style="font-size: {{ faceLayout.goalValue.fontSize }}px; color: {{ faceAccent }};">{{ goalPercent }}%</text></div>
+    <div class="goal-track" style="width: {{ faceLayout.goalTrack.width }}px; height: {{ faceLayout.goalTrack.height }}px; border-radius: {{ faceLayout.goalTrack.radius }}px;"><div class="goal-fill" style="width: {{ goalPercent }}%; height: {{ faceLayout.goalFill.height }}px; border-radius: {{ faceLayout.goalFill.radius }}px; background-color: {{ faceAccent }};"></div></div>
+    <div class="simple-metrics" style="width: {{ faceLayout.metrics.width }}px; height: {{ faceLayout.metrics.height }}px; margin-top: {{ faceLayout.metrics.marginTop }}px;">
+      <div class="simple-metric" style="width: {{ faceLayout.metric.width }}px; height: {{ faceLayout.metric.height }}px; border-radius: {{ faceLayout.metric.radius }}px; padding-top: {{ faceLayout.metric.paddingTop }}px;" @click="openSteps"><text class="simple-value steps" style="width: {{ faceLayout.value.width }}px; font-size: {{ faceLayout.value.fontSize }}px;">{{ stepsText }}</text><text class="simple-label" style="font-size: {{ faceLayout.label.fontSize }}px; margin-top: {{ faceLayout.label.marginTop }}px;">步数</text></div>
+      <div class="simple-metric" style="width: {{ faceLayout.metric.width }}px; height: {{ faceLayout.metric.height }}px; border-radius: {{ faceLayout.metric.radius }}px; padding-top: {{ faceLayout.metric.paddingTop }}px;" @click="openHealth"><text class="simple-value heart" style="width: {{ faceLayout.value.width }}px; font-size: {{ faceLayout.value.fontSize }}px;">{{ currentHeartRate }}</text><text class="simple-label" style="font-size: {{ faceLayout.label.fontSize }}px; margin-top: {{ faceLayout.label.marginTop }}px;">心率</text></div>
+      <div class="simple-metric" style="width: {{ faceLayout.metric.width }}px; height: {{ faceLayout.metric.height }}px; border-radius: {{ faceLayout.metric.radius }}px; padding-top: {{ faceLayout.metric.paddingTop }}px;"><text class="simple-value" style="width: {{ faceLayout.value.width }}px; font-size: {{ faceLayout.value.fontSize }}px; color: {{ batteryColor }};">{{ batteryPercent }}%</text><text class="simple-label" style="font-size: {{ faceLayout.label.fontSize }}px; margin-top: {{ faceLayout.label.marginTop }}px;">电量</text></div>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  props: ['displayWeek','displayMonth','displayDate','displayHours','displayMinutes','faceAccent','goalPercent','stepsText','currentHeartRate','batteryPercent','batteryColor'],
+  props: ['faceLayout','displayWeek','displayMonth','displayDate','displayHours','displayMinutes','faceAccent','goalPercent','stepsText','currentHeartRate','batteryPercent','batteryColor'],
   openHealth() { this.$emit('openHealth') },
   openSteps() { this.$emit('openSteps') }
 }
 </script>
 
 <style>
-.rect-simple-face { width: 192px; height: 100%; flex-direction: column; align-items: center; background-color: #040810; }
-.simple-head { width: 164px; height: 28px; margin-top: 16px; flex-direction: row; justify-content: space-between; align-items: center; }
-.simple-week { font-size: 10px; font-weight: bold; } .simple-date { font-size: 9px; color: #8E8E93; }
-.simple-time { width: 164px; height: 60px; font-size: 45px; color: #FFFFFF; font-weight: bold; text-align: center; margin-top: 4px; }
-.goal-row { width: 164px; height: 20px; margin-top: 6px; flex-direction: row; justify-content: space-between; align-items: center; } .goal-label { font-size: 7px; color: #636366; } .goal-value { font-size: 9px; font-weight: bold; }
-.goal-track { width: 164px; height: 6px; border-radius: 3px; background-color: #20242B; } .goal-fill { height: 6px; border-radius: 3px; }
-.simple-metrics { width: 164px; height: 66px; margin-top: 16px; flex-direction: row; justify-content: space-between; }
-.simple-metric { width: 50px; height: 66px; border-radius: 16px; background-color: #12161D; padding-top: 12px; flex-direction: column; align-items: center; }
-.simple-value { width: 48px; font-size: 16px; font-weight: bold; text-align: center; } .simple-label { font-size: 7px; color: #8E8E93; margin-top: 5px; } .steps { color: #FFD60A; } .heart { color: #FF375F; }
+.rect-simple-face { height: 100%; flex-direction: column; align-items: center; background-color: #040810; }
+.simple-head { flex-direction: row; justify-content: space-between; align-items: center; }
+.simple-week { font-weight: bold; } .simple-date { color: #8E8E93; }
+.simple-time { color: #FFFFFF; font-weight: bold; text-align: center; }
+.goal-row { flex-direction: row; justify-content: space-between; align-items: center; } .goal-label { color: #636366; } .goal-value { font-weight: bold; }
+.goal-track { background-color: #20242B; }
+.simple-metrics { flex-direction: row; justify-content: space-between; }
+.simple-metric { background-color: #12161D; flex-direction: column; align-items: center; }
+.simple-value { font-weight: bold; text-align: center; } .simple-label { color: #8E8E93; } .steps { color: #FFD60A; } .heart { color: #FF375F; }
 </style>
