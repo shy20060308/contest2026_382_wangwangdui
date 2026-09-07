@@ -20,9 +20,9 @@ function relativeBars(values, height, minHeight, minimumSpread, inactive, active
   var source = numericValues(values)
   if (!source.length) return []
   var range = stats(source)
-  var chartHeight = Math.max(6, Math.round(Number(height) || 24))
-  var floor = Math.max(3, Math.min(chartHeight, Math.round(Number(minHeight) || 7)))
-  var spread = Math.max(Number(minimumSpread) || 1, range.max - range.min)
+  var chartHeight = Math.round(Number(height))
+  var floor = Math.round(Number(minHeight))
+  var spread = Math.max(Number(minimumSpread), range.max - range.min)
   var center = (range.min + range.max) / 2
   var visualMin = center - spread / 2
   var result = []
@@ -76,8 +76,9 @@ function summaryState(source) {
 
 function project(model, plan) {
   var source = model || {}
-  var chartHeight = Math.max(18, Math.round(Number(plan && plan.chartHeight) || 24))
-  var trendMinHeight = Math.max(4, Math.round(Number(plan && plan.trendMinHeight) || 7))
+  var chartHeight = Math.round(Number(plan.chartHeight))
+  var trendMinHeight = Math.round(Number(plan.trendMinHeight))
+  var visual = plan.trendVisual
   var heartValue = Number(source.heartRate) || 0
   var spo2Value = Number(source.spo2) || 0
   var stressValue = source.stress === null || source.stress === undefined ? null : Number(source.stress)
@@ -109,9 +110,9 @@ function project(model, plan) {
     heartTrendText: trendText(heartValues), spo2TrendText: trendText(spo2Values), stressTrendText: trendText(stressValues),
     heartRangeText: rangeText(heartValues, ' bpm'), spo2RangeText: rangeText(spo2Values, '%'),
     stressRangeText: stressValues.length ? '本次 ' + stressRange.min + '–' + stressRange.max + ' · 均 ' + stressRange.avg : '等待数据',
-    heartBars: relativeBars(heartValues, chartHeight, trendMinHeight, 20, '#7A2436', '#FF375F'),
-    spo2Bars: relativeBars(spo2Values, chartHeight, trendMinHeight, 4, '#245566', '#5AC8FA'),
-    stressBars: relativeBars(stressValues, chartHeight, trendMinHeight, 20, '#542966', '#BF5AF2')
+    heartBars: relativeBars(heartValues, chartHeight, trendMinHeight, visual.heartSpread, visual.heartInactive, visual.heartActive),
+    spo2Bars: relativeBars(spo2Values, chartHeight, trendMinHeight, visual.spo2Spread, visual.spo2Inactive, visual.spo2Active),
+    stressBars: relativeBars(stressValues, chartHeight, trendMinHeight, visual.stressSpread, visual.stressInactive, visual.stressActive)
   }
 }
 
