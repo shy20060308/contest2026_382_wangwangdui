@@ -3,12 +3,90 @@ module.exports = {
     surface: 'rect-face-stage',
     faceIds: ['sport', 'simple', 'dashboard'],
     notificationOverlay: false,
-    alpine: {
-      dataGlassTop: 0,
-      dataRowTop: 0,
-      batteryTop: 0
+    chrome: {
+      dim: { paddingBottom: 40, textWidth: 128, textHeight: 22, textRadius: 11, textFontSize: 10 },
+      sleep: { timeFontSize: 32, labelFontSize: 10, labelMarginTop: 8, tipFontSize: 7, tipMarginTop: 10 },
+      notification: {
+        bodyWidth: 168,
+        iconWidth: 38,
+        iconHeight: 38,
+        iconMarginRight: 10,
+        nameFontSize: 18,
+        contentWidth: 160,
+        contentFontSize: 14,
+        contentLineHeight: 20,
+        contentMarginTop: 18,
+        contentLines: 3,
+        callContactFontSize: 22,
+        callPhoneFontSize: 15,
+        callPhoneMarginTop: 10,
+        actionsWidth: 168,
+        actionsHeight: 56,
+        actionsMarginBottom: 32,
+        buttonWidth: 70,
+        buttonHeight: 34,
+        buttonMargin: 6,
+        buttonRadius: 17,
+        buttonFontSize: 12
+      }
     },
-    faces: {}
+    faces: {
+      sport: {
+        dateMonth: { fontSize: 22, marginRight: -4, marginTop: -4 },
+        dateSeparator: { fontSize: 30, marginX: 4 },
+        dateValue: { fontSize: 20, marginLeft: -4, marginTop: 10 },
+        minute: { fontSize: 72, marginBottom: -40, marginLeft: 22 },
+        hour: { fontSize: 72, marginRight: 38, marginTop: -14 },
+        battery: { marginTop: 12 },
+        batteryIcon: { width: 18, height: 18, marginRight: 6 },
+        batteryTrack: { width: 108, height: 6, radius: 3 },
+        batteryFill: { height: 6, radius: 3 },
+        batteryText: { fontSize: 12, marginLeft: 6 },
+        heart: { marginTop: 10 },
+        heartIcon: { width: 30, height: 30, marginRight: 8 },
+        heartChart: { width: 96, height: 32 },
+        heartBar: { width: 8, radius: 2, minHeight: 4, maxHeight: 28, minSpan: 8 },
+        heartRateText: { fontSize: 12, marginTop: 4 },
+        step: { marginTop: 10 },
+        stepIcon: { width: 34, height: 34 },
+        stepInfo: { marginLeft: 10 },
+        stepCurrent: { fontSize: 23 },
+        stepGoal: { fontSize: 13 }
+      },
+      simple: {
+        heading: { width: 148, height: 26 },
+        week: { fontSize: 15 },
+        date: { fontSize: 12 },
+        dial: { width: 150, height: 150, marginTop: 24 },
+        arc: { width: 150, height: 150, strokeWidth: 7, startAngle: 0, totalAngle: 360, centerX: 75, centerY: 75, radius: 68 },
+        center: { width: 150, height: 150 },
+        time: { fontSize: 37 },
+        goal: { fontSize: 13, marginTop: 7 },
+        metrics: { width: 168, marginTop: 30 },
+        metric: { width: 52, height: 58, radius: 12, paddingTop: 9 },
+        metricValue: { fontSize: 17 },
+        metricLabel: { fontSize: 11, marginTop: 4 }
+      },
+      dashboard: {
+        timeBlock: { marginBottom: 12 },
+        time: { fontSize: 46 },
+        date: { fontSize: 13, marginTop: 2 },
+        card: { width: 168, height: 88, radius: 8, padding: 10, marginBottom: 10 },
+        cardRow: { width: 148 },
+        label: { fontSize: 13 },
+        value: { fontSize: 23 },
+        track: { width: 148, height: 7, radius: 4, marginTop: 10 },
+        fill: { height: 7, radius: 4 },
+        small: { fontSize: 11, marginTop: 6 },
+        heartChart: { width: 148, height: 28, marginTop: 5 },
+        heartBar: { width: 12, radius: 3, marginRight: 10, minHeight: 4, maxHeight: 28, minSpan: 8 },
+        battery: { width: 168, height: 36, radius: 8, paddingX: 10 },
+        batteryIcon: { width: 18, height: 18, marginRight: 8 },
+        batteryTrack: { width: 94, height: 6, radius: 3 },
+        batteryFill: { height: 6, radius: 3 },
+        batteryText: { fontSize: 12, marginLeft: 8 }
+      }
+    }
   },
   circle: {
     surface: 'circle-face-stage',
@@ -97,13 +175,81 @@ module.exports = {
     surface: 'pill-face-stage',
     faceIds: ['sport', 'simple', 'dashboard', 'alpine'],
     notificationOverlay: true,
-    alpine: {
-      dataGlassTop: 319,
-      dataRowTop: 327,
-      batteryTop: 401
+    faces: {
+      alpine: {
+        dateGlass: { left: 24, top: 38, width: 144, height: 34, radius: 10, borderWidth: 1 },
+        dateRow: { left: 30, top: 42, width: 132, height: 26 },
+        dateCopy: { width: 52, height: 25 },
+        week: { width: 52, height: 10, fontSize: 7 },
+        date: { width: 52, height: 12, fontSize: 8, marginTop: 1 },
+        brand: { width: 72, fontSize: 6 },
+        eyebrow: { left: 29, top: 91, width: 110, height: 12, fontSize: 7 },
+        hour: { left: 24, top: 100, width: 100, height: 90, fontSize: 76 },
+        timeAccent: { left: 115, top: 130, width: 3, height: 42, radius: 2 },
+        minute: { left: 124, top: 133, width: 44, height: 38, fontSize: 31 },
+        dataGlass: { left: 24, top: 319, width: 144, height: 69, radius: 16, borderWidth: 1 },
+        dataRow: { left: 32, top: 327, width: 128, height: 51 },
+        metric: { width: 58, height: 45 },
+        metricLabel: { width: 58, height: 10, fontSize: 6 },
+        metricValue: { width: 58, height: 25, fontSize: 18, marginTop: 2 },
+        battery: { left: 30, top: 401, width: 132, height: 16 },
+        batteryLabel: { width: 31, fontSize: 6 },
+        batteryTrack: { width: 68, height: 4, radius: 2 },
+        batteryFill: { height: 4, radius: 2 },
+        batteryValue: { width: 29, fontSize: 7, marginLeft: 4 }
+      }
     }
   },
   rect: {
-    surface: 'rect-face-stage'
+    surface: 'rect-face-stage',
+    faces: {
+      sport: {
+        root: { width: 192 },
+        head: { width: 164, height: 28, marginTop: 16 },
+        date: { fontSize: 10 },
+        battery: { fontSize: 9 },
+        time: { width: 164, height: 58, fontSize: 46, marginTop: 4 },
+        accent: { width: 54, height: 4, radius: 2 },
+        metricRow: { width: 164, height: 78, marginTop: 14 },
+        metric: { width: 78, height: 78, radius: 18, padding: 10 },
+        metricLabel: { fontSize: 7 },
+        metricValue: { fontSize: 23, marginTop: 5 },
+        metricSub: { fontSize: 7, marginTop: 4 },
+        batteryTrack: { width: 164, height: 5, radius: 3, marginTop: 12 },
+        batteryFill: { height: 5, radius: 3 }
+      },
+      simple: {
+        root: { width: 192 },
+        head: { width: 164, height: 28, marginTop: 16 },
+        week: { fontSize: 10 },
+        date: { fontSize: 9 },
+        time: { width: 164, height: 60, fontSize: 45, marginTop: 4 },
+        goalRow: { width: 164, height: 20, marginTop: 6 },
+        goalLabel: { fontSize: 7 },
+        goalValue: { fontSize: 9 },
+        goalTrack: { width: 164, height: 6, radius: 3 },
+        goalFill: { height: 6, radius: 3 },
+        metrics: { width: 164, height: 66, marginTop: 16 },
+        metric: { width: 50, height: 66, radius: 16, paddingTop: 12 },
+        value: { width: 48, fontSize: 16 },
+        label: { fontSize: 7, marginTop: 5 }
+      },
+      dashboard: {
+        root: { width: 192 },
+        head: { width: 164, height: 56, marginTop: 14 },
+        time: { fontSize: 29 },
+        date: { fontSize: 7, marginTop: 2 },
+        power: { width: 38, fontSize: 9 },
+        card: { width: 164, height: 68, radius: 16, paddingY: 9, paddingX: 11, marginBottom: 8 },
+        cardHead: { width: 142, height: 22 },
+        label: { fontSize: 8 },
+        value: { fontSize: 17 },
+        track: { width: 142, height: 5, radius: 3, marginTop: 5 },
+        fill: { height: 5, radius: 3 },
+        bars: { width: 142, height: 20, marginTop: 3 },
+        bar: { width: 7, radius: 3, minHeight: 3, maxHeight: 20, minSpan: 8 },
+        sub: { fontSize: 6, marginTop: 3 }
+      }
+    }
   }
 }
