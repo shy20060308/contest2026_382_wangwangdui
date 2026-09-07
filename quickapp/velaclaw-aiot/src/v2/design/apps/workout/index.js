@@ -5,7 +5,7 @@ var layout = require('./layout')
 function contentWidth(profile) { return adapter.contentWidth(profile, layout) }
 
 function box(profile, scene, safe, source) {
-  var spec = adapter.merge({}, source || {})
+  var spec = adapter.merge({}, source)
   if (spec.topFromBottom !== undefined) {
     spec.absoluteTop = true
     spec.top = safe.bottom - Number(spec.topFromBottom)
@@ -37,6 +37,8 @@ function resolve(profile, scene, safe) {
   plan.radius = config.radius
   plan.metricItemWidth = adapter.grid(plan.metrics, plan.metricColumns, plan.metricGap).itemWidth
   plan.actionWidth = adapter.grid(plan.actions, 2, plan.actionGap).itemWidth
+  plan.chrome = adapter.merge({}, config.chrome)
+  plan.confirm = adapter.merge({}, config.confirm)
   return plan
 }
 
