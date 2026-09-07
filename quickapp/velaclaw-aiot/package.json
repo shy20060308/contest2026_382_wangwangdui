@@ -18,7 +18,7 @@
     "lint": "node scripts/lint.js",
     "studio": "node tools/layout-studio/server.js",
     "studio:check": "node test/layout_studio.test.js",
-    "v3:architecture": "node test/v3_architecture.test.js",
+    "v3:architecture": "node test/v3_legacy_absence.test.js && node test/v3_architecture.test.js",
     "v3:design": "node test/v3_design.test.js",
     "capabilities:check": "node test/capability_runtime.test.js",
     "power:logic": "node test/power_state_machine.test.js",
