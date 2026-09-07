@@ -71,8 +71,16 @@ const strictRecipePages = [
   'src/pages/applist/applist.ux',
   'src/pages/heartrate/heartrate.ux',
   'src/pages/history/history.ux',
+  'src/pages/notification_demo/notification_demo.ux',
+  'src/pages/settings/settings/settings.ux',
+  'src/pages/settings/bluetooth/bluetooth.ux',
+  'src/pages/settings/brightness/brightness.ux',
+  'src/pages/settings/diagnostics/diagnostics.ux',
+  'src/pages/settings/motion/motion.ux',
+  'src/pages/settings/vibration/vibration.ux',
   'src/pages/steps/steps.ux',
   'src/pages/today/today.ux',
+  'src/pages/watchface/index.ux',
   'src/pages/workout/workout.ux',
   'src/pages/workout_history/workout_history.ux',
   'src/pages/workout_select/workout_select.ux'
@@ -111,12 +119,21 @@ strictWatchfaceComponents.forEach(function (file) {
 })
 
 const strictRecipeResolvers = [
+  'src/v2/design/apps/_shared/detail.js',
   'src/v2/design/apps/steps/index.js',
   'src/v2/design/apps/launcher/index.js',
   'src/v2/design/apps/heart/index.js',
   'src/v2/design/apps/history/index.js',
   'src/v2/design/apps/clock/index.js',
   'src/v2/design/apps/today/index.js',
+  'src/v2/design/apps/faces/index.js',
+  'src/v2/design/apps/notification/index.js',
+  'src/v2/design/apps/settings/index.js',
+  'src/v2/design/apps/brightness/index.js',
+  'src/v2/design/apps/vibration/index.js',
+  'src/v2/design/apps/motion/index.js',
+  'src/v2/design/apps/diagnostics/index.js',
+  'src/v2/design/apps/sync/index.js',
   'src/v2/design/apps/workout/index.js',
   'src/v2/design/apps/workout/selection.js',
   'src/v2/design/apps/workout/history.js'
@@ -129,7 +146,8 @@ strictRecipeResolvers.forEach(function (file) {
 const strictPlanViews = [
   'src/v2/design/apps/launcher/view.js',
   'src/v2/design/apps/heart/view.js',
-  'src/v2/design/apps/history/view.js'
+  'src/v2/design/apps/history/view.js',
+  'src/v2/design/apps/settings/view.js'
 ]
 strictPlanViews.forEach(function (file) {
   const source = read(file)
