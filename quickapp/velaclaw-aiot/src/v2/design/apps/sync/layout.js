@@ -2,7 +2,7 @@ module.exports = {
   base: {
     surface: 'settings-stream', contentWidth: 164,
     headerTop: 0, headerWidth: 164, headerHeight: 24, headerGap: 8, streamWidth: 164,
-    compact: false, tall: false, titleSize: 12, cardRadius: 16, cardGap: 6,
+    titleSize: 12, cardRadius: 16, cardGap: 6,
     chrome: {
       transportWidth: 70, transportSize: 6, cardPadding: 10,
       statusMinHeight: 72, statusBorderWidth: 1, smallTextSize: 7, statusValueSize: 20, statusValueMarginTop: 3,
@@ -16,11 +16,11 @@ module.exports = {
   },
   circle: {
     contentWidth: 148, headerTop: 14, headerWidth: 124, headerHeight: 20, headerGap: 5, streamWidth: 148,
-    compact: true, tall: false, titleSize: 12, cardRadius: 14, cardGap: 6
+    titleSize: 12, cardRadius: 14, cardGap: 6
   },
   pill: {
     contentWidth: 168, headerTop: 0, headerWidth: 168, headerHeight: 32, headerGap: 8, streamWidth: 168,
-    compact: false, tall: true, titleSize: 14, cardRadius: 20, cardGap: 8
+    titleSize: 14, cardRadius: 20, cardGap: 8
   },
   rect: { contentWidth: 164 }
 }
