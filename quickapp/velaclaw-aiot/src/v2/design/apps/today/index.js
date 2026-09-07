@@ -10,6 +10,8 @@ function resolve(profile, scene, safe) {
   plan.interaction = config.interaction
   plan.overflow = config.overflow
   plan.frame = adapter.region(config.frame.left, config.frame.top, config.frame.width, config.frame.height)
+  plan.summary = config.summary
+  plan.calendar = config.calendar
   return plan
 }
 
