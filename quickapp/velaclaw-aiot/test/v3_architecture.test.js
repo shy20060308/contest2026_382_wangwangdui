@@ -72,7 +72,8 @@ const strictRecipePages = [
   'src/pages/heartrate/heartrate.ux',
   'src/pages/history/history.ux',
   'src/pages/steps/steps.ux',
-  'src/pages/workout/workout.ux'
+  'src/pages/workout/workout.ux',
+  'src/pages/workout_select/workout_select.ux'
 ]
 strictRecipePages.forEach(function (file) {
   const source = read(file)
