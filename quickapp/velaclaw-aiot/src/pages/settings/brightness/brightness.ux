@@ -1,13 +1,13 @@
 <template>
   <stack class="detail-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
-    <div class="detail-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
-      <div class="header" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;"><text class="title" style="font-size: {{ titleSize }}px;">亮度与省电</text><text class="back" @click="goBack">返回</text></div>
+    <div class="detail-scene" if="{{ ready }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
+      <div class="header" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;"><text class="title" style="font-size: {{ titleSize }}px;">亮度与省电</text><text class="back" @click="goBack" style="font-size: {{ chrome.backSize }}px;">返回</text></div>
       <scroll class="content" scroll-y="true" style="left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ streamWidth }}px; height: {{ streamHeight }}px;">
-        <div class="status-card" style="width: {{ streamWidth }}px; border-radius: {{ cardRadius }}px;"><text class="label">当前亮度</text><text class="brightness-value" style="font-size: {{ valueSize }}px;">{{ brightnessText }}</text><text class="sub">{{ brightnessDetail }}</text></div>
-        <div class="slider-card" style="width: {{ streamWidth }}px; border-radius: {{ cardRadius }}px; margin-top: {{ cardGap }}px;"><div class="row"><text class="setting-title">手动亮度</text><text class="sub">{{ manualStateText }}</text></div><slider class="brightness-slider" min="0" max="255" step="1" value="{{ brightnessValue }}" @change="onBrightnessChange"></slider><div class="scale"><text>暗</text><text>中</text><text>亮</text></div></div>
-        <div class="setting-card" @click="toggleAuto" style="width: {{ streamWidth }}px; border-radius: {{ cardRadius }}px; margin-top: {{ cardGap }}px;"><div class="copy"><text class="setting-title">自动亮度</text><text class="sub">根据场景模拟调节</text></div><text class="switch" style="color: {{ autoColor }};">{{ autoText }}</text></div>
-        <div class="setting-card" @click="toggleRaiseWake" style="width: {{ streamWidth }}px; border-radius: {{ cardRadius }}px; margin-top: {{ cardGap }}px;"><div class="copy"><text class="setting-title">抬腕亮屏</text><text class="sub">息屏后动作唤醒</text></div><text class="switch" style="color: {{ raiseColor }};">{{ raiseText }}</text></div>
-        <div class="setting-card" @click="toggleLowPower" style="width: {{ streamWidth }}px; border-radius: {{ cardRadius }}px; margin-top: {{ cardGap }}px;"><div class="copy"><text class="setting-title">低功耗模式</text><text class="sub">暗屏、息屏与降刷新率</text></div><text class="switch" style="color: {{ lowPowerColor }};">{{ lowPowerText }}</text></div>
+        <div class="status-card" style="width: {{ streamWidth }}px; min-height: {{ chrome.statusMinHeight }}px; border-radius: {{ cardRadius }}px; padding: {{ chrome.cardPadding }}px;"><text class="label" style="font-size: {{ chrome.labelSize }}px;">当前亮度</text><text class="brightness-value" style="font-size: {{ valueSize }}px; margin-top: {{ chrome.valueMarginTop }}px;">{{ brightnessText }}</text><text class="sub" style="font-size: {{ chrome.labelSize }}px;">{{ brightnessDetail }}</text></div>
+        <div class="slider-card" style="width: {{ streamWidth }}px; min-height: {{ chrome.sliderMinHeight }}px; border-radius: {{ cardRadius }}px; margin-top: {{ cardGap }}px; padding: {{ chrome.cardPadding }}px;"><div class="row"><text class="setting-title" style="font-size: {{ chrome.settingTitleSize }}px;">手动亮度</text><text class="sub" style="font-size: {{ chrome.labelSize }}px;">{{ manualStateText }}</text></div><slider class="brightness-slider" min="0" max="255" step="1" value="{{ brightnessValue }}" @change="onBrightnessChange" style="height: {{ chrome.sliderHeight }}px;"></slider><div class="scale"><text style="font-size: {{ chrome.scaleSize }}px;">暗</text><text style="font-size: {{ chrome.scaleSize }}px;">中</text><text style="font-size: {{ chrome.scaleSize }}px;">亮</text></div></div>
+        <div class="setting-card" @click="toggleAuto" style="width: {{ streamWidth }}px; min-height: {{ chrome.settingMinHeight }}px; border-radius: {{ cardRadius }}px; margin-top: {{ cardGap }}px; padding: {{ chrome.cardPadding }}px;"><div class="copy"><text class="setting-title" style="font-size: {{ chrome.settingTitleSize }}px;">自动亮度</text><text class="sub" style="font-size: {{ chrome.labelSize }}px;">根据场景模拟调节</text></div><text class="switch" style="width: {{ chrome.switchWidth }}px; font-size: {{ chrome.switchSize }}px; color: {{ autoColor }};">{{ autoText }}</text></div>
+        <div class="setting-card" @click="toggleRaiseWake" style="width: {{ streamWidth }}px; min-height: {{ chrome.settingMinHeight }}px; border-radius: {{ cardRadius }}px; margin-top: {{ cardGap }}px; padding: {{ chrome.cardPadding }}px;"><div class="copy"><text class="setting-title" style="font-size: {{ chrome.settingTitleSize }}px;">抬腕亮屏</text><text class="sub" style="font-size: {{ chrome.labelSize }}px;">息屏后动作唤醒</text></div><text class="switch" style="width: {{ chrome.switchWidth }}px; font-size: {{ chrome.switchSize }}px; color: {{ raiseColor }};">{{ raiseText }}</text></div>
+        <div class="setting-card" @click="toggleLowPower" style="width: {{ streamWidth }}px; min-height: {{ chrome.settingMinHeight }}px; border-radius: {{ cardRadius }}px; margin-top: {{ cardGap }}px; padding: {{ chrome.cardPadding }}px;"><div class="copy"><text class="setting-title" style="font-size: {{ chrome.settingTitleSize }}px;">低功耗模式</text><text class="sub" style="font-size: {{ chrome.labelSize }}px;">暗屏、息屏与降刷新率</text></div><text class="switch" style="width: {{ chrome.switchWidth }}px; font-size: {{ chrome.switchSize }}px; color: {{ lowPowerColor }};">{{ lowPowerText }}</text></div>
       </scroll>
     </div>
   </stack>
@@ -22,9 +22,10 @@ import brightnessView from '../../../v2/design/apps/brightness/view'
 
 export default {
   private: {
+    ready: false,
     brightnessValue: 140, brightnessText: '55%', brightnessDetail: '140 / 255', manualStateText: '可调节', autoText: '关', autoColor: '#8E8E93', raiseText: '开', raiseColor: '#30D158', lowPowerText: '开', lowPowerColor: '#30D158',
-    headerLeft: 22, headerTop: 24, headerWidth: 148, headerHeight: 20, streamLeft: 22, streamTop: 49, streamWidth: 148, streamHeight: 120, titleSize: 12, cardRadius: 16, cardGap: 6, valueSize: 18,
-    sceneWidth: 192, sceneHeight: 192, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
+    headerLeft: 0, headerTop: 0, headerWidth: 0, headerHeight: 0, streamLeft: 0, streamTop: 0, streamWidth: 0, streamHeight: 0, titleSize: 0, cardRadius: 0, cardGap: 0, valueSize: 0, chrome: {},
+    sceneWidth: 0, sceneHeight: 0, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
   },
   onInit() {
     var self = this
@@ -33,7 +34,8 @@ export default {
       var plan = detailDesign.resolve(profile, scene, safe)
       self.headerLeft = plan.header.left; self.headerTop = plan.header.top; self.headerWidth = plan.header.width; self.headerHeight = plan.header.height
       self.streamLeft = plan.stream.left; self.streamTop = plan.stream.top; self.streamWidth = plan.stream.width; self.streamHeight = plan.stream.height
-      self.titleSize = plan.titleSize; self.cardRadius = plan.cardRadius; self.cardGap = plan.cardGap; self.valueSize = plan.valueSize
+      self.titleSize = plan.titleSize; self.cardRadius = plan.cardRadius; self.cardGap = plan.cardGap; self.valueSize = plan.valueSize; self.chrome = plan.chrome
+      self.ready = true
     })
   },
   onShow() { this.controller.load() },
@@ -52,11 +54,11 @@ export default {
 .detail-scene { position: absolute; left: 0px; top: 0px; }
 .header, .content { position: absolute; }
 .header, .row, .setting-card { flex-direction: row; justify-content: space-between; align-items: center; }
-.title { color: #FFD60A; font-weight: bold; } .back { color: #8E8E93; font-size: 8px; }
+.title { color: #FFD60A; font-weight: bold; } .back { color: #8E8E93; }
 .content { flex-direction: column; }
-.status-card, .slider-card, .setting-card { background-color: #111317; padding: 12px; flex-direction: column; }
-.status-card { min-height: 76px; } .label, .sub { color: #8E8E93; font-size: 8px; } .brightness-value { color: #FFD60A; font-weight: bold; margin-top: 3px; }
-.slider-card { min-height: 78px; } .row { width: 100%; } .setting-title { color: #FFFFFF; font-size: 11px; font-weight: bold; } .brightness-slider { width: 100%; height: 24px; color: #FFD60A; selected-color: #FFD60A; block-color: #FFFFFF; }
-.scale { width: 100%; flex-direction: row; justify-content: space-between; } .scale text { color: #636366; font-size: 7px; }
-.setting-card { min-height: 58px; flex-direction: row; } .copy { flex: 1; flex-direction: column; } .switch { width: 28px; font-size: 13px; font-weight: bold; text-align: right; }
+.status-card, .slider-card, .setting-card { background-color: #111317; flex-direction: column; }
+.label, .sub { color: #8E8E93; } .brightness-value { color: #FFD60A; font-weight: bold; }
+.row { width: 100%; } .setting-title { color: #FFFFFF; font-weight: bold; } .brightness-slider { width: 100%; color: #FFD60A; selected-color: #FFD60A; block-color: #FFFFFF; }
+.scale { width: 100%; flex-direction: row; justify-content: space-between; } .scale text { color: #636366; }
+.setting-card { flex-direction: row; } .copy { flex: 1; flex-direction: column; } .switch { font-weight: bold; text-align: right; }
 </style>
