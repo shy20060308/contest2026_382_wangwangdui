@@ -5,6 +5,7 @@ const healthView = require('../src/v2/design/apps/heart/view')
 
 const root = path.resolve(__dirname, '..')
 const read = name => fs.readFileSync(path.join(root, name), 'utf8')
+const exists = name => fs.existsSync(path.join(root, name))
 
 const plan = {
   chartHeight: 24,
@@ -72,6 +73,7 @@ assert.strictEqual(waiting.heartBars.length, 0)
 const controller = read('src/v2/features/health/controller.js')
 const store = read('src/domain/health/store.js')
 const page = read('src/pages/heartrate/heartrate.ux')
+assert.strictEqual(exists('src/domain/health/recent.js'), false, 'Official Health must not retain seeded compatibility samples')
 assert.ok(controller.includes("data[prefix + 'Source'] === 'live'"), 'Health controller must only promote official system samples into visible metric state')
 assert.ok(!controller.includes('var heartValues = [72'), 'Health controller must not seed a fabricated trend')
 assert.ok(!controller.includes('historyRepository.loadHourlyHeartRate'), 'Health must not pull demo-backed hourly history into the official data surface')
