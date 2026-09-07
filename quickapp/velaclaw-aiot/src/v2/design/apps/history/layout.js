@@ -4,6 +4,7 @@ module.exports = {
     surface: 'trend-stream',
     contentWidth: 164,
     streamTop: 0,
+    streamPaddingBottom: 18,
     headerWidth: 156,
     headerHeight: 30,
     titleWidth: 96,
@@ -21,10 +22,28 @@ module.exports = {
     summaryPaddingY: 7,
     summaryLabelSize: 7,
     summaryValueSize: 15,
+    insightGap: 6,
     insightOuterHeight: 42,
     insightPadding: 6,
     insightLabelSize: 6,
     insightValueSize: 9,
+    chrome: {
+      summaryValueTop: 3,
+      columnTrendTop: 3,
+      columnBarRadius: 4,
+      columnLabelTop: 2,
+      rowTrendTop: 4,
+      rowItemHeight: 20,
+      rowLabelWidth: 28,
+      rowLabelSize: 7,
+      rowTrackHeight: 10,
+      rowTrackGap: 4,
+      rowTrackRadius: 5,
+      rowValueWidth: 44,
+      rowValueSize: 8,
+      insightDetailSize: 5,
+      insightDetailTop: 2
+    },
     trend: {
       mode: 'compact-column',
       outerWidth: 150,
@@ -37,7 +56,10 @@ module.exports = {
       chartHeight: 48,
       labelSize: 6,
       labelLineHeight: 9,
-      barWidth: 9
+      barWidth: 9,
+      barMinHeight: 5,
+      rowMinWidth: 0,
+      rowMaxWidth: 0
     }
   },
   circle: {
@@ -60,6 +82,7 @@ module.exports = {
     summaryPaddingY: 6,
     summaryLabelSize: 6,
     summaryValueSize: 13,
+    insightGap: 4,
     insightOuterHeight: 36,
     insightPadding: 5,
     insightLabelSize: 5,
@@ -76,7 +99,10 @@ module.exports = {
       chartHeight: 30,
       labelSize: 5,
       labelLineHeight: 8,
-      barWidth: 7
+      barWidth: 7,
+      barMinHeight: 5,
+      rowMinWidth: 0,
+      rowMaxWidth: 0
     }
   },
   pill: {
@@ -99,6 +125,7 @@ module.exports = {
     summaryPaddingY: 10,
     summaryLabelSize: 9,
     summaryValueSize: 20,
+    insightGap: 6,
     insightOuterHeight: 58,
     insightPadding: 9,
     insightLabelSize: 8,
@@ -113,6 +140,10 @@ module.exports = {
       titleSize: 11,
       captionSize: 8,
       chartHeight: 10,
+      labelSize: 0,
+      labelLineHeight: 0,
+      barWidth: 0,
+      barMinHeight: 5,
       rowMinWidth: 14,
       rowMaxWidth: 70
     }
