@@ -175,9 +175,14 @@ const manifest = JSON.parse(read('src/manifest.json'))
 assert.strictEqual(manifest.versionName, '3.0.0')
 assert.strictEqual(manifest.versionCode, 30)
 assert.ok(manifest.router.pages[manifest.router.entry], 'manifest entry must point to a registered page')
+const strictRecipeSet = new Set(strictRecipePages)
 Object.keys(manifest.router.pages).forEach(function (route) {
   const component = manifest.router.pages[route].component
-  assert.ok(exists('src/' + route + '/' + component + '.ux'), route + ' must point to an existing UX component')
+  const file = 'src/' + route + '/' + component + '.ux'
+  assert.ok(exists(file), route + ' must point to an existing UX component')
+  if (route !== 'pages/clock' && route !== 'pages/clock_guard') {
+    assert.ok(strictRecipeSet.has(file), route + ' must be covered by strict V3 recipe ownership tests')
+  }
 })
 
 const guard = read('src/pages/clock_guard/clock_guard.ux')
