@@ -155,6 +155,15 @@ strictPlanViews.forEach(function (file) {
   assert.ok(!/Number\(\s*plan[^)]*\)\s*\|\|/.test(source), file + ' must not invent visual geometry when plan data is missing')
 })
 
+const diagnosticsView = read('src/v2/design/apps/diagnostics/view.js')
+assert.ok(!diagnosticsView.includes('|| 3'), 'Diagnostics paging must require recipe capacity instead of falling back to three cards')
+assert.ok(diagnosticsView.includes('requires resolved capabilityPageSize'), 'Diagnostics paging must fail visibly when recipe capacity is missing')
+
+const watchfaceChart = read('src/v2/design/watchface_chart.js')
+assert.ok(watchfaceChart.includes("visualNumber(minHeight, 'minHeight')"), 'Watchface chart min height must come from the face recipe')
+assert.ok(watchfaceChart.includes("visualNumber(maxHeight, 'maxHeight')"), 'Watchface chart max height must come from the face recipe')
+assert.ok(watchfaceChart.includes("visualNumber(minSpan, 'minSpan')"), 'Watchface chart data span must come from the face recipe')
+
 const adapter = read('src/v2/design/adapter.js')
 assert.ok(adapter.includes("SYSTEM_ID = 'recipe-translator-v3.0'"))
 assert.ok(!adapter.includes('function clamp('), 'Adapter must not repair recipe geometry at runtime')
