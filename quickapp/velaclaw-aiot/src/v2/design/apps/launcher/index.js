@@ -39,10 +39,16 @@ function resolve(profile, scene, safe) {
   plan.itemHeight = config.itemHeight
   plan.itemGap = config.itemGap
   plan.titleSize = config.titleSize
+  plan.pageTextSize = config.pageTextSize
   plan.nameSize = config.nameSize
   plan.arrowSize = config.arrowSize
   plan.iconSize = config.iconSize
+  plan.iconRadius = Math.round(Number(config.iconSize) / 2)
   plan.itemRadius = config.itemRadius
+  plan.listChrome = adapter.merge({}, config.listChrome)
+  plan.gridChrome = adapter.merge({}, config.gridChrome)
+  plan.pagerChrome = adapter.merge({}, config.pagerChrome)
+  plan.honeycomb = adapter.merge({}, config.honeycomb)
   return plan
 }
 
