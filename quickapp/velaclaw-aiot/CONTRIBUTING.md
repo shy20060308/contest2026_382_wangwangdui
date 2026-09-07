@@ -1,82 +1,121 @@
 # Contributing to vela_band
 
-感谢你参与 `vela_band`。本项目是面向 Xiaomi Vela Quick App 模拟器的演示应用，贡献内容应保持可构建、可回退，并明确区分真实系统能力与模拟行为。
+感谢参与 `vela_band`。当前工程版本为 V3，贡献必须维护单一产品链：
+
+```text
+Capability → Domain → Feature → Device Profile/Scene → Recipe → Adapter → Resolver → UX
+```
+
+Git 历史负责保存旧实现；当前源码不建立 V2/common/presentation 兼容桥。
 
 ## 开发环境
 
 - Node.js 18 或更高版本
 - npm
-- AIoT-IDE 与可用的 Vela 模拟器
-
-安装锁定依赖：
+- AIoT-IDE 或兼容的 Vela Quick App 工具链
+- 可用的 Vela 模拟器/设备
 
 ```bash
 npm ci
 ```
 
-## 开发流程
-
-1. 从最新目标分支创建功能分支。
-2. 保持改动聚焦，不混入 IDE 配置、普通构建产物或模拟器日志。
-3. 修改系统 API、路由、存储结构或用户行为时同步更新文档。
-4. 提交前运行完整检查。
+## 提交前门禁
 
 ```bash
 npm run check
 npm run build
 ```
 
-涉及页面交互、生命周期或系统 API 时，还需在 `mi-band10` 和 `Vela_Watchs4` 中执行对应形态回归；仅影响单一形态的改动也必须确认另一形态可以启动。
+涉及页面构图、生命周期、设备能力或形态差异时，还应在对应 Pill / Circle / Rect profile 与可用模拟器上做回归。
 
-## 编码约定
+## V3 所有权规则
 
-- 与现有 `.ux` 和 JavaScript 风格保持一致。
-- 兼容 Vela 运行时支持的 JavaScript 子集，避免依赖浏览器 DOM 或 Node.js API。
-- 页面跳转统一通过 `page_motion.js`，并始终传递路由 `params`。
-- 定时器、传感器和事件订阅必须在 `onHide` 或 `onDestroy` 中释放。
-- 持久化数据通过 `storage_adapter.js`，同一键的读改写使用串行更新接口。
-- 系统能力不可用时提供明确降级，不得把模拟链路描述为真实硬件能力。
-- 页面根节点使用可用视口，不恢复 `192×490` 固定根尺寸；圆屏内容必须位于安全区或提供滚动。
-- 圆屏蜂窝坐标集中维护在 `launcher_apps.js`，拖拽定时器必须随页面生命周期释放。
-- 应用标签、路由和图标路径集中维护在 `launcher_apps.js`；图标先修改 `assets/icons/*.svg`，再转换为 `src/common/icons/*.jpg`，两种列表不得各自维护图标。
+- `src/capabilities/*`：原生 Vela API 与能力边界。
+- `src/domain/*`：业务模型、状态机、持久化语义。
+- `src/runtime/*`：需要独立执行的 runtime core；不得承担页面设计。
+- `src/v2/features/*`：应用级生命周期和业务编排。
+- `src/v2/system/*`：设备 profile 和系统级编排。
+- `src/v2/design/*`：Scene、Recipe、Adapter、Resolver 和明确的设计/交互 engine。
+- `src/pages/*`：绑定 resolved plan、feature state 和用户交互。
+- `src/components/watchfaces/*`：渲染 Clock Recipe 注入的表盘计划。
+- `src/common/*`：仅静态图片、图标、表盘背景等资源；禁止新增 JS/UX 逻辑。
 
-## 文档要求
+不要恢复：
 
-- 用户可见行为更新 `README.md` 与 `docs/README_EN.md`。
-- 架构或公共模块变化更新 `docs/TECHNICAL.md`。
-- 模拟器或系统 API 差异更新 `docs/COMPATIBILITY.md`。
-- 运动和同步协议变化更新 `docs/B_F_IMPLEMENTATION.md`。
+- `src/presentation`
+- `src/platform` capability aliases
+- `src/v2/design/specs`
+- `src/v2/design/views`
+- `src/v2/design/geometry.js`
+- `src/common/*.js`
 
-本地文档链接可通过以下命令检查：
+## Recipe ownership
+
+视觉迁移或新页面必须遵循：
+
+1. 页面在 resolved plan 就绪前不渲染产品几何。
+2. 页面 CSS 不写产品非零 px 几何；颜色、方向、语义状态等非几何样式可以保留。
+3. UX 不保留 `plan || oldValue` 一类私有视觉 fallback。
+4. Resolver 不用 `Math.min/Math.max`、扫描、缩放等方式修复 Recipe 几何。
+5. Adapter 只做 Recipe → Host Scene 翻译和明确的 box-model 转换，不决定设计。
+6. Device Profile 显式声明 safe insets；safe area 不根据组件宽度重新求解。
+7. Circle / Pill / Rect 的真实产品差异写在 app-owned Recipe 中，不藏在共享 helper 里。
+8. 复杂交互 engine 可以计算动态状态，但不得重新成为页面适配 solver。
+
+## 业务与能力规则
+
+- 页面不重新实现 Domain 状态机或 Capability 调用。
+- 定时器、传感器、位置、健康和事件订阅必须由其 owner 在生命周期结束时释放。
+- 持久化统一进入对应 Domain repository/store。
+- 原生系统能力统一进入 Capabilities；不要新增 platform/common 转发层。
+- 健康和运动正式表面只使用官方实时健康样本，不得生成伪造健康趋势。
+- 模拟 transport 或降级能力必须在产品语义上明确，不得描述为真实硬件链路。
+
+## 静态资源
+
+应用图标源文件位于 `assets/icons/*.svg`，渲染后的 wearable 资源位于 `src/common/icons/`。`src/common` 是资源命名空间，不是公共代码目录。
+
+资源生成脚本：
 
 ```bash
-npm run docs:check
+npm run icons:render
+npm run backgrounds:render
 ```
+
+## 文档
+
+架构变化同步更新：
+
+- `README.md`
+- `docs/README_EN.md`
+- `docs/ARCHITECTURE_V3.md`
+- `docs/PROJECT_OWNER_GUIDE.md`
+
+不要在当前树中保留已退休架构的“当前实现说明”；历史说明由 Git 历史保存。
 
 ## 提交信息
 
-推荐使用 Conventional Commits：
+推荐 Conventional Commits：
 
 ```text
 feat: add a user-visible capability
 fix: correct runtime behavior
-docs: update documentation only
-refactor: reorganize code without behavior changes
-test: add or adjust verification
+docs: update current documentation
+refactor: change ownership or implementation structure
+test: strengthen a current contract
 chore: maintain tooling or dependencies
 ```
 
-## 提交前检查清单
+## 检查清单
 
 - [ ] `npm run check` 通过
-- [ ] `npm run build` 生成 JSC 调试 RPK
-- [ ] 参赛发布前使用生产模式生成并验证 `dist/*.release.rpk`
-- [ ] 相关模拟器场景已回归
-- [ ] 同一 RPK 可安装并启动于 `mi-band10` 与 `Vela_Watchs4`
-- [ ] 新增资源、页面和 feature 已在 `src/manifest.json` 中登记
-- [ ] 中英文 README 与兼容性说明保持一致
-- [ ] 未提交 `build/`、普通 `dist/` 产物、`outputs/`、IDE 私有文件或密钥；赛事要求的 `dist/*.release.rpk` 例外
+- [ ] `npm run build` 成功
+- [ ] 相关 Pill / Circle / Rect 场景已回归
+- [ ] 新页面已登记在 `src/manifest.json`
+- [ ] 新视觉参数归 Recipe 所有，没有写回 UX/CSS fallback
+- [ ] 新业务逻辑归 Domain/Feature/Capability 所有
+- [ ] 没有新增 `src/common` 逻辑、platform alias 或 retired design runtime
+- [ ] 中英文 README 与当前 V3 实现一致
+- [ ] 未提交普通构建产物、IDE 私有文件或密钥
 
-## 问题反馈
-
-报告问题时请提供：复现步骤、AVD/系统镜像名称、Node.js 与 AIoT Toolkit 版本、相关日志片段以及预期行为。请先删除账号、设备标识和其他敏感信息。
+报告问题时请提供复现步骤、设备/模拟器信息、Node.js 与 AIoT Toolkit 版本、相关日志和预期行为，并先删除账号、设备标识等敏感信息。
