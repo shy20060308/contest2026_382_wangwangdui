@@ -10,12 +10,27 @@ module.exports = {
     actionHeight: 42,
     actionRadius: 21,
     modeNameSize: 12,
-    modeDescSize: 7
+    modeDescSize: 7,
+    chrome: {
+      cardGap: 9,
+      cardPaddingY: 10,
+      cardPaddingX: 12,
+      accentWidth: 5,
+      accentHeight: '70%',
+      accentRadius: 3,
+      copyGap: 10,
+      descTop: 4,
+      actionTitleSize: 10,
+      actionSubSize: 7,
+      actionSubTop: 3,
+      chevronWidth: 18,
+      chevronSize: 18
+    }
   },
   circle: {
     contentWidth: 148,
-    header: { top: 14, width: 124, height: 20, circleFit: 'edges' },
-    stream: { top: 39, width: 148, circleFit: 'none' },
+    header: { top: 14, width: 124, height: 20 },
+    stream: { top: 39, width: 148 },
     titleSize: 13,
     cardHeight: 52,
     cardRadius: 17,
