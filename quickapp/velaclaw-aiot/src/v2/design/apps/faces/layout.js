@@ -3,7 +3,7 @@ module.exports = {
     contentWidth: 164,
     surface: 'preview-grid',
     faceIds: ['sport', 'simple', 'dashboard'],
-    pageSize: 0,
+    pageSize: 2,
     header: { top: 0, width: 164, height: 24 },
     content: { top: 30, width: 164, bottomInset: 0 },
     cardHeight: 76,
@@ -52,6 +52,7 @@ module.exports = {
     previewRadius: 56,
     chrome: {
       circle: {
+        previewSize: 112,
         previewBorderWidth: 1,
         faceNameMarginTop: 6,
         tagSize: 6,
