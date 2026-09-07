@@ -72,6 +72,7 @@ const strictRecipePages = [
   'src/pages/heartrate/heartrate.ux',
   'src/pages/history/history.ux',
   'src/pages/steps/steps.ux',
+  'src/pages/today/today.ux',
   'src/pages/workout/workout.ux',
   'src/pages/workout_history/workout_history.ux',
   'src/pages/workout_select/workout_select.ux'
@@ -79,7 +80,7 @@ const strictRecipePages = [
 strictRecipePages.forEach(function (file) {
   const source = read(file)
   const style = styleBlock(source)
-  assert.ok(source.includes('if="{{ ready }}"'), file + ' must not render product geometry before its V3 plan resolves')
+  assert.ok(/if="\{\{\s*ready(?:\s*&&|\s*\}\})/.test(source), file + ' must not render product geometry before its V3 plan resolves')
   assert.ok(!source.includes('|| this.'), file + ' must not fall back to UX-owned legacy geometry')
   assert.ok(!/:\s*-?(?:[1-9]\d*|0\.\d*[1-9]\d*)px\b/.test(style), file + ' CSS must not own non-zero geometry after strict V3 migration')
 })
@@ -115,6 +116,7 @@ const strictRecipeResolvers = [
   'src/v2/design/apps/heart/index.js',
   'src/v2/design/apps/history/index.js',
   'src/v2/design/apps/clock/index.js',
+  'src/v2/design/apps/today/index.js',
   'src/v2/design/apps/workout/index.js',
   'src/v2/design/apps/workout/selection.js',
   'src/v2/design/apps/workout/history.js'
