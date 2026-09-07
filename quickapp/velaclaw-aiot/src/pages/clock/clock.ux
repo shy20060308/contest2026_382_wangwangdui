@@ -27,10 +27,10 @@
       </div>
 
       <div class="circle-stage" if="{{ isCircle && faceMounted }}">
-        <sportcircle if="{{ faceId === 'sport' }}" onopen-health="openHealth" onopen-steps="openSteps" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-minutes="{{ displayMinutes }}" display-hours="{{ displayHours }}" face-accent="{{ faceAccent }}" goal-percent="{{ goalPercent }}" battery-percent="{{ batteryPercent }}" battery-color="{{ batteryColor }}" current-heart-rate="{{ currentHeartRate }}" steps-text="{{ stepsText }}"></sportcircle>
-        <simplecircle if="{{ faceId === 'simple' }}" onopen-health="openHealth" onopen-steps="openSteps" display-week="{{ displayWeek }}" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-hours="{{ displayHours }}" display-minutes="{{ displayMinutes }}" face-accent="{{ faceAccent }}" goal-percent="{{ goalPercent }}" steps-text="{{ stepsText }}" current-heart-rate="{{ currentHeartRate }}" battery-percent="{{ batteryPercent }}" battery-color="{{ batteryColor }}"></simplecircle>
-        <dashboardcircle if="{{ faceId === 'dashboard' }}" onopen-health="openHealth" onopen-steps="openSteps" display-week="{{ displayWeek }}" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-hours="{{ displayHours }}" display-minutes="{{ displayMinutes }}" face-accent="{{ faceAccent }}" steps-text="{{ stepsText }}" steps-progress-width="{{ stepsProgressWidth }}" current-heart-rate="{{ currentHeartRate }}" heart-rate-data="{{ heartRateData }}" battery-percent="{{ batteryPercent }}" battery-width="{{ batteryWidth }}" battery-color="{{ batteryColor }}"></dashboardcircle>
-        <mechanicalcircle if="{{ faceId === 'mechanical' }}" onopen-today="openToday" onopen-health="openHealth" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" battery-percent="{{ batteryPercent }}" current-heart-rate="{{ currentHeartRate }}" analog-ticks="{{ analogTicks }}" hour-hand-transform="{{ hourHandTransform }}" minute-hand-transform="{{ minuteHandTransform }}" second-hand-transform="{{ secondHandTransform }}"></mechanicalcircle>
+        <sportcircle if="{{ faceId === 'sport' }}" face-layout="{{ faceLayouts.sport }}" onopen-health="openHealth" onopen-steps="openSteps" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-minutes="{{ displayMinutes }}" display-hours="{{ displayHours }}" face-accent="{{ faceAccent }}" goal-percent="{{ goalPercent }}" battery-percent="{{ batteryPercent }}" battery-color="{{ batteryColor }}" current-heart-rate="{{ currentHeartRate }}" steps-text="{{ stepsText }}"></sportcircle>
+        <simplecircle if="{{ faceId === 'simple' }}" face-layout="{{ faceLayouts.simple }}" onopen-health="openHealth" onopen-steps="openSteps" display-week="{{ displayWeek }}" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-hours="{{ displayHours }}" display-minutes="{{ displayMinutes }}" face-accent="{{ faceAccent }}" goal-percent="{{ goalPercent }}" steps-text="{{ stepsText }}" current-heart-rate="{{ currentHeartRate }}" battery-percent="{{ batteryPercent }}" battery-color="{{ batteryColor }}"></simplecircle>
+        <dashboardcircle if="{{ faceId === 'dashboard' }}" face-layout="{{ faceLayouts.dashboard }}" onopen-health="openHealth" onopen-steps="openSteps" display-week="{{ displayWeek }}" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-hours="{{ displayHours }}" display-minutes="{{ displayMinutes }}" face-accent="{{ faceAccent }}" steps-text="{{ stepsText }}" steps-progress-width="{{ stepsProgressWidth }}" current-heart-rate="{{ currentHeartRate }}" heart-rate-data="{{ heartRateData }}" battery-percent="{{ batteryPercent }}" battery-width="{{ batteryWidth }}" battery-color="{{ batteryColor }}"></dashboardcircle>
+        <mechanicalcircle if="{{ faceId === 'mechanical' }}" face-layout="{{ faceLayouts.mechanical }}" onopen-today="openToday" onopen-health="openHealth" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" battery-percent="{{ batteryPercent }}" current-heart-rate="{{ currentHeartRate }}" analog-ticks="{{ analogTicks }}" hour-hand-transform="{{ hourHandTransform }}" minute-hand-transform="{{ minuteHandTransform }}" second-hand-transform="{{ secondHandTransform }}"></mechanicalcircle>
       </div>
 
       <div class="dim-cover" if="{{ powerDimVisible }}" @click="wake"><text class="dim-text">{{ powerModeText }} · {{ powerRefreshText }}</text></div>
@@ -70,16 +70,16 @@ function consumeGestureEvent(event) {
 
 export default {
   private: {
-    profileReady: false, isCircle: false, isPill: false, isRect: false, notificationOverlay: false, clockPlan: null, clockModel: null,
+    profileReady: false, isCircle: false, isPill: false, isRect: false, notificationOverlay: false, clockPlan: null, clockModel: null, faceLayouts: {},
     faceId: 'sport', faceMounted: true, faceMountTimer: null, faceBackground: '#000000', faceAccent: '#0A84FF',
     displayMonth: 'JAN', displayDate: '01', displayWeek: 'MON', displayHours: '00', displayMinutes: '00',
     analogTicks: [], hourHandTransform: '', minuteHandTransform: '', secondHandTransform: '',
     batteryPercent: 75, batteryWidth: '75%', batteryColor: '#30D158', currentHeartRate: 88, heartRateData: [], stepsText: '0', stepsGoalText: '0', goalPercent: 0, stepsProgressWidth: '0%',
     powerModeText: '亮屏', powerRefreshText: '实时刷新', powerDimVisible: false, powerSleepVisible: false,
     notificationVisible: false, notificationType: '', notificationAppName: '', notificationAppIcon: '/common/logo.png', notificationContent: '', notificationContact: '', notificationPhone: '', notificationHangUp: false, notificationHangUpColor: '#FFFFFF',
-    alpineDataGlassTop: '319px', alpineDataRowTop: '327px', alpineBatteryRowTop: '401px',
+    alpineDataGlassTop: '0px', alpineDataRowTop: '0px', alpineBatteryRowTop: '0px',
     touchTracking: false, touchStartX: 0, touchStartY: 0, pendingGesture: '', lastGestureAt: 0, lastGestureDirection: '',
-    sceneWidth: 192, sceneHeight: 192, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
+    sceneWidth: 0, sceneHeight: 0, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
   },
 
   onInit() {
@@ -88,6 +88,7 @@ export default {
     pageRuntime.bind(this, function (profile, scene, safe) {
       var plan = clockDesign.resolve(profile, scene, safe)
       self.clockPlan = plan
+      self.faceLayouts = plan.faces
       self.isCircle = plan.shape === 'circle'
       self.isPill = plan.shape === 'pill'
       self.isRect = plan.shape === 'rect'
