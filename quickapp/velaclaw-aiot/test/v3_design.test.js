@@ -15,7 +15,11 @@ const designs = [
   require('../src/v2/design/apps/settings'),
   require('../src/v2/design/apps/notification'),
   require('../src/v2/design/apps/today'),
-  require('../src/v2/design/apps/brightness')
+  require('../src/v2/design/apps/brightness'),
+  require('../src/v2/design/apps/vibration'),
+  require('../src/v2/design/apps/motion'),
+  require('../src/v2/design/apps/diagnostics'),
+  require('../src/v2/design/apps/sync')
 ]
 
 const profiles = [
