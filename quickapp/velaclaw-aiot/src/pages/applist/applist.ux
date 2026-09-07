@@ -1,25 +1,25 @@
 <template>
   <stack class="launcher-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
-    <div class="launcher-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
+    <div class="launcher-scene" if="{{ ready }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
       <stack class="honeycomb" if="{{ surface === 'honeycomb' }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;" @touchstart="onHoneyStart" @touchmove="onHoneyMove" @touchend="onHoneyEnd">
         <div class="honey-app" for="{{ circleVisibleSlots }}" tid="slotKey" style="left: {{ $item.left }}px; top: {{ $item.top }}px; width: {{ $item.size }}px; height: {{ $item.size }}px; opacity: {{ $item.opacity }};" @click="tapHoney($item)"><image class="honey-icon" src="{{ $item.icon }}" style="width: {{ $item.size }}px; height: {{ $item.size }}px; border-radius: {{ $item.radius }}px;"></image></div>
-        <div class="honey-label" style="opacity: {{ honeyLabelOpacity }};"><text class="honey-name">{{ focusedLabel }}</text></div>
+        <div class="honey-label" style="left: {{ honeyLabelLeft }}px; top: {{ honeyLabelTop }}px; width: {{ honeyLabelWidth }}px; height: {{ honeyLabelHeight }}px; border-radius: {{ honeyLabelRadius }}px; opacity: {{ honeyLabelOpacity }};"><text class="honey-name" style="width: {{ honeyNameWidth }}px; font-size: {{ honeyNameSize }}px;">{{ focusedLabel }}</text></div>
       </stack>
 
       <div class="list-surface" if="{{ surface === 'paged-list' }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;" @swipe="handleListSwipe">
-        <div class="launcher-header" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;"><text class="launcher-title" style="font-size: {{ titleSize }}px;">应用</text><text class="page-text">{{ pageText }}</text></div>
+        <div class="launcher-header" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;"><text class="launcher-title" style="font-size: {{ titleSize }}px;">应用</text><text class="page-text" style="font-size: {{ pageTextSize }}px;">{{ pageText }}</text></div>
         <div class="pill-list" style="left: {{ contentLeft }}px; top: {{ contentTop }}px; width: {{ contentWidth }}px; height: {{ contentHeight }}px;">
-          <div class="pill-app" for="{{ pageApps }}" tid="id" @click="openApp($item)" style="width: {{ contentWidth }}px; height: {{ itemHeight }}px; margin-bottom: {{ itemGap }}px; border-radius: {{ itemRadius }}px;"><image class="pill-icon" src="{{ $item.icon }}" style="width: {{ iconSize }}px; height: {{ iconSize }}px; border-radius: {{ iconRadius }}px;"></image><text class="pill-name" style="font-size: {{ nameSize }}px;">{{ $item.label }}</text><text class="pill-arrow" style="font-size: {{ arrowSize }}px;">›</text></div>
+          <div class="pill-app" for="{{ pageApps }}" tid="id" @click="openApp($item)" style="width: {{ contentWidth }}px; height: {{ itemHeight }}px; margin-bottom: {{ itemGap }}px; border-radius: {{ itemRadius }}px; padding-left: {{ listPaddingX }}px; padding-right: {{ listPaddingX }}px;"><image class="pill-icon" src="{{ $item.icon }}" style="width: {{ iconSize }}px; height: {{ iconSize }}px; border-radius: {{ iconRadius }}px;"></image><text class="pill-name" style="font-size: {{ nameSize }}px; margin-left: {{ listNameGap }}px;">{{ $item.label }}</text><text class="pill-arrow" style="width: {{ arrowWidth }}px; font-size: {{ arrowSize }}px;">›</text></div>
         </div>
-        <div class="pager" style="left: {{ pagerLeft }}px; top: {{ pagerTop }}px; width: {{ pagerWidth }}px; height: {{ pagerHeight }}px;"><text class="pager-button" style="color: {{ previousColor }};" @click="previousPage">‹</text><div class="pager-track"><div class="pager-fill" style="width: {{ pageProgress }};"></div></div><text class="pager-button" style="color: {{ nextColor }};" @click="nextPage">›</text></div>
+        <div class="pager" style="left: {{ pagerLeft }}px; top: {{ pagerTop }}px; width: {{ pagerWidth }}px; height: {{ pagerHeight }}px;"><text class="pager-button" style="width: {{ pagerButtonWidth }}px; height: {{ pagerButtonHeight }}px; font-size: {{ pagerButtonSize }}px; color: {{ previousColor }};" @click="previousPage">‹</text><div class="pager-track" style="width: {{ pagerTrackWidth }}px; height: {{ pagerTrackHeight }}px; border-radius: {{ pagerTrackRadius }}px;"><div class="pager-fill" style="width: {{ pageProgress }}; height: {{ pagerTrackHeight }}px; border-radius: {{ pagerTrackRadius }}px;"></div></div><text class="pager-button" style="width: {{ pagerButtonWidth }}px; height: {{ pagerButtonHeight }}px; font-size: {{ pagerButtonSize }}px; color: {{ nextColor }};" @click="nextPage">›</text></div>
       </div>
 
       <div class="grid-surface" if="{{ surface === 'designed-grid' }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;" @swipe="handleListSwipe">
-        <div class="launcher-header" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;"><text class="launcher-title" style="font-size: {{ titleSize }}px;">应用</text><text class="page-text">{{ pageText }}</text></div>
+        <div class="launcher-header" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;"><text class="launcher-title" style="font-size: {{ titleSize }}px;">应用</text><text class="page-text" style="font-size: {{ pageTextSize }}px;">{{ pageText }}</text></div>
         <div class="rect-grid" style="left: {{ contentLeft }}px; top: {{ contentTop }}px; width: {{ contentWidth }}px; height: {{ contentHeight }}px;">
-          <div class="grid-app" for="{{ gridApps }}" tid="id" @click="openApp($item)" style="width: {{ itemWidth }}px; height: {{ itemHeight }}px; margin-right: {{ $item.marginRight }}px; margin-bottom: {{ $item.marginBottom }}px; border-radius: {{ itemRadius }}px; border-color: {{ $item.accent }};"><image class="grid-icon" src="{{ $item.icon }}" style="width: {{ iconSize }}px; height: {{ iconSize }}px; border-radius: {{ iconRadius }}px;"></image><text class="grid-name" style="font-size: {{ nameSize }}px;">{{ $item.label }}</text><div class="grid-accent" style="background-color: {{ $item.accent }};"></div></div>
+          <div class="grid-app" for="{{ gridApps }}" tid="id" @click="openApp($item)" style="width: {{ itemWidth }}px; height: {{ itemHeight }}px; margin-right: {{ $item.marginRight }}px; margin-bottom: {{ $item.marginBottom }}px; border-radius: {{ itemRadius }}px; border-width: {{ gridBorderWidth }}px; border-color: {{ $item.accent }}; padding: {{ gridPadding }}px;"><image class="grid-icon" src="{{ $item.icon }}" style="width: {{ iconSize }}px; height: {{ iconSize }}px; border-radius: {{ iconRadius }}px;"></image><text class="grid-name" style="font-size: {{ nameSize }}px; margin-left: {{ gridNameGap }}px;">{{ $item.label }}</text><div class="grid-accent" style="width: {{ gridAccentWidth }}px; height: {{ gridAccentHeight }}px; border-radius: {{ gridAccentRadius }}px; margin-left: {{ gridAccentGap }}px; background-color: {{ $item.accent }};"></div></div>
         </div>
-        <div class="pager" style="left: {{ pagerLeft }}px; top: {{ pagerTop }}px; width: {{ pagerWidth }}px; height: {{ pagerHeight }}px;"><text class="pager-button" style="color: {{ previousColor }};" @click="previousPage">‹</text><div class="pager-track"><div class="pager-fill" style="width: {{ pageProgress }};"></div></div><text class="pager-button" style="color: {{ nextColor }};" @click="nextPage">›</text></div>
+        <div class="pager" style="left: {{ pagerLeft }}px; top: {{ pagerTop }}px; width: {{ pagerWidth }}px; height: {{ pagerHeight }}px;"><text class="pager-button" style="width: {{ pagerButtonWidth }}px; height: {{ pagerButtonHeight }}px; font-size: {{ pagerButtonSize }}px; color: {{ previousColor }};" @click="previousPage">‹</text><div class="pager-track" style="width: {{ pagerTrackWidth }}px; height: {{ pagerTrackHeight }}px; border-radius: {{ pagerTrackRadius }}px;"><div class="pager-fill" style="width: {{ pageProgress }}; height: {{ pagerTrackHeight }}px; border-radius: {{ pagerTrackRadius }}px;"></div></div><text class="pager-button" style="width: {{ pagerButtonWidth }}px; height: {{ pagerButtonHeight }}px; font-size: {{ pagerButtonSize }}px; color: {{ nextColor }};" @click="nextPage">›</text></div>
       </div>
     </div>
   </stack>
@@ -36,11 +36,15 @@ import honeycomb from '../../v2/design/engines/honeycomb'
 
 export default {
   private: {
-    surface: '', pageApps: [], gridApps: [], pageText: '1 / 1', pageProgress: '100%', previousColor: '#3A3A3C', nextColor: '#3A3A3C', hasPrevious: false, hasNext: false,
-    headerLeft: 12, headerTop: 24, headerWidth: 168, headerHeight: 28, contentLeft: 12, contentTop: 60, contentWidth: 168, contentHeight: 300, pagerLeft: 12, pagerTop: 400, pagerWidth: 168, pagerHeight: 24,
-    itemHeight: 62, itemGap: 8, itemWidth: 79, itemRadius: 20, titleSize: 18, nameSize: 14, arrowSize: 20, iconSize: 40, iconRadius: 20, gridGap: 6,
+    ready: false, surface: '', pageApps: [], gridApps: [], pageText: '1 / 1', pageProgress: '100%', previousColor: '#3A3A3C', nextColor: '#3A3A3C', hasPrevious: false, hasNext: false,
+    headerLeft: 0, headerTop: 0, headerWidth: 0, headerHeight: 0, contentLeft: 0, contentTop: 0, contentWidth: 0, contentHeight: 0, pagerLeft: 0, pagerTop: 0, pagerWidth: 0, pagerHeight: 0,
+    itemHeight: 0, itemGap: 0, itemWidth: 0, itemRadius: 0, titleSize: 0, pageTextSize: 0, nameSize: 0, arrowSize: 0, iconSize: 0, iconRadius: 0,
+    listPaddingX: 0, listNameGap: 0, arrowWidth: 0,
+    gridBorderWidth: 0, gridPadding: 0, gridNameGap: 0, gridAccentWidth: 0, gridAccentHeight: 0, gridAccentRadius: 0, gridAccentGap: 0,
+    pagerButtonWidth: 0, pagerButtonHeight: 0, pagerButtonSize: 0, pagerTrackWidth: 0, pagerTrackHeight: 0, pagerTrackRadius: 0,
+    honeyLabelLeft: 0, honeyLabelTop: 0, honeyLabelWidth: 0, honeyLabelHeight: 0, honeyLabelRadius: 0, honeyNameWidth: 0, honeyNameSize: 0, honeyInitialFocusDistance: 0,
     circleSlots: [], circleVisibleSlots: [], focusedLabel: '', honeyLabelOpacity: 1, circleFocusIndex: 0, circlePanX: 0, circlePanY: 0, circleTouchActive: false, circleVelocityX: 0, circleVelocityY: 0,
-    sceneWidth: 192, sceneHeight: 192, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
+    sceneWidth: 0, sceneHeight: 0, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
   },
   onInit() {
     var self = this
@@ -48,6 +52,7 @@ export default {
     pageRuntime.bind(this, function (profile, scene, safe) {
       self.plan = launcherDesign.resolve(profile, scene, safe)
       self.applyPlan(self.plan)
+      self.ready = true
       self.controller.configure(self.plan.appIds, self.plan.pageSize)
     })
   },
@@ -57,11 +62,18 @@ export default {
 
   applyPlan(plan) {
     this.surface = plan.surface
-    if (plan.header) { this.headerLeft = plan.header.left; this.headerTop = plan.header.top; this.headerWidth = plan.header.width; this.headerHeight = plan.header.height }
-    if (plan.content) { this.contentLeft = plan.content.left; this.contentTop = plan.content.top; this.contentWidth = plan.content.width; this.contentHeight = plan.content.height }
-    if (plan.pager) { this.pagerLeft = plan.pager.left; this.pagerTop = plan.pager.top; this.pagerWidth = plan.pager.width; this.pagerHeight = plan.pager.height }
-    this.itemHeight = plan.itemHeight || this.itemHeight; this.itemGap = plan.itemGap || plan.gap || this.itemGap; this.itemWidth = plan.itemWidth || this.itemWidth; this.itemRadius = plan.itemRadius || this.itemRadius
-    this.titleSize = plan.titleSize || this.titleSize; this.nameSize = plan.nameSize || this.nameSize; this.arrowSize = plan.arrowSize || this.arrowSize; this.iconSize = plan.iconSize || this.iconSize; this.iconRadius = Math.round(this.iconSize / 2); this.gridGap = plan.gap || 6
+    this.headerLeft = plan.header.left; this.headerTop = plan.header.top; this.headerWidth = plan.header.width; this.headerHeight = plan.header.height
+    this.contentLeft = plan.content.left; this.contentTop = plan.content.top; this.contentWidth = plan.content.width; this.contentHeight = plan.content.height
+    this.pagerLeft = plan.pager.left; this.pagerTop = plan.pager.top; this.pagerWidth = plan.pager.width; this.pagerHeight = plan.pager.height
+    this.itemHeight = plan.itemHeight; this.itemGap = plan.itemGap; this.itemWidth = plan.itemWidth; this.itemRadius = plan.itemRadius
+    this.titleSize = plan.titleSize; this.pageTextSize = plan.pageTextSize; this.nameSize = plan.nameSize; this.arrowSize = plan.arrowSize; this.iconSize = plan.iconSize; this.iconRadius = plan.iconRadius
+    this.listPaddingX = plan.listChrome.paddingX; this.listNameGap = plan.listChrome.nameGap; this.arrowWidth = plan.listChrome.arrowWidth
+    this.gridBorderWidth = plan.gridChrome.borderWidth; this.gridPadding = plan.gridChrome.padding; this.gridNameGap = plan.gridChrome.nameGap; this.gridAccentWidth = plan.gridChrome.accentWidth; this.gridAccentHeight = plan.gridChrome.accentHeight; this.gridAccentRadius = plan.gridChrome.accentRadius; this.gridAccentGap = plan.gridChrome.accentGap
+    this.pagerButtonWidth = plan.pagerChrome.buttonWidth; this.pagerButtonHeight = plan.pagerChrome.buttonHeight; this.pagerButtonSize = plan.pagerChrome.buttonSize; this.pagerTrackWidth = plan.pagerChrome.trackWidth; this.pagerTrackHeight = plan.pagerChrome.trackHeight; this.pagerTrackRadius = plan.pagerChrome.trackRadius
+    if (plan.honeycomb && plan.honeycomb.label) {
+      this.honeyLabelLeft = plan.honeycomb.label.left; this.honeyLabelTop = plan.honeycomb.label.top; this.honeyLabelWidth = plan.honeycomb.label.width; this.honeyLabelHeight = plan.honeycomb.label.height; this.honeyLabelRadius = plan.honeycomb.label.radius
+      this.honeyNameWidth = plan.honeycomb.nameWidth; this.honeyNameSize = plan.honeycomb.nameSize; this.honeyInitialFocusDistance = plan.honeycomb.initialFocusDistance
+    }
   },
 
   applyState(state) {
@@ -80,7 +92,7 @@ export default {
   initHoneycomb(apps) {
     this.circleSlots = honeycomb.buildSlots(apps)
     this.circleFocusIndex = 0
-    var target = honeycomb.panForSlot(this.circleSlots[0], 82)
+    var target = honeycomb.panForSlot(this.circleSlots[0], this.honeyInitialFocusDistance)
     this.circlePanX = target ? target.x : 0
     this.circlePanY = target ? target.y : 0
     this.renderHoneycomb()
@@ -242,20 +254,19 @@ export default {
 .list-surface, .grid-surface { position: absolute; left: 0px; top: 0px; background-color: #000000; }
 .honeycomb { position: absolute; left: 0px; top: 0px; background-color: #000000; }
 .honey-app { position: absolute; } .honey-icon { object-fit: cover; }
-.honey-label { position: absolute; left: 54px; top: 159px; width: 84px; height: 18px; border-radius: 9px; background-color: #111317; justify-content: center; align-items: center; }
-.honey-name { width: 78px; color: #FFFFFF; font-size: 8px; font-weight: bold; text-align: center; lines: 1; }
+.honey-label { position: absolute; background-color: #111317; justify-content: center; align-items: center; }
+.honey-name { color: #FFFFFF; font-weight: bold; text-align: center; lines: 1; }
 .launcher-header, .pill-list, .rect-grid, .pager { position: absolute; }
 .launcher-header { flex-direction: row; justify-content: space-between; align-items: center; }
-.launcher-title { color: #FFFFFF; font-weight: bold; } .page-text { color: #636366; font-size: 8px; }
+.launcher-title { color: #FFFFFF; font-weight: bold; } .page-text { color: #636366; }
 .pill-list { flex-direction: column; overflow: hidden; }
-.pill-app { background-color: #14161A; flex-direction: row; align-items: center; padding-left: 12px; padding-right: 12px; }
-.pill-icon { object-fit: cover; } .pill-name { flex: 1; color: #FFFFFF; font-weight: bold; margin-left: 12px; } .pill-arrow { width: 20px; color: #636366; text-align: right; }
+.pill-app { background-color: #14161A; flex-direction: row; align-items: center; }
+.pill-icon { object-fit: cover; } .pill-name { flex: 1; color: #FFFFFF; font-weight: bold; } .pill-arrow { color: #636366; text-align: right; }
 .rect-grid { flex-direction: row; flex-wrap: wrap; align-content: flex-start; }
-.grid-app { border-width: 1px; background-color: #111317; flex-direction: row; align-items: center; padding: 8px; }
-.grid-icon { object-fit: cover; } .grid-name { flex: 1; color: #FFFFFF; font-weight: bold; margin-left: 6px; lines: 1; }
-.grid-accent { width: 3px; height: 24px; border-radius: 2px; margin-left: 4px; }
+.grid-app { background-color: #111317; flex-direction: row; align-items: center; }
+.grid-icon { object-fit: cover; } .grid-name { flex: 1; color: #FFFFFF; font-weight: bold; lines: 1; }
 .pager { flex-direction: row; justify-content: space-between; align-items: center; }
-.pager-button { width: 28px; height: 24px; font-size: 20px; text-align: center; }
-.pager-track { width: 96px; height: 4px; border-radius: 2px; background-color: #242426; }
-.pager-fill { height: 4px; border-radius: 2px; background-color: #0A84FF; }
+.pager-button { text-align: center; }
+.pager-track { background-color: #242426; }
+.pager-fill { background-color: #0A84FF; }
 </style>
