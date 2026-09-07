@@ -8,11 +8,13 @@ function summarize(history) {
 
   var totalSteps = 0
   var totalHeart = 0
+  var heartCount = 0
   var best = source[0]
   for (var i = 0; i < source.length; i++) {
     var item = source[i]
     totalSteps += Number(item.steps) || 0
-    totalHeart += Number(item.avgHeartRate) || 0
+    var heart = Number(item.avgHeartRate)
+    if (isFinite(heart) && heart > 0) { totalHeart += heart; heartCount++ }
     if ((Number(item.steps) || 0) > (Number(best.steps) || 0)) best = item
   }
 
@@ -22,7 +24,7 @@ function summarize(history) {
     avgSteps: Math.round(totalSteps / source.length),
     bestSteps: Number(best.steps) || 0,
     bestDate: best.date || '',
-    avgHeartRate: Math.round(totalHeart / source.length),
+    avgHeartRate: heartCount ? Math.round(totalHeart / heartCount) : 0,
     goalPercent: Number(today.goalPercent) || 0,
     records: source.slice()
   }
