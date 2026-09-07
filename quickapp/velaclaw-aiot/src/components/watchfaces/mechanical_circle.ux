@@ -2,7 +2,7 @@
   <div class="mechanical-circle-face" style="left: {{ faceLayout.root.left }}px; top: {{ faceLayout.root.top }}px; width: {{ faceLayout.root.width }}px; height: {{ faceLayout.root.height }}px;">
     <stack class="mechanical-dial" style="left: {{ faceLayout.dial.left }}px; top: {{ faceLayout.dial.top }}px; width: {{ faceLayout.dial.width }}px; height: {{ faceLayout.dial.height }}px;">
       <div class="mechanical-bezel" style="left: {{ faceLayout.bezel.left }}px; top: {{ faceLayout.bezel.top }}px; width: {{ faceLayout.bezel.width }}px; height: {{ faceLayout.bezel.height }}px; border-radius: {{ faceLayout.bezel.radius }}px; border-width: {{ faceLayout.bezel.borderWidth }}px;"></div><div class="mechanical-inner-ring" style="left: {{ faceLayout.innerRing.left }}px; top: {{ faceLayout.innerRing.top }}px; width: {{ faceLayout.innerRing.width }}px; height: {{ faceLayout.innerRing.height }}px; border-radius: {{ faceLayout.innerRing.radius }}px; border-width: {{ faceLayout.innerRing.borderWidth }}px;"></div>
-      <div class="{{ $item.className }}" for="{{ analogTicks }}" tid="index" style="{{ tickStyle($item) }}"></div>
+      <div class="{{ $item.className }}" for="{{ analogTicks }}" tid="index" style="left: {{ tickLeft($item) }}px; top: {{ tickTop($item) }}px; width: {{ tickWidth($item) }}px; height: {{ tickHeight($item) }}px; transform-origin: {{ tickOriginX($item) }}px {{ tickOriginY($item) }}px; transform: {{ $item.transform }};"></div>
       <text class="mechanical-roman roman-twelve" style="width: {{ faceLayout.roman.width }}px; height: {{ faceLayout.roman.height }}px; font-size: {{ faceLayout.roman.fontSize }}px; left: {{ faceLayout.romanTwelve.left }}px; top: {{ faceLayout.romanTwelve.top }}px;">XII</text><text class="mechanical-roman roman-three" style="width: {{ faceLayout.roman.width }}px; height: {{ faceLayout.roman.height }}px; font-size: {{ faceLayout.roman.fontSize }}px; left: {{ faceLayout.romanThree.left }}px; top: {{ faceLayout.romanThree.top }}px;">III</text><text class="mechanical-roman roman-six" style="width: {{ faceLayout.roman.width }}px; height: {{ faceLayout.roman.height }}px; font-size: {{ faceLayout.roman.fontSize }}px; left: {{ faceLayout.romanSix.left }}px; top: {{ faceLayout.romanSix.top }}px;">VI</text><text class="mechanical-roman roman-nine" style="width: {{ faceLayout.roman.width }}px; height: {{ faceLayout.roman.height }}px; font-size: {{ faceLayout.roman.fontSize }}px; left: {{ faceLayout.romanNine.left }}px; top: {{ faceLayout.romanNine.top }}px;">IX</text>
       <text class="mechanical-brand" style="left: {{ faceLayout.brand.left }}px; top: {{ faceLayout.brand.top }}px; width: {{ faceLayout.brand.width }}px; height: {{ faceLayout.brand.height }}px; font-size: {{ faceLayout.brand.fontSize }}px;">VELA</text><text class="mechanical-caption" style="left: {{ faceLayout.caption.left }}px; top: {{ faceLayout.caption.top }}px; width: {{ faceLayout.caption.width }}px; height: {{ faceLayout.caption.height }}px; font-size: {{ faceLayout.caption.fontSize }}px;">AUTOMATIC</text><text class="mechanical-power" style="left: {{ faceLayout.power.left }}px; top: {{ faceLayout.power.top }}px; width: {{ faceLayout.power.width }}px; height: {{ faceLayout.power.height }}px; font-size: {{ faceLayout.power.fontSize }}px;">POWER {{ batteryPercent }}%</text>
       <div class="mechanical-date-window" style="left: {{ faceLayout.dateWindow.left }}px; top: {{ faceLayout.dateWindow.top }}px; width: {{ faceLayout.dateWindow.width }}px; height: {{ faceLayout.dateWindow.height }}px; border-radius: {{ faceLayout.dateWindow.radius }}px; border-width: {{ faceLayout.dateWindow.borderWidth }}px;" @click="openToday"><text class="mechanical-date-label" style="width: {{ faceLayout.dateLabel.width }}px; height: {{ faceLayout.dateLabel.height }}px; font-size: {{ faceLayout.dateLabel.fontSize }}px;">{{ displayMonth }}</text><text class="mechanical-date-value" style="width: {{ faceLayout.dateValue.width }}px; height: {{ faceLayout.dateValue.height }}px; font-size: {{ faceLayout.dateValue.fontSize }}px;">{{ displayDate }}</text></div>
@@ -15,10 +15,13 @@
 <script>
 export default {
   props: ['faceLayout','displayMonth','displayDate','batteryPercent','currentHeartRate','analogTicks','hourHandTransform','minuteHandTransform','secondHandTransform'],
-  tickStyle(item) {
-    var geometry = item.className === 'mechanical-major-tick' ? this.faceLayout.majorTick : this.faceLayout.minuteTick
-    return 'left: ' + geometry.left + 'px; top: ' + geometry.top + 'px; width: ' + geometry.width + 'px; height: ' + geometry.height + 'px; transform-origin: ' + geometry.originX + 'px ' + geometry.originY + 'px; transform: ' + item.transform + ';'
-  },
+  tickGeometry(item) { return item.className === 'mechanical-major-tick' ? this.faceLayout.majorTick : this.faceLayout.minuteTick },
+  tickLeft(item) { return this.tickGeometry(item).left },
+  tickTop(item) { return this.tickGeometry(item).top },
+  tickWidth(item) { return this.tickGeometry(item).width },
+  tickHeight(item) { return this.tickGeometry(item).height },
+  tickOriginX(item) { return this.tickGeometry(item).originX },
+  tickOriginY(item) { return this.tickGeometry(item).originY },
   openHealth() { this.$emit('openHealth') },
   openToday() { this.$emit('openToday') }
 }
