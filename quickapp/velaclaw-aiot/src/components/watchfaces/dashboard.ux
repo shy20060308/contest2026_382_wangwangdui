@@ -1,9 +1,9 @@
 <template>
   <div class="dashboard-face">
-    <div class="dash-time-block"><text class="dash-time">{{ displayHours }}:{{ displayMinutes }}</text><text class="dash-date" style="color: {{ faceAccent }}">{{ displayWeek }}  {{ displayMonth }} {{ displayDate }}</text></div>
-    <div class="dash-progress-card" @click="openSteps"><div class="dash-card-row"><text class="dash-label">今日步数</text><text class="dash-value" style="color: #FFD60A">{{ stepsText }}</text></div><div class="dash-track"><div class="dash-fill" style="width: {{ stepsProgressWidth }}; background-color: #FFD60A;"></div></div><text class="dash-small">目标 {{ stepsGoalText }} 步</text></div>
-    <div class="dash-progress-card" @click="openHealth"><div class="dash-card-row"><text class="dash-label">实时心率</text><text class="dash-value" style="color: #FF375F">{{ currentHeartRate }}</text></div><div class="dash-heart-chart"><div class="dash-heart-bar" for="{{ heartRateData }}" style="height: {{ heartBarHeight($idx) }}px;"></div></div><text class="dash-small">bpm</text></div>
-    <div class="dash-battery-row"><image class="dash-battery-icon" src="/common/lightning.png"></image><div class="dash-battery-track"><div class="dash-battery-fill" style="width: {{ batteryWidth }}; background-color: {{ batteryColor }};"></div></div><text class="dash-battery-text" style="color: {{ batteryColor }}">{{ batteryPercent }}%</text></div>
+    <div class="dash-time-block" style="margin-bottom: {{ faceLayout.timeBlock.marginBottom }}px;"><text class="dash-time" style="font-size: {{ faceLayout.time.fontSize }}px;">{{ displayHours }}:{{ displayMinutes }}</text><text class="dash-date" style="font-size: {{ faceLayout.date.fontSize }}px; margin-top: {{ faceLayout.date.marginTop }}px; color: {{ faceAccent }}">{{ displayWeek }}  {{ displayMonth }} {{ displayDate }}</text></div>
+    <div class="dash-progress-card" style="width: {{ faceLayout.card.width }}px; height: {{ faceLayout.card.height }}px; border-radius: {{ faceLayout.card.radius }}px; padding: {{ faceLayout.card.padding }}px; margin-bottom: {{ faceLayout.card.marginBottom }}px;" @click="openSteps"><div class="dash-card-row" style="width: {{ faceLayout.cardRow.width }}px;"><text class="dash-label" style="font-size: {{ faceLayout.label.fontSize }}px;">今日步数</text><text class="dash-value" style="font-size: {{ faceLayout.value.fontSize }}px; color: #FFD60A">{{ stepsText }}</text></div><div class="dash-track" style="width: {{ faceLayout.track.width }}px; height: {{ faceLayout.track.height }}px; border-radius: {{ faceLayout.track.radius }}px; margin-top: {{ faceLayout.track.marginTop }}px;"><div class="dash-fill" style="width: {{ stepsProgressWidth }}; height: {{ faceLayout.fill.height }}px; border-radius: {{ faceLayout.fill.radius }}px; background-color: #FFD60A;"></div></div><text class="dash-small" style="font-size: {{ faceLayout.small.fontSize }}px; margin-top: {{ faceLayout.small.marginTop }}px;">目标 {{ stepsGoalText }} 步</text></div>
+    <div class="dash-progress-card" style="width: {{ faceLayout.card.width }}px; height: {{ faceLayout.card.height }}px; border-radius: {{ faceLayout.card.radius }}px; padding: {{ faceLayout.card.padding }}px; margin-bottom: {{ faceLayout.card.marginBottom }}px;" @click="openHealth"><div class="dash-card-row" style="width: {{ faceLayout.cardRow.width }}px;"><text class="dash-label" style="font-size: {{ faceLayout.label.fontSize }}px;">实时心率</text><text class="dash-value" style="font-size: {{ faceLayout.value.fontSize }}px; color: #FF375F">{{ currentHeartRate }}</text></div><div class="dash-heart-chart" style="width: {{ faceLayout.heartChart.width }}px; height: {{ faceLayout.heartChart.height }}px; margin-top: {{ faceLayout.heartChart.marginTop }}px;"><div class="dash-heart-bar" for="{{ heartRateData }}" style="width: {{ faceLayout.heartBar.width }}px; border-radius: {{ faceLayout.heartBar.radius }}px; margin-right: {{ faceLayout.heartBar.marginRight }}px; height: {{ heartBarHeight($idx) }}px;"></div></div><text class="dash-small" style="font-size: {{ faceLayout.small.fontSize }}px; margin-top: {{ faceLayout.small.marginTop }}px;">bpm</text></div>
+    <div class="dash-battery-row" style="width: {{ faceLayout.battery.width }}px; height: {{ faceLayout.battery.height }}px; border-radius: {{ faceLayout.battery.radius }}px; padding-left: {{ faceLayout.battery.paddingX }}px; padding-right: {{ faceLayout.battery.paddingX }}px;"><image class="dash-battery-icon" style="width: {{ faceLayout.batteryIcon.width }}px; height: {{ faceLayout.batteryIcon.height }}px; margin-right: {{ faceLayout.batteryIcon.marginRight }}px;" src="/common/lightning.png"></image><div class="dash-battery-track" style="width: {{ faceLayout.batteryTrack.width }}px; height: {{ faceLayout.batteryTrack.height }}px; border-radius: {{ faceLayout.batteryTrack.radius }}px;"><div class="dash-battery-fill" style="width: {{ batteryWidth }}; height: {{ faceLayout.batteryFill.height }}px; border-radius: {{ faceLayout.batteryFill.radius }}px; background-color: {{ batteryColor }};"></div></div><text class="dash-battery-text" style="font-size: {{ faceLayout.batteryText.fontSize }}px; margin-left: {{ faceLayout.batteryText.marginLeft }}px; color: {{ batteryColor }}">{{ batteryPercent }}%</text></div>
   </div>
 </template>
 
@@ -11,8 +11,8 @@
 var watchfaceChart = require('../../v2/design/watchface_chart')
 
 export default {
-  props: ['displayWeek','displayMonth','displayDate','displayHours','displayMinutes','faceAccent','stepsText','stepsGoalText','stepsProgressWidth','currentHeartRate','heartRateData','batteryPercent','batteryWidth','batteryColor'],
-  heartBarHeight(index) { return watchfaceChart.sampleBarHeight(this.heartRateData, index, 4, 28, 8) },
+  props: ['faceLayout','displayWeek','displayMonth','displayDate','displayHours','displayMinutes','faceAccent','stepsText','stepsGoalText','stepsProgressWidth','currentHeartRate','heartRateData','batteryPercent','batteryWidth','batteryColor'],
+  heartBarHeight(index) { return watchfaceChart.sampleBarHeight(this.heartRateData, index, this.faceLayout.heartBar.minHeight, this.faceLayout.heartBar.maxHeight, this.faceLayout.heartBar.minSpan) },
   openHealth() { this.$emit('openHealth') },
   openSteps() { this.$emit('openSteps') }
 }
@@ -20,21 +20,18 @@ export default {
 
 <style>
 .dashboard-face { flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; }
-.dash-time-block { flex-direction: column; align-items: center; margin-bottom: 12px; }
-.dash-time { font-size: 46px; color: #FFFFFF; font-weight: bold; }
-.dash-date { font-size: 13px; font-weight: bold; margin-top: 2px; }
-.dash-progress-card { flex-direction: column; width: 168px; height: 88px; background-color: #14181F; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
-.dash-card-row { flex-direction: row; justify-content: space-between; align-items: center; width: 148px; }
-.dash-label { font-size: 13px; color: #C7C7CC; }
-.dash-value { font-size: 23px; font-weight: bold; }
-.dash-track { width: 148px; height: 7px; background-color: #2C2C2E; border-radius: 4px; margin-top: 10px; }
-.dash-fill { height: 7px; border-radius: 4px; }
-.dash-small { font-size: 11px; color: #8E8E93; margin-top: 6px; }
-.dash-heart-chart { flex-direction: row; align-items: flex-end; width: 148px; height: 28px; margin-top: 5px; }
-.dash-heart-bar { width: 12px; border-radius: 3px; background-color: #FF375F; margin-right: 10px; }
-.dash-battery-row { flex-direction: row; align-items: center; width: 168px; height: 36px; background-color: #14181F; border-radius: 8px; padding-left: 10px; padding-right: 10px; }
-.dash-battery-icon { width: 18px; height: 18px; margin-right: 8px; }
-.dash-battery-track { width: 94px; height: 6px; background-color: #2C2C2E; border-radius: 3px; }
-.dash-battery-fill { height: 6px; border-radius: 3px; }
-.dash-battery-text { font-size: 12px; margin-left: 8px; font-weight: bold; }
+.dash-time-block { flex-direction: column; align-items: center; }
+.dash-time { color: #FFFFFF; font-weight: bold; }
+.dash-date { font-weight: bold; }
+.dash-progress-card { flex-direction: column; background-color: #14181F; }
+.dash-card-row { flex-direction: row; justify-content: space-between; align-items: center; }
+.dash-label { color: #C7C7CC; }
+.dash-value { font-weight: bold; }
+.dash-track { background-color: #2C2C2E; }
+.dash-small { color: #8E8E93; }
+.dash-heart-chart { flex-direction: row; align-items: flex-end; }
+.dash-heart-bar { background-color: #FF375F; }
+.dash-battery-row { flex-direction: row; align-items: center; background-color: #14181F; }
+.dash-battery-track { background-color: #2C2C2E; }
+.dash-battery-text { font-weight: bold; }
 </style>
