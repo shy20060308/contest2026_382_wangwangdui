@@ -18,7 +18,7 @@ function project(state, gap) {
   var source = state || { faces: [], selectedId: 'sport', selectedIndex: 0 }
   var faces = []
   var rectFaces = []
-  var gridGap = Math.max(0, Number(gap) || 0)
+  var gridGap = Number(gap)
   for (var i = 0; i < source.faces.length; i++) {
     var face = decorate(source.faces[i], source.selectedId)
     faces.push(face)
