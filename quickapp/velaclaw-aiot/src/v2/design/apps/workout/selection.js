@@ -9,7 +9,7 @@ function resolve(profile, scene, safe) {
   var plan = adapter.createPlan(profile, scene, safe, freedom.AUTO, config.surface)
   plan.header = adapter.placeBand(profile, scene, safe, config.header)
   var streamSpec = adapter.merge({}, config.stream)
-  streamSpec.height = Math.max(50, safe.bottom - (safe.top + Number(streamSpec.top || 0)))
+  streamSpec.height = safe.bottom - (safe.top + Number(streamSpec.top))
   plan.stream = adapter.placeBand(profile, scene, safe, streamSpec)
   plan.titleSize = config.titleSize
   plan.cardHeight = config.cardHeight
@@ -18,6 +18,7 @@ function resolve(profile, scene, safe) {
   plan.actionRadius = config.actionRadius
   plan.modeNameSize = config.modeNameSize
   plan.modeDescSize = config.modeDescSize
+  plan.chrome = adapter.merge({}, config.chrome)
   return plan
 }
 
