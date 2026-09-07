@@ -2,18 +2,18 @@
   <stack class="alpine-face">
     <image class="alpine-background" src="/common/watchfaces/alpine_night.jpg"></image>
     <div class="alpine-veil"></div>
-    <div class="alpine-date-glass" @click="openToday"></div>
-    <div class="alpine-date-row" @click="openToday"><div class="alpine-date-copy"><text class="alpine-week">{{ displayWeek }}</text><text class="alpine-date">{{ displayMonth }} {{ displayDate }}</text></div><text class="alpine-brand">VELA / ALPINE</text></div>
-    <text class="alpine-eyebrow">MIDNIGHT TRAIL</text><text class="alpine-hour">{{ displayHours }}</text><div class="alpine-time-accent"></div><text class="alpine-minute">{{ displayMinutes }}</text>
-    <div class="alpine-data-glass" style="top: {{ panelGlassTop }};"></div>
-    <div class="alpine-data-row" style="top: {{ panelRowTop }};"><div class="alpine-metric" @click="openSteps"><text class="alpine-metric-label">STEPS</text><text class="alpine-step-value">{{ stepsText }}</text></div><div class="alpine-metric" @click="openHealth"><text class="alpine-metric-label">HEART</text><text class="alpine-heart-value">{{ currentHeartRate }}</text></div></div>
-    <div class="alpine-battery-row" style="top: {{ batteryRowTop }};"><text class="alpine-battery-label">POWER</text><div class="alpine-battery-track"><div class="alpine-battery-fill" style="width: {{ batteryWidth }}; background-color: {{ batteryColor }};"></div></div><text class="alpine-battery-value">{{ batteryPercent }}%</text></div>
+    <div class="alpine-date-glass" style="left: {{ faceLayout.dateGlass.left }}px; top: {{ faceLayout.dateGlass.top }}px; width: {{ faceLayout.dateGlass.width }}px; height: {{ faceLayout.dateGlass.height }}px; border-radius: {{ faceLayout.dateGlass.radius }}px; border-width: {{ faceLayout.dateGlass.borderWidth }}px;" @click="openToday"></div>
+    <div class="alpine-date-row" style="left: {{ faceLayout.dateRow.left }}px; top: {{ faceLayout.dateRow.top }}px; width: {{ faceLayout.dateRow.width }}px; height: {{ faceLayout.dateRow.height }}px;" @click="openToday"><div class="alpine-date-copy" style="width: {{ faceLayout.dateCopy.width }}px; height: {{ faceLayout.dateCopy.height }}px;"><text class="alpine-week" style="width: {{ faceLayout.week.width }}px; height: {{ faceLayout.week.height }}px; font-size: {{ faceLayout.week.fontSize }}px;">{{ displayWeek }}</text><text class="alpine-date" style="width: {{ faceLayout.date.width }}px; height: {{ faceLayout.date.height }}px; font-size: {{ faceLayout.date.fontSize }}px; margin-top: {{ faceLayout.date.marginTop }}px;">{{ displayMonth }} {{ displayDate }}</text></div><text class="alpine-brand" style="width: {{ faceLayout.brand.width }}px; font-size: {{ faceLayout.brand.fontSize }}px;">VELA / ALPINE</text></div>
+    <text class="alpine-eyebrow" style="left: {{ faceLayout.eyebrow.left }}px; top: {{ faceLayout.eyebrow.top }}px; width: {{ faceLayout.eyebrow.width }}px; height: {{ faceLayout.eyebrow.height }}px; font-size: {{ faceLayout.eyebrow.fontSize }}px;">MIDNIGHT TRAIL</text><text class="alpine-hour" style="left: {{ faceLayout.hour.left }}px; top: {{ faceLayout.hour.top }}px; width: {{ faceLayout.hour.width }}px; height: {{ faceLayout.hour.height }}px; font-size: {{ faceLayout.hour.fontSize }}px;">{{ displayHours }}</text><div class="alpine-time-accent" style="left: {{ faceLayout.timeAccent.left }}px; top: {{ faceLayout.timeAccent.top }}px; width: {{ faceLayout.timeAccent.width }}px; height: {{ faceLayout.timeAccent.height }}px; border-radius: {{ faceLayout.timeAccent.radius }}px;"></div><text class="alpine-minute" style="left: {{ faceLayout.minute.left }}px; top: {{ faceLayout.minute.top }}px; width: {{ faceLayout.minute.width }}px; height: {{ faceLayout.minute.height }}px; font-size: {{ faceLayout.minute.fontSize }}px;">{{ displayMinutes }}</text>
+    <div class="alpine-data-glass" style="left: {{ faceLayout.dataGlass.left }}px; top: {{ faceLayout.dataGlass.top }}px; width: {{ faceLayout.dataGlass.width }}px; height: {{ faceLayout.dataGlass.height }}px; border-radius: {{ faceLayout.dataGlass.radius }}px; border-width: {{ faceLayout.dataGlass.borderWidth }}px;"></div>
+    <div class="alpine-data-row" style="left: {{ faceLayout.dataRow.left }}px; top: {{ faceLayout.dataRow.top }}px; width: {{ faceLayout.dataRow.width }}px; height: {{ faceLayout.dataRow.height }}px;"><div class="alpine-metric" style="width: {{ faceLayout.metric.width }}px; height: {{ faceLayout.metric.height }}px;" @click="openSteps"><text class="alpine-metric-label" style="width: {{ faceLayout.metricLabel.width }}px; height: {{ faceLayout.metricLabel.height }}px; font-size: {{ faceLayout.metricLabel.fontSize }}px;">STEPS</text><text class="alpine-step-value" style="width: {{ faceLayout.metricValue.width }}px; height: {{ faceLayout.metricValue.height }}px; font-size: {{ faceLayout.metricValue.fontSize }}px; margin-top: {{ faceLayout.metricValue.marginTop }}px;">{{ stepsText }}</text></div><div class="alpine-metric" style="width: {{ faceLayout.metric.width }}px; height: {{ faceLayout.metric.height }}px;" @click="openHealth"><text class="alpine-metric-label" style="width: {{ faceLayout.metricLabel.width }}px; height: {{ faceLayout.metricLabel.height }}px; font-size: {{ faceLayout.metricLabel.fontSize }}px;">HEART</text><text class="alpine-heart-value" style="width: {{ faceLayout.metricValue.width }}px; height: {{ faceLayout.metricValue.height }}px; font-size: {{ faceLayout.metricValue.fontSize }}px; margin-top: {{ faceLayout.metricValue.marginTop }}px;">{{ currentHeartRate }}</text></div></div>
+    <div class="alpine-battery-row" style="left: {{ faceLayout.battery.left }}px; top: {{ faceLayout.battery.top }}px; width: {{ faceLayout.battery.width }}px; height: {{ faceLayout.battery.height }}px;"><text class="alpine-battery-label" style="width: {{ faceLayout.batteryLabel.width }}px; font-size: {{ faceLayout.batteryLabel.fontSize }}px;">POWER</text><div class="alpine-battery-track" style="width: {{ faceLayout.batteryTrack.width }}px; height: {{ faceLayout.batteryTrack.height }}px; border-radius: {{ faceLayout.batteryTrack.radius }}px;"><div class="alpine-battery-fill" style="width: {{ batteryWidth }}; height: {{ faceLayout.batteryFill.height }}px; border-radius: {{ faceLayout.batteryFill.radius }}px; background-color: {{ batteryColor }};"></div></div><text class="alpine-battery-value" style="width: {{ faceLayout.batteryValue.width }}px; font-size: {{ faceLayout.batteryValue.fontSize }}px; margin-left: {{ faceLayout.batteryValue.marginLeft }}px;">{{ batteryPercent }}%</text></div>
   </stack>
 </template>
 
 <script>
 export default {
-  props: ['displayWeek','displayMonth','displayDate','displayHours','displayMinutes','stepsText','currentHeartRate','batteryPercent','batteryWidth','batteryColor','panelGlassTop','panelRowTop','batteryRowTop'],
+  props: ['faceLayout','displayWeek','displayMonth','displayDate','displayHours','displayMinutes','stepsText','currentHeartRate','batteryPercent','batteryWidth','batteryColor'],
   openToday() { this.$emit('openToday') },
   openHealth() { this.$emit('openHealth') },
   openSteps() { this.$emit('openSteps') }
@@ -24,25 +24,24 @@ export default {
 .alpine-face { position: absolute; left: 0px; top: 0px; width: 100%; height: 100%; background-color: #020713; }
 .alpine-background { position: absolute; left: 0px; top: 0px; width: 100%; height: 100%; object-fit: cover; }
 .alpine-veil { position: absolute; left: 0px; top: 0px; width: 100%; height: 100%; background-color: #02050C; opacity: 0.2; }
-.alpine-date-glass { left: 24px; top: 38px; width: 144px; height: 34px; border-radius: 10px; border-width: 1px; border-color: #8D99B8; background-color: #08101F; opacity: 0.55; }
-.alpine-date-row { left: 30px; top: 42px; width: 132px; height: 26px; flex-direction: row; justify-content: space-between; align-items: center; }
-.alpine-date-copy { width: 52px; height: 25px; flex-direction: column; }
-.alpine-week { width: 52px; height: 10px; font-size: 7px; font-weight: bold; color: #FFB15C; }
-.alpine-date { width: 52px; height: 12px; font-size: 8px; color: #FFFFFF; margin-top: 1px; }
-.alpine-brand { width: 72px; font-size: 6px; color: #DCE4F7; text-align: right; }
-.alpine-eyebrow { left: 29px; top: 91px; width: 110px; height: 12px; font-size: 7px; font-weight: bold; color: #DCE4F7; }
-.alpine-hour { left: 24px; top: 100px; width: 100px; height: 90px; font-size: 76px; font-weight: bold; color: #FFFFFF; text-align: left; }
-.alpine-time-accent { left: 115px; top: 130px; width: 3px; height: 42px; border-radius: 2px; background-color: #FF9F4A; }
-.alpine-minute { left: 124px; top: 133px; width: 44px; height: 38px; font-size: 31px; font-weight: bold; color: #FFE2C2; text-align: left; }
-.alpine-data-glass { left: 24px; width: 144px; height: 69px; border-radius: 16px; border-width: 1px; border-color: #8995B1; background-color: #07101E; opacity: 0.6; }
-.alpine-data-row { left: 32px; width: 128px; height: 51px; flex-direction: row; justify-content: space-between; align-items: center; }
-.alpine-metric { width: 58px; height: 45px; flex-direction: column; justify-content: center; }
-.alpine-metric-label { width: 58px; height: 10px; font-size: 6px; color: #AEB9D0; }
-.alpine-step-value, .alpine-heart-value { width: 58px; height: 25px; font-size: 18px; font-weight: bold; margin-top: 2px; }
+.alpine-date-glass { border-color: #8D99B8; background-color: #08101F; opacity: 0.55; }
+.alpine-date-row { flex-direction: row; justify-content: space-between; align-items: center; }
+.alpine-date-copy { flex-direction: column; }
+.alpine-week { font-weight: bold; color: #FFB15C; }
+.alpine-date { color: #FFFFFF; }
+.alpine-brand { color: #DCE4F7; text-align: right; }
+.alpine-eyebrow { font-weight: bold; color: #DCE4F7; }
+.alpine-hour { font-weight: bold; color: #FFFFFF; text-align: left; }
+.alpine-time-accent { background-color: #FF9F4A; }
+.alpine-minute { font-weight: bold; color: #FFE2C2; text-align: left; }
+.alpine-data-glass { border-color: #8995B1; background-color: #07101E; opacity: 0.6; }
+.alpine-data-row { flex-direction: row; justify-content: space-between; align-items: center; }
+.alpine-metric { flex-direction: column; justify-content: center; }
+.alpine-metric-label { color: #AEB9D0; }
+.alpine-step-value, .alpine-heart-value { font-weight: bold; }
 .alpine-step-value { color: #FFFFFF; } .alpine-heart-value { color: #FF8A8A; text-align: right; }
-.alpine-battery-row { left: 30px; width: 132px; height: 16px; flex-direction: row; align-items: center; }
-.alpine-battery-label { width: 31px; font-size: 6px; color: #AFBBD3; }
-.alpine-battery-track { width: 68px; height: 4px; border-radius: 2px; background-color: #263246; }
-.alpine-battery-fill { height: 4px; border-radius: 2px; }
-.alpine-battery-value { width: 29px; font-size: 7px; font-weight: bold; color: #FFFFFF; text-align: right; margin-left: 4px; }
+.alpine-battery-row { flex-direction: row; align-items: center; }
+.alpine-battery-label { color: #AFBBD3; }
+.alpine-battery-track { background-color: #263246; }
+.alpine-battery-value { font-weight: bold; color: #FFFFFF; text-align: right; }
 </style>
