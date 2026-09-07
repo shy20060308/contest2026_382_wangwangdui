@@ -7,12 +7,10 @@ function contentWidth(profile) { return adapter.contentWidth(profile, layout) }
 function band(profile, scene, safe, spec) {
   if (!spec) return null
   var copy = adapter.merge({}, spec)
-  var relativeTop = Number(copy.top) || 0
-  var bottomInset = copy.bottomInset === undefined ? 0 : Number(copy.bottomInset) || 0
-  if (copy.height === undefined) copy.height = Math.max(1, safe.height - relativeTop - bottomInset)
+  if (copy.height === undefined) copy.height = safe.height - Number(copy.top) - Number(copy.bottomInset)
   if (copy.bottomInset !== undefined) {
     copy.absoluteTop = true
-    copy.top = safe.bottom - bottomInset - Number(copy.height || 0)
+    copy.top = safe.bottom - Number(copy.bottomInset) - Number(copy.height)
   }
   return adapter.placeBand(profile, scene, safe, copy)
 }
@@ -20,7 +18,7 @@ function band(profile, scene, safe, spec) {
 function resolve(profile, scene, safe) {
   var config = adapter.select(layout, profile)
   var plan = adapter.createPlan(profile, scene, safe, freedom.FREE, config.surface)
-  plan.faceIds = (config.faceIds || []).slice()
+  plan.faceIds = config.faceIds.slice()
   plan.pageSize = config.pageSize
   plan.header = band(profile, scene, safe, config.header)
   plan.preview = band(profile, scene, safe, config.preview)
@@ -30,7 +28,8 @@ function resolve(profile, scene, safe) {
   plan.cardHeight = config.cardHeight
   plan.cardGap = config.cardGap
   plan.gap = config.gap
-  plan.cardWidth = config.gap && plan.content ? adapter.grid(plan.content, 2, config.gap).itemWidth : config.cardWidth
+  plan.cardWidth = config.gap !== undefined && plan.content ? adapter.grid(plan.content, 2, config.gap).itemWidth : config.cardWidth
+  plan.cardInnerHeight = config.chrome.pill ? config.cardHeight - config.chrome.pill.cardInnerInset : 0
   plan.titleSize = config.titleSize
   plan.nameSize = config.nameSize
   plan.descSize = config.descSize
@@ -38,6 +37,7 @@ function resolve(profile, scene, safe) {
   plan.previewNameSize = config.previewNameSize
   plan.previewTimeSize = config.previewTimeSize
   plan.previewRadius = config.previewRadius
+  plan.chrome = config.chrome
   return plan
 }
 
