@@ -1,29 +1,29 @@
 <template>
   <div class="sport-face">
     <div class="date-display">
-      <text class="display-month" style="color: {{ faceAccent }}">{{ displayMonth }}</text>
-      <text class="date-separator">/</text>
-      <text class="display-date">{{ displayDate }}</text>
+      <text class="display-month" style="font-size: {{ faceLayout.dateMonth.fontSize }}px; margin-right: {{ faceLayout.dateMonth.marginRight }}px; margin-top: {{ faceLayout.dateMonth.marginTop }}px; color: {{ faceAccent }}">{{ displayMonth }}</text>
+      <text class="date-separator" style="font-size: {{ faceLayout.dateSeparator.fontSize }}px; margin-left: {{ faceLayout.dateSeparator.marginX }}px; margin-right: {{ faceLayout.dateSeparator.marginX }}px;">/</text>
+      <text class="display-date" style="font-size: {{ faceLayout.dateValue.fontSize }}px; margin-left: {{ faceLayout.dateValue.marginLeft }}px; margin-top: {{ faceLayout.dateValue.marginTop }}px;">{{ displayDate }}</text>
     </div>
     <div class="time-container">
-      <text class="time-minutes" style="color: {{ faceAccent }}">{{ displayMinutes }}</text>
-      <text class="time-hours">{{ displayHours }}</text>
+      <text class="time-minutes" style="font-size: {{ faceLayout.minute.fontSize }}px; margin-bottom: {{ faceLayout.minute.marginBottom }}px; margin-left: {{ faceLayout.minute.marginLeft }}px; color: {{ faceAccent }}">{{ displayMinutes }}</text>
+      <text class="time-hours" style="font-size: {{ faceLayout.hour.fontSize }}px; margin-right: {{ faceLayout.hour.marginRight }}px; margin-top: {{ faceLayout.hour.marginTop }}px;">{{ displayHours }}</text>
     </div>
-    <div class="battery-container">
-      <image class="battery-icon" src="/common/lightning.png"></image>
-      <div class="battery-bar-bg"><div class="battery-bar-fill" style="width: {{ batteryWidth }}; background-color: {{ batteryColor }}"></div></div>
-      <text class="battery-text" style="color: {{ batteryColor }}">{{ batteryPercent }}%</text>
+    <div class="battery-container" style="margin-top: {{ faceLayout.battery.marginTop }}px;">
+      <image class="battery-icon" style="width: {{ faceLayout.batteryIcon.width }}px; height: {{ faceLayout.batteryIcon.height }}px; margin-right: {{ faceLayout.batteryIcon.marginRight }}px;" src="/common/lightning.png"></image>
+      <div class="battery-bar-bg" style="width: {{ faceLayout.batteryTrack.width }}px; height: {{ faceLayout.batteryTrack.height }}px; border-radius: {{ faceLayout.batteryTrack.radius }}px;"><div class="battery-bar-fill" style="width: {{ batteryWidth }}; height: {{ faceLayout.batteryFill.height }}px; border-radius: {{ faceLayout.batteryFill.radius }}px; background-color: {{ batteryColor }}"></div></div>
+      <text class="battery-text" style="font-size: {{ faceLayout.batteryText.fontSize }}px; margin-left: {{ faceLayout.batteryText.marginLeft }}px; color: {{ batteryColor }}">{{ batteryPercent }}%</text>
     </div>
-    <div class="heart-container" @click="openHealth">
-      <image class="heart-icon" src="/common/heart.png"></image>
+    <div class="heart-container" style="margin-top: {{ faceLayout.heart.marginTop }}px;" @click="openHealth">
+      <image class="heart-icon" style="width: {{ faceLayout.heartIcon.width }}px; height: {{ faceLayout.heartIcon.height }}px; margin-right: {{ faceLayout.heartIcon.marginRight }}px;" src="/common/heart.png"></image>
       <div class="heart-chart-wrapper">
-        <div class="heart-chart"><div class="heart-bar" for="{{ heartRateData }}" style="height: {{ heartBarHeight($idx) }}px;"></div></div>
-        <text class="heart-rate-text">{{ currentHeartRate }} bpm</text>
+        <div class="heart-chart" style="width: {{ faceLayout.heartChart.width }}px; height: {{ faceLayout.heartChart.height }}px;"><div class="heart-bar" for="{{ heartRateData }}" style="width: {{ faceLayout.heartBar.width }}px; border-radius: {{ faceLayout.heartBar.radius }}px; height: {{ heartBarHeight($idx) }}px;"></div></div>
+        <text class="heart-rate-text" style="font-size: {{ faceLayout.heartRateText.fontSize }}px; margin-top: {{ faceLayout.heartRateText.marginTop }}px;">{{ currentHeartRate }} bpm</text>
       </div>
     </div>
-    <div class="step-container" @click="openSteps">
-      <image class="step-icon" src="/common/shoes.png"></image>
-      <div class="step-info"><text class="step-current">{{ stepsText }}</text><text class="step-goal">/ {{ stepsGoalText }}</text></div>
+    <div class="step-container" style="margin-top: {{ faceLayout.step.marginTop }}px;" @click="openSteps">
+      <image class="step-icon" style="width: {{ faceLayout.stepIcon.width }}px; height: {{ faceLayout.stepIcon.height }}px;" src="/common/shoes.png"></image>
+      <div class="step-info" style="margin-left: {{ faceLayout.stepInfo.marginLeft }}px;"><text class="step-current" style="font-size: {{ faceLayout.stepCurrent.fontSize }}px;">{{ stepsText }}</text><text class="step-goal" style="font-size: {{ faceLayout.stepGoal.fontSize }}px;">/ {{ stepsGoalText }}</text></div>
     </div>
   </div>
 </template>
@@ -32,8 +32,8 @@
 var watchfaceChart = require('../../v2/design/watchface_chart')
 
 export default {
-  props: ['displayMonth','displayDate','displayMinutes','displayHours','faceAccent','batteryPercent','batteryWidth','batteryColor','heartRateData','currentHeartRate','stepsText','stepsGoalText'],
-  heartBarHeight(index) { return watchfaceChart.sampleBarHeight(this.heartRateData, index, 4, 28, 8) },
+  props: ['faceLayout','displayMonth','displayDate','displayMinutes','displayHours','faceAccent','batteryPercent','batteryWidth','batteryColor','heartRateData','currentHeartRate','stepsText','stepsGoalText'],
+  heartBarHeight(index) { return watchfaceChart.sampleBarHeight(this.heartRateData, index, this.faceLayout.heartBar.minHeight, this.faceLayout.heartBar.maxHeight, this.faceLayout.heartBar.minSpan) },
   openHealth() { this.$emit('openHealth') },
   openSteps() { this.$emit('openSteps') }
 }
@@ -42,26 +42,21 @@ export default {
 <style>
 .sport-face { flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; }
 .date-display { flex-direction: row; align-items: center; }
-.display-month { font-size: 22px; font-weight: bold; margin-right: -4px; margin-top: -4px; }
-.date-separator { font-size: 30px; color: #FFFFFF; margin: 0 4px; }
-.display-date { font-size: 20px; font-weight: bold; color: #FF9F0A; margin-left: -4px; margin-top: 10px; }
+.display-month { font-weight: bold; }
+.date-separator { color: #FFFFFF; }
+.display-date { font-weight: bold; color: #FF9F0A; }
 .time-container { flex-direction: column; align-items: center; }
-.time-minutes { font-size: 72px; font-weight: bold; text-align: center; margin-bottom: -40px; margin-left: 22px; opacity: 0.9; }
-.time-hours { font-size: 72px; font-weight: bold; color: #FF9F0A; text-align: center; margin-right: 38px; margin-top: -14px; }
-.battery-container { flex-direction: row; align-items: center; margin-top: 12px; }
-.battery-icon { width: 18px; height: 18px; margin-right: 6px; }
-.battery-bar-bg { width: 108px; height: 6px; background-color: #333333; border-radius: 3px; }
-.battery-bar-fill { height: 6px; border-radius: 3px; }
-.battery-text { font-size: 12px; margin-left: 6px; }
-.heart-container { flex-direction: row; align-items: center; margin-top: 10px; }
-.heart-icon { width: 30px; height: 30px; margin-right: 8px; }
+.time-minutes { font-weight: bold; text-align: center; opacity: 0.9; }
+.time-hours { font-weight: bold; color: #FF9F0A; text-align: center; }
+.battery-container { flex-direction: row; align-items: center; }
+.battery-bar-bg { background-color: #333333; }
+.heart-container { flex-direction: row; align-items: center; }
 .heart-chart-wrapper { flex-direction: column; align-items: center; }
-.heart-chart { flex-direction: row; align-items: flex-end; justify-content: space-between; width: 96px; height: 32px; }
-.heart-bar { width: 8px; border-radius: 2px; background-color: #FF375F; }
-.heart-rate-text { font-size: 12px; color: #FF375F; margin-top: 4px; font-weight: bold; }
-.step-container { flex-direction: row; align-items: center; margin-top: 10px; }
-.step-icon { width: 34px; height: 34px; }
-.step-info { flex-direction: column; margin-left: 10px; }
-.step-current { font-size: 23px; color: #FFD60A; font-weight: bold; }
-.step-goal { font-size: 13px; color: #8E8E93; }
+.heart-chart { flex-direction: row; align-items: flex-end; justify-content: space-between; }
+.heart-bar { background-color: #FF375F; }
+.heart-rate-text { color: #FF375F; font-weight: bold; }
+.step-container { flex-direction: row; align-items: center; }
+.step-info { flex-direction: column; }
+.step-current { color: #FFD60A; font-weight: bold; }
+.step-goal { color: #8E8E93; }
 </style>
