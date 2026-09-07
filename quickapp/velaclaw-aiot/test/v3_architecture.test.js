@@ -73,6 +73,7 @@ const strictRecipePages = [
   'src/pages/history/history.ux',
   'src/pages/steps/steps.ux',
   'src/pages/workout/workout.ux',
+  'src/pages/workout_history/workout_history.ux',
   'src/pages/workout_select/workout_select.ux'
 ]
 strictRecipePages.forEach(function (file) {
