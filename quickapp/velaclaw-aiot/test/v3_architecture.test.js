@@ -84,11 +84,25 @@ strictRecipePages.forEach(function (file) {
   assert.ok(!/:\s*-?(?:[1-9]\d*|0\.\d*[1-9]\d*)px\b/.test(style), file + ' CSS must not own non-zero geometry after strict V3 migration')
 })
 
+const strictWatchfaceComponents = [
+  'src/components/watchfaces/sport_circle.ux',
+  'src/components/watchfaces/simple_circle.ux',
+  'src/components/watchfaces/dashboard_circle.ux',
+  'src/components/watchfaces/mechanical_circle.ux'
+]
+strictWatchfaceComponents.forEach(function (file) {
+  const source = read(file)
+  const style = styleBlock(source)
+  assert.ok(source.includes('faceLayout'), file + ' must render the resolved Clock Recipe instead of owning a private layout')
+  assert.ok(!/:\s*-?(?:[1-9]\d*|0\.\d*[1-9]\d*)px\b/.test(style), file + ' CSS must not own non-zero geometry after strict V3 migration')
+})
+
 const strictRecipeResolvers = [
   'src/v2/design/apps/steps/index.js',
   'src/v2/design/apps/launcher/index.js',
   'src/v2/design/apps/heart/index.js',
   'src/v2/design/apps/history/index.js',
+  'src/v2/design/apps/clock/index.js',
   'src/v2/design/apps/workout/index.js',
   'src/v2/design/apps/workout/selection.js',
   'src/v2/design/apps/workout/history.js'
