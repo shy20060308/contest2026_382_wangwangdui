@@ -1,24 +1,24 @@
 <template>
   <stack class="steps-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
-    <div class="steps-scene" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
-      <text class="steps-title" style="left: {{ titleLeft }}px; top: {{ titleTop }}px; width: {{ contentWidth }}px; font-size: {{ titleSize }}px;">运动</text>
-      <div class="history-entry" @click="goToHistory" style="left: {{ historyLeft }}px; top: {{ historyTop }}px; width: {{ contentWidth }}px; height: {{ historyHeight }}px; border-radius: {{ historyRadius }}px;">
+    <div class="steps-scene" if="{{ ready }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
+      <text class="steps-title" style="left: {{ titleLeft }}px; top: {{ titleTop }}px; width: {{ titleWidth }}px; height: {{ titleHeight }}px; font-size: {{ titleSize }}px;">运动</text>
+      <div class="history-entry" @click="goToHistory" style="left: {{ historyLeft }}px; top: {{ historyTop }}px; width: {{ historyWidth }}px; height: {{ historyHeight }}px; border-radius: {{ historyRadius }}px; padding-left: {{ historyPaddingX }}px; padding-right: {{ historyPaddingX }}px;">
         <text class="history-title" style="font-size: {{ historyTitleSize }}px;">7日趋势</text><text class="history-sub" style="font-size: {{ historySubSize }}px;">查看趋势 ›</text>
       </div>
-      <scroll class="metric-scroll" scroll-y="true" style="left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ contentWidth }}px; height: {{ streamHeight }}px;">
-        <div class="metric-card" for="{{ metrics }}" tid="id" style="width: {{ contentWidth }}px; min-height: {{ metricHeight }}px; margin-bottom: {{ metricGap }}px; border-radius: {{ metricRadius }}px; padding: {{ metricPadding }}px;">
-          <div class="metric-head">
+      <scroll class="metric-scroll" scroll-y="true" style="left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ streamWidth }}px; height: {{ streamHeight }}px;">
+        <div class="metric-card" for="{{ metrics }}" tid="id" style="width: {{ streamWidth }}px; min-height: {{ metricHeight }}px; margin-bottom: {{ metricGap }}px; border-radius: {{ metricRadius }}px; padding: {{ metricPadding }}px;">
+          <div class="metric-head" style="height: {{ metricHeadHeight }}px;">
             <text class="metric-name" style="font-size: {{ labelSize }}px; color: {{ $item.color }};">{{ $item.name }}</text>
             <text class="metric-progress" style="font-size: {{ progressTextSize }}px; color: {{ $item.color }};">{{ $item.progressText }}</text>
           </div>
-          <div class="metric-value-row">
+          <div class="metric-value-row" style="height: {{ metricValueRowHeight }}px;">
             <text class="metric-value" style="font-size: {{ valueSize }}px; color: {{ $item.color }};">{{ $item.current }}</text>
-            <text class="metric-unit" style="font-size: {{ unitSize }}px;">{{ $item.unit }}</text>
+            <text class="metric-unit" style="font-size: {{ unitSize }}px; margin-left: {{ unitGap }}px; margin-bottom: {{ unitBottom }}px;">{{ $item.unit }}</text>
           </div>
           <div class="progress-track" style="width: {{ progressTrackWidth }}px; height: {{ progressTrackHeight }}px; border-radius: {{ progressTrackRadius }}px; margin-top: {{ progressGap }}px;">
             <div class="progress-fill" style="width: {{ $item.progressWidth }}px; height: {{ progressTrackHeight }}px; border-radius: {{ progressTrackRadius }}px; background-color: {{ $item.color }};"></div>
           </div>
-          <div class="metric-foot" style="width: {{ progressTrackWidth }}px;">
+          <div class="metric-foot" style="width: {{ progressTrackWidth }}px; height: {{ metricFootHeight }}px; margin-top: {{ metricFootTop }}px;">
             <text class="metric-goal" style="font-size: {{ footerSize }}px;">{{ $item.goalText }}</text>
             <text class="metric-status" style="font-size: {{ footerSize }}px; color: {{ $item.statusColor }};">{{ $item.statusText }}</text>
           </div>
@@ -37,13 +37,14 @@ var activityView = require('../../v2/design/apps/steps/view')
 
 export default {
   private: {
-    ready: false, metrics: [], contentWidth: 148,
-    titleLeft: 22, titleTop: 35, titleSize: 14,
-    historyLeft: 22, historyTop: 52, historyHeight: 34, historyRadius: 17, historyTitleSize: 9, historySubSize: 7,
-    streamLeft: 22, streamTop: 92, streamHeight: 80, metricHeight: 91, metricGap: 7, metricRadius: 16, metricPadding: 9,
-    labelSize: 9, valueSize: 24, unitSize: 7, progressTextSize: 8,
-    progressTrackWidth: 130, progressTrackHeight: 7, progressTrackRadius: 4, footerSize: 7, progressGap: 7,
-    sceneWidth: 192, sceneHeight: 192,
+    ready: false, metrics: [],
+    titleLeft: 0, titleTop: 0, titleWidth: 0, titleHeight: 0, titleSize: 0,
+    historyLeft: 0, historyTop: 0, historyWidth: 0, historyHeight: 0, historyRadius: 0, historyPaddingX: 0, historyTitleSize: 0, historySubSize: 0,
+    streamLeft: 0, streamTop: 0, streamWidth: 0, streamHeight: 0,
+    metricHeight: 0, metricGap: 0, metricRadius: 0, metricPadding: 0, metricHeadHeight: 0,
+    labelSize: 0, metricValueRowHeight: 0, valueSize: 0, unitSize: 0, unitGap: 0, unitBottom: 0, progressTextSize: 0,
+    progressTrackWidth: 0, progressTrackHeight: 0, progressTrackRadius: 0, footerSize: 0, metricFootHeight: 0, metricFootTop: 0, progressGap: 0,
+    sceneWidth: 0, sceneHeight: 0,
     viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
   },
   onInit() {
@@ -62,13 +63,12 @@ export default {
   onDestroy() { this.pageVisible = false; if (this.controller) this.controller.stop(); this.metrics = [] },
   onBackPress() { navigation.back(); return true },
   applyPlan(plan) {
-    this.contentWidth = plan.stream.width
-    this.titleLeft = plan.title.left; this.titleTop = plan.title.top; this.titleSize = plan.titleSize
-    this.historyLeft = plan.history.left; this.historyTop = plan.history.top; this.historyHeight = plan.history.height; this.historyRadius = plan.historyRadius; this.historyTitleSize = plan.historyTitleSize; this.historySubSize = plan.historySubSize
-    this.streamLeft = plan.stream.left; this.streamTop = plan.stream.top; this.streamHeight = plan.stream.height
-    this.metricHeight = plan.metricHeight; this.metricGap = plan.metricGap; this.metricRadius = plan.metricRadius; this.metricPadding = plan.metricPadding
-    this.labelSize = plan.labelSize; this.valueSize = plan.valueSize; this.unitSize = plan.unitSize; this.progressTextSize = plan.progressTextSize
-    this.progressTrackWidth = plan.progressTrackWidth; this.progressTrackHeight = plan.progressTrackHeight; this.progressTrackRadius = plan.progressTrackRadius; this.footerSize = plan.footerSize; this.progressGap = plan.progressGap
+    this.titleLeft = plan.title.left; this.titleTop = plan.title.top; this.titleWidth = plan.title.width; this.titleHeight = plan.title.height; this.titleSize = plan.titleSize
+    this.historyLeft = plan.history.left; this.historyTop = plan.history.top; this.historyWidth = plan.history.width; this.historyHeight = plan.history.height; this.historyRadius = plan.historyRadius; this.historyPaddingX = plan.historyPaddingX; this.historyTitleSize = plan.historyTitleSize; this.historySubSize = plan.historySubSize
+    this.streamLeft = plan.stream.left; this.streamTop = plan.stream.top; this.streamWidth = plan.stream.width; this.streamHeight = plan.stream.height
+    this.metricHeight = plan.metricHeight; this.metricGap = plan.metricGap; this.metricRadius = plan.metricRadius; this.metricPadding = plan.metricPadding; this.metricHeadHeight = plan.metricHeadHeight
+    this.labelSize = plan.labelSize; this.metricValueRowHeight = plan.metricValueRowHeight; this.valueSize = plan.valueSize; this.unitSize = plan.unitSize; this.unitGap = plan.unitGap; this.unitBottom = plan.unitBottom; this.progressTextSize = plan.progressTextSize
+    this.progressTrackWidth = plan.progressTrackWidth; this.progressTrackHeight = plan.progressTrackHeight; this.progressTrackRadius = plan.progressTrackRadius; this.footerSize = plan.footerSize; this.metricFootHeight = plan.metricFootHeight; this.metricFootTop = plan.metricFootTop; this.progressGap = plan.progressGap
   },
   applyMetrics(metrics) { this.metrics = activityView.present(metrics, this.progressTrackWidth) },
   goToHistory() { navigation.push('/pages/history') }
@@ -78,18 +78,18 @@ export default {
 <style>
 .steps-root, .steps-scene { background-color: #000000; }
 .steps-scene { position: absolute; left: 0px; top: 0px; }
-.steps-title { position: absolute; height: 22px; color: #FFD60A; font-weight: bold; text-align: center; }
-.history-entry { position: absolute; background-color: #15171B; flex-direction: row; justify-content: space-between; align-items: center; padding-left: 12px; padding-right: 12px; }
+.steps-title { position: absolute; color: #FFD60A; font-weight: bold; text-align: center; }
+.history-entry { position: absolute; background-color: #15171B; flex-direction: row; justify-content: space-between; align-items: center; }
 .history-title { color: #FFFFFF; font-weight: bold; } .history-sub { color: #8E8E93; }
 .metric-scroll { position: absolute; flex-direction: column; }
 .metric-card { background-color: #101215; flex-direction: column; }
-.metric-head { width: 100%; height: 14px; flex-direction: row; justify-content: space-between; align-items: center; }
+.metric-head { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
 .metric-name, .metric-progress { font-weight: bold; }
-.metric-value-row { width: 100%; height: 28px; flex-direction: row; align-items: flex-end; }
+.metric-value-row { width: 100%; flex-direction: row; align-items: flex-end; }
 .metric-value { font-weight: bold; }
-.metric-unit { color: #8E8E93; margin-left: 4px; margin-bottom: 4px; }
+.metric-unit { color: #8E8E93; }
 .progress-track { background-color: #24262C; overflow: hidden; flex-direction: row; align-items: center; }
-.metric-foot { height: 12px; margin-top: 5px; flex-direction: row; justify-content: space-between; align-items: center; }
+.metric-foot { flex-direction: row; justify-content: space-between; align-items: center; }
 .metric-goal { color: #8E8E93; }
 .metric-status { text-align: right; }
 </style>
