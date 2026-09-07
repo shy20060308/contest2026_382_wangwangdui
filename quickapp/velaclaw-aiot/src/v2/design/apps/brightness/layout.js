@@ -7,7 +7,6 @@ module.exports = {
     headerHeight: 24,
     headerGap: 8,
     streamWidth: 164,
-    streamMinHeight: 40,
     compact: false,
     tall: false,
     titleSize: 12,
@@ -24,6 +23,20 @@ module.exports = {
       capabilityCardHeight: 64,
       patternCardHeight: 50,
       pagerHeight: 30
+    },
+    chrome: {
+      backSize: 8,
+      cardPadding: 12,
+      statusMinHeight: 76,
+      labelSize: 8,
+      valueMarginTop: 3,
+      sliderMinHeight: 78,
+      settingTitleSize: 11,
+      sliderHeight: 24,
+      scaleSize: 7,
+      settingMinHeight: 58,
+      switchWidth: 28,
+      switchSize: 13
     }
   },
   circle: {
