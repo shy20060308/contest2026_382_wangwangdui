@@ -20,6 +20,17 @@ module.exports = {
     detailOuterHeight: 68,
     chartHeight: 22,
     trendMinHeight: 6,
+    trendVisual: {
+      heartSpread: 20,
+      spo2Spread: 4,
+      stressSpread: 20,
+      heartInactive: '#7A2436',
+      heartActive: '#FF375F',
+      spo2Inactive: '#245566',
+      spo2Active: '#5AC8FA',
+      stressInactive: '#542966',
+      stressActive: '#BF5AF2'
+    },
     scrollPaddingBottom: 24,
     titleSize: 13,
     subtitleSize: 7,
