@@ -2,54 +2,102 @@
 
 [English](docs/README_EN.md) | **简体中文**
 
-`vela_band` 是面向 Xiaomi Vela Quick App 的智能手环/手表参考应用。当前版本以 **V2 Design Engine + Capability Runtime** 为主架构，在同一 RPK 中支持胶囊、圆形与矩形 wearable form factor，覆盖表盘、应用启动器、健康、趋势、运动、日历、通知、同步、低功耗和设置等演示能力。
+`vela_band` 是面向 Xiaomi Vela Quick App 的智能手环/手表参考应用。当前工程版本为 **3.0.0**，使用 Recipe-first 的 V3 设计运行时，在同一 RPK 中支持 Pill / Circle / Rect 三类 wearable form factor。
 
-> 本项目用于比赛演示、架构验证和可穿戴 UI 探索，不是医疗软件或生产级设备固件。系统健康能力不可用时可能使用明确标识的演示数据，不能用于健康判断。
+> 本项目用于比赛演示、架构验证和可穿戴 UI 探索，不是医疗软件或生产级设备固件。健康页面只把官方实时健康样本提升为正式可见数据；能力不可用时必须明确表现等待或不可用状态，不得伪造健康趋势。
 
-当前可回退稳定版本见 [V2 稳定基线](docs/STABLE_BASELINE_V2.md)。
+## V3 架构
 
-## 当前状态
+当前产品链只有一条：
 
-- 项目版本：`vela_band@2.0.0`
-- Node.js：18+
-- 稳定主架构：Capability → Domain → V2 Feature → V2 Design → Page
-- 目标形态：Pill / Circle / Rect
-- 稳定基线已完成维护者本地 `npm run check` 全量验收，并完成关键多屏交互 smoke test。
+```text
+Vela Native APIs
+      ↓
+Capabilities
+      ↓
+Domain / State Machines
+      ↓
+Feature Controllers
+      ↓
+Device Profile + Host Scene
+      ↓
+App Recipe
+      ↓
+V3 Adapter translation
+      ↓
+App Resolver
+      ↓
+UX
+```
 
-## 功能概览
+核心约束：
 
-| 模块 | 当前能力 |
+- Capability 封装原生 Vela API 和设备能力边界。
+- Domain 持有业务模型、状态机和持久化语义，不持有屏幕几何。
+- Feature Controller 负责编排生命周期和业务流程，不拥有产品布局。
+- Device Profile 声明设备形态、尺寸和显式 safe insets。
+- Recipe 拥有页面/表盘的视觉意图、几何、字号、间距、形态差异和视觉约束。
+- Adapter 只翻译 Recipe，不扫描、缩放、clamp、拟合或发明几何。
+- Resolver 只组合无法直接静态表达的 Recipe 数据，不修复 Recipe。
+- UX 在 resolved plan 就绪后渲染，不保留私有非零几何 fallback。
+- `src/common` 仅保留静态资源；运行时逻辑不得重新放回 common。
+
+架构细节见 [V3 Design Runtime](docs/ARCHITECTURE_V3.md) 和 [维护者指南](docs/PROJECT_OWNER_GUIDE.md)。
+
+## 当前功能
+
+| 模块 | 当前实现 |
 | --- | --- |
-| 表盘 | 多表盘切换、持久化、圆屏机械表盘、胶囊 Alpine 表盘、表盘库 |
-| 应用启动器 | Circle 蜂巢、Pill 分页列表、Rect 网格 |
-| 健康 | 心率、血氧、压力、窗口趋势与系统能力降级 |
-| 活动趋势 | 7 日趋势；Circle/Pill/Rect 使用不同 L2 构图 |
-| 运动 | 步行/跑步、暂停/继续、运动历史、可用时使用位置能力 |
-| 今日日历 | 日期、农历、健康摘要、圆屏月历交互 |
-| 通知 | 本地/事件演示的来电、短信和应用通知 |
-| 同步 | 协议、分包、ACK、进度与模拟 transport |
-| 低功耗 | ACTIVE / DIM / SLEEP、抬腕唤醒演示 |
-| 设置 | 同步、震动、亮度、动作诊断、设备自检与分页导航 |
+| 表盘 | Sport / Simple / Dashboard，以及 Circle Mechanical、Pill Alpine；表盘布局由 Clock Recipe 控制 |
+| 应用启动器 | Circle 蜂巢、Pill 分页列表、Rect 设计网格 |
+| 健康 | 心率、血氧、压力与窗口趋势；保留官方数据来源信息 |
+| 活动与趋势 | 今日活动、7 日历史趋势与持久化 |
+| 运动 | 步行/跑步、暂停/继续、官方心率、位置能力、运动历史 |
+| Today | 日期、农历、活动摘要和月历 |
+| 通知 | 本地/系统事件演示、来电状态和震动反馈 |
+| 同步 | 业务 payload、分包、ACK、进度和模拟 transport |
+| 设置 | 亮度、震动、同步、动作诊断和设备能力诊断 |
+| Power | ACTIVE / DIM / SLEEP runtime 与亮度、心率、电量编排 |
 
-## 快速开始
+## 工程结构
 
-安装锁定依赖并运行完整质量门禁：
+```text
+src/
+├── capabilities/          # Vela 原生能力网关
+├── domain/                # 业务状态、状态机、持久化
+├── runtime/               # 需要独立执行的运行时核心（当前主要为 Power）
+├── v2/
+│   ├── app/               # 页面 Runtime、导航、路由
+│   ├── system/            # Device Profile、Haptics 等系统级编排
+│   ├── features/          # Feature Controllers
+│   └── design/            # V3 Scene / Recipe / Adapter / Resolver / Engine
+├── pages/                 # 产品页面，仅绑定 plan、feature state 和交互
+├── components/watchfaces/ # 表盘渲染组件，布局由 Clock Recipe 注入
+└── common/                # 仅静态图片、图标和表盘资源
+```
+
+`src/v2` 是当前源码路径的一部分，不代表运行时继续兼容 V2；V3 不保留旧 Design Specs、Design Views、Geometry solver 或 Presentation runtime。
+
+## 开发与检查
+
+要求：
+
+- Node.js 18+
+- npm
+- AIoT-IDE 或兼容的 Vela Quick App 工具链
+- 可用的 Vela 模拟器/设备
+
+安装依赖并运行完整门禁：
 
 ```bash
 npm ci
 npm run check
 ```
 
-构建启用 JSC 的调试 RPK：
+构建调试 RPK：
 
 ```bash
 npm run build
-```
-
-默认产物：
-
-```text
-dist/com.application.watch.demo.debug.1.0.0.rpk
 ```
 
 开发 watch 模式：
@@ -58,160 +106,29 @@ dist/com.application.watch.demo.debug.1.0.0.rpk
 npm run start
 ```
 
-也可以使用项目脚本：
+V3 设计相关门禁：
 
 ```bash
-# Windows
-build.bat
-
-# macOS / Linux
-sh build.sh
+npm run v3:architecture
+npm run v3:design
+npm run studio:check
 ```
 
-应用安装、模拟器选择和设备调试仍由 AIoT-IDE 或兼容工具完成。兼容性与已知镜像差异参见 [COMPATIBILITY.md](docs/COMPATIBILITY.md)。
+`v3:architecture` 会验证 retired runtime/compatibility 层没有重新出现、`src/common` 没有运行时逻辑、产品路由均进入 strict Recipe ownership，并检查依赖可解析。`v3:design` 会验证当前设计在 Circle / Pill / Rect profile 上可解析。
 
-## V2 架构
+## V3 设计规则
 
-```text
-Vela Native APIs
-      ↓
-Capability Runtime
-      ↓
-Domain / State Machines
-      ↓
-V2 Feature Controllers
-      ↓
-V2 Design Specs + Design Views
-      ↓
-Full-bleed Design Scene
-      ↓
-Pages
-```
+1. 不恢复 `src/presentation`。
+2. 不恢复 `src/v2/design/specs`、`src/v2/design/views` 或 `geometry.js`。
+3. 不通过组件宽度重新计算 safe area。
+4. 不在 Adapter/Resolver/UX 中做 circle chord fitting、Y 扫描、自动缩放或运行时几何修复。
+5. 页面 CSS 不拥有产品非零几何；几何必须来自 resolved Recipe。
+6. 页面在 Recipe plan 就绪前不渲染产品 geometry。
+7. Full-bleed scene 与 safe content 分离。
+8. Feature / Domain / Capability 逻辑不得因为视觉迁移重新塞回页面。
+9. 健康和运动正式表面不得伪造系统健康数据。
+10. 历史实现由 Git 历史保存，不在当前 runtime 中建立兼容桥。
 
-主要目录：
+## 说明
 
-```text
-src/
-├── capabilities/          # 原生 Vela 能力网关
-├── domain/                # 业务状态、持久化与状态机
-├── v2/
-│   ├── app/               # 页面 Runtime、导航、路由
-│   ├── features/          # 应用级 Controller
-│   ├── design/            # Scene、Geometry、Spec、View、Engine
-│   └── system/            # 设备 Profile 与系统 facade
-├── components/watchfaces/# 表盘组件
-└── pages/                 # Vela 页面、生命周期和事件绑定
-```
-
-`src/common`、旧 `src/presentation` 等目录仍可能作为历史实现、兼容参考或资源位置保留，但**新的 V2 页面不得重新依赖 legacy common 代码模块**。架构测试会约束实际代码依赖。
-
-详细说明：
-
-- [V2 Stable Architecture](docs/REWRITE_V2_ARCHITECTURE.md)
-- [Wearable Design Engine](docs/DESIGN_ENGINE.md)
-- [V2 稳定基线](docs/STABLE_BASELINE_V2.md)
-- [兼容性说明](docs/COMPATIBILITY.md)
-
-## Design Engine：不是统一缩放
-
-V2 将 UI 自由度分为：
-
-- **L1 Auto**：普通设置、简单详情、分页列表；
-- **L2 Assisted**：健康、趋势、运动等共享语义但需要形态专用构图的页面；
-- **L3 Free**：表盘、蜂巢启动器等强视觉/强交互页面。
-
-稳定的形态语言是：
-
-- **Circle**：使用圆形画布和弦区布局，不把整页裁成小内接矩形；
-- **Pill**：利用长纵轴组织信息流，趋势适合横向比较柱；
-- **Rect**：利用横向空间做 dashboard / grid。
-
-例如 History：Circle 使用紧凑 tracked bars，Pill 使用纵向 `vertical-comparative-trend`，Rect 使用 dashboard。三者共享同一数据语义，但不强行共享同一图形结构。
-
-## Full-bleed Scene 与安全内容
-
-V2 当前稳定规则：
-
-1. Design Scene 从 `(0, 0)` 开始覆盖完整逻辑/物理投影。
-2. 背景/表盘可以 full-bleed 到屏幕边缘。
-3. safe geometry 用于文字、控件和可交互内容的位置，不用于把整个页面裁小。
-4. Circle 使用 chord-aware 布局；Pill 的上下舒适区不能变成背景黑带。
-5. 只有绝对定位子节点的 full-page wrapper 必须显式拥有 Scene 宽高，避免 Vela 上父容器塌成 0 高黑屏。
-
-## 主要交互
-
-| 入口 | 操作 | 结果 |
-| --- | --- | --- |
-| Clock | 左/右滑 | 切换可用表盘 |
-| Clock | 长按 | 打开表盘库 |
-| Clock | 上滑 | 打开应用列表 |
-| 应用列表 | 点击应用 | 进入对应功能 |
-| Settings | 左/右滑或点击箭头 | 切换设置分页 |
-| 子页面 | 系统返回 / 页面返回语义 | 返回上一页 |
-| Circle Honeycomb | 拖动 / 点击 | 移动焦点并启动应用 |
-
-Clock 是导航手势的单一 owner。为兼容部分 beta Vela runtime，**同一个 owner** 可以同时使用 native swipe 和 raw-touch fallback，以避免纵向手势被错误解释为滚动；嵌套组件不得再创建竞争性的页面导航 owner。
-
-## 生命周期与功耗
-
-V2 将资源生命周期作为稳定契约的一部分：
-
-- 健康订阅只在需要的前台页面/表盘状态保持；
-- Workout pause 释放 1Hz tick 和 location 资源；
-- 页面 hide/destroy 停止临时 listener、timer 与采样；
-- SLEEP 状态可暂停昂贵实时能力，唤醒后恢复。
-
-UI 重排不能改变这些资源释放规则。
-
-## `npm run check`
-
-当前完整检查包括：
-
-- lint
-- V2 Scene / Architecture / Runtime / Visual / Interaction / Design Views
-- Capability Runtime
-- Power logic/runtime
-- Health logic
-- Activity persistence
-- Settings store
-- Motion logic
-- Haptics logic/runtime
-- Calendar logic
-- Analog logic
-- Honeycomb logic
-- Markdown 本地链接检查
-
-涉及 Scene、手势、绝对定位、表盘和 shape-specific layout 的变更，即使静态检查通过，也必须补做模拟器/设备 smoke test。
-
-## 调试提示
-
-Mi Band 10 冷启动后，在 AIoT-IDE 已打开项目、Broker 正常且 RPK 已安装的前提下，可以使用：
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-emulator.ps1 -Avd mi-band10
-```
-
-健康页面的抓图辅助脚本：
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/capture-health-visual.ps1 -Device xiaomi_band_10 -Serial emulator-5554
-```
-
-不同模拟器镜像提供的 Vela feature 可能不同；接口存在也不等于已经收到真实数据。
-
-## 文档索引
-
-### 当前规范
-
-- [V2 稳定基线](docs/STABLE_BASELINE_V2.md)
-- [V2 Stable Architecture](docs/REWRITE_V2_ARCHITECTURE.md)
-- [Wearable Design Engine](docs/DESIGN_ENGINE.md)
-- [兼容性说明](docs/COMPATIBILITY.md)
-
-### 历史/参考
-
-`REFACTOR_PHASE1.md`、`ADAPTIVE_LAYOUT_ARCHITECTURE.md`、`TECHNICAL.md` 等文件保留早期实现和设计探索。若与当前 V2 测试、稳定架构文档冲突，以当前 V2 规范为准。
-
-## 下一阶段
-
-稳定基线合入主分支后，后续功能/体验优化应从主分支新建独立分支。下一阶段优先推进 **L2 Design System v2.1**：把已经验证的 Circle / Pill / Rect 设计经验固化成可复用的设计 primitive，而不是再次大范围重写 Host Scene 或 Runtime。
+当前重构分支的质量结论应以开发者本地执行 `npm run check` 和实际 Vela 构建/模拟器回归为准。仓库内的架构测试用于阻止旧设计运行时、隐藏几何 fallback 和兼容层重新进入产品链。
