@@ -84,11 +84,23 @@ strictRecipePages.forEach(function (file) {
   assert.ok(!/:\s*-?(?:[1-9]\d*|0\.\d*[1-9]\d*)px\b/.test(style), file + ' CSS must not own non-zero geometry after strict V3 migration')
 })
 
+const clockHost = read('src/pages/clock/clock.ux')
+assert.ok(clockHost.includes('if="{{ profileReady }}"'), 'Clock must not render product geometry before its V3 plan resolves')
+assert.ok(clockHost.includes('face-layout="{{ faceLayouts.'), 'Clock must pass resolved face recipes into watchface components')
+assert.ok(!/:\s*-?(?:[1-9]\d*|0\.\d*[1-9]\d*)px\b/.test(styleBlock(clockHost)), 'Clock CSS must not own non-zero product geometry')
+
 const strictWatchfaceComponents = [
+  'src/components/watchfaces/sport.ux',
+  'src/components/watchfaces/simple.ux',
+  'src/components/watchfaces/dashboard.ux',
+  'src/components/watchfaces/alpine.ux',
   'src/components/watchfaces/sport_circle.ux',
   'src/components/watchfaces/simple_circle.ux',
   'src/components/watchfaces/dashboard_circle.ux',
-  'src/components/watchfaces/mechanical_circle.ux'
+  'src/components/watchfaces/mechanical_circle.ux',
+  'src/components/watchfaces/sport_rect.ux',
+  'src/components/watchfaces/simple_rect.ux',
+  'src/components/watchfaces/dashboard_rect.ux'
 ]
 strictWatchfaceComponents.forEach(function (file) {
   const source = read(file)
