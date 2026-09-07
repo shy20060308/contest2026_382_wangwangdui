@@ -8,10 +8,10 @@ function resolveBand(profile, scene, safe, spec) {
   if (!spec) return null
   var copy = adapter.merge({}, spec)
   if (copy.bottomInset !== undefined) {
+    if (copy.height === undefined) copy.height = safe.height - Number(copy.top) - Number(copy.bottomInset)
     copy.absoluteTop = true
-    copy.top = safe.bottom - Number(copy.bottomInset) - Number(copy.height || 0)
+    copy.top = safe.bottom - Number(copy.bottomInset) - Number(copy.height)
   }
-  if (copy.height === undefined && copy.bottomInset !== undefined) copy.height = Math.max(1, safe.bottom - (safe.top + Number(copy.top || 0)) - Number(copy.bottomInset || 0))
   return adapter.placeBand(profile, scene, safe, copy)
 }
 
@@ -22,15 +22,11 @@ function resolve(profile, scene, safe) {
   plan.pageSize = config.pageSize
   if (config.frame === 'scene') plan.frame = adapter.region(0, 0, scene.width, scene.height)
   if (config.header) plan.header = resolveBand(profile, scene, safe, config.header)
-  if (config.content) {
-    var contentSpec = adapter.merge({}, config.content)
-    if (contentSpec.height === undefined) contentSpec.height = Math.max(1, safe.height - Number(contentSpec.top || 0) - Number(contentSpec.bottomInset || 0))
-    plan.content = resolveBand(profile, scene, safe, contentSpec)
-  }
+  if (config.content) plan.content = resolveBand(profile, scene, safe, config.content)
   if (config.pager) {
     var pagerSpec = adapter.merge({}, config.pager)
     pagerSpec.absoluteTop = true
-    pagerSpec.top = safe.bottom - Number(pagerSpec.bottomInset || 0)
+    pagerSpec.top = safe.bottom - Number(pagerSpec.bottomInset)
     plan.pager = adapter.placeBand(profile, scene, safe, pagerSpec)
   }
   plan.columns = config.columns
