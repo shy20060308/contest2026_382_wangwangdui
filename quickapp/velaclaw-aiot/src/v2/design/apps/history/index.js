@@ -7,15 +7,15 @@ function contentWidth(profile) { return adapter.contentWidth(profile, layout) }
 function resolve(profile, scene, safe) {
   var config = adapter.select(layout, profile)
   var plan = adapter.createPlan(profile, scene, safe, freedom.ASSISTED, config.surface)
-  var streamHeight = Math.max(40, safe.bottom - (safe.top + config.streamTop))
+  var streamHeight = safe.bottom - (safe.top + config.streamTop)
   plan.stream = adapter.placeBand(profile, scene, safe, {
     top: config.streamTop,
     width: config.contentWidth,
-    height: streamHeight,
-    circleFit: 'none'
+    height: streamHeight
   })
+  plan.streamPaddingBottom = config.streamPaddingBottom
 
-  plan.headerWidth = Math.min(config.headerWidth, plan.stream.width)
+  plan.headerWidth = config.headerWidth
   plan.headerHeight = config.headerHeight
   plan.titleWidth = config.titleWidth
   plan.goalWidth = config.goalWidth
@@ -40,7 +40,7 @@ function resolve(profile, scene, safe) {
   plan.summaryLabelSize = config.summaryLabelSize
   plan.summaryValueSize = config.summaryValueSize
 
-  plan.insightGap = Math.max(3, Math.min(config.cardGap, 6))
+  plan.insightGap = config.insightGap
   plan.insightRowHeight = config.insightOuterHeight
   plan.insightPadding = config.insightPadding
   var insightOuter = adapter.grid(plan.stream, 3, plan.insightGap).itemWidth
@@ -51,29 +51,27 @@ function resolve(profile, scene, safe) {
   plan.insightLabelSize = config.insightLabelSize
   plan.insightValueSize = config.insightValueSize
 
-  var trend = config.trend || {}
-  plan.trendMode = trend.mode || 'compact-column'
-  plan.trendOuterWidth = Math.min(Number(trend.outerWidth) || plan.stream.width, plan.stream.width)
-  plan.trendOuterHeight = Number(trend.outerHeight) || 80
-  plan.trendPaddingX = Number(trend.paddingX) || 0
-  plan.trendPaddingY = Number(trend.paddingY) || 0
+  var trend = config.trend
+  plan.trendMode = trend.mode
+  plan.trendOuterWidth = trend.outerWidth
+  plan.trendOuterHeight = trend.outerHeight
+  plan.trendPaddingX = trend.paddingX
+  plan.trendPaddingY = trend.paddingY
   var trendBox = adapter.contentBox(plan.trendOuterWidth, plan.trendOuterHeight, plan.trendPaddingX, plan.trendPaddingY)
   plan.trendWidth = trendBox.width
   plan.trendHeight = trendBox.height
-  plan.trendHeadHeight = trend.headHeight || 14
-  plan.trendTitleSize = trend.titleSize || 9
-  plan.trendCaptionSize = trend.captionSize || 6
-  plan.chartHeight = trend.chartHeight || 30
-  plan.columnLabelSize = trend.labelSize || 0
-  plan.columnLabelLineHeight = trend.labelLineHeight || 0
-  plan.columnBarWidth = trend.barWidth || 0
-  plan.pillTrendMinWidth = trend.rowMinWidth || 0
-  plan.pillTrendMaxWidth = trend.rowMaxWidth || 0
-  if (plan.trendMode === 'compact-column') {
-    plan.columnCellWidth = adapter.grid({ width: plan.trendWidth }, 7, 0).itemWidth
-  } else {
-    plan.columnCellWidth = 0
-  }
+  plan.trendHeadHeight = trend.headHeight
+  plan.trendTitleSize = trend.titleSize
+  plan.trendCaptionSize = trend.captionSize
+  plan.chartHeight = trend.chartHeight
+  plan.columnLabelSize = trend.labelSize
+  plan.columnLabelLineHeight = trend.labelLineHeight
+  plan.columnBarWidth = trend.barWidth
+  plan.barMinHeight = trend.barMinHeight
+  plan.pillTrendMinWidth = trend.rowMinWidth
+  plan.pillTrendMaxWidth = trend.rowMaxWidth
+  plan.columnCellWidth = plan.trendMode === 'compact-column' ? adapter.grid({ width: plan.trendWidth }, 7, 0).itemWidth : 0
+  plan.chrome = adapter.merge({}, config.chrome)
   return plan
 }
 
