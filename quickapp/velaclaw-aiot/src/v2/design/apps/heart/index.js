@@ -14,7 +14,7 @@ function resolve(profile, scene, safe) {
   plan.stream = adapter.placeBand(profile, scene, safe, {
     top: config.streamTop,
     width: config.contentWidth,
-    height: Math.max(1, safe.bottom - (safe.top + config.streamTop))
+    height: safe.bottom - (safe.top + config.streamTop)
   })
 
   plan.headerWidth = config.headerWidth
@@ -31,6 +31,7 @@ function resolve(profile, scene, safe) {
   plan.cardPaddingY = config.cardPaddingY
   plan.chartHeight = config.chartHeight
   plan.trendMinHeight = config.trendMinHeight
+  plan.trendVisual = adapter.merge({}, config.trendVisual)
   plan.scrollPaddingBottom = config.scrollPaddingBottom
 
   var hero = adapter.contentBox(plan.stream.width, config.heroOuterHeight, config.cardPaddingX, config.cardPaddingY)
