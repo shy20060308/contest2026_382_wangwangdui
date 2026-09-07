@@ -40,6 +40,11 @@ function dependencyExists(file, dependency) {
   return [base, base + '.js', base + '.ux', path.join(base, 'index.js'), path.join(base, 'index.ux')].some(fs.existsSync)
 }
 
+function styleBlock(source) {
+  const match = source.match(/<style>([\s\S]*?)<\/style>/)
+  return match ? match[1] : ''
+}
+
 assert.strictEqual(exists('src/presentation'), false, 'V3 must not keep the retired presentation system')
 assert.strictEqual(exists('src/v2/design/specs'), false, 'V3 must not keep design spec compatibility bridges')
 assert.strictEqual(exists('src/v2/design/views'), false, 'V3 must not keep design view compatibility bridges')
@@ -60,6 +65,17 @@ sources.forEach(function (file) {
 filesUnder('src/pages', []).forEach(function (file) {
   const source = read(file)
   assert.ok(!/pageRuntime\.bind\(this,\s*\{/.test(source), file + ' must use the V3 bind(page, callback) contract')
+})
+
+const strictRecipePages = [
+  'src/pages/steps/steps.ux'
+]
+strictRecipePages.forEach(function (file) {
+  const source = read(file)
+  const style = styleBlock(source)
+  assert.ok(source.includes('if="{{ ready }}"'), file + ' must not render product geometry before its V3 plan resolves')
+  assert.ok(!source.includes('|| this.'), file + ' must not fall back to UX-owned legacy geometry')
+  assert.ok(!/:\s*-?(?:[1-9]\d*|0\.\d*[1-9]\d*)px\b/.test(style), file + ' CSS must not own non-zero geometry after strict V3 migration')
 })
 
 const adapter = read('src/v2/design/adapter.js')
