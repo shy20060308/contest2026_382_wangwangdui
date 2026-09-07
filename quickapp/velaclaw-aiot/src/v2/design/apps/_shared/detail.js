@@ -19,8 +19,6 @@ function create(layout) {
       width: config.streamWidth,
       height: safe.bottom - streamTop
     })
-    plan.compact = !!config.compact
-    plan.tall = !!config.tall
     plan.titleSize = config.titleSize
     plan.cardRadius = config.cardRadius
     plan.cardGap = config.cardGap
