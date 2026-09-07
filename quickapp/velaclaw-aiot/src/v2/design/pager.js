@@ -2,7 +2,8 @@ function clamp(value, min, max) { return Math.max(min, Math.min(max, value)) }
 
 function resolve(items, pageIndex, pageSize) {
   var source = Array.isArray(items) ? items : []
-  var size = Math.max(1, Math.round(Number(pageSize) || 1))
+  var size = Math.round(Number(pageSize))
+  if (!(size > 0)) throw new Error('pager requires explicit pageSize')
   var pageCount = Math.max(1, Math.ceil(source.length / size))
   var index = clamp(Math.round(Number(pageIndex) || 0), 0, pageCount - 1)
   var start = index * size
