@@ -68,6 +68,7 @@ filesUnder('src/pages', []).forEach(function (file) {
 })
 
 const strictRecipePages = [
+  'src/pages/applist/applist.ux',
   'src/pages/steps/steps.ux'
 ]
 strictRecipePages.forEach(function (file) {
