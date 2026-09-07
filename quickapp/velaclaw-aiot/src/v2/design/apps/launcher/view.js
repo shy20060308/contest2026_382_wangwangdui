@@ -17,7 +17,7 @@ function project(state, plan) {
   return {
     allApps: apps.list(source.all),
     pageApps: apps.list(source.items),
-    gridApps: decorateGrid(source.items, Number(plan && plan.gap) || 0),
+    gridApps: decorateGrid(source.items, Number(plan.gap)),
     pageText: pageNumber + ' / ' + pageCount,
     pageProgress: Math.round((pageNumber / pageCount) * 100) + '%',
     previousColor: source.hasPrevious ? '#0A84FF' : '#3A3A3C',
