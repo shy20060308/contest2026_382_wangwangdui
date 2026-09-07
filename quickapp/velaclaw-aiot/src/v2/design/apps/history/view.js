@@ -26,10 +26,11 @@ function compactLabel(text, isToday) {
 function project(model, plan) {
   var source = model || {}
   var records = Array.isArray(source.records) ? source.records : []
-  var chartHeight = Math.max(10, Math.round(Number(plan && plan.chartHeight) || 30))
-  var minRowWidth = Math.max(8, Math.round(Number(plan && plan.pillTrendMinWidth) || 14))
-  var maxRowWidth = Math.max(minRowWidth, Math.round(Number(plan && plan.pillTrendMaxWidth) || 70))
-  var rowMode = plan && plan.trendMode === 'comparative-row'
+  var chartHeight = Math.round(Number(plan.chartHeight))
+  var barMinHeight = Math.round(Number(plan.barMinHeight))
+  var rowMode = plan.trendMode === 'comparative-row'
+  var minRowWidth = rowMode ? Math.round(Number(plan.pillTrendMinWidth)) : 0
+  var maxRowWidth = rowMode ? Math.round(Number(plan.pillTrendMaxWidth)) : 0
   var maxSteps = 1
   var bars = []
   var i
@@ -45,13 +46,13 @@ function project(model, plan) {
     var isToday = i === records.length - 1
     var rowLabel = isToday ? '今天' : weekdayLabel(item.date)
     var compact = compactLabel(item.date, isToday)
-    var comparativeWidth = Math.round(minRowWidth + ratio * (maxRowWidth - minRowWidth))
+    var comparativeWidth = rowMode ? Math.round(minRowWidth + ratio * (maxRowWidth - minRowWidth)) : 0
     bars.push({
       date: String(item.date || i),
       label: formatDay(item.date),
       displayLabel: rowMode ? rowLabel : compact,
       stepsText: formatNumber(steps),
-      height: Math.max(5, Math.round(ratio * chartHeight)),
+      height: Math.max(barMinHeight, Math.round(ratio * chartHeight)),
       rowWidth: comparativeWidth,
       pillWidth: comparativeWidth,
       pillLabel: rowLabel,
