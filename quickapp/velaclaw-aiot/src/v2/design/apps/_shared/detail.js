@@ -28,7 +28,6 @@ function create(layout) {
     plan.valueSize = config.valueSize
     plan.testTitleSize = config.testTitleSize
     plan.controls = adapter.merge({}, config.controls)
-    plan.controls.levelButtonWidth = adapter.grid(plan.stream, 3, plan.cardGap).itemWidth
     plan.chrome = adapter.merge({}, config.chrome)
     return plan
   }
