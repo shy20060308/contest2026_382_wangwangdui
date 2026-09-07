@@ -84,6 +84,31 @@ strictRecipePages.forEach(function (file) {
   assert.ok(!/:\s*-?(?:[1-9]\d*|0\.\d*[1-9]\d*)px\b/.test(style), file + ' CSS must not own non-zero geometry after strict V3 migration')
 })
 
+const strictRecipeResolvers = [
+  'src/v2/design/apps/steps/index.js',
+  'src/v2/design/apps/launcher/index.js',
+  'src/v2/design/apps/heart/index.js',
+  'src/v2/design/apps/history/index.js',
+  'src/v2/design/apps/workout/index.js',
+  'src/v2/design/apps/workout/selection.js',
+  'src/v2/design/apps/workout/history.js'
+]
+strictRecipeResolvers.forEach(function (file) {
+  const source = read(file)
+  assert.ok(!/Math\.(?:min|max)\s*\(/.test(source), file + ' must compose declared recipe geometry instead of repairing it')
+})
+
+const strictPlanViews = [
+  'src/v2/design/apps/launcher/view.js',
+  'src/v2/design/apps/heart/view.js',
+  'src/v2/design/apps/history/view.js'
+]
+strictPlanViews.forEach(function (file) {
+  const source = read(file)
+  assert.ok(!/plan\s*&&/.test(source), file + ' must require the resolved V3 plan instead of silently falling back')
+  assert.ok(!/Number\(\s*plan[^)]*\)\s*\|\|/.test(source), file + ' must not invent visual geometry when plan data is missing')
+})
+
 const adapter = read('src/v2/design/adapter.js')
 assert.ok(adapter.includes("SYSTEM_ID = 'recipe-translator-v3.0'"))
 assert.ok(!adapter.includes('function clamp('), 'Adapter must not repair recipe geometry at runtime')
