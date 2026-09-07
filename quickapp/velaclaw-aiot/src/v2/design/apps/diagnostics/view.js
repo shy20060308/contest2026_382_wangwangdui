@@ -36,7 +36,8 @@ function project(model) {
 function page(capabilities, pageIndex, pageSize) {
   var groups = [{ id: 'device' }]
   var source = Array.isArray(capabilities) ? capabilities : []
-  var size = Math.max(1, Math.round(Number(pageSize) || 3))
+  var size = Math.round(Number(pageSize))
+  if (!(size > 0)) throw new Error('diagnostics view requires resolved capabilityPageSize')
   for (var start = 0; start < source.length; start += size) groups.push({ id: 'cap-' + start, items: source.slice(start, start + size) })
   var state = pager.resolve(groups, pageIndex, 1)
   var group = state.items[0]
