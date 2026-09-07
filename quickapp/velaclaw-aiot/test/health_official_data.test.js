@@ -1,12 +1,27 @@
 const assert = require('assert')
 const fs = require('fs')
 const path = require('path')
-const healthView = require('../src/v2/design/views/health')
+const healthView = require('../src/v2/design/apps/heart/view')
 
 const root = path.resolve(__dirname, '..')
 const read = name => fs.readFileSync(path.join(root, name), 'utf8')
 
-const plan = { chartHeight: 24, trendMinHeight: 6 }
+const plan = {
+  chartHeight: 24,
+  trendMinHeight: 6,
+  trendVisual: {
+    heartSpread: 20,
+    spo2Spread: 4,
+    stressSpread: 20,
+    heartInactive: '#5A1E2A',
+    heartActive: '#FF375F',
+    spo2Inactive: '#153B4A',
+    spo2Active: '#64D2FF',
+    stressInactive: '#3B2245',
+    stressActive: '#BF5AF2'
+  }
+}
+
 const live = healthView.project({
   heartRate: 76,
   spo2: 98,
@@ -29,8 +44,8 @@ assert.strictEqual(live.heartSource, '系统')
 assert.strictEqual(live.sourceText, '系统健康数据')
 assert.strictEqual(live.heartRate, 76)
 assert.ok(live.heartBars.length === 5)
-assert.ok(Math.max.apply(null, live.heartBars.map(item => item.height)) <= 24)
-assert.ok(Math.min.apply(null, live.heartBars.map(item => item.height)) >= 6)
+assert.ok(Math.max.apply(null, live.heartBars.map(item => item.height)) <= plan.chartHeight)
+assert.ok(Math.min.apply(null, live.heartBars.map(item => item.height)) >= plan.trendMinHeight)
 
 const waiting = healthView.project({
   heartRate: 0,
@@ -61,10 +76,11 @@ assert.ok(controller.includes("data[prefix + 'Source'] === 'live'"), 'Health con
 assert.ok(!controller.includes('var heartValues = [72'), 'Health controller must not seed a fabricated trend')
 assert.ok(!controller.includes('historyRepository.loadHourlyHeartRate'), 'Health must not pull demo-backed hourly history into the official data surface')
 assert.ok(store.includes('heartRateSource: heart.source'), 'Health store must preserve capability source provenance')
-assert.strictEqual((page.match(/class="health-stream"/g) || []).length, 1, 'Health must have one canonical L1 stream')
+assert.strictEqual((page.match(/class="health-stream"/g) || []).length, 1, 'Health must have one canonical stream')
 assert.ok(!page.includes('isCircle') && !page.includes('isPill') && !page.includes('isRect'), 'Health presentation must not fork by form factor')
-assert.ok(page.includes('.heart-value { width: 58px; color: #FFFFFF; }'), 'Unified Health value must reserve glyph-safe width for three-digit heart rate')
-assert.ok(page.includes('line-height: {{ metaLineHeight }}px'), 'Health metadata must use explicit glyph-safe line boxes')
-assert.ok(page.includes('padding-bottom: {{ scrollPaddingBottom }}px'), 'Round scrolling must leave enough tail space to center the final detail card')
+assert.ok(page.includes('width: {{ heartValueWidth }}px'), 'Health value width must come from the resolved recipe')
+assert.ok(page.includes('line-height: {{ metaLineHeight }}px'), 'Health metadata must use explicit recipe line boxes')
+assert.ok(page.includes('padding-bottom: {{ scrollPaddingBottom }}px'), 'Health stream tail space must come from the recipe')
+assert.ok(page.includes('if="{{ ready }}"'), 'Health must not render product geometry before the recipe resolves')
 
-console.log('Health official-data contracts verified')
+console.log('Health official-data contracts verified on the V3 app-owned view')
