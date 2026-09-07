@@ -1,188 +1,178 @@
 # 维护者指南
 
-本文面向 `vela_band` 的维护、评审和发布工作。当前规范以 [V2 Stable Architecture](REWRITE_V2_ARCHITECTURE.md)、[Design Engine](DESIGN_ENGINE.md) 和 [V2 稳定基线](STABLE_BASELINE_V2.md) 为准。
+本文描述 `vela_band` 3.0 当前维护边界。设计运行时的规范以 [ARCHITECTURE_V3.md](ARCHITECTURE_V3.md) 和实际测试为准；历史架构只存在于 Git 历史中，不作为新代码的兼容入口。
 
 ## 维护目标
 
-每次改动都应尽量保持：
+每次改动都应保持：
 
-1. 同一 RPK 在 Pill / Circle / Rect 目标形态上保持可用。
-2. 页面首次进入、重复进入和返回结果一致，不出现 0 高 surface、黑屏或首次挂载偏移。
-3. 页面离开后不残留无意义 timer、location、health、motion、event 或异步 UI 更新。
-4. Domain/Feature 行为与 UI 构图分离；页面不重新承载业务状态机。
-5. 文档明确区分真实系统能力、模拟能力和产品降级。
-6. `npm run check` 始终是合并前的最低质量门槛。
+1. 同一产品在 Pill / Circle / Rect 目标形态上可运行。
+2. 页面在 V3 Design Plan 解析完成前不渲染产品几何。
+3. Recipe 是静态视觉几何的唯一来源；UX、View 和 Resolver 不保存第二套默认布局。
+4. 页面生命周期、Feature、Domain 和 Capability 的职责不因视觉适配重新混回 UX。
+5. 健康、运动、传感器和同步数据的真实性边界保持清晰，视觉层不得伪造业务样本。
+6. `npm run check` 是合并前的最低质量门槛。
 
 ## 事实来源优先级
 
-发生文档与实现冲突时，按以下顺序核对：
+发生实现与文档冲突时，按以下顺序核对：
 
-1. `src/manifest.json`：包名、feature、权限、路由。
-2. `package.json` / `package-lock.json`：命令与依赖版本。
+1. `src/manifest.json`：权限、系统 feature、路由和入口。
+2. `package.json`：版本、检查命令和构建入口。
 3. `src/capabilities/*`：原生 Vela 能力边界。
-4. `src/domain/*`：业务模型、持久化和状态机。
-5. `src/v2/features/*`：应用级 orchestration 与资源生命周期。
-6. `src/v2/design/*`：Scene、Geometry、Design Spec/View 和 shape composition。
-7. `src/pages/*`：生命周期、事件与最终渲染绑定。
-8. [COMPATIBILITY.md](COMPATIBILITY.md)：特定镜像/设备差异。
+4. `src/domain/*`：业务模型、状态与持久化。
+5. `src/v2/features/*`：应用级 orchestration 和资源生命周期。
+6. `src/v2/system/device_profile.js`：设备形态、物理尺寸和声明式 safe insets。
+7. `src/v2/design/scene.js`：Host Scene 投影。
+8. `src/v2/design/apps/*`：产品 Recipe、Resolver 和 View。
+9. `src/pages/*` 与 `src/components/watchfaces/*`：最终渲染和事件绑定。
+10. `test/v3_architecture.test.js`、`test/v3_design.test.js`：当前架构边界的可执行约束。
 
-`src/common`、旧 `src/presentation` 等目录可能仍保留历史实现、资源或参考代码，但它们不是新的 V2 扩展入口。V2 页面不得重新导入 legacy common 代码模块。
+`src/v2` 是当前 V3 运行时的历史路径名，不代表其中代码属于旧架构。是否属于 legacy 由职责和行为判断，而不是目录名称判断。
 
-## V2 模块所有权
+## 当前设计链
 
-| 关注点 | 当前入口 |
-| --- | --- |
-| 包配置、权限、路由 | `src/manifest.json` |
-| 设备/形态识别 | `src/v2/system/device_profile.js` |
-| Full-bleed Scene 与 Safe Geometry | `src/v2/design/scene.js`、`src/v2/design/geometry.js` |
-| 页面 Runtime | `src/v2/app/page_runtime.js` |
-| 路由 | `src/v2/app/navigation.js`、`src/v2/app/app_routes.js` |
-| 原生能力 | `src/capabilities/*` |
-| Domain | `src/domain/*` |
-| Feature Controller | `src/v2/features/*` |
-| Design Spec / View | `src/v2/design/specs/*`、`src/v2/design/views/*` |
-| 表盘 UI | `src/components/watchfaces/*`、`src/pages/clock/clock.ux` |
-| 表盘库 | `src/pages/watchface/index.ux` |
-| 应用启动器 | `src/pages/applist/applist.ux` |
-| 健康 | `src/pages/heartrate/heartrate.ux` 与对应 V2 feature/design |
-| 趋势 | `src/pages/history/history.ux` 与对应 V2 feature/design |
-| 设置 | `src/pages/settings/*` 与对应 V2 feature/design |
-| 运动 | `src/pages/workout/*` 与对应 Domain/Feature |
-
-如果需要新增路径，优先问“它属于 Capability、Domain、Feature、Design 还是 Page”，不要直接把公共逻辑堆回页面或 `common`。
-
-## 关键不变量
-
-### Scene 与布局
-
-- Design Scene 从 `(0, 0)` 覆盖完整逻辑/物理投影，不以 beta host inset 作为产品画布高度。
-- 百分比字符串不能被当成像素高度解析。
-- 背景 full-bleed 与前景 safe geometry 分离。
-- Circle 使用 chord-aware placement，不把整页压成小内接矩形。
-- 只有绝对定位子节点的 full-page wrapper 必须显式设置 Scene width/height，否则 Vela 可能把父容器折叠成 0 高。
-- `overflow:hidden` 只能用于明确的视觉裁剪，不能拿来掩盖 Scene 或 safe-area 错误。
-- 小型 wearable 控件若百分比尺寸在运行时不稳定，应由 Design Spec 解析为明确 px 几何。
-
-### Design Freedom
-
-- L1：普通列表、设置、简单详情，尽量由 Design Spec 自动解决。
-- L2：共享语义、形态专用构图。Health / History / Workout 是主要参考。
-- L3：表盘、蜂巢等强视觉/交互 surface。
-- 如果 L1 只能靠不断缩字体才能塞下，优先升级为 L2，不要继续压缩。
-
-### 生命周期
-
-- `onShow` 可能重复调用，启动/加载逻辑必须可重复。
-- `onHide` / `onDestroy` 必须释放当前页面不再需要的 transient resources。
-- Workout pause 必须停止 1Hz tick 和 location。
-- Health/motion/event 等订阅必须存在明确停止路径。
-- 页面销毁后不得继续写入页面字段。
-
-### 交互
-
-- 一个导航手势域只有一个页面 owner。
-- Clock 可在同一 owner 内同时使用 native swipe 与 raw-touch fallback，但不能让嵌套表盘组件再拥有竞争性的页面导航。
-- Settings 等分页页的 swipe 与箭头必须更新同一 page state。
-- 涉及 raw touch 时，要明确是否需要 `preventDefault` / `stopPropagation`，防止手势退化成滚动。
-
-### 数据与持久化
-
-- 页面不直接复制 Domain 计算。
-- 持久化 schema 应保留旧数据 fallback，并明确升级/缺字段行为。
-- 展示格式、标签和 shape-specific 视觉值优先由 Design View 输出。
-- 模拟数据必须保持可识别，不得伪装成系统实时数据。
-
-### 系统 API
-
-- 新增原生能力优先创建/扩展 `src/capabilities` gateway。
-- 必要的 manifest feature/permission 与能力修改同步提交。
-- “接口存在”不等于“设备真实提供有效数据”。
-- 调用失败必须有可理解的降级。
-- 新发现的镜像/设备差异记录到 [COMPATIBILITY.md](COMPATIBILITY.md)。
-
-## 常见修改流程
-
-### 新增功能
-
-1. 明确产品语义和数据所有权。
-2. 如涉及原生 API，先定义 Capability gateway。
-3. 在 Domain 中放业务状态/持久化。
-4. 在 `src/v2/features` 中组织页面需要的 application model/action。
-5. 选择 L1 / L2 / L3，并在 Design Spec/View 中解决 presentation。
-6. Page 只负责 lifecycle、事件和绑定。
-7. 补相应 unit/contract test。
-8. 运行 `npm run check`。
-9. 对 Pill / Circle / Rect 做必要 smoke test。
-10. 更新规范/兼容性/README 文档。
-
-### 新增或重做页面
-
-在写 `.ux` 前先确定：
-
-- 是否需要滚动；
-- full-bleed layer 与 safe content 的边界；
-- Circle/Pill/Rect 是否应共享 composition；
-- 是否有分页/返回/长按等手势冲突；
-- 绝对定位 wrapper 是否拥有明确尺寸；
-- 首次 mount 是否依赖不稳定测量。
-
-对 L2/L3 页面，先写 shape strategy，再写 CSS。
-
-### 修改表盘
-
-- Clock 保持手势总 owner。
-- 表盘组件以显示与局部点击为主，不建立第二套路由手势状态机。
-- 精确表盘优先使用稳定、可预测的绝对几何。
-- full-face 背景覆盖 Scene，不通过父级裁剪制造安全区。
-- 修改后至少回归：冷启动、首次显示、左右切换、切回、长按表盘库、持久化恢复。
-
-### 修改趋势/健康
-
-- 保持 Domain 数据语义共享。
-- shape-specific 表达放在 Design Spec/View。
-- Circle 检查上下圆弧和中部弦宽。
-- Pill 检查纵向节奏和数字完整性。
-- Rect 检查 dashboard 横向信息密度。
-- 删除信息层时同步删除 dead presentation state，不只用 CSS 隐藏。
-
-## 合并前检查
-
-```bash
-npm ci
-npm run check
+```text
+Device Profile
+    ↓
+Host Scene + declared safe insets
+    ↓
+App Recipe
+    ↓
+Adapter translation
+    ↓
+App Resolver
+    ↓
+Resolved Plan
+    ↓
+UX / Watchface renderer
 ```
 
-然后根据改动范围做至少一次 smoke test。对于 Scene、手势、绝对定位、Watchface、Launcher、Health、History、Settings 等高风险区域，建议覆盖：
+### Device Profile
 
-1. 冷启动；
-2. 首次进入；
-3. 返回；
-4. 连续进入/退出 5–10 次；
-5. 页面切换后状态恢复；
-6. Pill / Circle / Rect 代表设备。
+`src/v2/system/device_profile.js` 负责设备形态、屏幕尺寸和显式 safe inset。不要在页面或组件里重新推断安全区域。
 
-静态 contract test 是防回归网，不等价于真实 Vela 渲染验收。
+### Scene
 
-## 分支与稳定点
+`src/v2/design/scene.js` 只负责把设备投影到 192 design-width Host Scene，并应用 Device Profile 已声明的 inset。
 
-当前稳定点记录在 [STABLE_BASELINE_V2.md](STABLE_BASELINE_V2.md)。推荐流程：
+### Recipe
 
-1. 稳定阶段完成后更新文档；
-2. 将稳定实现通过 PR 合入默认分支；
-3. 下一阶段从默认分支新建功能分支；
-4. 不在稳定 PR 中继续加入未经验收的产品功能；
-5. 发生大范围回归时优先回到最近稳定 checkpoint 做最小修复，而不是继续叠加重构。
+每个产品的 `src/v2/design/apps/<app>/layout.js` 拥有该产品的静态视觉意图，包括：
 
-## 文档维护
+- 区域位置与尺寸；
+- 间距、padding、radius；
+- typography；
+- shape-specific override；
+- 静态视觉 chrome；
+- 明确的分页容量或图表视觉范围。
 
-修改以下内容时必须同步维护文档：
+如果一个值改变后应直接改变产品构图，它通常应属于 Recipe，而不是 UX 私有默认值。
 
-- Scene / viewport / safe geometry；
-- Design Freedom 规则；
-- 新 form factor 或设备差异；
-- 路由/关键手势；
-- 系统能力或 fallback；
-- 稳定版本/验收范围；
-- 构建与检查命令。
+### Adapter
 
-`npm run docs:check` 会验证 Markdown 的本地链接，但不会判断文档语义是否已经过时，因此维护者仍需主动做内容审查。
+`src/v2/design/adapter.js` 只做 Recipe 合并、区域投影、grid 和 content-box 翻译。禁止加入：
+
+- clamp/fitting；
+- Circle chord 扫描；
+- 根据组件宽度重新计算 safe area；
+- aesthetic scale；
+- 缺字段时的视觉兜底。
+
+### Resolver
+
+Resolver 只组合无法静态表达的区域关系。它不得用 `Math.min` / `Math.max` 修复 Recipe 几何，也不得因为设备空间不足偷偷改变设计意图。
+
+### View
+
+View 负责业务数据到展示状态的映射，例如文案、颜色、百分比和真实样本的可视化映射。View 可以约束数据范围，但不得发明缺失的 Recipe 几何或容量。
+
+### UX / Watchface
+
+UX 和表盘组件负责：
+
+- 渲染 resolved plan；
+- 绑定 Feature state；
+- 路由和用户事件；
+- 必要的实时交互状态。
+
+静态产品几何不得重新写回 `<style>`。已经完成 strict V3 的页面由架构测试禁止 CSS 持有非零 px 几何。
+
+## Clock 组件边界
+
+Clock 是一个完整产品链，不允许父页进入 V3 后由子表盘重新拥有布局。
+
+`clock/layout.js` 持有每个 shape / face 的静态视觉几何；`clock.ux` 把 resolved `faceLayout` 传给 `src/components/watchfaces/*`。子表盘只能渲染该 layout 和实时表盘数据。
+
+动态模拟表针 transform、真实数据柱高映射等可以在 renderer/helper 中计算，但柱高视觉范围等参数必须来自 Recipe。
+
+## Settings 共享层边界
+
+`src/v2/design/apps/_shared/detail.js` 仅共享设置详情页真正共同的 `header + stream` Host Scene 投影。
+
+不要把具体页面的卡片、按钮、列宽或视觉 chrome 放进共享层。Brightness、Vibration、Motion、Diagnostics、Sync 各自拥有自己的 Recipe。
+
+## L1 / L2 / L3
+
+- L1：产品和表达相同，仅几何变化。
+- L2：产品/数据共享，但局部表达变化。
+- L3：交互或产品 surface 本身不同。
+
+等级描述的是某个跨形态差异，不是页面永久标签。蜂巢等真正的动态交互引擎可以存在，但不能演化成新的通用屏幕 fitting solver。
+
+## 数据与几何的 Math.min / Math.max
+
+不要机械禁止所有 `Math.min` / `Math.max`。
+
+允许：
+
+- 亮度值限制到 0–255；
+- 进度限制到 0–100%；
+- 倒计时不小于 0；
+- 真实样本映射到 Recipe 给出的图表范围。
+
+禁止：
+
+- `Math.max(40, recipeHeight)`；
+- `Math.min(recipeWidth, safeWidth)`；
+- 缺少 Recipe 时回退到旧卡片尺寸；
+- Resolver 根据屏幕空间重新选择“看起来安全”的几何。
+
+## 分页与容量
+
+容量属于产品表达时必须显式声明。`pager.js` 要求调用方提供正数 `pageSize`，不再默认为 1。Diagnostics 等页面的每页卡片数量同样来自对应 Recipe。
+
+## 修改检查清单
+
+改 UI 前确认：
+
+- 这个值是产品静态视觉、动态数据，还是交互状态？
+- 静态视觉是否进入对应 App Recipe？
+- Resolver 是否只做组合，没有修复设计？
+- View 是否只处理数据，没有视觉 fallback？
+- UX CSS 是否重新拥有非零固定几何？
+- 子组件是否绕过父计划？
+- 新 Manifest 产品路由是否被 strict V3 ownership 测试覆盖？
+
+改业务前确认：
+
+- 是否应属于 Capability、Domain 或 Feature，而不是 Design/Page？
+- 页面销毁后 timer、sensor、health、location 和事件订阅是否正确释放？
+- 数据降级是否明确，而不是由视觉层伪造？
+
+## 验证
+
+在 `quickapp/velaclaw-aiot` 下运行：
+
+```bash
+npm check
+```
+
+其中 V3 的核心设计检查为：
+
+```bash
+npm run v3:architecture
+npm run v3:design
+```
+
+如果架构测试失败，应修正 ownership，而不是通过重新加入 fallback、compat bridge 或 CSS 私有几何绕过测试。
