@@ -7,6 +7,7 @@ module.exports = {
     stream: { top: 86, width: 164 },
     itemHeight: 78,
     itemGap: 7,
+    summaryGap: 6,
     titleSize: 14,
     backSize: 8,
     summaryValueSize: 16,
@@ -14,13 +15,25 @@ module.exports = {
     recordTitleSize: 12,
     recordMetaSize: 7,
     radius: 18,
-    padding: 9
+    padding: 9,
+    chrome: {
+      summaryPaddingLeft: 10,
+      summaryLabelTop: 2,
+      recordMetaTop: 4,
+      recordMetricsTop: 7,
+      recordSourceTop: 4,
+      emptyTitleSize: 12,
+      emptyCopyWidth: 130,
+      emptyCopySize: 8,
+      emptyCopyLineHeight: 13,
+      emptyCopyTop: 8
+    }
   },
   circle: {
     contentWidth: 148,
-    header: { absoluteTop: true, top: 24, width: 128, height: 20, circleFit: 'none' },
-    summary: { absoluteTop: true, top: 49, width: 140, height: 38, circleFit: 'none' },
-    stream: { absoluteTop: true, top: 92, width: 140, height: 90, circleFit: 'none' },
+    header: { absoluteTop: true, top: 24, width: 128, height: 20 },
+    summary: { absoluteTop: true, top: 49, width: 140, height: 38 },
+    stream: { absoluteTop: true, top: 92, width: 140, height: 90 },
     itemHeight: 66,
     itemGap: 7,
     titleSize: 11,
