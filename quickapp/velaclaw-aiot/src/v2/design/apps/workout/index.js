@@ -1,4 +1,4 @@
-var freedom = require('../../freedom')
+var difference = require('../../difference')
 var adapter = require('../../adapter')
 var layout = require('./layout')
 
@@ -16,7 +16,7 @@ function box(profile, scene, safe, source) {
 
 function resolve(profile, scene, safe) {
   var config = adapter.select(layout, profile)
-  var plan = adapter.createPlan(profile, scene, safe, freedom.ASSISTED, config.surface)
+  var plan = adapter.createPlan(profile, scene, safe, difference.L2, config.surface)
   plan.header = box(profile, scene, safe, config.header)
   plan.hero = box(profile, scene, safe, config.hero)
   plan.metrics = box(profile, scene, safe, config.metrics)
@@ -42,4 +42,4 @@ function resolve(profile, scene, safe) {
   return plan
 }
 
-module.exports = { freedomLevel: freedom.ASSISTED, contentWidth: contentWidth, resolve: resolve, layout: layout }
+module.exports = { differenceLevel: difference.L2, contentWidth: contentWidth, resolve: resolve, layout: layout }
