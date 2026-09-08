@@ -27,14 +27,12 @@ function requireKey(key) {
 function canonicalValue(key, value) {
   requireKey(key)
   if (key === 'lastSyncAt') {
-    var timestamp = Number(value)
-    if (!isFinite(timestamp) || timestamp < 0) throw new Error('Invalid setting value: ' + key)
-    return Math.round(timestamp)
+    if (typeof value !== 'number' || !isFinite(value) || value < 0) throw new Error('Invalid setting value: ' + key)
+    return Math.round(value)
   }
   if (key === 'brightnessValue') {
-    var brightness = Number(value)
-    if (!isFinite(brightness)) throw new Error('Invalid setting value: ' + key)
-    return Math.max(0, Math.min(255, Math.round(brightness)))
+    if (typeof value !== 'number' || !isFinite(value) || value < 0 || value > 255) throw new Error('Invalid setting value: ' + key)
+    return Math.round(value)
   }
   if (key === 'vibrationLevel') {
     if (value !== 'light' && value !== 'medium' && value !== 'strong') throw new Error('Invalid setting value: ' + key)
@@ -51,7 +49,18 @@ function canonicalValue(key, value) {
 function mergeStored(stored) {
   var next = copy(DEFAULTS)
   if (!stored) return next
+  if (typeof stored !== 'object' || Array.isArray(stored)) throw new Error('Invalid stored Settings state')
   for (var key in stored) next[requireKey(key)] = canonicalValue(key, stored[key])
+  return next
+}
+
+function validatedPatch(patch) {
+  if (!patch || typeof patch !== 'object' || Array.isArray(patch)) throw new Error('Settings updateMany requires a patch object')
+  var next = {}
+  for (var key in patch) {
+    var setting = requireKey(key)
+    next[setting] = canonicalValue(setting, patch[key])
+  }
   return next
 }
 
@@ -134,11 +143,10 @@ function createStore(storage) {
       return clone()
     },
     updateMany: function (patch, callback) {
-      if (!patch || typeof patch !== 'object' || Array.isArray(patch)) throw new Error('Settings updateMany requires a patch object')
-      for (var key in patch) {
-        var setting = requireKey(key)
-        cached[setting] = canonicalValue(setting, patch[key])
-        rememberPending(setting, cached[setting])
+      var next = validatedPatch(patch)
+      for (var key in next) {
+        cached[key] = next[key]
+        rememberPending(key, next[key])
       }
       persist(callback)
       return clone()
