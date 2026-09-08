@@ -60,7 +60,6 @@ export default {
   subscribe: function (listener) {
     if (typeof listener !== 'function' || listeners.indexOf(listener) >= 0) return false
     listeners.push(listener)
-    if (latest) listener(latest)
     if (listeners.length === 1) startNative()
     return active
   },
