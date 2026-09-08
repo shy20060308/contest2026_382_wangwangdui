@@ -75,10 +75,10 @@ Object.keys(manifest.router.pages || {}).forEach(route => {
   const source = read(path.join('src', route, page.component + '.ux'))
   assert.ok(!source.includes('/capabilities/'), route + ' Page must not depend on Capability directly')
   assert.ok(!hasRawDeviceApi(source), route + ' Page must not access raw device APIs')
-  assert.ok(!source.includes('@system.router'), route + ' Page must delegate navigation to app runtime')
+  assert.ok(!source.includes('@system.router'), route + ' Page must delegate navigation to runtime')
 })
 
-const navigation = read('src/v2/app/navigation.js')
-assert.ok(navigation.includes("from '@system.router'"), 'navigation runtime must be the sole router framework boundary')
+const navigation = read('src/runtime/navigation.js')
+assert.ok(navigation.includes("from '@system.router'"), 'Runtime navigation must be the sole router framework boundary')
 
 console.log('Capability Runtime verified: raw Vela APIs stay in gateways and Pages stay capability-free')
