@@ -30,7 +30,6 @@ export function createNotificationController(onChange) {
   var state = initialState()
   var started = false
   var settingsReady = false
-  var externalRegistered = false
   var lifecycleGeneration = 0
   var dismissTimer = null
   var hangTimer = null
@@ -53,17 +52,13 @@ export function createNotificationController(onChange) {
   }
 
   function registerExternal() {
-    if (externalRegistered) return
     systemEvent.subscribe(EVENT_NAME, onExternal)
     interconnect.subscribe(onExternal)
-    externalRegistered = true
   }
 
   function unregisterExternal() {
-    if (!externalRegistered) return
     systemEvent.unsubscribe(EVENT_NAME, onExternal)
     interconnect.unsubscribe(onExternal)
-    externalRegistered = false
   }
 
   function vibrate() {
@@ -122,7 +117,6 @@ export function createNotificationController(onChange) {
       state.hangUp = true
       emit()
       hangTimer = setTimeout(dismiss, HANGUP_DELAY_MS)
-    },
-    getSnapshot: snapshot
+    }
   }
 }
