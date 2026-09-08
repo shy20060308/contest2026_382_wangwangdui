@@ -23,27 +23,25 @@ function read(callback, forceRefresh) {
       device.getInfo({
         success: function (info) {
           loading = false
-          cached = info || {}
+          cached = info || null
           flush(cached)
         },
         fail: function () {
           loading = false
-          cached = cached || {}
-          flush(cached)
+          flush(null)
         }
       })
       return
     }
   } catch (error) {}
   loading = false
-  cached = cached || {}
-  flush(cached)
+  flush(null)
 }
 
 var gateway = {
   get: read,
   getInfo: function (success) { read(success) },
-  getCached: function () { return cached || {} },
+  getCached: function () { return cached },
   refresh: function (callback) { read(callback, true) },
   clearCache: function () { cached = null }
 }
