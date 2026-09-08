@@ -69,6 +69,11 @@ filesUnder('src/v2/design', /\.(?:js|ux)$/, []).forEach(function (file) {
   assert.ok(!source.includes('adaptive-geometry'), file + ' must not restore the retired adaptive geometry strategy')
 })
 
+filesUnder('src/v2/design/apps', /(?:^|_)layout\.js$/, []).forEach(function (file) {
+  const source = read(file)
+  assert.ok(!/^module\.exports\s*=\s*\{\s*\r?\n\s*level\s*:/m.test(source), file + ' must not duplicate resolver-owned differenceLevel in Recipe layout metadata')
+})
+
 const deviceProfile = read('src/v2/system/device_profile.js')
 assert.ok(!deviceProfile.includes('isBetaPillViewport'), 'Device Profile must not restore beta-emulator viewport compatibility state')
 assert.ok(!deviceProfile.includes("|| 'pill-shaped'"), 'Device Profile must not default an unknown device to Pill')
@@ -88,4 +93,4 @@ filesUnder('test', /\.test\.js$/, []).forEach(function (file) {
   assert.ok(!source.includes('design/specs/'), file + ' must not validate retired Design Specs')
 })
 
-console.log('V3 legacy absence verified: no compatibility runtime, aliases, device fallbacks, freedom metadata or legacy test contracts')
+console.log('V3 legacy absence verified: no compatibility runtime, aliases, duplicate layout levels, device fallbacks or retired design metadata')
