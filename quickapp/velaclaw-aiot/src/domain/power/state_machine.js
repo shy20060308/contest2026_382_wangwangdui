@@ -9,17 +9,24 @@ function requireMode(mode) {
   return mode
 }
 
+function requireTime(value) {
+  if (typeof value !== 'number' || !isFinite(value)) throw new Error('Power state machine requires numeric time')
+  return value
+}
+
 function modeForIdle(idleMs) {
+  if (typeof idleMs !== 'number' || !isFinite(idleMs)) throw new Error('Power state machine requires numeric idle duration')
   if (idleMs >= SLEEP_AFTER_MS) return MODE_SLEEP
   if (idleMs >= DIM_AFTER_MS) return MODE_DIM
   return MODE_ACTIVE
 }
 
 function create(initialNow) {
+  var initialTime = requireTime(initialNow)
   var state = {
     mode: MODE_ACTIVE,
-    lastActiveAt: initialNow,
-    changedAt: initialNow,
+    lastActiveAt: initialTime,
+    changedAt: initialTime,
     reason: 'init'
   }
 
@@ -44,14 +51,16 @@ function create(initialNow) {
 
   return {
     markActive: function (reason, now) {
-      state.lastActiveAt = now
-      return transition(MODE_ACTIVE, reason, now)
+      var time = requireTime(now)
+      state.lastActiveAt = time
+      return transition(MODE_ACTIVE, reason, time)
     },
     evaluate: function (now) {
-      return transition(modeForIdle(now - state.lastActiveAt), 'idle', now)
+      var time = requireTime(now)
+      return transition(modeForIdle(time - state.lastActiveAt), 'idle', time)
     },
     force: function (mode, reason, now) {
-      return transition(mode, reason, now)
+      return transition(mode, reason, requireTime(now))
     },
     getSnapshot: snapshot
   }
