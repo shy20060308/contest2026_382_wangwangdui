@@ -21,7 +21,7 @@ export default {
   list: function () {
     return [
       entry('motion', '加速度计', 'motion.subscribe', motion.isAvailable()),
-      entry('health', '健康服务', 'heartRate.subscribe', heartRate.isAvailable(), true),
+      entry('health', '健康服务', 'heartRate.subscribe', heartRate.isAvailable()),
       entry('haptic', '震动反馈', 'vibration.vibrate', vibration.available()),
       entry('battery', '电池状态', 'battery.get', battery.isAvailable(), true),
       entry('brightness', '屏幕控制', 'displayPower.setBrightness', displayPower.isAvailable()),
