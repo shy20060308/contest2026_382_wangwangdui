@@ -1,4 +1,4 @@
-var freedom = require('./freedom')
+var difference = require('./difference')
 
 var SYSTEM_ID = 'recipe-translator-v3.0'
 var VERSION = '3.0'
@@ -88,13 +88,12 @@ function contentBox(outerWidth, outerHeight, paddingX, paddingY) {
 }
 
 function createPlan(profile, scene, safe, level, surface) {
-  var freedomLevel = level || freedom.AUTO
+  var differenceLevel = level || difference.L1
   return {
     designSystem: SYSTEM_ID,
     designSystemVersion: VERSION,
-    freedom: freedom.describe(freedomLevel),
-    freedomLevel: freedomLevel,
-    strategy: freedomLevel === freedom.FREE ? 'free' : (freedomLevel === freedom.ASSISTED ? 'assisted' : 'auto'),
+    difference: difference.describe(differenceLevel),
+    differenceLevel: differenceLevel,
     shape: shapeOf(profile),
     surface: surface || 'surface',
     content: region(safe && safe.left, safe && safe.top, safe && safe.width, safe && safe.height)
