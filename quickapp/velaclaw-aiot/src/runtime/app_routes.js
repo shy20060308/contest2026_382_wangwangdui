@@ -2,6 +2,7 @@ var ROUTES = {
   workout: '/pages/workout_select',
   history: '/pages/history',
   heart: '/pages/heartrate',
+  clock: '/pages/clock',
   steps: '/pages/steps',
   faces: '/pages/watchface',
   sync: '/pages/settings/bluetooth',
