@@ -57,7 +57,9 @@ function inside(target, parent) {
   [path.join('src', 'common', 'icons', 'soft'), 'soft launcher icon variants'],
   ['scripts/render-soft-icons.py', 'soft icon renderer'],
   ['husky.sh', 'inactive Husky setup'],
-  ['commitlint.config.js', 'inactive Commitlint config']
+  ['commitlint.config.js', 'inactive Commitlint config'],
+  ['.prettierrc.js', 'inactive Prettier config'],
+  ['.stylelintrc.js', 'inactive Stylelint config']
 ].forEach(function (entry) {
   assert.strictEqual(exists(entry[0]), false, 'V3 must not restore retired ' + entry[1])
 })
