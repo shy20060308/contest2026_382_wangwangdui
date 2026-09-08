@@ -1,25 +1,18 @@
 import capabilityIntrospection from '../../../capabilities/introspection'
 
 function deviceSnapshot(profile) {
-  var source = profile || {}
   return {
-    deviceFamily: source.deviceFamily,
-    model: source.model,
-    screenWidth: source.screenWidth,
-    screenHeight: source.screenHeight,
-    formFactor: source.formFactor,
-    platformVersionCode: source.platformVersionCode
+    deviceFamily: profile.deviceFamily,
+    model: profile.model,
+    screenWidth: profile.screenWidth,
+    screenHeight: profile.screenHeight,
+    formFactor: profile.formFactor,
+    platformVersionCode: profile.platformVersionCode
   }
 }
 
 function hostSnapshot(scene) {
-  var source = scene || {}
-  return { width: Number(source.width) || 0, height: Number(source.height) || 0 }
-}
-
-function capabilitySnapshot(entry) {
-  var source = entry || {}
-  return { id: source.id, name: source.name, api: source.api, available: !!source.available, fallback: !!source.fallback }
+  return { width: scene.width, height: scene.height }
 }
 
 export function createDiagnosticsController(onChange) {
@@ -27,10 +20,12 @@ export function createDiagnosticsController(onChange) {
   var scene = null
 
   function snapshot() {
-    var raw = capabilityIntrospection.list()
-    var capabilities = []
-    for (var i = 0; i < raw.length; i++) capabilities.push(capabilitySnapshot(raw[i]))
-    return { device: deviceSnapshot(profile), host: hostSnapshot(scene), capabilities: capabilities }
+    if (!profile || !scene) throw new Error('Diagnostics requires resolved Device Profile and Host Scene')
+    return {
+      device: deviceSnapshot(profile),
+      host: hostSnapshot(scene),
+      capabilities: capabilityIntrospection.list()
+    }
   }
 
   function emit() {
@@ -40,7 +35,12 @@ export function createDiagnosticsController(onChange) {
   }
 
   return {
-    configureScene: function (nextProfile, nextScene) { profile = nextProfile; scene = nextScene; return emit() },
-    refresh: emit
+    configureScene: function (nextProfile, nextScene) {
+      if (!nextProfile || !nextScene) throw new Error('Diagnostics requires resolved Device Profile and Host Scene')
+      profile = nextProfile
+      scene = nextScene
+      return emit()
+    },
+    refresh: function () { return profile && scene ? emit() : null }
   }
 }
