@@ -1,5 +1,3 @@
-var WEEKDAY_LABELS = null
-
 function range(values) {
   if (!values.length) return { min: 0, max: 0 }
   var min = values[0]
