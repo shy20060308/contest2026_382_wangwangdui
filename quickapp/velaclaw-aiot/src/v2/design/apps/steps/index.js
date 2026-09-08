@@ -15,7 +15,7 @@ function resolve(profile, scene, safe) {
     height: safe.bottom - (safe.top + config.stream.top)
   })
   plan.titleSize = config.titleSize
-  plan.historyRadius = Math.round(config.history.height / 2)
+  plan.historyRadius = config.historyRadius
   plan.historyPaddingX = config.historyPaddingX
   plan.historyTitleSize = config.historyTitleSize
   plan.historySubSize = config.historySubSize
@@ -33,7 +33,7 @@ function resolve(profile, scene, safe) {
   plan.progressTextSize = config.progressTextSize
   plan.progressTrackWidth = plan.stream.width - config.metricPadding * 2
   plan.progressTrackHeight = config.progressTrackHeight
-  plan.progressTrackRadius = Math.ceil(config.progressTrackHeight / 2)
+  plan.progressTrackRadius = config.progressTrackRadius
   plan.footerSize = config.footerSize
   plan.metricFootHeight = config.metricFootHeight
   plan.metricFootTop = config.metricFootTop
