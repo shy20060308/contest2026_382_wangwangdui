@@ -63,17 +63,16 @@ export function createTodayController(onChange) {
   }
 
   function applyActivity(snapshot) {
-    var source = snapshot || {}
-    state.steps = Number(source.steps) || 0
-    state.calories = Number(source.calories) || 0
-    state.standHours = Number(source.standHours) || 0
-    state.goalPercent = Math.max(0, Math.min(100, Number(source.goalPercent) || 0))
+    state.steps = snapshot.steps
+    state.calories = snapshot.calories
+    state.standHours = snapshot.standHours
+    state.goalPercent = snapshot.goalPercent
     emit()
   }
 
   function onHealth(snapshot) {
     if (!started) return
-    if (snapshot && snapshot.heartRate !== undefined && snapshot.heartRate !== null) state.heartRate = Number(snapshot.heartRate) || 0
+    state.heartRate = snapshot && snapshot.heartRateLive && snapshot.heartRateSource === 'live' ? snapshot.heartRate : null
     emit()
   }
 
