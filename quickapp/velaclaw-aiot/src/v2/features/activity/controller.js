@@ -1,11 +1,10 @@
 import activityStore from '../../../domain/activity/store'
 
 function semanticMetrics(snapshot) {
-  var source = snapshot || {}
   return [
-    { id: 'steps', current: Number(source.steps) || 0, goal: Number(source.stepsGoal) || 0 },
-    { id: 'calories', current: Number(source.calories) || 0, goal: Number(source.caloriesGoal) || 0 },
-    { id: 'stand', current: Number(source.standHours) || 0, goal: Number(source.standGoal) || 0 }
+    { id: 'steps', current: snapshot.steps, goal: snapshot.stepsGoal },
+    { id: 'calories', current: snapshot.calories, goal: snapshot.caloriesGoal },
+    { id: 'stand', current: snapshot.standHours, goal: snapshot.standGoal }
   ]
 }
 
@@ -36,7 +35,7 @@ export function createActivityController(onChange) {
       active = false
       lifecycleEpoch++
     },
-    refresh: function () { if (active) return emit(activityStore.getSnapshot()); return semanticMetrics(activityStore.getSnapshot()) },
+    refresh: function () { return emit(activityStore.getSnapshot()) },
     getSnapshot: function () { return semanticMetrics(activityStore.getSnapshot()) }
   }
 }
