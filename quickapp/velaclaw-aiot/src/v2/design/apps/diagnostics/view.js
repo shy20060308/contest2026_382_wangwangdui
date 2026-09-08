@@ -1,7 +1,7 @@
 var pager = require('../../pager')
 
 function capability(entry) {
-  var status = entry.available ? { text: '可用', color: '#30D158', background: '#102A19' } : (entry.fallback ? { text: '兼容', color: '#FFD60A', background: '#2A2310' } : { text: '不可用', color: '#FF453A', background: '#321519' })
+  var status = entry.available ? { text: '可用', color: '#30D158', background: '#102A19' } : { text: '不可用', color: '#FF453A', background: '#321519' }
   return {
     id: entry.id,
     name: entry.name,
