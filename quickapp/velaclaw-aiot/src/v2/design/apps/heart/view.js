@@ -33,9 +33,17 @@ function sourceText(source) {
 function heartStatus(zone, value) {
   if (value === null) return { text: '等待', color: '#8E8E93' }
   if (zone === 'rest') return { text: '偏低', color: '#5AC8FA' }
+  if (zone === 'normal') return { text: '正常', color: '#30D158' }
   if (zone === 'elevated') return { text: '偏高', color: '#FF9F0A' }
   if (zone === 'peak') return { text: '峰值', color: '#FF453A' }
-  return { text: '正常', color: '#30D158' }
+  throw new Error('Unknown heart-rate zone: ' + zone)
+}
+
+function spo2Status(zone, value) {
+  if (value === null) return { text: '等待', color: '#8E8E93' }
+  if (zone === 'good') return { text: '良好', color: '#30D158' }
+  if (zone === 'attention') return { text: '请关注', color: '#FF9F0A' }
+  throw new Error('Unknown SpO2 zone: ' + zone)
 }
 
 function stressStatus(zone, value) {
@@ -43,7 +51,8 @@ function stressStatus(zone, value) {
   if (zone === 'relaxed') return { text: '放松', color: '#30D158' }
   if (zone === 'normal') return { text: '正常', color: '#64D2FF' }
   if (zone === 'elevated') return { text: '偏高', color: '#FFD60A' }
-  return { text: '较高', color: '#FF453A' }
+  if (zone === 'high') return { text: '较高', color: '#FF453A' }
+  throw new Error('Unknown stress zone: ' + zone)
 }
 
 function formatTime(timestamp) {
@@ -63,15 +72,14 @@ function summaryState(source) {
   return attention ? { text: '有指标需关注', color: '#FF9F0A' } : { text: '状态平稳', color: '#30D158' }
 }
 
-function project(model, plan) {
-  var source = model
+function project(source, plan) {
   var visual = plan.trendVisual
   var heartValue = source.heartRate
   var spo2Value = source.spo2
   var stressValue = source.stress
   var heart = heartStatus(source.heartZone, heartValue)
+  var spo2 = spo2Status(source.spo2Zone, spo2Value)
   var stress = stressStatus(source.stressZone, stressValue)
-  var spo2Attention = spo2Value !== null && source.spo2Zone === 'attention'
   var summary = summaryState(source)
   var heartValues = source.heartValues
   var spo2Values = source.spo2Values
@@ -81,8 +89,7 @@ function project(model, plan) {
     spo2: spo2Value === null ? '--' : spo2Value,
     stress: stressValue === null ? '--' : stressValue,
     heartStatus: heart.text, heartStatusColor: heart.color,
-    spo2Status: spo2Value === null ? '等待' : (spo2Attention ? '请关注' : '良好'),
-    spo2StatusColor: spo2Value === null ? '#8E8E93' : (spo2Attention ? '#FF9F0A' : '#30D158'),
+    spo2Status: spo2.text, spo2StatusColor: spo2.color,
     stressStatus: stress.text, stressStatusColor: stress.color,
     summaryText: summary.text, summaryColor: summary.color,
     dailyMin: source.dailyMin,
