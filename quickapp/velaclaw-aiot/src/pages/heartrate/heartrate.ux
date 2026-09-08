@@ -58,8 +58,8 @@
 </template>
 
 <script>
-import pageRuntime from '../../v2/app/page_runtime'
-import navigation from '../../v2/app/navigation'
+import pageRuntime from '../../runtime/page_runtime'
+import navigation from '../../runtime/navigation'
 import { createHealthController } from '../../v2/features/health/controller'
 import healthDesign from '../../v2/design/apps/heart'
 import healthView from '../../v2/design/apps/heart/view'
