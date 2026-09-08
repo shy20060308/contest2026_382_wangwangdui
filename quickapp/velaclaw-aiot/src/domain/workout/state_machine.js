@@ -30,9 +30,13 @@ function ruleFor(type) {
   return MODE_RULES[requireType(type)]
 }
 
+function validStatus(status) {
+  return status === 'running' || status === 'paused'
+}
+
 function updateRunning(session, now) {
   if (!session || session.status !== 'running') return session
-  var current = now || Date.now()
+  var current = now === undefined ? Date.now() : now
   var elapsedMs = Math.max(0, current - session.lastUpdateAt)
   if (elapsedMs < 500) return session
 
@@ -55,18 +59,18 @@ function rawRecord(session, endTime) {
     id: session.id,
     type: session.type,
     startTime: session.startedAt,
-    endTime: endTime || Date.now(),
+    endTime: endTime === undefined ? Date.now() : endTime,
     durationSec: Math.floor(session.durationMs / 1000),
     steps: session.steps,
     calories: session.calories,
     distanceMeters: session.distanceMeters,
     distanceSource: session.gpsDistanceMeters > 0 ? 'gps' : 'steps',
-    gpsDistanceMeters: session.gpsDistanceMeters || 0,
+    gpsDistanceMeters: session.gpsDistanceMeters,
     gpsPoint: clone(session.gpsPoint),
     avgHeartRate: session.heartSamples > 0
       ? Math.round(session.heartTotal / session.heartSamples)
       : null,
-    heartSource: session.heartSamples > 0 && session.heartSource === 'official' ? 'official' : 'none',
+    heartSource: session.heartSamples > 0 ? 'official' : 'none',
     synced: false
   }
 }
@@ -81,31 +85,21 @@ export default {
   },
 
   restore: function (session) {
-    if (!session || !session.id || !MODE_RULES[session.type]) {
+    if (!session || !session.id || !MODE_RULES[session.type] || !validStatus(session.status)) {
       activeSession = null
       return null
     }
     activeSession = clone(session)
-    if (activeSession.heartSource === 'official') {
-      if (activeSession.currentHeartRate === undefined) activeSession.currentHeartRate = null
-      activeSession.heartTotal = Number(activeSession.heartTotal) || 0
-      activeSession.heartSamples = Number(activeSession.heartSamples) || 0
-    } else {
-      activeSession.currentHeartRate = null
-      activeSession.heartTotal = 0
-      activeSession.heartSamples = 0
-      activeSession.heartSource = null
-    }
     updateRunning(activeSession)
     return clone(activeSession)
   },
 
   start: function (type, now) {
-    var startedAt = now || Date.now()
-    var normalized = requireType(type)
+    var startedAt = now === undefined ? Date.now() : now
+    requireType(type)
     activeSession = {
       id: 'workout_' + startedAt,
-      type: normalized,
+      type: type,
       status: 'running',
       startedAt: startedAt,
       lastUpdateAt: startedAt,
@@ -147,17 +141,18 @@ export default {
     if (activeSession.status === 'paused') {
       activeSession.status = 'running'
       activeSession.gpsStatus = 'locating'
-      activeSession.lastUpdateAt = now || Date.now()
+      activeSession.lastUpdateAt = now === undefined ? Date.now() : now
     }
     return clone(activeSession)
   },
 
   updateGps: function (data) {
-    if (!activeSession || !data) return this.tick()
+    if (!activeSession) return null
+    if (!data) throw new Error('Workout GPS update requires data')
     if (data.status) activeSession.gpsStatus = data.status
     if (data.point) activeSession.gpsPoint = clone(data.point)
-    if (typeof data.distanceMeters === 'number' && data.distanceMeters >= 0) {
-      activeSession.gpsDistanceMeters = Math.round(data.distanceMeters)
+    if (data.distanceMeters !== undefined) {
+      activeSession.gpsDistanceMeters = data.distanceMeters
       if (activeSession.gpsDistanceMeters > 0) activeSession.distanceMeters = activeSession.gpsDistanceMeters
     }
     return clone(activeSession)
@@ -165,11 +160,8 @@ export default {
 
   updateHeartRate: function (value) {
     if (!activeSession) return null
-    var number = Number(value)
-    if (!isFinite(number) || number <= 0) return clone(activeSession)
-    var heartRate = Math.round(number)
-    activeSession.currentHeartRate = heartRate
-    activeSession.heartTotal += heartRate
+    activeSession.currentHeartRate = value
+    activeSession.heartTotal += value
     activeSession.heartSamples += 1
     activeSession.heartSource = 'official'
     return clone(activeSession)
