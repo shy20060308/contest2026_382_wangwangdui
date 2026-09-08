@@ -7,9 +7,6 @@ var PATTERNS = {
 
 var LEVEL_SCALE = { light: 0.72, medium: 1, strong: 1.3 }
 
-// Used only when migrating persisted settings from older versions.
-function normalize(id) { return PATTERNS[id] ? id : 'goal' }
-
 function get(id, level) {
   var source = PATTERNS[id]
   if (!source) throw new Error('Unknown haptic pattern: ' + id)
@@ -23,4 +20,4 @@ function list() {
   return [get('tap', 'medium'), get('goal', 'medium'), get('countdown', 'medium'), get('alert', 'medium')]
 }
 
-module.exports = { normalize: normalize, get: get, list: list }
+module.exports = { get: get, list: list }
