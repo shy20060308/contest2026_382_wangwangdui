@@ -7,21 +7,18 @@ var DEFAULT_STATE = {
   standGoal: 12
 }
 
-function normalizeState(source, fallback) {
-  var base = fallback || DEFAULT_STATE
-  var value = source || base
+function copyState(source) {
   return {
-    steps: Math.max(0, Math.round(Number(value.steps) || 0)),
-    stepsGoal: Math.max(1, Math.round(Number(value.stepsGoal) || base.stepsGoal)),
-    calories: Math.max(0, Math.round(Number(value.calories) || 0)),
-    caloriesGoal: Math.max(1, Math.round(Number(value.caloriesGoal) || base.caloriesGoal)),
-    standHours: Math.max(0, Math.round(Number(value.standHours) || 0)),
-    standGoal: Math.max(1, Math.round(Number(value.standGoal) || base.standGoal))
+    steps: source.steps,
+    stepsGoal: source.stepsGoal,
+    calories: source.calories,
+    caloriesGoal: source.caloriesGoal,
+    standHours: source.standHours,
+    standGoal: source.standGoal
   }
 }
 
 function clampPercent(value, goal) {
-  if (!goal || goal <= 0) return 0
   var percent = Math.round((value / goal) * 100)
   if (percent < 0) return 0
   if (percent > 100) return 100
@@ -29,8 +26,8 @@ function clampPercent(value, goal) {
 }
 
 function createStore(repository, defaults) {
-  var base = normalizeState(defaults || DEFAULT_STATE, DEFAULT_STATE)
-  var state = normalizeState(base, base)
+  var base = defaults ? copyState(defaults) : copyState(DEFAULT_STATE)
+  var state = copyState(base)
   var hydrated = false
   var loading = false
   var hydrateWaiters = []
@@ -57,21 +54,20 @@ function createStore(repository, defaults) {
     }
   }
 
-  function mergePersisted(persisted) {
-    if (!persisted) return snapshot()
-    var source = normalizeState(persisted, base)
+  function mergePersisted(source) {
+    if (!source) return snapshot()
     state.steps = Math.max(state.steps, source.steps)
     state.calories = Math.max(state.calories, source.calories)
     state.standHours = Math.max(state.standHours, source.standHours)
-    state.stepsGoal = source.stepsGoal || state.stepsGoal
-    state.caloriesGoal = source.caloriesGoal || state.caloriesGoal
-    state.standGoal = source.standGoal || state.standGoal
+    if (source.stepsGoal !== undefined) state.stepsGoal = source.stepsGoal
+    if (source.caloriesGoal !== undefined) state.caloriesGoal = source.caloriesGoal
+    if (source.standGoal !== undefined) state.standGoal = source.standGoal
     return snapshot()
   }
 
   function applyAdd(steps, calories) {
-    state.steps += Math.max(0, Math.round(Number(steps) || 0))
-    state.calories += Math.max(0, Math.round(Number(calories) || 0))
+    state.steps += steps
+    state.calories += calories
     return snapshot()
   }
 
@@ -81,7 +77,7 @@ function createStore(repository, defaults) {
     var entry = saveQueue.shift()
     repository.save(entry.snapshot, function (saved, result) {
       saveInFlight = false
-      if (entry.callback) entry.callback(saved || entry.snapshot, result)
+      if (entry.callback) entry.callback(saved, result)
       flushSaveQueue()
     })
   }
