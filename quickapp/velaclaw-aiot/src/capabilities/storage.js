@@ -97,6 +97,10 @@ function readJSON(key, fallback, success, fail) {
 }
 
 var adapter = {
+  isAvailable: function () {
+    return !!(storage && storage.get && storage.set)
+  },
+
   set: function (key, value, callback) {
     enqueueOperation(key, function () {
       var stringValue
