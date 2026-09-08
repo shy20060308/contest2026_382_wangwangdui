@@ -11,6 +11,12 @@ function parseJson(key, value) {
   }
 }
 
+function storageFailure(action, key, data, code) {
+  var error = data instanceof Error ? data : new Error('storage.' + action + ' failed for ' + key)
+  if (code !== undefined) error.code = code
+  return error
+}
+
 function finishOperation(key) {
   var queue = operationQueues[key]
   if (!queue) return
@@ -51,6 +57,41 @@ function persistString(key, stringValue, callback) {
   callback(makeResult(false, true, new Error('storage.set unavailable')))
 }
 
+function readString(key, success, fail) {
+  if (memoryCache[key] !== undefined) {
+    success(memoryCache[key])
+    return
+  }
+  try {
+    if (!storage || !storage.get) {
+      fail(new Error('storage.get unavailable for ' + key))
+      return
+    }
+    storage.get({
+      key: key,
+      success: function (value) {
+        if (value !== '' && value !== undefined) memoryCache[key] = value
+        success(value)
+      },
+      fail: function (data, code) {
+        fail(storageFailure('get', key, data, code))
+      }
+    })
+  } catch (error) {
+    fail(error)
+  }
+}
+
+function readJSON(key, fallback, success, fail) {
+  readString(key, function (value) {
+    if (value === '' || value === undefined || value === null) {
+      success(fallback !== undefined ? fallback : null)
+      return
+    }
+    success(parseJson(key, value))
+  }, fail)
+}
+
 var adapter = {
   set: function (key, value, callback) {
     enqueueOperation(key, function () {
@@ -71,36 +112,11 @@ var adapter = {
 
   get: function (key, callback) {
     if (!callback) return
-    if (memoryCache[key] !== undefined) {
-      callback(memoryCache[key])
-      return
-    }
-    try {
-      if (storage && storage.get) {
-        storage.get({
-          key: key,
-          success: function (value) {
-            if (value !== '' && value !== undefined) memoryCache[key] = value
-            callback(value)
-          },
-          fail: function () {
-            callback(memoryCache[key] !== undefined ? memoryCache[key] : '')
-          }
-        })
-        return
-      }
-    } catch (error) {}
-    callback(memoryCache[key] !== undefined ? memoryCache[key] : '')
+    readString(key, callback, function (error) { throw error })
   },
 
   getJSON: function (key, callback, fallback) {
-    this.get(key, function (value) {
-      if (value === '' || value === undefined || value === null) {
-        callback(fallback !== undefined ? fallback : null)
-        return
-      }
-      callback(parseJson(key, value))
-    })
+    readJSON(key, fallback, callback, function (error) { throw error })
   },
 
   delete: function (key, callback) {
@@ -133,7 +149,7 @@ var adapter = {
 
   updateJSON: function (key, fallback, updater, callback) {
     enqueueOperation(key, function () {
-      adapter.getJSON(key, function (current) {
+      readJSON(key, fallback, function (current) {
         var nextValue
         var stringValue
         try {
@@ -148,7 +164,10 @@ var adapter = {
           if (callback) callback(nextValue, result)
           finishOperation(key)
         })
-      }, fallback)
+      }, function (error) {
+        if (callback) callback(null, makeResult(false, false, error))
+        finishOperation(key)
+      })
     })
   }
 }
