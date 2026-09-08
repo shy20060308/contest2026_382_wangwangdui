@@ -46,7 +46,6 @@ export function createWatchfaceController(onChange) {
       selectedId = requireAllowedFace(ids, id)
       emit()
       watchfaceStore.setSelectedFaceId(selectedId, function () { if (callback) callback(selectedId) })
-    },
-    refresh: emit
+    }
   }
 }
