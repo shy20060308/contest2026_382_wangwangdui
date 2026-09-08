@@ -169,7 +169,7 @@ export function createClockController(onChange, onNotification) {
       if (powerRuntime) powerRuntime.stop()
       notification.stop()
     },
-    markActive: function (reason) { if (powerRuntime) powerRuntime.markActive(reason || 'user') },
+    markActive: function (reason) { if (powerRuntime) powerRuntime.markActive(reason) },
     switchFace: function (step) {
       if (!faceIds.length) throw new Error('Clock must configure Recipe faceIds before switching')
       var current = faceIds.indexOf(selectedFaceId)
@@ -179,7 +179,7 @@ export function createClockController(onChange, onNotification) {
       emit()
       return selectedFaceId
     },
-    wake: function (reason) { if (powerRuntime) powerRuntime.markActive(reason || 'wake') },
+    wake: function (reason) { if (powerRuntime) powerRuntime.markActive(reason) },
     dismissNotification: function () { notification.dismiss() },
     hangUpNotification: function () { notification.hangUp() }
   }
