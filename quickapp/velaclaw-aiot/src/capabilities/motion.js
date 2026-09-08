@@ -55,7 +55,7 @@ function startNative(interval) {
       fail: function (data, code) {
         active = false
         activeInterval = ''
-        emitError(code === undefined ? 'failed' : code)
+        emitError(code === undefined ? null : code)
       }
     })
     return true
@@ -85,8 +85,8 @@ function removeConsumer(listener) {
 
 export default {
   subscribe: function (listener, options) {
-    if (typeof listener !== 'function') return false
-    var interval = requireInterval(options && options.interval ? options.interval : 'normal')
+    if (typeof listener !== 'function') throw new Error('Motion subscribe requires a listener')
+    var interval = requireInterval(options && options.interval)
     var fail = options && options.fail
     for (var i = 0; i < consumers.length; i++) {
       if (consumers[i].listener === listener) {
