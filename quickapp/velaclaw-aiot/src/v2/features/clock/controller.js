@@ -1,6 +1,5 @@
 import powerRuntimeFactory from '../../../runtime/power/controller'
 import activityStore from '../../../domain/activity/store'
-import historyRepository from '../../../domain/history/repository'
 import watchfaceStore from '../../../domain/watchface/store'
 import settingsStore from '../../../domain/settings/store'
 import { createNotificationController } from '../notification/controller'
@@ -20,6 +19,7 @@ export function createClockController(onChange, onNotification) {
   var selectedFaceId = ''
   var heartValues = []
   var started = false
+  var lifecycleGeneration = 0
   var powerRuntime = null
   var notification = createNotificationController(function (state) {
     if (state.visible && powerRuntime) powerRuntime.markActive('notification')
@@ -67,17 +67,16 @@ export function createClockController(onChange, onNotification) {
     state.faceIndex = faceIds.indexOf(selectedFaceId)
   }
 
-  function updateTime() {
-    state.timestamp = Date.now()
-    emit()
-  }
-
-  function refreshActivity() {
-    var activity = activityStore.getSnapshot()
+  function applyActivity(activity) {
     state.steps = activity.steps
     state.stepsGoal = activity.stepsGoal
     state.goalPercent = activity.goalPercent
     state.stepsPercent = activity.stepsPercent
+  }
+
+  function updateTime() {
+    state.timestamp = Date.now()
+    emit()
   }
 
   function onHeartRate(sample) {
@@ -128,20 +127,47 @@ export function createClockController(onChange, onNotification) {
       if (started) return
       if (!faceIds.length) throw new Error('Clock must configure Recipe faceIds before start')
       started = true
+      var generation = ++lifecycleGeneration
+      var activityReady = false
+      var settingsReady = false
+      var runtimeStarted = false
+      var settingsValue = null
       ensurePowerRuntime()
-      refreshActivity()
-      updateTime()
-      settingsStore.load(function (settings) { configurePower(settings); powerRuntime.start() })
-      watchfaceStore.loadSelectedFaceId(function (id) { if (id) applyFace(id); emit() })
-      historyRepository.saveToday(activityStore.getSnapshot(), function () {})
-      notification.start()
+
+      function isCurrent() { return started && generation === lifecycleGeneration }
+      function startRuntimeWhenReady() {
+        if (!isCurrent() || runtimeStarted || !activityReady || !settingsReady) return
+        configurePower(settingsValue)
+        powerRuntime.start()
+        notification.start()
+        runtimeStarted = true
+      }
+
+      activityStore.hydrate(function (activity) {
+        if (!isCurrent()) return
+        applyActivity(activity)
+        activityReady = true
+        updateTime()
+        startRuntimeWhenReady()
+      })
+      settingsStore.load(function (settings) {
+        if (!isCurrent()) return
+        settingsValue = settings
+        settingsReady = true
+        startRuntimeWhenReady()
+      })
+      watchfaceStore.loadSelectedFaceId(function (id) {
+        if (!isCurrent()) return
+        if (id) applyFace(id)
+        if (activityReady) emit()
+      })
     },
     stop: function () {
       if (!started) return
       started = false
+      lifecycleGeneration++
       if (powerRuntime) powerRuntime.stop()
       notification.stop()
-      historyRepository.saveToday(activityStore.getSnapshot(), function () {})
     },
     markActive: function (reason) { if (powerRuntime) powerRuntime.markActive(reason || 'user') },
     switchFace: function (step) {
