@@ -8,7 +8,10 @@ function pad2(value) { return value < 10 ? '0' + value : '' + value }
 function formatNumber(value) { return Number(value || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') }
 
 function batteryView(percent) {
-  var value = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)))
+  if (percent === null || percent === undefined) return { percent: '--', width: '0%', color: '#8E8E93' }
+  var numeric = Number(percent)
+  if (!isFinite(numeric)) return { percent: '--', width: '0%', color: '#8E8E93' }
+  var value = Math.max(0, Math.min(100, Math.round(numeric)))
   return { percent: value, width: value + '%', color: value <= 20 ? '#FF453A' : value <= 50 ? '#FFD60A' : '#30D158' }
 }
 
@@ -20,6 +23,7 @@ function powerView(mode) {
 
 function project(model) {
   var source = model || {}
+  if (!source.faceId) throw new Error('Clock view requires resolved faceId')
   var timestamp = Number(source.timestamp) || Date.now()
   var now = new Date(timestamp)
   var battery = batteryView(source.batteryPercent)
@@ -28,9 +32,11 @@ function project(model) {
   var angles = analog.angles(now.getHours(), now.getMinutes(), now.getSeconds())
   var goalPercent = Math.max(0, Math.min(100, Number(source.goalPercent) || 0))
   var stepsPercent = Math.max(0, Math.min(100, Number(source.stepsPercent) || 0))
+  var heartRate = Number(source.currentHeartRate)
+  var heartRateText = source.currentHeartRate !== null && source.currentHeartRate !== undefined && isFinite(heartRate) && heartRate > 0 ? Math.round(heartRate) : '--'
 
   return {
-    faceId: source.faceId || 'sport',
+    faceId: source.faceId,
     faceIndex: Number(source.faceIndex) || 0,
     faceBackground: visual.background,
     faceAccent: visual.accent,
@@ -46,7 +52,7 @@ function project(model) {
     batteryPercent: battery.percent,
     batteryWidth: battery.width,
     batteryColor: battery.color,
-    currentHeartRate: Math.round(Number(source.currentHeartRate) || 0),
+    currentHeartRate: heartRateText,
     heartRateData: Array.isArray(source.heartRateValues) ? source.heartRateValues.slice() : [],
     stepsText: formatNumber(source.steps),
     stepsGoalText: formatNumber(source.stepsGoal),
