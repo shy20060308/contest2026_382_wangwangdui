@@ -10,9 +10,8 @@ var LEVEL_SCALE = { light: 0.72, medium: 1, strong: 1.3 }
 function get(id, level) {
   var source = PATTERNS[id]
   if (!source) throw new Error('Unknown haptic pattern: ' + id)
-  var intensity = level === undefined ? 'medium' : level
-  var scale = LEVEL_SCALE[intensity]
-  if (!scale) throw new Error('Unknown haptic level: ' + intensity)
+  var scale = LEVEL_SCALE[level]
+  if (!scale) throw new Error('Unknown haptic level: ' + level)
   return { id: source.id, duration: Math.round(source.duration * scale), interval: source.interval, count: source.count, mode: source.mode }
 }
 
