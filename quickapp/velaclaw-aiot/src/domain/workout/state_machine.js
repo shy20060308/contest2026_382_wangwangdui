@@ -17,12 +17,17 @@ function clone(value) {
   return value ? JSON.parse(JSON.stringify(value)) : value
 }
 
-function ruleFor(type) {
-  return MODE_RULES[type] || MODE_RULES.walk
+function supportedTypes() {
+  return Object.keys(MODE_RULES)
 }
 
-function normalizeType(type) {
-  return MODE_RULES[type] ? type : 'walk'
+function requireType(type) {
+  if (!MODE_RULES[type]) throw new Error('Unknown workout mode: ' + type)
+  return type
+}
+
+function ruleFor(type) {
+  return MODE_RULES[requireType(type)]
 }
 
 function updateRunning(session, now) {
@@ -67,31 +72,37 @@ function rawRecord(session, endTime) {
 }
 
 export default {
+  getSupportedTypes: function () {
+    return supportedTypes()
+  },
+
   getActive: function () {
     return clone(activeSession)
   },
 
   restore: function (session) {
-    activeSession = session && session.id ? clone(session) : null
-    if (activeSession) {
-      if (activeSession.heartSource === 'official') {
-        if (activeSession.currentHeartRate === undefined) activeSession.currentHeartRate = null
-        activeSession.heartTotal = Number(activeSession.heartTotal) || 0
-        activeSession.heartSamples = Number(activeSession.heartSamples) || 0
-      } else {
-        activeSession.currentHeartRate = null
-        activeSession.heartTotal = 0
-        activeSession.heartSamples = 0
-        activeSession.heartSource = null
-      }
-      updateRunning(activeSession)
+    if (!session || !session.id || !MODE_RULES[session.type]) {
+      activeSession = null
+      return null
     }
+    activeSession = clone(session)
+    if (activeSession.heartSource === 'official') {
+      if (activeSession.currentHeartRate === undefined) activeSession.currentHeartRate = null
+      activeSession.heartTotal = Number(activeSession.heartTotal) || 0
+      activeSession.heartSamples = Number(activeSession.heartSamples) || 0
+    } else {
+      activeSession.currentHeartRate = null
+      activeSession.heartTotal = 0
+      activeSession.heartSamples = 0
+      activeSession.heartSource = null
+    }
+    updateRunning(activeSession)
     return clone(activeSession)
   },
 
   start: function (type, now) {
     var startedAt = now || Date.now()
-    var normalized = normalizeType(type)
+    var normalized = requireType(type)
     activeSession = {
       id: 'workout_' + startedAt,
       type: normalized,
