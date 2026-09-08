@@ -7,9 +7,9 @@ export function createBrightnessController(onChange) {
   function snapshot() {
     return {
       brightnessValue: state.brightnessValue,
-      autoBrightness: !!state.autoBrightness,
-      raiseWakeEnabled: state.raiseWakeEnabled !== false,
-      lowPowerEnabled: state.lowPowerEnabled !== false
+      autoBrightness: state.autoBrightness,
+      raiseWakeEnabled: state.raiseWakeEnabled,
+      lowPowerEnabled: state.lowPowerEnabled
     }
   }
 
@@ -29,9 +29,9 @@ export function createBrightnessController(onChange) {
     refresh: emit,
     setBrightness: function (value) {
       if (state.autoBrightness) return emit()
-      var next = settingsStore.brightness(value)
-      displayPower.setBrightness(next)
-      return commit('brightnessValue', next)
+      state = settingsStore.update('brightnessValue', value)
+      displayPower.setBrightness(state.brightnessValue)
+      return emit()
     },
     toggleAuto: function () {
       var next = !state.autoBrightness
