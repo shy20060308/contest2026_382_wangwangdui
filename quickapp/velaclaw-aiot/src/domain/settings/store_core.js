@@ -47,10 +47,14 @@ function canonicalValue(key, value) {
 }
 
 function mergeStored(stored) {
-  var next = copy(DEFAULTS)
-  if (!stored) return next
+  if (stored === null || stored === undefined) return copy(DEFAULTS)
   if (typeof stored !== 'object' || Array.isArray(stored)) throw new Error('Invalid stored Settings state')
-  for (var key in stored) next[requireKey(key)] = canonicalValue(key, stored[key])
+  var next = {}
+  for (var storedKey in stored) requireKey(storedKey)
+  for (var key in DEFAULTS) {
+    if (!Object.prototype.hasOwnProperty.call(stored, key)) throw new Error('Incomplete stored Settings state: ' + key)
+    next[key] = canonicalValue(key, stored[key])
+  }
   return next
 }
 
