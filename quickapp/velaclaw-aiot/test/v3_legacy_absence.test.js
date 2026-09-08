@@ -48,6 +48,8 @@ assert.strictEqual(exists('src/v2/design/specs'), false, 'V3 must not restore De
 assert.strictEqual(exists('src/v2/design/views'), false, 'V3 must not restore Design View compatibility code')
 assert.strictEqual(exists('src/v2/design/geometry.js'), false, 'V3 must not restore the retired geometry solver')
 assert.strictEqual(exists('src/v2/design/freedom.js'), false, 'V3 design difference levels must not restore the retired freedom compatibility system')
+assert.strictEqual(exists('src/v2/system/haptics.js'), false, 'Haptics orchestration belongs to src/runtime/haptics')
+assert.strictEqual(exists('src/v2/system/haptics_core.js'), false, 'Haptics core belongs to src/runtime/haptics/core')
 
 const commonLogic = filesUnder('src/common', /\.(?:js|ux)$/, [])
 assert.deepStrictEqual(commonLogic, [], 'src/common is a static-resource namespace only; runtime logic belongs to Capability/Domain/Feature/Design/App')
@@ -67,6 +69,16 @@ filesUnder('src/v2/design', /\.(?:js|ux)$/, []).forEach(function (file) {
   assert.ok(!source.includes('adaptive-geometry'), file + ' must not restore the retired adaptive geometry strategy')
 })
 
+const deviceProfile = read('src/v2/system/device_profile.js')
+assert.ok(!deviceProfile.includes('isBetaPillViewport'), 'Device Profile must not restore beta-emulator viewport compatibility state')
+assert.ok(!deviceProfile.includes("|| 'pill-shaped'"), 'Device Profile must not default an unknown device to Pill')
+assert.ok(!deviceProfile.includes('width = 192; height = 490'), 'Device Profile must not fabricate Band dimensions')
+const pageRuntime = read('src/v2/app/page_runtime.js')
+assert.ok(!pageRuntime.includes('betaPill'), 'Page Runtime must not restore beta-pill viewport compatibility branches')
+const sceneRuntime = read('src/v2/design/scene.js')
+assert.ok(!sceneRuntime.includes("? String(profile.formFactor) : 'rect'"), 'Scene must not default an unknown profile to Rect')
+assert.ok(!sceneRuntime.includes('hostScene || resolve(profile)'), 'Scene safe projection must require the already-resolved Host Scene')
+
 filesUnder('test', /\.test\.js$/, []).forEach(function (file) {
   const source = read(file)
   assert.ok(!source.includes('src/common/'), file + ' must not validate retired common logic')
@@ -76,4 +88,4 @@ filesUnder('test', /\.test\.js$/, []).forEach(function (file) {
   assert.ok(!source.includes('design/specs/'), file + ' must not validate retired Design Specs')
 })
 
-console.log('V3 legacy absence verified: no compatibility runtime, aliases, freedom metadata or legacy test contracts')
+console.log('V3 legacy absence verified: no compatibility runtime, aliases, device fallbacks, freedom metadata or legacy test contracts')
