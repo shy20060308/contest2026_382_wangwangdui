@@ -13,18 +13,18 @@ var APPS = {
   today: { label: '今日日历', icon: '/common/icons/calendar.jpg', accent: '#30D158' }
 }
 
-function softIcon(path) { return String(path || '').replace('/common/icons/', '/common/icons/soft/') }
+function softIcon(path) { return String(path).replace('/common/icons/', '/common/icons/soft/') }
 
 function get(id) {
   var source = APPS[id]
-  if (!source) return { id: id, label: id || '', icon: '', softIcon: '', accent: '#8E8E93' }
+  if (!source) throw new Error('Unknown V3 launcher app: ' + id)
   return { id: id, label: source.label, icon: source.icon, softIcon: softIcon(source.icon), accent: source.accent }
 }
 
 function list(ids) {
-  var source = Array.isArray(ids) ? ids : []
+  if (!Array.isArray(ids) || !ids.length) throw new Error('Launcher catalog requires explicit appIds')
   var result = []
-  for (var i = 0; i < source.length; i++) result.push(get(source[i]))
+  for (var i = 0; i < ids.length; i++) result.push(get(ids[i]))
   return result
 }
 
