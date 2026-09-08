@@ -9,7 +9,7 @@ var AUTO_DISMISS_MS = 10000
 var HANGUP_DELAY_MS = 400
 var HAPTIC_OWNER = 'notification'
 
-function normalizeExternal(value) {
+function externalPayload(value) {
   var source = value
   if (value && value.params) source = value.params
   else if (value && value.options && value.options.params) source = value.options.params
@@ -17,7 +17,7 @@ function normalizeExternal(value) {
   if (typeof source === 'string') {
     try { source = JSON.parse(source) } catch (error) { source = { content: source } }
   }
-  return notificationFactory.normalize(source || {})
+  return source || {}
 }
 
 export function createNotificationController(onChange) {
@@ -58,16 +58,15 @@ export function createNotificationController(onChange) {
   }
 
   function show(payload) {
-    var next = notificationFactory.normalize(payload)
     clearTimers()
-    state = next
+    state = notificationFactory.normalize(payload)
     state.visible = true
     vibrate()
     emit()
     dismissTimer = setTimeout(dismiss, AUTO_DISMISS_MS)
   }
 
-  function onExternal(value) { show(normalizeExternal(value)) }
+  function onExternal(value) { show(externalPayload(value)) }
 
   return {
     start: function () {
