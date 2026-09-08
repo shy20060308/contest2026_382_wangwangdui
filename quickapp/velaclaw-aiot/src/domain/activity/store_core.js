@@ -111,9 +111,7 @@ function createStore(repository, defaults) {
   function startHydrate() {
     if (hydrated || loading) return
     loading = true
-    var syncValue = repository.loadSync ? repository.loadSync() : null
-    if (syncValue) mergePersisted(syncValue)
-    repository.load(function (persisted) { finishHydrate(persisted) })
+    repository.load(finishHydrate)
   }
 
   return {
