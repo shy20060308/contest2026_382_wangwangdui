@@ -53,7 +53,9 @@ function inside(target, parent) {
   ['src/v2/design/freedom.js', 'freedom compatibility system'],
   ['src/v2/features/sync/mock_transport.js', 'mock sync transport'],
   ['src/pages/index', 'sample index page'],
-  ['src/pages/detail', 'sample detail page']
+  ['src/pages/detail', 'sample detail page'],
+  [path.join('src', 'common', 'icons', 'soft'), 'soft launcher icon variants'],
+  ['scripts/render-soft-icons.py', 'soft icon renderer']
 ].forEach(function (entry) {
   assert.strictEqual(exists(entry[0]), false, 'V3 must not restore retired ' + entry[1])
 })
@@ -66,6 +68,7 @@ filesUnder('src', /\.(?:js|ux)$/, []).forEach(function (file) {
   assert.ok(!source.includes('v2/app/'), file + ' must not depend on retired v2/app code')
   assert.ok(!source.includes('/design/specs/') && !source.includes('/design/views/'), file + ' must not consume retired Design Specs/Views')
   assert.ok(!source.includes('../presentation/') && !source.includes('/presentation/'), file + ' must not depend on retired presentation code')
+  assert.ok(!source.includes('soft' + 'Icon'), file + ' must not restore the retired soft launcher icon strategy')
   relativeDependencies(source).forEach(function (dependency) {
     const resolved = path.resolve(path.dirname(path.join(root, file)), dependency)
     assert.ok(!inside(resolved, commonRoot), file + ' must not depend on legacy src/common logic: ' + dependency)
@@ -96,6 +99,8 @@ assert.ok(!sceneRuntime.includes('shapeOf('), 'Scene must trust the validated De
 assert.ok(!sceneRuntime.includes('hostScene || resolve(profile)'), 'Scene safe projection must use the resolved Host Scene')
 const adapter = read('src/v2/design/adapter.js')
 assert.ok(!adapter.includes('function shapeOf('), 'Adapter must not duplicate Device Profile shape validation')
+const packageSource = read('package.json')
+assert.ok(!packageSource.includes('render-' + 'soft-icons'), 'tooling must not regenerate retired soft launcher icons')
 
 filesUnder('test', /\.test\.js$/, []).forEach(function (file) {
   const source = read(file)
