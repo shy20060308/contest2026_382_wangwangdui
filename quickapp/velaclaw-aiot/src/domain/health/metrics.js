@@ -1,3 +1,15 @@
+function isHeartRate(value) {
+  return typeof value === 'number' && isFinite(value) && value > 0
+}
+
+function isSpo2(value) {
+  return typeof value === 'number' && isFinite(value) && value > 0 && value <= 100
+}
+
+function isStress(value) {
+  return typeof value === 'number' && isFinite(value) && value >= 0 && value <= 100
+}
+
 function classifyHeartRate(value) {
   if (value < 60) return 'rest'
   if (value < 100) return 'normal'
@@ -32,6 +44,9 @@ function stats(values) {
 }
 
 module.exports = {
+  isHeartRate: isHeartRate,
+  isSpo2: isSpo2,
+  isStress: isStress,
   classifyHeartRate: classifyHeartRate,
   classifyStress: classifyStress,
   pushWindow: pushWindow,
