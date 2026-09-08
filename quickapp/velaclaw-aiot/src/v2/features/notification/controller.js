@@ -23,6 +23,9 @@ function externalPayload(value) {
 export function createNotificationController(onChange) {
   var state = { visible: false, type: '', appName: '', appIcon: '', content: '', contact: '', phone: '', hangUp: false }
   var started = false
+  var settingsReady = false
+  var externalRegistered = false
+  var lifecycleGeneration = 0
   var dismissTimer = null
   var hangTimer = null
 
@@ -43,7 +46,22 @@ export function createNotificationController(onChange) {
     hangTimer = null
   }
 
+  function registerExternal() {
+    if (externalRegistered) return
+    systemEvent.subscribe(EVENT_NAME, onExternal)
+    interconnect.subscribe(onExternal)
+    externalRegistered = true
+  }
+
+  function unregisterExternal() {
+    if (!externalRegistered) return
+    systemEvent.unsubscribe(EVENT_NAME, onExternal)
+    interconnect.unsubscribe(onExternal)
+    externalRegistered = false
+  }
+
   function vibrate() {
+    if (!settingsReady) return false
     var settings = settingsStore.getSnapshot()
     if (!settings.vibrationEnabled) return false
     return haptics.play(settings.vibrationPattern, settings.vibrationLevel, HAPTIC_OWNER)
@@ -72,15 +90,20 @@ export function createNotificationController(onChange) {
     start: function () {
       if (started) return
       started = true
-      settingsStore.load(function () {})
-      systemEvent.subscribe(EVENT_NAME, onExternal)
-      interconnect.subscribe(onExternal)
+      settingsReady = false
+      var generation = ++lifecycleGeneration
+      settingsStore.load(function () {
+        if (!started || generation !== lifecycleGeneration) return
+        settingsReady = true
+        registerExternal()
+      })
     },
     stop: function () {
       if (!started) return
       started = false
-      systemEvent.unsubscribe(EVENT_NAME, onExternal)
-      interconnect.unsubscribe(onExternal)
+      settingsReady = false
+      lifecycleGeneration++
+      unregisterExternal()
       dismiss()
     },
     show: show,
