@@ -3,11 +3,11 @@ import storage from '@system.storage'
 var memoryCache = {}
 var operationQueues = {}
 
-function safeJsonParse(value, fallback) {
+function parseJson(key, value) {
   try {
     return JSON.parse(value)
   } catch (error) {
-    return fallback !== undefined ? fallback : null
+    throw new Error('Invalid persisted JSON for ' + key)
   }
 }
 
@@ -95,11 +95,11 @@ var adapter = {
 
   getJSON: function (key, callback, fallback) {
     this.get(key, function (value) {
-      if (!value || value === '') {
+      if (value === '' || value === undefined || value === null) {
         callback(fallback !== undefined ? fallback : null)
         return
       }
-      callback(safeJsonParse(value, fallback))
+      callback(parseJson(key, value))
     })
   },
 
