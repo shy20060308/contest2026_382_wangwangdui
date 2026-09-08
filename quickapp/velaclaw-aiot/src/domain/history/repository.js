@@ -16,32 +16,38 @@ function clone(value) {
   return value ? JSON.parse(JSON.stringify(value)) : value
 }
 
-function finiteNumber(value, fallback) {
-  var number = Number(value)
-  return isFinite(number) ? number : fallback
+function requireInteger(name, value, min, max) {
+  if (typeof value !== 'number' || !isFinite(value) || Math.round(value) !== value || value < min || (max !== undefined && value > max)) {
+    throw new Error('Invalid V3 history field: ' + name)
+  }
+  return value
 }
 
-function normalizeRecord(record) {
-  if (!record || !record.date) return null
+function requireHeartRate(name, value) {
+  if (value === null) return null
+  if (typeof value !== 'number' || !isFinite(value) || value <= 0) throw new Error('Invalid V3 history field: ' + name)
+  return value
+}
+
+function requireRecord(record) {
+  if (!record || typeof record !== 'object' || Array.isArray(record)) throw new Error('Invalid V3 history record')
+  if (typeof record.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(record.date)) throw new Error('Invalid V3 history field: date')
   return {
-    date: String(record.date),
-    steps: Math.max(0, Math.round(finiteNumber(record.steps, 0))),
-    calories: Math.max(0, Math.round(finiteNumber(record.calories, 0))),
-    standHours: Math.max(0, Math.round(finiteNumber(record.standHours, 0))),
-    avgHeartRate: finiteNumber(record.avgHeartRate, null),
-    minHeartRate: finiteNumber(record.minHeartRate, null),
-    maxHeartRate: finiteNumber(record.maxHeartRate, null),
-    goalPercent: Math.max(0, Math.min(100, Math.round(finiteNumber(record.goalPercent, 0))))
+    date: record.date,
+    steps: requireInteger('steps', record.steps, 0),
+    calories: requireInteger('calories', record.calories, 0),
+    standHours: requireInteger('standHours', record.standHours, 0),
+    avgHeartRate: requireHeartRate('avgHeartRate', record.avgHeartRate),
+    minHeartRate: requireHeartRate('minHeartRate', record.minHeartRate),
+    maxHeartRate: requireHeartRate('maxHeartRate', record.maxHeartRate),
+    goalPercent: requireInteger('goalPercent', record.goalPercent, 0, 100)
   }
 }
 
-function normalizeHistory(stored) {
-  var source = Array.isArray(stored) ? stored : []
+function requireHistory(stored) {
+  if (!Array.isArray(stored)) throw new Error('V3 history persistence must be an array')
   var result = []
-  for (var i = 0; i < source.length; i++) {
-    var record = normalizeRecord(source[i])
-    if (record) result.push(record)
-  }
+  for (var i = 0; i < stored.length; i++) result.push(requireRecord(stored[i]))
   result.sort(function (a, b) { return a.date > b.date ? 1 : (a.date < b.date ? -1 : 0) })
   while (result.length > HISTORY_DAYS) result.shift()
   return result
@@ -62,7 +68,7 @@ function todayRecord(activity) {
 }
 
 function upsertToday(history, activitySnapshot) {
-  var source = normalizeHistory(history)
+  var source = requireHistory(history)
   var key = dateKey(new Date())
   var merged = []
   for (var i = 0; i < source.length; i++) if (source[i].date !== key) merged.push(source[i])
@@ -74,7 +80,7 @@ function upsertToday(history, activitySnapshot) {
 
 function loadHistory(callback) {
   storage.getJSON(HISTORY_KEY, function (stored) {
-    if (callback) callback(clone(normalizeHistory(stored)))
+    if (callback) callback(clone(requireHistory(stored)))
   }, [])
 }
 
