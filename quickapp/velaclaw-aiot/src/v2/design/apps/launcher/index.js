@@ -8,17 +8,18 @@ function resolveBand(profile, scene, safe, spec) {
   if (!spec) return null
   var copy = adapter.merge({}, spec)
   if (copy.bottomInset !== undefined) {
-    if (copy.height === undefined) copy.height = safe.height - Number(copy.top) - Number(copy.bottomInset)
+    if (copy.height === undefined) copy.height = safe.height - copy.top - copy.bottomInset
     copy.absoluteTop = true
-    copy.top = safe.bottom - Number(copy.bottomInset) - Number(copy.height)
+    copy.top = safe.bottom - copy.bottomInset - copy.height
   }
   return adapter.placeBand(profile, scene, safe, copy)
 }
 
 function resolve(profile, scene, safe) {
   var config = adapter.select(layout, profile)
+  if (!Array.isArray(config.appIds) || !config.appIds.length) throw new Error('Launcher Recipe requires appIds')
   var plan = adapter.createPlan(profile, scene, safe, difference.L3, config.surface)
-  plan.appIds = (config.appIds || []).slice()
+  plan.appIds = config.appIds.slice()
   plan.pageSize = config.pageSize
   if (config.frame === 'scene') plan.frame = adapter.region(0, 0, scene.width, scene.height)
   if (config.header) plan.header = resolveBand(profile, scene, safe, config.header)
@@ -26,7 +27,7 @@ function resolve(profile, scene, safe) {
   if (config.pager) {
     var pagerSpec = adapter.merge({}, config.pager)
     pagerSpec.absoluteTop = true
-    pagerSpec.top = safe.bottom - Number(pagerSpec.bottomInset)
+    pagerSpec.top = safe.bottom - pagerSpec.bottomInset
     plan.pager = adapter.placeBand(profile, scene, safe, pagerSpec)
   }
   plan.columns = config.columns
@@ -39,7 +40,7 @@ function resolve(profile, scene, safe) {
   plan.nameSize = config.nameSize
   plan.arrowSize = config.arrowSize
   plan.iconSize = config.iconSize
-  plan.iconRadius = Math.round(Number(config.iconSize) / 2)
+  plan.iconRadius = Math.round(config.iconSize / 2)
   plan.itemRadius = config.itemRadius
   plan.listChrome = adapter.merge({}, config.listChrome)
   plan.gridChrome = adapter.merge({}, config.gridChrome)
