@@ -43,7 +43,7 @@ import pager from '../../v2/design/pager'
 
 export default {
   private: {
-    ready: false, layout: {}, faces: [], visibleFaces: [], rectFaces: [], selectedIndex: 0, selectedName: '活力数字', selectedAccent: '#0A84FF', previewName: '活力数字', pageIndex: 0, pageText: '1 / 1', pageSize: 0,
+    ready: false, layout: {}, faces: [], visibleFaces: [], rectFaces: [], selectedIndex: 0, selectedName: '', selectedAccent: '', previewName: '', pageIndex: 0, pageText: '', pageSize: 0,
     sceneWidth: 0, sceneHeight: 0, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
   },
   onInit() {
