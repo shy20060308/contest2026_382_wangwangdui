@@ -22,4 +22,4 @@ npm run check
 echo "[vela_band] Building JSC-enabled RPK..."
 npm run build
 
-echo "[vela_band] Build complete: dist/com.application.watch.demo.debug.1.0.0.rpk"
+echo "[vela_band] Build complete. See dist/ for the toolkit-produced RPK."
