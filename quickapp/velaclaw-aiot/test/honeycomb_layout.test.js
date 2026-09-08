@@ -1,5 +1,6 @@
 const assert = require('assert')
 const honeycomb = require('../src/v2/design/engines/honeycomb')
+const launcherLayout = require('../src/v2/design/apps/launcher/layout')
 
 let passed = 0
 function test(name, callback) { callback(); passed++; console.log('通过 - ' + name) }
@@ -11,13 +12,21 @@ function fitsInCircle(left, top, width, height) {
 
 const coords = honeycomb.buildCoords(37)
 
-test('动态 hex ring 按 1/7/19/37 容量扩展且坐标唯一', function () {
+test('动态 hex ring 按 0/1/7/19/37 容量扩展且坐标唯一', function () {
+  assert.strictEqual(honeycomb.buildCoords(0).length, 0)
   assert.strictEqual(honeycomb.buildCoords(1).length, 1)
   assert.strictEqual(honeycomb.buildCoords(7).length, 7)
   assert.strictEqual(honeycomb.buildCoords(19).length, 19)
   assert.strictEqual(coords.length, 37)
   const keys = coords.map(function (point) { return point.q + ':' + point.r })
   assert.strictEqual(new Set(keys).size, 37)
+})
+
+test('Honeycomb 不修复非 canonical 输入', function () {
+  assert.throws(function () { honeycomb.buildCoords('19') }, /non-negative integer count/)
+  assert.throws(function () { honeycomb.buildSlots(null) }, /apps array/)
+  assert.throws(function () { honeycomb.clampPan([], '0', 0, 0) }, /numeric panX/)
+  assert.throws(function () { honeycomb.nextPan([], 0, 0, '4', 2) }, /numeric deltaX/)
 })
 
 test('中心格恰好有六个等距邻居', function () {
@@ -39,7 +48,7 @@ test('动态晶格最近邻间距保持 SPACING', function () {
 
 test('12 个应用不再复用第一个坐标', function () {
   const apps = []
-  for (let i = 0; i < 12; i++) apps.push({ id: 'app-' + i, label: 'App ' + i, icon: '/' + i + '.png', softIcon: '/' + i + '-soft.png' })
+  for (let i = 0; i < 12; i++) apps.push({ id: 'app-' + i, label: 'App ' + i, icon: '/' + i + '.png' })
   const slots = honeycomb.buildSlots(apps)
   const keys = slots.map(function (slot) { return slot.gridX + ':' + slot.gridY })
   assert.strictEqual(slots.length, 12)
@@ -58,19 +67,19 @@ test('聚焦时图标保持间隙并明显大于邻居', function () {
   }
 })
 
-test('槽位只保留渲染与语义字段，不携带路由', function () {
-  const slots = honeycomb.buildSlots([{ id: 'a', label: 'A', icon: '/a.png', softIcon: '/a-soft.png' }, { id: 'b', label: 'B', icon: '/b.png', softIcon: '/b-soft.png' }])
+test('槽位只保留渲染与语义字段，不携带路由或退休 softIcon', function () {
+  const slots = honeycomb.buildSlots([{ id: 'a', label: 'A', icon: '/a.png' }, { id: 'b', label: 'B', icon: '/b.png' }])
   assert.strictEqual(slots.length, 2)
   assert.strictEqual(slots[0].id, 'a')
   assert.strictEqual(slots[0].route, undefined)
   assert.strictEqual(slots[0].normalIcon, '/a.png')
-  assert.strictEqual(slots[0].softIcon, '/a-soft.png')
+  assert.strictEqual(slots[0].softIcon, undefined)
   assert.strictEqual(slots[0].gridX, honeycomb.FOCUS_X)
   assert.strictEqual(slots[0].gridY, honeycomb.FOCUS_Y)
 })
 
 test('移动期间图标 src 保持稳定，由尺寸和透明度表达焦点', function () {
-  const slots = honeycomb.buildSlots([{ id: 'a', label: 'A', icon: '/a.png', softIcon: '/a-soft.png' }, { id: 'b', label: 'B', icon: '/b.png', softIcon: '/b-soft.png' }])
+  const slots = honeycomb.buildSlots([{ id: 'a', label: 'A', icon: '/a.png' }, { id: 'b', label: 'B', icon: '/b.png' }])
   const centered = honeycomb.layoutSlots(slots, 0, 0, 0, 0)
   const shifted = honeycomb.layoutSlots(slots, -80, -80, 0, 0)
   assert.strictEqual(centered.slots[0].icon, '/a.png')
@@ -131,6 +140,9 @@ test('焦点图标完整落在圆屏可视范围内', function () {
   })
 })
 
-test('精简后的名称条仍位于圆屏安全区域', function () { assert.strictEqual(fitsInCircle(54, 159, 84, 18), true) })
+test('Launcher Recipe 名称条位于圆屏安全区域', function () {
+  const label = launcherLayout.circle.honeycomb.label
+  assert.strictEqual(fitsInCircle(label.left, label.top, label.width, label.height), true)
+})
 
-console.log('V2 圆屏蜂巢布局测试通过：' + passed + ' 项')
+console.log('V3 圆屏蜂巢布局测试通过：' + passed + ' 项')
