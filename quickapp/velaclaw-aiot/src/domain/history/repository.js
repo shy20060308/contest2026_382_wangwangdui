@@ -54,7 +54,6 @@ function requireHistory(stored) {
 }
 
 function todayRecord(activity) {
-  if (!activity) throw new Error('History saveToday requires canonical Activity snapshot')
   return {
     date: dateKey(new Date()),
     steps: activity.steps,
