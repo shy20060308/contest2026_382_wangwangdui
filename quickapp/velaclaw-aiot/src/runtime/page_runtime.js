@@ -17,11 +17,6 @@ function bind(page, callback) {
 
     page.sceneWidth = host.width
     page.sceneHeight = host.height
-    page.sceneShape = host.shape
-    page.sceneSafeLeft = safe.left
-    page.sceneSafeTop = safe.top
-    page.sceneSafeBottom = safe.bottom
-    page.sceneSafeHeight = safe.height
 
     callback(profile, host, safe)
   })
