@@ -6,14 +6,13 @@ function bind(page, callback) {
   deviceProfile.resolve(page, function (profile) {
     var host = scene.resolve(profile)
     var safe = scene.safe(profile, host)
-    var betaPill = !!(profile && profile.isBetaPillViewport)
 
-    page.viewportClass = betaPill ? 'beta-pill-viewport-' + profile.screenWidth : ''
-    page.viewportPosition = betaPill ? 'absolute' : 'relative'
+    page.viewportClass = ''
+    page.viewportPosition = 'relative'
     page.viewportLeft = '0px'
     page.viewportTop = '0px'
-    page.viewportWidth = betaPill ? host.width + 'px' : '100%'
-    page.viewportHeight = betaPill ? host.height + 'px' : '100%'
+    page.viewportWidth = '100%'
+    page.viewportHeight = '100%'
 
     page.sceneWidth = host.width
     page.sceneHeight = host.height
