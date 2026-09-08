@@ -45,11 +45,7 @@ function stopNative() {
 }
 
 function startNative(interval) {
-  if (consumers.length === 0) return false
-  if (!sensor || !sensor.subscribeAccelerometer) {
-    emitError('unavailable')
-    return false
-  }
+  if (consumers.length === 0 || !sensor || !sensor.subscribeAccelerometer) return false
   try {
     active = true
     activeInterval = interval
@@ -66,7 +62,6 @@ function startNative(interval) {
   } catch (error) {
     active = false
     activeInterval = ''
-    emitError('exception')
     return false
   }
 }
@@ -82,6 +77,12 @@ function reconcile() {
   return startNative(interval)
 }
 
+function removeConsumer(listener) {
+  var next = []
+  for (var i = 0; i < consumers.length; i++) if (consumers[i].listener !== listener) next.push(consumers[i])
+  consumers = next
+}
+
 export default {
   subscribe: function (listener, options) {
     if (typeof listener !== 'function') return false
@@ -89,18 +90,25 @@ export default {
     var fail = options && options.fail
     for (var i = 0; i < consumers.length; i++) {
       if (consumers[i].listener === listener) {
+        var previousInterval = consumers[i].interval
+        var previousFail = consumers[i].fail
         consumers[i].interval = interval
         consumers[i].fail = fail
-        return reconcile()
+        if (reconcile()) return true
+        consumers[i].interval = previousInterval
+        consumers[i].fail = previousFail
+        reconcile()
+        return false
       }
     }
     consumers.push({ listener: listener, interval: interval, fail: fail })
-    return reconcile()
+    if (reconcile()) return true
+    removeConsumer(listener)
+    reconcile()
+    return false
   },
   unsubscribe: function (listener) {
-    var next = []
-    for (var i = 0; i < consumers.length; i++) if (consumers[i].listener !== listener) next.push(consumers[i])
-    consumers = next
+    removeConsumer(listener)
     reconcile()
   },
   isAvailable: function () { return !!(sensor && sensor.subscribeAccelerometer) }
