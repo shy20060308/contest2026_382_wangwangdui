@@ -1,7 +1,7 @@
 var visuals = require('../../watchface_catalog')
 
 function decorate(face, selectedId) {
-  var style = visuals.get(face && face.id)
+  var style = visuals.get(face.id)
   return {
     id: face.id,
     name: face.name,
@@ -15,27 +15,26 @@ function decorate(face, selectedId) {
 }
 
 function project(state, gap) {
-  var source = state || { faces: [], selectedId: 'sport', selectedIndex: 0 }
   var faces = []
   var rectFaces = []
-  var gridGap = Number(gap)
-  for (var i = 0; i < source.faces.length; i++) {
-    var face = decorate(source.faces[i], source.selectedId)
+  for (var i = 0; i < state.faces.length; i++) {
+    var face = decorate(state.faces[i], state.selectedId)
     faces.push(face)
     var rect = {}
     for (var key in face) rect[key] = face[key]
-    rect.marginRight = i % 2 === 0 ? gridGap : 0
-    rect.marginBottom = i < 2 ? gridGap : 0
+    rect.marginRight = i % 2 === 0 ? gap : 0
+    rect.marginBottom = i < 2 ? gap : 0
     rectFaces.push(rect)
   }
-  var selected = faces[source.selectedIndex] || faces[0]
+  var selected = faces[state.selectedIndex]
+  if (!selected) throw new Error('Faces view requires canonical selectedIndex')
   return {
     faces: faces,
     rectFaces: rectFaces,
-    selectedIndex: selected ? Math.max(0, faces.indexOf(selected)) : 0,
-    selectedName: selected ? selected.name : '活力数字',
-    selectedAccent: selected ? selected.accent : visuals.get('sport').accent,
-    previewName: selected ? selected.name : '活力数字'
+    selectedIndex: state.selectedIndex,
+    selectedName: selected.name,
+    selectedAccent: selected.accent,
+    previewName: selected.name
   }
 }
 
