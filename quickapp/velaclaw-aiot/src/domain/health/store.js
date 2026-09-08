@@ -5,7 +5,6 @@ import stressCapability from '../../capabilities/stress'
 var listeners = []
 var active = { heartRate: false, spo2: false, stress: false }
 var lastObservedAt = { heartRate: 0, spo2: 0, stress: 0 }
-var latestState = null
 
 function requireMetrics(metrics) {
   if (!Array.isArray(metrics) || !metrics.length) throw new Error('Health Store requires explicit metrics')
@@ -57,7 +56,6 @@ function buildState(changedMetric) {
     stressChanged: false
   }
   if (changedMetric) state[changedMetric + 'Changed'] = didChange(changedMetric, state[changedMetric + 'UpdatedAt'])
-  latestState = state
   return state
 }
 
@@ -88,7 +86,7 @@ function subscribe(listener, metrics) {
   for (var i = 0; i < listeners.length; i++) if (listeners[i].listener === listener) return
   listeners.push({ listener: listener, metrics: requireMetrics(metrics) })
   reconcile()
-  listener(latestState || buildState())
+  listener(buildState())
 }
 
 function unsubscribe(listener) {
@@ -102,5 +100,5 @@ export default {
   subscribeHeartRate: function (listener) { subscribe(listener, ['heartRate']) },
   subscribeAll: function (listener) { subscribe(listener, ['heartRate', 'spo2', 'stress']) },
   unsubscribe: unsubscribe,
-  getSnapshot: function () { return latestState || buildState() }
+  getSnapshot: function () { return buildState() }
 }
