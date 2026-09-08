@@ -8,7 +8,7 @@
 
 1. 同一产品在 Pill / Circle / Rect 目标形态上可运行。
 2. 页面在 V3 Design Plan 解析完成前不渲染产品几何。
-3. Recipe 是静态视觉几何的唯一来源；UX、View 和 Resolver 不保存第二套默认布局。
+3. Recipe 是静态视觉几何的唯一来源；UX、View、Resolver 和 Product Engine 不保存第二套默认布局。
 4. 页面生命周期、Feature、Domain 和 Capability 的职责不因视觉适配重新混回 UX。
 5. 健康、运动、传感器和同步数据的真实性边界保持清晰，视觉层不得伪造业务样本。
 6. 同一个事实只在拥有它的边界校验/规范化一次；下游不得叠加防御性 normalize、clamp、缓存或 silent fallback。
@@ -26,8 +26,9 @@
 6. `src/runtime/device_profile.js`：设备形态、物理尺寸和声明式 safe insets。
 7. `src/v2/design/scene.js`：Host Scene 投影。
 8. `src/v2/design/apps/*`：产品 Recipe、Resolver 和 View。
-9. `src/pages/*` 与 `src/components/watchfaces/*`：最终渲染和事件绑定。
-10. `test/v3_architecture.test.js`、`test/v3_design.test.js` 和各 Domain/Runtime 测试：当前边界的可执行约束。
+9. `src/v2/design/engines/*`：只消费 resolved Plan 的产品数学/交互引擎。
+10. `src/pages/*` 与 `src/components/watchfaces/*`：最终渲染和事件绑定。
+11. `test/v3_architecture.test.js`、`test/v3_design.test.js` 和各 Domain/Runtime 测试：当前边界的可执行约束。
 
 `src/v2` 是当前 V3 中部分源码的历史路径名，不代表其中代码属于旧架构。`src/v2/app` 和 `src/v2/system` 已经退出；是否属于 legacy 应由职责和行为判断，而不是仅看目录名称。
 
@@ -45,6 +46,8 @@ Adapter translation
 App Resolver
     ↓
 Resolved Plan
+    ↓
+Optional Product Math Engine
     ↓
 UX / Watchface renderer
 ```
@@ -71,6 +74,12 @@ UX / Watchface renderer
 
 Resolver 只组合无法静态表达的区域关系。它不得用 `Math.min` / `Math.max` 修复 Recipe 几何，也不得因为设备空间不足偷偷改变设计意图。
 
+### Product Math Engine
+
+只有确实需要运行时数学或连续交互的产品才使用 `src/v2/design/engines/*`。Engine 必须由 resolved Recipe/Plan 配置，可以拥有纯几何算法、惯性、阻尼、overscroll、方向选择等交互物理，但不得拥有产品 focus 坐标、icon 基础尺寸/放大量、label 区域等静态视觉事实，也不得为缺失/错误 Recipe 输入发明默认值。
+
+当前 Circle Launcher 的 Honeycomb 是明确样例：`launcher/layout.js` 声明 focus、spacing、动态 icon 表达和 label 几何；Launcher Resolver 注入真实 Scene viewport；`honeycomb.create(plan.honeycomb)` 只把这些已决设计翻译成 hex 坐标、动态尺寸、遮让、pan bounds 和交互运动。
+
 ### View
 
 View 负责 canonical 业务数据到展示状态的映射，例如文案、颜色和真实样本的可视化映射。View 不应再次 `Number/isFinite` 已由 Capability/Domain 规范的数据，也不得用 0、空字符串等二次编码代替 `null/unavailable`。
@@ -89,7 +98,7 @@ Business state   -> Domain validate/transition once
 Lifecycle flow   -> Feature orchestrate
 Physical device  -> Device Profile validate once
 Design intent    -> Recipe
-Design math      -> Adapter/Resolver translate
+Design math      -> Adapter/Resolver/Recipe-bound Engine translate
 Presentation     -> View/UX format
 ```
 
@@ -144,7 +153,7 @@ Settings Domain 使用干净 V3 persistence，并是 brightness、haptic setting
 
 ## 修改检查清单
 
-改 UI 前确认：这个值属于静态视觉、动态数据还是交互状态；静态视觉是否进入 App Recipe；Resolver 是否只组合；View 是否只处理展示；UX CSS 是否重新拥有固定几何；子组件是否绕过父 plan。
+改 UI 前确认：这个值属于静态视觉、动态数据还是交互状态；静态视觉是否进入 App Recipe；Resolver 是否只组合；Product Engine 是否只消费 resolved Plan；View 是否只处理展示；UX CSS 是否重新拥有固定几何；子组件是否绕过父 plan。
 
 改业务前确认：校验是否已经在上游 owner 做过；是否新增了第二份默认值/缓存/normalize；页面销毁后 timer、sensor、health、location 和事件订阅是否释放；数据降级是否明确而不是伪造。
 
