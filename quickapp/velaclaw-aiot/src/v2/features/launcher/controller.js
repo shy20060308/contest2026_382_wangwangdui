@@ -6,6 +6,11 @@ function pageCapacity(value) {
   return size
 }
 
+function requireAppIds(ids) {
+  if (!Array.isArray(ids) || !ids.length) throw new Error('Launcher controller requires Recipe appIds')
+  return ids.slice()
+}
+
 export function createLauncherController(onChange) {
   var all = []
   var pageIndex = 0
@@ -35,7 +40,7 @@ export function createLauncherController(onChange) {
 
   return {
     configure: function (ids, size) {
-      all = Array.isArray(ids) ? ids.slice() : []
+      all = requireAppIds(ids)
       pageSize = pageCapacity(size)
       pageIndex = 0
       return emit()
