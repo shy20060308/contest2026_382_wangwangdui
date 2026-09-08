@@ -1,6 +1,3 @@
 import createHealthChannel from './internal/health_channel'
 
-export default createHealthChannel({
-  dataTypeName: 'STRESS',
-  fallbackDataType: 9
-})
+export default createHealthChannel({ dataTypeName: 'STRESS' })
