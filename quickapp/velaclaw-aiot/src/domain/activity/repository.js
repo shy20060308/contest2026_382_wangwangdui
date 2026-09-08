@@ -46,16 +46,6 @@ export default {
     }, null)
   },
 
-  loadSync: function () {
-    var raw = storage.getSync(ACTIVITY_KEY)
-    if (!raw) return null
-    try {
-      return normalize(JSON.parse(raw))
-    } catch (error) {
-      return null
-    }
-  },
-
   save: function (snapshot, callback) {
     storage.set(ACTIVITY_KEY, payload(snapshot), function (result) {
       if (callback) callback(clone(snapshot), result)
