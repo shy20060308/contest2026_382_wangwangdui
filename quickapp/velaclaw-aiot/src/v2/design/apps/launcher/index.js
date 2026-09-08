@@ -45,7 +45,8 @@ function resolve(profile, scene, safe) {
   plan.listChrome = adapter.merge({}, config.listChrome)
   plan.gridChrome = adapter.merge({}, config.gridChrome)
   plan.pagerChrome = adapter.merge({}, config.pagerChrome)
-  plan.honeycomb = adapter.merge({}, config.honeycomb)
+  plan.honeycomb = config.honeycomb ? adapter.merge({}, config.honeycomb) : null
+  if (plan.honeycomb) plan.honeycomb.viewport = { width: scene.width, height: scene.height }
   return plan
 }
 
