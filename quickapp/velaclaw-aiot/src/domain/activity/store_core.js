@@ -1,9 +1,9 @@
 var DEFAULT_STATE = {
-  steps: 4567,
+  steps: 0,
   stepsGoal: 6000,
-  calories: 180,
+  calories: 0,
   caloriesGoal: 300,
-  standHours: 8,
+  standHours: 0,
   standGoal: 12
 }
 
