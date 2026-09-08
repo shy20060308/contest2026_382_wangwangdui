@@ -55,7 +55,9 @@ function inside(target, parent) {
   ['src/pages/index', 'sample index page'],
   ['src/pages/detail', 'sample detail page'],
   [path.join('src', 'common', 'icons', 'soft'), 'soft launcher icon variants'],
-  ['scripts/render-soft-icons.py', 'soft icon renderer']
+  ['scripts/render-soft-icons.py', 'soft icon renderer'],
+  ['husky.sh', 'inactive Husky setup'],
+  ['commitlint.config.js', 'inactive Commitlint config']
 ].forEach(function (entry) {
   assert.strictEqual(exists(entry[0]), false, 'V3 must not restore retired ' + entry[1])
 })
@@ -101,6 +103,8 @@ const adapter = read('src/v2/design/adapter.js')
 assert.ok(!adapter.includes('function shapeOf('), 'Adapter must not duplicate Device Profile shape validation')
 const packageSource = read('package.json')
 assert.ok(!packageSource.includes('render-' + 'soft-icons'), 'tooling must not regenerate retired soft launcher icons')
+assert.ok(!packageSource.includes('lint-' + 'staged'), 'package metadata must not restore inactive hook tooling')
+assert.ok(!packageSource.includes('commit' + 'lint'), 'package metadata must not restore inactive Commitlint tooling')
 
 filesUnder('test', /\.test\.js$/, []).forEach(function (file) {
   const source = read(file)
