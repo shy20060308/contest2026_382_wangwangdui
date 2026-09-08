@@ -44,12 +44,11 @@ function inside(target, parent) {
 
 assert.strictEqual(exists('src/platform'), false, 'V3 must consume capabilities directly; platform aliases are retired')
 assert.strictEqual(exists('src/presentation'), false, 'V3 must not restore the retired presentation runtime')
+assert.strictEqual(exists('src/v2/system'), false, 'V3 runtime ownership must not restore the retired v2/system namespace')
 assert.strictEqual(exists('src/v2/design/specs'), false, 'V3 must not restore Design Spec compatibility code')
 assert.strictEqual(exists('src/v2/design/views'), false, 'V3 must not restore Design View compatibility code')
 assert.strictEqual(exists('src/v2/design/geometry.js'), false, 'V3 must not restore the retired geometry solver')
 assert.strictEqual(exists('src/v2/design/freedom.js'), false, 'V3 design difference levels must not restore the retired freedom compatibility system')
-assert.strictEqual(exists('src/v2/system/haptics.js'), false, 'Haptics orchestration belongs to src/runtime/haptics')
-assert.strictEqual(exists('src/v2/system/haptics_core.js'), false, 'Haptics core belongs to src/runtime/haptics/core')
 
 const commonLogic = filesUnder('src/common', /\.(?:js|ux)$/, [])
 assert.deepStrictEqual(commonLogic, [], 'src/common is a static-resource namespace only; runtime logic belongs to Capability/Domain/Feature/Design/App')
@@ -74,7 +73,7 @@ filesUnder('src/v2/design/apps', /(?:^|_)layout\.js$/, []).forEach(function (fil
   assert.ok(!/^module\.exports\s*=\s*\{\s*\r?\n\s*level\s*:/m.test(source), file + ' must not duplicate resolver-owned differenceLevel in Recipe layout metadata')
 })
 
-const deviceProfile = read('src/v2/system/device_profile.js')
+const deviceProfile = read('src/runtime/device_profile.js')
 assert.ok(!deviceProfile.includes('isBetaPillViewport'), 'Device Profile must not restore beta-emulator viewport compatibility state')
 assert.ok(!deviceProfile.includes("|| 'pill-shaped'"), 'Device Profile must not default an unknown device to Pill')
 assert.ok(!deviceProfile.includes('width = 192; height = 490'), 'Device Profile must not fabricate Band dimensions')
@@ -93,4 +92,4 @@ filesUnder('test', /\.test\.js$/, []).forEach(function (file) {
   assert.ok(!source.includes('design/specs/'), file + ' must not validate retired Design Specs')
 })
 
-console.log('V3 legacy absence verified: no compatibility runtime, aliases, duplicate layout levels, device fallbacks or retired design metadata')
+console.log('V3 legacy absence verified: no compatibility runtime, v2 system namespace, duplicate layout levels or retired design metadata')
