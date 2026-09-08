@@ -7,12 +7,13 @@ var active = { heartRate: false, spo2: false, stress: false }
 var lastObservedAt = { heartRate: 0, spo2: 0, stress: 0 }
 var latestState = null
 
-function normalizeMetrics(metrics) {
-  var source = metrics && metrics.length ? metrics : ['heartRate']
+function requireMetrics(metrics) {
+  if (!Array.isArray(metrics) || !metrics.length) throw new Error('Health Store requires explicit metrics')
   var result = []
-  for (var i = 0; i < source.length; i++) {
-    var name = source[i]
-    if ((name === 'heartRate' || name === 'spo2' || name === 'stress') && result.indexOf(name) < 0) result.push(name)
+  for (var i = 0; i < metrics.length; i++) {
+    var name = metrics[i]
+    if (name !== 'heartRate' && name !== 'spo2' && name !== 'stress') throw new Error('Unknown health metric: ' + name)
+    if (result.indexOf(name) < 0) result.push(name)
   }
   return result
 }
@@ -23,9 +24,8 @@ function needsMetric(name) {
 }
 
 function didChange(name, updatedAt) {
-  var next = Number(updatedAt) || 0
-  if (next <= 0 || next === lastObservedAt[name]) return false
-  lastObservedAt[name] = next
+  if (updatedAt <= 0 || updatedAt === lastObservedAt[name]) return false
+  lastObservedAt[name] = updatedAt
   return true
 }
 
@@ -33,7 +33,6 @@ function buildState(changedMetric) {
   var heart = heartRateCapability.getSnapshot()
   var spo2 = bloodOxygenCapability.getSnapshot()
   var stress = stressCapability.getSnapshot()
-  var updatedAt = Math.max(heart.updatedAt || 0, spo2.updatedAt || 0, stress.updatedAt || 0)
   var state = {
     heartRate: heart.value,
     spo2: spo2.value,
@@ -41,18 +40,18 @@ function buildState(changedMetric) {
     heartRateLive: heart.live,
     spo2Live: spo2.live,
     stressLive: stress.live,
-    heartRateSource: heart.source || 'unavailable',
-    spo2Source: spo2.source || 'unavailable',
-    stressSource: stress.source || 'unavailable',
-    heartRateErrorCode: heart.errorCode || 0,
-    spo2ErrorCode: spo2.errorCode || 0,
-    stressErrorCode: stress.errorCode || 0,
+    heartRateSource: heart.source,
+    spo2Source: spo2.source,
+    stressSource: stress.source,
+    heartRateErrorCode: heart.errorCode,
+    spo2ErrorCode: spo2.errorCode,
+    stressErrorCode: stress.errorCode,
     anyLive: heart.live || spo2.live || stress.live,
     serviceAvailable: heart.available || spo2.available || stress.available,
-    heartRateUpdatedAt: heart.updatedAt || 0,
-    spo2UpdatedAt: spo2.updatedAt || 0,
-    stressUpdatedAt: stress.updatedAt || 0,
-    updatedAt: updatedAt,
+    heartRateUpdatedAt: heart.updatedAt,
+    spo2UpdatedAt: spo2.updatedAt,
+    stressUpdatedAt: stress.updatedAt,
+    updatedAt: Math.max(heart.updatedAt, spo2.updatedAt, stress.updatedAt),
     heartRateChanged: false,
     spo2Changed: false,
     stressChanged: false
@@ -85,9 +84,9 @@ function reconcile() {
 }
 
 function subscribe(listener, metrics) {
-  if (typeof listener !== 'function') return
+  if (typeof listener !== 'function') throw new Error('Health Store requires a listener')
   for (var i = 0; i < listeners.length; i++) if (listeners[i].listener === listener) return
-  listeners.push({ listener: listener, metrics: normalizeMetrics(metrics) })
+  listeners.push({ listener: listener, metrics: requireMetrics(metrics) })
   reconcile()
   listener(latestState || buildState())
 }
@@ -100,13 +99,10 @@ function unsubscribe(listener) {
 }
 
 export default {
-  subscribe: subscribe,
   subscribeHeartRate: function (listener) { subscribe(listener, ['heartRate']) },
   subscribeBloodOxygen: function (listener) { subscribe(listener, ['spo2']) },
   subscribeStress: function (listener) { subscribe(listener, ['stress']) },
   subscribeAll: function (listener) { subscribe(listener, ['heartRate', 'spo2', 'stress']) },
   unsubscribe: unsubscribe,
-  start: subscribe,
-  stop: unsubscribe,
   getSnapshot: function () { return latestState || buildState() }
 }
