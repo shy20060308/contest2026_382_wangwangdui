@@ -39,7 +39,7 @@ Responsibilities are strict:
 - Capabilities wrap native Vela APIs and are the native-value normalization boundary.
 - Domain owns business state, state machines, and persistence semantics, not screen geometry.
 - Feature Controllers orchestrate lifecycle and behavior; they do not own layout or re-normalize canonical Domain/Capability values.
-- `src/runtime/device_profile.js` validates physical device facts. Scene only projects them into design coordinates.
+- `src/runtime/device_profile.js` validates physical device facts and requires Vela's canonical `screenShape`. Scene only projects those facts into design coordinates.
 - Recipe owns visual intent, geometry, typography, spacing, form-factor differences, and visual constraints.
 - Adapter translates Recipe data only; it does not scan, scale, clamp, fit, or invent geometry.
 - Resolvers only compose Recipe relationships that cannot be represented statically; they do not repair a Recipe.
@@ -61,7 +61,7 @@ See [V3 Design Runtime](ARCHITECTURE_V3.md) and [Project Owner Guide](PROJECT_OW
 | Workout | Walk/run, pause/resume, official heart rate, location capability, workout history |
 | Today | Date, lunar calendar, activity summary, and month calendar |
 | Notifications | Local/system-event demos, call state, and haptic feedback |
-| Sync | Business payload, packets, ACK progress, and an explicitly labeled mock transport |
+| Sync | System Interconnect connection state, business payload, packet transfer progress, and completion state |
 | Settings | Brightness, vibration, sync, motion diagnostics, capability diagnostics |
 | Power | ACTIVE / DIM / SLEEP runtime with display, heart-rate, and battery orchestration |
 
@@ -90,6 +90,7 @@ Requirements:
 
 - Node.js 18+
 - npm
+- Vela JS application Framework API Level 3+
 - AIoT-IDE or compatible Vela Quick App tooling
 - a compatible Vela emulator/device
 
@@ -126,16 +127,17 @@ npm run v3:truth
 
 1. Do not restore `src/presentation`, `src/v2/app`, or `src/v2/system`.
 2. Do not restore `src/v2/design/specs`, `src/v2/design/views`, or `geometry.js`.
-3. Safe area is not recalculated from component width.
-4. Adapter/Resolver/UX must not reintroduce circle chord fitting, Y scanning, automatic aesthetic scaling, or runtime geometry repair.
-5. Product non-zero geometry does not belong in page CSS; it comes from the resolved Recipe.
-6. Product geometry is not rendered before its Recipe plan is ready.
-7. Full-bleed scene and safe content are separate concepts.
-8. Product Math Engines must be configured by the resolved Recipe/Plan and must not become a second static visual owner or adaptation solver.
-9. Feature / Domain / Capability behavior must not move back into pages during visual work.
-10. Official health and workout surfaces do not fabricate system health data. Unknown telemetry stays `null`/unavailable until View renders `--`.
-11. A value is normalized once at its owner boundary; do not stack Number/clamp/normalize in Capability, Domain, Feature, and View.
-12. Breaking V3 persistence uses clean namespaces rather than permanent legacy migration code. Git history preserves retired implementations.
-13. Future tooling/templates must not become a second Recipe/Adapter/Device Profile specification.
+3. Device Profile consumes the canonical system `screenShape` and must not infer form factor from aspect ratio.
+4. Safe area is not recalculated from component width.
+5. Adapter/Resolver/UX must not reintroduce circle chord fitting, Y scanning, automatic aesthetic scaling, or runtime geometry repair.
+6. Product non-zero geometry does not belong in page CSS; it comes from the resolved Recipe.
+7. Product geometry is not rendered before its Recipe plan is ready.
+8. Full-bleed scene and safe content are separate concepts.
+9. Product Math Engines must be configured by the resolved Recipe/Plan and must not become a second static visual owner or adaptation solver.
+10. Feature / Domain / Capability behavior must not move back into pages during visual work.
+11. Official health and workout surfaces do not fabricate system health data. Unknown telemetry stays `null`/unavailable until View renders `--`.
+12. A value is normalized once at its owner boundary; do not stack Number/clamp/normalize in Capability, Domain, Feature, and View.
+13. Breaking V3 persistence uses clean namespaces rather than permanent legacy migration code. Git history preserves retired implementations.
+14. Future tooling/templates must not become a second Recipe/Adapter/Device Profile specification.
 
 The final quality result for this refactor should be established by running `npm run check`, building the Vela package, and performing emulator/device regression locally.
