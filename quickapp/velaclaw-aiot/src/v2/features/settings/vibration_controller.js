@@ -59,7 +59,6 @@ export function createVibrationController(onChange) {
       state = settingsStore.update('vibrationPattern', name)
       return play(state.vibrationPattern)
     },
-    playCurrent: function () { return play(state.vibrationPattern) },
-    refresh: emit
+    playCurrent: function () { return play(state.vibrationPattern) }
   }
 }
