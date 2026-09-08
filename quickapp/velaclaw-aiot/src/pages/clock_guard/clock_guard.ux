@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import navigation from '../../v2/app/navigation'
+import navigation from '../../runtime/navigation'
 
 export default {
   private: {
