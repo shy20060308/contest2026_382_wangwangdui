@@ -59,7 +59,7 @@ export default function createHealthChannel(options) {
 
   function applySample(sample) {
     if (!sample || typeof sample.value !== 'number' || !isFinite(sample.value)) return
-    state.value = Math.round(sample.value)
+    state.value = sample.value
     state.live = true
     state.available = true
     state.errorCode = 0
