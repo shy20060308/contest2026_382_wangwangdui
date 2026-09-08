@@ -32,14 +32,15 @@ UX
 
 核心约束：
 
-- Capability 封装原生 Vela API 和设备能力边界。
+- Capability 封装原生 Vela API 和设备能力边界，并负责原生值的一次规范化。
 - Domain 持有业务模型、状态机和持久化语义，不持有屏幕几何。
-- Feature Controller 负责编排生命周期和业务流程，不拥有产品布局。
-- Device Profile 声明设备形态、尺寸和显式 safe insets。
+- Feature Controller 负责编排生命周期和业务流程，不拥有产品布局，也不重复修正 canonical Domain/Capability 数据。
+- `src/runtime/device_profile.js` 是物理设备事实的验证边界；Scene 只负责设计坐标投影。
 - Recipe 拥有页面/表盘的视觉意图、几何、字号、间距、形态差异和视觉约束。
 - Adapter 只翻译 Recipe，不扫描、缩放、clamp、拟合或发明几何。
 - Resolver 只组合无法直接静态表达的 Recipe 数据，不修复 Recipe。
 - UX 在 resolved plan 就绪后渲染，不保留私有非零几何 fallback。
+- 同一个事实只允许一个 owner 和一次规范化；下游消费 canonical 数据，不重复验证或静默兜底。
 - `src/common` 仅保留静态资源；运行时逻辑不得重新放回 common。
 
 架构细节见 [V3 Design Runtime](docs/ARCHITECTURE_V3.md) 和 [维护者指南](docs/PROJECT_OWNER_GUIDE.md)。
@@ -50,12 +51,12 @@ UX
 | --- | --- |
 | 表盘 | Sport / Simple / Dashboard，以及 Circle Mechanical、Pill Alpine；表盘布局由 Clock Recipe 控制 |
 | 应用启动器 | Circle 蜂巢、Pill 分页列表、Rect 设计网格 |
-| 健康 | 心率、血氧、压力与窗口趋势；保留官方数据来源信息 |
-| 活动与趋势 | 今日活动、7 日历史趋势与持久化 |
+| 健康 | 心率、血氧、压力与窗口趋势；只接受官方 live 数据并保留来源状态 |
+| 活动与趋势 | 今日活动、7 日历史趋势与 V3 持久化 |
 | 运动 | 步行/跑步、暂停/继续、官方心率、位置能力、运动历史 |
 | Today | 日期、农历、活动摘要和月历 |
 | 通知 | 本地/系统事件演示、来电状态和震动反馈 |
-| 同步 | 业务 payload、分包、ACK、进度和模拟 transport |
+| 同步 | 业务 payload、分包、ACK、进度和明确标识的模拟 transport |
 | 设置 | 亮度、震动、同步、动作诊断和设备能力诊断 |
 | Power | ACTIVE / DIM / SLEEP runtime 与亮度、心率、电量编排 |
 
@@ -63,20 +64,20 @@ UX
 
 ```text
 src/
-├── capabilities/          # Vela 原生能力网关
+├── capabilities/          # Vela 原生能力网关与原生数据规范化边界
 ├── domain/                # 业务状态、状态机、持久化
-├── runtime/               # 需要独立执行的运行时核心（当前主要为 Power）
+├── runtime/               # Page/Navigation/Device/Profile/Haptics/Power 等正式运行时
 ├── v2/
-│   ├── app/               # 页面 Runtime、导航、路由
-│   ├── system/            # Device Profile、Haptics 等系统级编排
-│   ├── features/          # Feature Controllers
-│   └── design/            # V3 Scene / Recipe / Adapter / Resolver / Engine
+│   ├── features/          # 当前 Feature Controllers（历史路径名）
+│   └── design/            # 当前 V3 Scene / Recipe / Adapter / Resolver / View
 ├── pages/                 # 产品页面，仅绑定 plan、feature state 和交互
 ├── components/watchfaces/ # 表盘渲染组件，布局由 Clock Recipe 注入
 └── common/                # 仅静态图片、图标和表盘资源
 ```
 
-`src/v2` 是当前源码路径的一部分，不代表运行时继续兼容 V2；V3 不保留旧 Design Specs、Design Views、Geometry solver 或 Presentation runtime。
+`src/v2` 是当前源码中的历史路径名，不代表运行时继续兼容 V2。`src/v2/app`、`src/v2/system`、旧 Design Specs、Design Views、Geometry solver 和 Presentation runtime 已退出当前代码树。
+
+当前阶段不维护 Layout Studio/模板工具。未来若重新引入开发者工具，应直接消费成熟的 V3 Recipe/IR 与单一 Validator，而不是复制 Profile、Recipe 字段、mock 数据或 Adapter 规则。
 
 ## 开发与检查
 
@@ -111,14 +112,14 @@ V3 设计相关门禁：
 ```bash
 npm run v3:architecture
 npm run v3:design
-npm run studio:check
+npm run v3:truth
 ```
 
-`v3:architecture` 会验证 retired runtime/compatibility 层没有重新出现、`src/common` 没有运行时逻辑、产品路由均进入 strict Recipe ownership，并检查依赖可解析。`v3:design` 会验证当前设计在 Circle / Pill / Rect profile 上可解析。
+`v3:architecture` 验证 retired runtime/compatibility 层没有重新出现、`src/common` 没有运行时逻辑、产品路由均进入 strict Recipe ownership，并检查依赖可解析。`v3:design` 验证当前设计在 Circle / Pill / Rect profile 上可解析。`v3:truth` 防止伪遥测、静默 catalog fallback 和隐藏默认 ownership 回归。
 
-## V3 设计规则
+## V3 设计与数据规则
 
-1. 不恢复 `src/presentation`。
+1. 不恢复 `src/presentation`、`src/v2/app` 或 `src/v2/system`。
 2. 不恢复 `src/v2/design/specs`、`src/v2/design/views` 或 `geometry.js`。
 3. 不通过组件宽度重新计算 safe area。
 4. 不在 Adapter/Resolver/UX 中做 circle chord fitting、Y 扫描、自动缩放或运行时几何修复。
@@ -126,9 +127,11 @@ npm run studio:check
 6. 页面在 Recipe plan 就绪前不渲染产品 geometry。
 7. Full-bleed scene 与 safe content 分离。
 8. Feature / Domain / Capability 逻辑不得因为视觉迁移重新塞回页面。
-9. 健康和运动正式表面不得伪造系统健康数据。
-10. 历史实现由 Git 历史保存，不在当前 runtime 中建立兼容桥。
+9. 健康和运动正式表面不得伪造系统健康数据；未知值保持 `null`/unavailable 直到 View 显示为 `--`。
+10. 一个值只在其 owner 边界规范化一次；不要在 Capability、Domain、Feature、View 连续 Number/clamp/normalize。
+11. 旧持久化 schema 不通过长期兼容代码修补；破坏性 V3 迁移使用干净 namespace，历史实现由 Git 保存。
+12. 未来工具或模板不得成为第二套 Recipe/Adapter/Device Profile 规范。
 
 ## 说明
 
-当前重构分支的质量结论应以开发者本地执行 `npm run check` 和实际 Vela 构建/模拟器回归为准。仓库内的架构测试用于阻止旧设计运行时、隐藏几何 fallback 和兼容层重新进入产品链。
+当前重构分支的质量结论应以开发者本地执行 `npm run check` 和实际 Vela 构建/模拟器回归为准。仓库内的架构测试用于阻止旧设计运行时、隐藏 fallback、重复 ownership 和兼容层重新进入产品链。
