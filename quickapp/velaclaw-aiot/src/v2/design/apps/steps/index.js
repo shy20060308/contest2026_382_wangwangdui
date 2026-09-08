@@ -6,7 +6,7 @@ function contentWidth(profile) { return adapter.contentWidth(profile, layout) }
 
 function resolve(profile, scene, safe) {
   var config = adapter.select(layout, profile)
-  var plan = adapter.createPlan(profile, scene, safe, difference.L1, config.surface || 'goal-progress-stream')
+  var plan = adapter.createPlan(profile, scene, safe, difference.L1, config.surface)
   plan.title = adapter.placeBand(profile, scene, safe, config.title)
   plan.history = adapter.placeBand(profile, scene, safe, config.history)
   plan.stream = adapter.placeBand(profile, scene, safe, {
