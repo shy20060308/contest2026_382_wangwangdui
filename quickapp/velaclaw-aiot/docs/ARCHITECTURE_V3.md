@@ -4,13 +4,14 @@ V3 is a breaking design-runtime reset. Git history is the compatibility layer; r
 
 ## One path
 
-`Device Profile → Host Scene + declared safe insets → App Recipe → Adapter translation → App resolver → UX`
+`Device Profile → Host Scene + declared safe insets → App Recipe → Adapter translation → App resolver → Resolved Plan → UX`
 
 - Device Profile owns physical shape, dimensions and explicit safe insets.
 - Scene performs only the 192-design-width projection and applies those insets.
 - Recipe owns visual intent: sizes, positions, typography, spacing and shape overrides.
 - Adapter merges recipes and translates coordinates/box model. It does not scan, scale, clamp or invent geometry.
 - App resolver performs only composition that cannot be represented as static recipe data.
+- Product-specific math engines, when needed, consume the resolved Plan. They may own pure geometry algorithms and interaction physics, but not product focus points, icon sizing, label geometry or fallback design values.
 - UX renders the resolved plan and feature state.
 
 ## Difference levels
@@ -31,6 +32,7 @@ The level belongs to the difference, not to the whole page.
 6. Full-bleed backgrounds are scene-level; safe insets constrain content only.
 7. Feature orchestrates Domain/Capabilities. Design does not depend upward on Feature/Capability.
 8. Health and workout only surface official live health samples; presentation must not fabricate distributions.
+9. A product math engine must be configured by the resolved Recipe/Plan; it must not become a second visual-design owner.
 
 ## Tests
 
