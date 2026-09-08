@@ -13,13 +13,6 @@ function optionalNumber(value, label, fallback) {
   return value === undefined ? fallback : requiredNumber(value, label)
 }
 
-function shapeOf(profile) {
-  if (!profile || !profile.formFactor) throw new Error('V3 Adapter requires profile.formFactor')
-  var shape = String(profile.formFactor)
-  if (shape !== 'circle' && shape !== 'pill' && shape !== 'rect') throw new Error('Unsupported V3 form factor: ' + shape)
-  return shape
-}
-
 function clone(value) {
   if (Array.isArray(value)) return value.map(clone)
   if (!value || typeof value !== 'object') return value
@@ -41,7 +34,7 @@ function merge(base, override) {
 
 function select(recipe, profile) {
   if (!recipe || typeof recipe !== 'object') throw new Error('V3 Adapter requires a recipe object')
-  var shape = shapeOf(profile)
+  var shape = profile.formFactor
   var base = recipe.base && typeof recipe.base === 'object' ? recipe.base : {}
   var override = recipe[shape] && typeof recipe[shape] === 'object' ? recipe[shape] : {}
   return merge(base, override)
@@ -60,27 +53,13 @@ function region(left, top, width, height) {
   }
 }
 
-// Recipe owns geometry. This function only translates safe/scene-relative
-// coordinates into the Host Scene; it does not resize, clamp, scan or scale.
+// Recipe owns geometry. Scene/Profile have already been resolved upstream, so
+// this function validates only recipe-owned offsets and dimensions.
 function placeBand(profile, scene, safe, spec) {
   var config = spec || {}
-  shapeOf(profile)
-  var bounds
-  if (config.bounds === 'scene') {
-    bounds = {
-      left: 0,
-      top: 0,
-      width: requiredNumber(scene && scene.width, 'scene.width'),
-      height: requiredNumber(scene && scene.height, 'scene.height')
-    }
-  } else {
-    bounds = {
-      left: requiredNumber(safe && safe.left, 'safe.left'),
-      top: requiredNumber(safe && safe.top, 'safe.top'),
-      width: requiredNumber(safe && safe.width, 'safe.width'),
-      height: requiredNumber(safe && safe.height, 'safe.height')
-    }
-  }
+  var bounds = config.bounds === 'scene'
+    ? { left: 0, top: 0, width: scene.width, height: scene.height }
+    : { left: safe.left, top: safe.top, width: safe.width, height: safe.height }
   var width = config.width === undefined ? bounds.width : requiredNumber(config.width, 'band.width')
   var relativeTop = optionalNumber(config.top, 'band.top', 0)
   var top = config.absoluteTop === true ? relativeTop : bounds.top + relativeTop
@@ -115,7 +94,6 @@ function contentBox(outerWidth, outerHeight, paddingX, paddingY) {
 }
 
 function createPlan(profile, scene, safe, level, surface) {
-  shapeOf(profile)
   if (level !== difference.L1 && level !== difference.L2 && level !== difference.L3) throw new Error('V3 Adapter requires an explicit L1/L2/L3 difference level')
   if (!surface || typeof surface !== 'string') throw new Error('V3 Adapter requires recipe.surface')
   return {
@@ -123,21 +101,15 @@ function createPlan(profile, scene, safe, level, surface) {
     designSystemVersion: VERSION,
     difference: difference.describe(level),
     differenceLevel: level,
-    shape: shapeOf(profile),
+    shape: profile.formFactor,
     surface: surface,
-    content: region(
-      requiredNumber(safe && safe.left, 'safe.left'),
-      requiredNumber(safe && safe.top, 'safe.top'),
-      requiredNumber(safe && safe.width, 'safe.width'),
-      requiredNumber(safe && safe.height, 'safe.height')
-    )
+    content: { left: safe.left, top: safe.top, width: safe.width, height: safe.height }
   }
 }
 
 module.exports = {
   SYSTEM_ID: SYSTEM_ID,
   VERSION: VERSION,
-  shapeOf: shapeOf,
   select: select,
   merge: merge,
   contentWidth: contentWidth,
