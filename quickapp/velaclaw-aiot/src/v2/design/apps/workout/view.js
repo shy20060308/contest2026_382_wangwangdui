@@ -17,15 +17,15 @@ function formatDistance(meters) {
 
 function gpsView(session) {
   if (session.gpsDistanceMeters > 0) return { text: 'GPS 距离', color: '#30D158' }
+  if (session.gpsStatus === 'locating') return { text: '正在定位', color: '#8E8E93' }
   if (session.gpsStatus === 'unavailable') return { text: 'GPS 不可用 · 步幅估算', color: '#FF9F0A' }
   if (session.gpsStatus === 'paused') return { text: 'GPS 已暂停', color: '#8E8E93' }
   if (session.gpsStatus === 'active') return { text: 'GPS 已定位', color: '#64D2FF' }
-  return { text: '正在定位', color: '#8E8E93' }
+  throw new Error('Unknown workout GPS status: ' + session.gpsStatus)
 }
 
 function stateView(session) {
-  var paused = session.status === 'paused'
-  return paused ? {
+  if (session.status === 'paused') return {
     statusText: '已暂停',
     statusColor: '#FFD60A',
     statusSurface: '#2B230D',
@@ -35,7 +35,8 @@ function stateView(session) {
     pauseButtonBackground: '#30D158',
     pauseButtonColor: '#061008',
     durationLabelText: '已记录时长'
-  } : {
+  }
+  if (session.status === 'running') return {
     statusText: '运动中',
     statusColor: '#30D158',
     statusSurface: '#102018',
@@ -46,6 +47,7 @@ function stateView(session) {
     pauseButtonColor: '#FFFFFF',
     durationLabelText: '运动时长'
   }
+  throw new Error('Unknown workout status: ' + session.status)
 }
 
 function project(session) {
