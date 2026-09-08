@@ -55,7 +55,7 @@ export default {
       self.ready = true
     })
   },
-  onShow() { if (this.controller) this.controller.refresh() },
+  onShow() { if (this.controller && this.ready) this.controller.refresh() },
   onBackPress() { navigation.back(); return true },
   applyModel(model) {
     var view = diagnosticsView.project(model)
