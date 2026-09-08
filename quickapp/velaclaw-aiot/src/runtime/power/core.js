@@ -24,7 +24,8 @@ function create(dependencies, options) {
   var mainTimer = null
   var heartTimer = null
   var healthActive = false
-  var raiseWakeRegistered = false
+  var raiseWakeSubscribed = false
+  var raiseWakeActive = false
   var latestHeartSample = null
   var currentMode = stateMachine.MODE_ACTIVE
   var lowPowerEnabled
@@ -56,8 +57,6 @@ function create(dependencies, options) {
   function handleHeartSample(sample) {
     if (!isOfficialHeartSample(sample)) return
     latestHeartSample = sample
-    // ACTIVE publishes official raw samples immediately. DIM buffers samples
-    // and only publishes through the lower-frequency business cadence.
     if (currentMode === stateMachine.MODE_ACTIVE) onHeartRate(sample, 'live')
   }
 
@@ -139,24 +138,29 @@ function create(dependencies, options) {
   }
 
   function handleMotionFailure() {
-    raiseWakeRegistered = false
+    raiseWakeActive = false
+    raiseDetector.reset()
+  }
+
+  function releaseRaiseWake() {
+    if (raiseWakeSubscribed) motion.unsubscribe(handleMotionSample)
+    raiseWakeSubscribed = false
+    raiseWakeActive = false
     raiseDetector.reset()
   }
 
   function reconcileRaiseWake() {
-    var shouldRegister = started && lowPowerEnabled && raiseWakeEnabled
-    if (!shouldRegister) {
-      if (raiseWakeRegistered) motion.unsubscribe(handleMotionSample)
-      raiseWakeRegistered = false
-      raiseDetector.reset()
+    var shouldSubscribe = started && lowPowerEnabled && raiseWakeEnabled
+    if (!shouldSubscribe) {
+      releaseRaiseWake()
       return
     }
-    if (!raiseWakeRegistered) {
-      // Motion capability emits canonical acceleration. The semantic detector
-      // decides whether a sequence is actually a raise-to-wake gesture.
-      raiseWakeRegistered = motion.subscribe(handleMotionSample, { interval: 'normal', fail: handleMotionFailure }) === true
-      raiseDetector.reset()
-    }
+    if (raiseWakeSubscribed && raiseWakeActive) return
+    var wasSubscribed = raiseWakeSubscribed
+    var activeNow = motion.subscribe(handleMotionSample, { interval: 'normal', fail: handleMotionFailure }) === true
+    if (!wasSubscribed) raiseWakeSubscribed = activeNow
+    raiseWakeActive = activeNow
+    raiseDetector.reset()
   }
 
   function reconcileIdleTimer() {
@@ -212,9 +216,7 @@ function create(dependencies, options) {
     idleTimer = clearTimer(idleTimer)
     mainTimer = clearTimer(mainTimer)
     heartTimer = clearTimer(heartTimer)
-    if (raiseWakeRegistered) motion.unsubscribe(handleMotionSample)
-    raiseWakeRegistered = false
-    raiseDetector.reset()
+    releaseRaiseWake()
     stopHealth()
     displayPower.setBrightness(activeBrightnessValue)
     displayPower.setKeepScreenOn(true)
@@ -241,7 +243,7 @@ function create(dependencies, options) {
         lowPowerEnabled: lowPowerEnabled,
         raiseWakeEnabled: raiseWakeEnabled,
         healthActive: healthActive,
-        raiseWakeActive: raiseWakeRegistered,
+        raiseWakeActive: raiseWakeActive,
         idleTimerActive: idleTimer !== null,
         mainTimerActive: mainTimer !== null,
         heartTimerActive: heartTimer !== null
