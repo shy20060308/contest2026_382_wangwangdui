@@ -3,6 +3,7 @@ const adapter = require('../src/v2/design/adapter')
 const difference = require('../src/v2/design/difference')
 const scene = require('../src/v2/design/scene')
 const watchfaceChart = require('../src/v2/design/watchface_chart')
+const launcherView = require('../src/v2/design/apps/launcher/view')
 
 const designs = [
   require('../src/v2/design/apps/steps'),
@@ -51,8 +52,21 @@ assert.strictEqual(watchfaceChart.sampleBarHeight([80, 90, 100], 1, 2, 10, 20), 
 
 assert.throws(function () { adapter.contentWidth(profiles[0], { base: {} }) }, /recipe\.contentWidth/)
 assert.throws(function () { adapter.grid({ width: 100 }, undefined, 0) }, /grid\.columns/)
+assert.throws(function () { adapter.region('1', 0, 10, 10) }, /region\.left/)
 assert.throws(function () { adapter.createPlan(profiles[0], circleHost, circleSafe, undefined, 'test') }, /Unknown V3 difference level/)
 assert.throws(function () { adapter.createPlan(profiles[0], circleHost, circleSafe, difference.L1, '') }, /recipe\.surface/)
+
+const launcherState = {
+  all: ['workout','history','heart','clock','steps'],
+  items: ['workout','history','heart','clock','steps'],
+  pageNumber: 1,
+  pageCount: 1,
+  hasPrevious: false,
+  hasNext: false
+}
+const launcherProjection = launcherView.project(launcherState, { columns: 3, gap: 6 })
+assert.deepStrictEqual(launcherProjection.gridApps.map(function (item) { return item.marginRight }), [6, 6, 0, 6, 6], 'Launcher grid columns must come from the resolved Recipe')
+assert.deepStrictEqual(launcherProjection.gridApps.map(function (item) { return item.marginBottom }), [6, 6, 6, 0, 0], 'Launcher grid row spacing must derive from the resolved column count')
 
 profiles.forEach(function (profile) {
   const host = scene.resolve(profile)
