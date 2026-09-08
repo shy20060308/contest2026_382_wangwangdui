@@ -39,10 +39,6 @@
     "backgrounds:render": "python scripts/fade-watchface-background.py --input assets/watchfaces/alpine_night_source.jpg --output src/common/watchfaces/alpine_night.jpg",
     "check": "npm run lint && npm run docs:check && npm run v3:architecture && npm run v3:design && npm run v3:truth && npm run capabilities:check && npm run power:logic && npm run power:runtime && npm run health:logic && npm run health:official && npm run history:truth && npm run workout:experience && npm run activity:persistence && npm run settings:store && npm run motion:logic && npm run haptics:logic && npm run haptics:runtime && npm run calendar:logic && npm run analog:logic && npm run honeycomb:logic"
   },
-  "lint-staged": {
-    "*.{ux,js}": ["prettier --write", "node scripts/lint.js", "git add"],
-    "*.{less,css}": ["prettier --write", "stylelint --fix --custom-syntax postcss-less", "git add"]
-  },
   "devDependencies": {
     "@aiot-toolkit/jsc": "^1.0.3",
     "aiot-toolkit": "^2.0.5",
