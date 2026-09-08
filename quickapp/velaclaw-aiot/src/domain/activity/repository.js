@@ -1,6 +1,6 @@
 import storage from '../../capabilities/storage'
 
-var ACTIVITY_KEY = 'activity_today_v2'
+var ACTIVITY_KEY = 'activity_today_v3'
 
 function pad2(value) {
   return value < 10 ? '0' + value : '' + value
@@ -28,15 +28,14 @@ function normalize(record) {
 }
 
 function payload(snapshot) {
-  var source = snapshot || {}
   return {
     date: dateKey(new Date()),
-    steps: source.steps,
-    stepsGoal: source.stepsGoal,
-    calories: source.calories,
-    caloriesGoal: source.caloriesGoal,
-    standHours: source.standHours,
-    standGoal: source.standGoal
+    steps: snapshot.steps,
+    stepsGoal: snapshot.stepsGoal,
+    calories: snapshot.calories,
+    caloriesGoal: snapshot.caloriesGoal,
+    standHours: snapshot.standHours,
+    standGoal: snapshot.standGoal
   }
 }
 
