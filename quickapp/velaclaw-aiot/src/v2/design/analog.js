@@ -1,5 +1,5 @@
 function normalize(value, cycle) {
-  var result = Number(value) % cycle
+  var result = value % cycle
   return result < 0 ? result + cycle : result
 }
 
