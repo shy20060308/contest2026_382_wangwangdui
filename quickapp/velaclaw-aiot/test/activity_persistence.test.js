@@ -34,6 +34,18 @@ function fakeRepository(syncValue) {
   }
 }
 
+test('首次启动没有持久记录时当前活动值必须为零', function () {
+  const repo = fakeRepository()
+  const store = core.createStore(repo)
+  const initial = store.getSnapshot()
+  assert.strictEqual(initial.steps, 0)
+  assert.strictEqual(initial.calories, 0)
+  assert.strictEqual(initial.standHours, 0)
+  assert.strictEqual(initial.stepsGoal, 6000)
+  assert.strictEqual(initial.caloriesGoal, 300)
+  assert.strictEqual(initial.standGoal, 12)
+})
+
 test('并发 hydrate 合并为一个初始读取 transaction', function () {
   const repo = fakeRepository({ steps: 4700, calories: 190, standHours: 8, stepsGoal: 6000, caloriesGoal: 300, standGoal: 12 })
   const store = core.createStore(repo)
@@ -94,6 +106,7 @@ test('较旧持久快照永远不能把今日累计值回滚', function () {
 })
 
 const repository = read('src/domain/activity/repository.js')
+const storeCore = read('src/domain/activity/store_core.js')
 const storeWrapper = read('src/domain/activity/store.js')
 const workout = read('src/v2/features/workout/controller.js')
 const activityFeature = read('src/v2/features/activity/controller.js')
@@ -102,13 +115,15 @@ const today = read('src/pages/today/today.ux')
 
 assert.ok(repository.includes("../../capabilities/storage"), 'Activity Repository must persist through the storage gateway')
 assert.ok(storeWrapper.includes("require('./store_core')"), 'Activity Store must delegate concurrency to the executable core')
+assert.ok(!storeCore.includes('steps: 4567') && !storeCore.includes('calories: 180') && !storeCore.includes('standHours: 8'), 'Activity Domain must not seed fabricated current totals')
 assert.ok(workout.includes('activityStore.addAndPersist(record.steps, record.calories'), 'Workout Feature must commit activity before finishing navigation flow')
 assert.ok(workout.includes('historyRepository.saveToday(activitySnapshot'), 'History must receive the exact committed Activity snapshot')
 assert.ok(activityFeature.includes("../../../domain/activity/store"), 'Activity Feature must own page-facing Activity access')
 assert.ok(activityFeature.includes('lifecycleEpoch'), 'Activity Feature must ignore stale hydration callbacks')
 assert.ok(!activityFeature.includes("name: '步数'") && !activityFeature.includes('RATIOS') && !activityFeature.includes("unit: '步'"), 'Activity Feature must remain presentation-free')
-assert.ok(steps.includes("../../v2/features/activity/controller") && steps.includes("../../v2/design/specs/activity") && steps.includes("../../v2/design/views/activity"), 'Steps Page must bind Activity Feature through Design')
+assert.ok(steps.includes("../../v2/features/activity/controller") && steps.includes("../../v2/design/apps/steps") && steps.includes("../../v2/design/apps/steps/view"), 'Steps Page must bind Activity Feature through the app-owned V3 Design runtime')
+assert.ok(!steps.includes('design/specs/') && !steps.includes('design/views/'), 'Steps Page must not restore retired Design compatibility layers')
 assert.ok(!steps.includes("../../domain/activity/store") && !steps.includes('profile.formFactor'), 'Steps Page must not bypass Feature or own shape policy')
 assert.ok(today.includes("../../v2/features/today/controller") && !today.includes("../../domain/activity/store"), 'Today Page must consume Activity only through its Feature orchestration')
 
-console.log('Activity persistence verified: one hydration source, ordered writes and V2 page boundaries (' + passed + ' runtime tests)')
+console.log('Activity persistence verified: truthful zero initial totals, one hydration source and ordered writes (' + passed + ' runtime tests)')
