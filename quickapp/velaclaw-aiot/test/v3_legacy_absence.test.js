@@ -42,21 +42,29 @@ function inside(target, parent) {
   return relative === '' || (!relative.startsWith('..' + path.sep) && relative !== '..' && !path.isAbsolute(relative))
 }
 
-assert.strictEqual(exists('src/platform'), false, 'V3 must consume capabilities directly; platform aliases are retired')
-assert.strictEqual(exists('src/presentation'), false, 'V3 must not restore the retired presentation runtime')
-assert.strictEqual(exists('src/v2/system'), false, 'V3 runtime ownership must not restore the retired v2/system namespace')
-assert.strictEqual(exists('src/v2/app'), false, 'V3 app runtime ownership must not restore the retired v2/app namespace')
-assert.strictEqual(exists('src/v2/design/specs'), false, 'V3 must not restore Design Spec compatibility code')
-assert.strictEqual(exists('src/v2/design/views'), false, 'V3 must not restore Design View compatibility code')
-assert.strictEqual(exists('src/v2/design/geometry.js'), false, 'V3 must not restore the retired geometry solver')
-assert.strictEqual(exists('src/v2/design/freedom.js'), false, 'V3 design difference levels must not restore the retired freedom compatibility system')
+[
+  ['src/platform', 'platform aliases'],
+  ['src/presentation', 'presentation runtime'],
+  ['src/v2/system', 'v2/system namespace'],
+  ['src/v2/app', 'v2/app namespace'],
+  ['src/v2/design/specs', 'Design Specs'],
+  ['src/v2/design/views', 'Design Views'],
+  ['src/v2/design/geometry.js', 'geometry solver'],
+  ['src/v2/design/freedom.js', 'freedom compatibility system'],
+  ['src/pages/index', 'sample index page'],
+  ['src/pages/detail', 'sample detail page']
+].forEach(function (entry) {
+  assert.strictEqual(exists(entry[0]), false, 'V3 must not restore retired ' + entry[1])
+})
 
 const commonLogic = filesUnder('src/common', /\.(?:js|ux)$/, [])
-assert.deepStrictEqual(commonLogic, [], 'src/common is a static-resource namespace only; runtime logic belongs to Capability/Domain/Feature/Design/App')
+assert.deepStrictEqual(commonLogic, [], 'src/common is a static-resource namespace only')
 
 filesUnder('src', /\.(?:js|ux)$/, []).forEach(function (file) {
   const source = read(file)
-  assert.ok(!source.includes('v2/app/'), file + ' must use the formal src/runtime app boundary instead of retired v2/app code')
+  assert.ok(!source.includes('v2/app/'), file + ' must not depend on retired v2/app code')
+  assert.ok(!source.includes('/design/specs/') && !source.includes('/design/views/'), file + ' must not consume retired Design Specs/Views')
+  assert.ok(!source.includes('../presentation/') && !source.includes('/presentation/'), file + ' must not depend on retired presentation code')
   relativeDependencies(source).forEach(function (dependency) {
     const resolved = path.resolve(path.dirname(path.join(root, file)), dependency)
     assert.ok(!inside(resolved, commonRoot), file + ' must not depend on legacy src/common logic: ' + dependency)
@@ -65,25 +73,28 @@ filesUnder('src', /\.(?:js|ux)$/, []).forEach(function (file) {
 
 filesUnder('src/v2/design', /\.(?:js|ux)$/, []).forEach(function (file) {
   const source = read(file)
-  assert.ok(!source.includes('freedomLevel'), file + ' must expose design difference metadata, not retired freedom metadata')
-  assert.ok(!source.includes('freedom.AUTO') && !source.includes('freedom.ASSISTED') && !source.includes('freedom.FREE'), file + ' must not use retired AUTO/ASSISTED/FREE design levels')
-  assert.ok(!source.includes('adaptive-geometry'), file + ' must not restore the retired adaptive geometry strategy')
+  assert.ok(!source.includes('freedomLevel'), file + ' must not restore retired freedom metadata')
+  assert.ok(!source.includes('freedom.AUTO') && !source.includes('freedom.ASSISTED') && !source.includes('freedom.FREE'), file + ' must not restore AUTO/ASSISTED/FREE design levels')
+  assert.ok(!source.includes('adaptive-geometry'), file + ' must not restore adaptive geometry strategy')
 })
 
 filesUnder('src/v2/design/apps', /(?:^|_)layout\.js$/, []).forEach(function (file) {
   const source = read(file)
-  assert.ok(!/^module\.exports\s*=\s*\{\s*\r?\n\s*level\s*:/m.test(source), file + ' must not duplicate resolver-owned differenceLevel in Recipe layout metadata')
+  assert.ok(!/^module\.exports\s*=\s*\{\s*\r?\n\s*level\s*:/m.test(source), file + ' must not duplicate resolver-owned differenceLevel')
 })
 
 const deviceProfile = read('src/runtime/device_profile.js')
-assert.ok(!deviceProfile.includes('isBetaPillViewport'), 'Device Profile must not restore beta-emulator viewport compatibility state')
+assert.ok(!deviceProfile.includes('isBetaPillViewport'), 'Device Profile must not restore beta-emulator compatibility state')
 assert.ok(!deviceProfile.includes("|| 'pill-shaped'"), 'Device Profile must not default an unknown device to Pill')
 assert.ok(!deviceProfile.includes('width = 192; height = 490'), 'Device Profile must not fabricate Band dimensions')
+assert.ok(!deviceProfile.includes('logicalHeight'), 'Device Profile must not duplicate Scene-owned design projection')
 const pageRuntime = read('src/runtime/page_runtime.js')
-assert.ok(!pageRuntime.includes('betaPill'), 'Page Runtime must not restore beta-pill viewport compatibility branches')
+assert.ok(!pageRuntime.includes('betaPill'), 'Page Runtime must not restore beta-pill compatibility branches')
 const sceneRuntime = read('src/v2/design/scene.js')
-assert.ok(!sceneRuntime.includes("? String(profile.formFactor) : 'rect'"), 'Scene must not default an unknown profile to Rect')
-assert.ok(!sceneRuntime.includes('hostScene || resolve(profile)'), 'Scene safe projection must require the already-resolved Host Scene')
+assert.ok(!sceneRuntime.includes('shapeOf('), 'Scene must trust the validated Device Profile instead of re-validating shape')
+assert.ok(!sceneRuntime.includes('hostScene || resolve(profile)'), 'Scene safe projection must use the resolved Host Scene')
+const adapter = read('src/v2/design/adapter.js')
+assert.ok(!adapter.includes('function shapeOf('), 'Adapter must not duplicate Device Profile shape validation')
 
 filesUnder('test', /\.test\.js$/, []).forEach(function (file) {
   const source = read(file)
@@ -95,4 +106,4 @@ filesUnder('test', /\.test\.js$/, []).forEach(function (file) {
   assert.ok(!source.includes('design/specs/'), file + ' must not validate retired Design Specs')
 })
 
-console.log('V3 legacy absence verified: no compatibility runtime, v2 app/system namespaces, duplicate layout levels or retired design metadata')
+console.log('V3 legacy absence verified: retired namespaces and compatibility strategies stay absent')
