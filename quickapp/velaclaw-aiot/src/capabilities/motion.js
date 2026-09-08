@@ -3,11 +3,10 @@ import sensor from '@system.sensor'
 var consumers = []
 var active = false
 var activeInterval = ''
-var latest = null
 
-function clone(sample) {
-  if (!sample) return null
-  return { x: sample.x, y: sample.y, z: sample.z, timestamp: sample.timestamp }
+function requireInterval(interval) {
+  if (interval !== 'normal' && interval !== 'ui' && interval !== 'game') throw new Error('Unknown accelerometer interval: ' + interval)
+  return interval
 }
 
 function intervalRank(interval) {
@@ -25,20 +24,15 @@ function desiredInterval() {
 }
 
 function emitError(code) {
-  for (var i = 0; i < consumers.length; i++) {
-    if (typeof consumers[i].fail === 'function') consumers[i].fail(code)
-  }
+  var current = consumers.slice()
+  for (var i = 0; i < current.length; i++) if (typeof current[i].fail === 'function') current[i].fail(code)
 }
 
 function handle(data) {
-  latest = {
-    x: Number(data && data.x) || 0,
-    y: Number(data && data.y) || 0,
-    z: Number(data && data.z) || 0,
-    timestamp: Date.now()
-  }
+  if (!data || typeof data.x !== 'number' || !isFinite(data.x) || typeof data.y !== 'number' || !isFinite(data.y) || typeof data.z !== 'number' || !isFinite(data.z)) return
+  var sample = { x: data.x, y: data.y, z: data.z, timestamp: Date.now() }
   var current = consumers.slice()
-  for (var i = 0; i < current.length; i++) current[i].listener(clone(latest))
+  for (var i = 0; i < current.length; i++) current[i].listener({ x: sample.x, y: sample.y, z: sample.z, timestamp: sample.timestamp })
 }
 
 function stopNative() {
@@ -52,20 +46,20 @@ function stopNative() {
 
 function startNative(interval) {
   if (consumers.length === 0) return false
+  if (!sensor || !sensor.subscribeAccelerometer) {
+    emitError('unavailable')
+    return false
+  }
   try {
-    if (!sensor || !sensor.subscribeAccelerometer) {
-      emitError('unavailable')
-      return false
-    }
     active = true
-    activeInterval = interval || 'normal'
+    activeInterval = interval
     sensor.subscribeAccelerometer({
-      interval: activeInterval,
+      interval: interval,
       callback: handle,
       fail: function (data, code) {
         active = false
         activeInterval = ''
-        emitError(code || 'failed')
+        emitError(code === undefined ? 'failed' : code)
       }
     })
     return true
@@ -91,32 +85,23 @@ function reconcile() {
 export default {
   subscribe: function (listener, options) {
     if (typeof listener !== 'function') return false
+    var interval = requireInterval(options && options.interval ? options.interval : 'normal')
+    var fail = options && options.fail
     for (var i = 0; i < consumers.length; i++) {
       if (consumers[i].listener === listener) {
-        consumers[i].interval = options && options.interval ? options.interval : consumers[i].interval
-        consumers[i].fail = options && options.fail ? options.fail : consumers[i].fail
+        consumers[i].interval = interval
+        consumers[i].fail = fail
         return reconcile()
       }
     }
-    consumers.push({
-      listener: listener,
-      interval: options && options.interval ? options.interval : 'normal',
-      fail: options && options.fail
-    })
-    if (latest) listener(clone(latest))
+    consumers.push({ listener: listener, interval: interval, fail: fail })
     return reconcile()
   },
   unsubscribe: function (listener) {
     var next = []
-    for (var i = 0; i < consumers.length; i++) {
-      if (consumers[i].listener !== listener) next.push(consumers[i])
-    }
+    for (var i = 0; i < consumers.length; i++) if (consumers[i].listener !== listener) next.push(consumers[i])
     consumers = next
     reconcile()
   },
-  getSnapshot: function () { return clone(latest) },
-  consumerCount: function () { return consumers.length },
-  isActive: function () { return active },
-  getInterval: function () { return activeInterval },
   isAvailable: function () { return !!(sensor && sensor.subscribeAccelerometer) }
 }
