@@ -13,7 +13,7 @@ function emitValue(onChange, session) {
 
 export function createWorkoutController(onChange) {
   var timer = null
-  var fallbackTimer = null
+  var locationTimeout = null
   var lastPoint = null
   var gpsDistance = 0
   var persistTicks = 0
@@ -26,8 +26,8 @@ export function createWorkoutController(onChange) {
   function isCurrent(generation) { return generation === lifecycleGeneration }
 
   function stopLocation() {
-    clearTimeout(fallbackTimer)
-    fallbackTimer = null
+    clearTimeout(locationTimeout)
+    locationTimeout = null
     location.unsubscribe(onLocation)
     lastPoint = null
   }
@@ -36,27 +36,27 @@ export function createWorkoutController(onChange) {
     if (!runtimeActive) return
     var active = workoutState.getActive()
     if (!active || active.status !== 'running') return
-    clearTimeout(fallbackTimer)
-    fallbackTimer = null
+    clearTimeout(locationTimeout)
+    locationTimeout = null
     if (lastPoint) gpsDistance += distance.acceptedSegment(lastPoint, point)
     lastPoint = point
-    emit(workoutState.updateGps({ status: 'active', point: point, distanceMeters: Math.round(gpsDistance) }))
+    emit(workoutState.updateGps({ status: 'active', point: point, distanceMeters: gpsDistance }))
   }
 
   function startLocation() {
     stopLocation()
     var active = workoutState.getActive()
     if (!active || active.status !== 'running') return
-    gpsDistance = active.gpsDistanceMeters || 0
+    gpsDistance = active.gpsDistanceMeters
     var subscribed = location.subscribe(onLocation)
     if (!subscribed) {
-      emit(workoutState.updateGps({ status: 'fallback' }))
+      emit(workoutState.updateGps({ status: 'unavailable' }))
       return
     }
-    fallbackTimer = setTimeout(function () {
+    locationTimeout = setTimeout(function () {
       if (!runtimeActive) return
       var current = workoutState.getActive()
-      if (current && current.status === 'running' && !lastPoint) emit(workoutState.updateGps({ status: 'fallback' }))
+      if (current && current.status === 'running' && !lastPoint) emit(workoutState.updateGps({ status: 'unavailable' }))
     }, 6000)
   }
 
@@ -87,12 +87,11 @@ export function createWorkoutController(onChange) {
   }
 
   function ensureTimer() {
-    if (timer) return
+    if (timer !== null) return
     timer = setInterval(function () {
       if (!runtimeActive) return
       var session = workoutState.tick()
-      if (!session) { stopTimer(); return }
-      if (session.status !== 'running') { stopTimer(); return }
+      if (!session || session.status !== 'running') { stopTimer(); return }
       emit(session)
       persistTicks++
       if (persistTicks >= 10) { persistTicks = 0; persist() }
@@ -123,6 +122,8 @@ export function createWorkoutController(onChange) {
   return {
     start: function (type, callback) {
       var generation = ++lifecycleGeneration
+      persistTicks = 0
+      gpsDistance = 0
       var session = workoutState.start(type)
       workoutRepository.saveActive(session, function () {
         if (!isCurrent(generation)) return
@@ -151,6 +152,7 @@ export function createWorkoutController(onChange) {
           if (callback) callback(null)
           return
         }
+        persistTicks = 0
         startRuntime()
         persist()
         emit(restored)
