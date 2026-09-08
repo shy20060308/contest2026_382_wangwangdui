@@ -5,12 +5,22 @@ var PATTERNS = {
   alert: { id: 'alert', duration: 450, interval: 160, count: 2, mode: 'long' }
 }
 
+var LEVEL_SCALE = { light: 0.72, medium: 1, strong: 1.3 }
+
+// Used only when migrating persisted settings from older versions.
 function normalize(id) { return PATTERNS[id] ? id : 'goal' }
+
 function get(id, level) {
-  var source = PATTERNS[normalize(id)]
-  var scale = level === 'light' ? 0.72 : level === 'strong' ? 1.3 : 1
-  return { id: source.id, duration: Math.max(50, Math.round(source.duration * scale)), interval: source.interval, count: source.count, mode: source.mode }
+  var source = PATTERNS[id]
+  if (!source) throw new Error('Unknown haptic pattern: ' + id)
+  var intensity = level === undefined ? 'medium' : level
+  var scale = LEVEL_SCALE[intensity]
+  if (!scale) throw new Error('Unknown haptic level: ' + intensity)
+  return { id: source.id, duration: Math.round(source.duration * scale), interval: source.interval, count: source.count, mode: source.mode }
 }
-function list() { return [get('tap'), get('goal'), get('countdown'), get('alert')] }
+
+function list() {
+  return [get('tap', 'medium'), get('goal', 'medium'), get('countdown', 'medium'), get('alert', 'medium')]
+}
 
 module.exports = { normalize: normalize, get: get, list: list }
