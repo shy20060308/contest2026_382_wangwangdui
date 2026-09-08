@@ -47,6 +47,7 @@ assert.strictEqual(exists('src/presentation'), false, 'V3 must not restore the r
 assert.strictEqual(exists('src/v2/design/specs'), false, 'V3 must not restore Design Spec compatibility code')
 assert.strictEqual(exists('src/v2/design/views'), false, 'V3 must not restore Design View compatibility code')
 assert.strictEqual(exists('src/v2/design/geometry.js'), false, 'V3 must not restore the retired geometry solver')
+assert.strictEqual(exists('src/v2/design/freedom.js'), false, 'V3 design difference levels must not restore the retired freedom compatibility system')
 
 const commonLogic = filesUnder('src/common', /\.(?:js|ux)$/, [])
 assert.deepStrictEqual(commonLogic, [], 'src/common is a static-resource namespace only; runtime logic belongs to Capability/Domain/Feature/Design/App')
@@ -59,6 +60,13 @@ filesUnder('src', /\.(?:js|ux)$/, []).forEach(function (file) {
   })
 })
 
+filesUnder('src/v2/design', /\.(?:js|ux)$/, []).forEach(function (file) {
+  const source = read(file)
+  assert.ok(!source.includes('freedomLevel'), file + ' must expose design difference metadata, not retired freedom metadata')
+  assert.ok(!source.includes('freedom.AUTO') && !source.includes('freedom.ASSISTED') && !source.includes('freedom.FREE'), file + ' must not use retired AUTO/ASSISTED/FREE design levels')
+  assert.ok(!source.includes('adaptive-geometry'), file + ' must not restore the retired adaptive geometry strategy')
+})
+
 filesUnder('test', /\.test\.js$/, []).forEach(function (file) {
   const source = read(file)
   assert.ok(!source.includes('src/common/'), file + ' must not validate retired common logic')
@@ -68,4 +76,4 @@ filesUnder('test', /\.test\.js$/, []).forEach(function (file) {
   assert.ok(!source.includes('design/specs/'), file + ' must not validate retired Design Specs')
 })
 
-console.log('V3 legacy absence verified: no compatibility runtime, aliases or legacy test contracts')
+console.log('V3 legacy absence verified: no compatibility runtime, aliases, freedom metadata or legacy test contracts')
