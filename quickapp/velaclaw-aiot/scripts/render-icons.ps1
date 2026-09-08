@@ -1,9 +1,26 @@
 param(
-  [string[]]$Names = @('calendar', 'diagnostics', 'motion')
+  [string[]]$Names = @()
 )
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
+$sourceRoot = Join-Path $root 'assets\icons'
+$outputRoot = Join-Path $root 'src\common\icons'
+
+if (-not $Names -or $Names.Count -eq 0) {
+  $Names = Get-ChildItem -LiteralPath $sourceRoot -Filter '*.svg' -File |
+    Sort-Object Name |
+    ForEach-Object { $_.BaseName }
+}
+
+if (-not $Names -or $Names.Count -eq 0) {
+  throw "No SVG icons found in $sourceRoot"
+}
+
+if (-not (Test-Path -LiteralPath $outputRoot)) {
+  New-Item -ItemType Directory -Path $outputRoot | Out-Null
+}
+
 $chromeCandidates = @(
   "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
   "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe",
@@ -21,16 +38,16 @@ $jpegCodec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() |
 $quality = [System.Drawing.Imaging.Encoder]::Quality
 
 foreach ($name in $Names) {
-  $svgPath = Join-Path $root "assets\icons\$name.svg"
-  $jpgPath = Join-Path $root "src\common\icons\$name.jpg"
-  if (-not (Test-Path $svgPath)) {
+  $svgPath = Join-Path $sourceRoot "$name.svg"
+  $jpgPath = Join-Path $outputRoot "$name.jpg"
+  if (-not (Test-Path -LiteralPath $svgPath)) {
     throw "Missing SVG icon: $svgPath"
   }
 
   $pngPath = Join-Path $env:TEMP "vela-band-$name-$PID.png"
-  $uri = ([System.Uri](Resolve-Path $svgPath).Path).AbsoluteUri
+  $uri = ([System.Uri](Resolve-Path -LiteralPath $svgPath).Path).AbsoluteUri
   & $browser --headless --disable-gpu --hide-scrollbars --default-background-color=000000 --window-size=96,96 "--screenshot=$pngPath" $uri | Out-Null
-  if (-not (Test-Path $pngPath)) {
+  if (-not (Test-Path -LiteralPath $pngPath)) {
     throw "Browser did not render PNG: $name"
   }
 
