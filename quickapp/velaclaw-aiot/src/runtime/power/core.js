@@ -48,9 +48,16 @@ function create(dependencies, options) {
     if (displayPower && displayPower.setKeepScreenOn) displayPower.setKeepScreenOn(policy.keepScreenOn)
   }
 
+  function isOfficialHeartSample(sample) {
+    if (!sample || sample.live !== true || sample.source !== 'live') return false
+    var value = Number(sample.value)
+    return isFinite(value) && value > 0
+  }
+
   function handleHeartSample(sample) {
+    if (!isOfficialHeartSample(sample)) return
     latestHeartSample = sample
-    // Golden Reference: ACTIVE publishes raw samples immediately. DIM buffers
+    // Golden Reference: ACTIVE publishes official raw samples immediately. DIM buffers
     // samples and only publishes through the lower-frequency business cadence.
     if (currentMode === stateMachine.MODE_ACTIVE) onHeartRate(sample, 'live')
   }
@@ -161,7 +168,8 @@ function create(dependencies, options) {
     machine = stateMachine.create(now())
     raiseDetector.reset()
     currentMode = stateMachine.MODE_ACTIVE
-    latestHeartSample = heartRate && heartRate.getSnapshot ? heartRate.getSnapshot() : null
+    var initialHeartSample = heartRate && heartRate.getSnapshot ? heartRate.getSnapshot() : null
+    latestHeartSample = isOfficialHeartSample(initialHeartSample) ? initialHeartSample : null
     applyMode(stateMachine.MODE_ACTIVE, 'start')
     onTime(now())
     readBattery()
