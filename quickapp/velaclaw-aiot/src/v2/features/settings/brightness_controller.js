@@ -26,7 +26,6 @@ export function createBrightnessController(onChange) {
 
   return {
     load: function () { settingsStore.load(function (value) { state = value; emit() }) },
-    refresh: emit,
     setBrightness: function (value) {
       if (state.autoBrightness) return emit()
       state = settingsStore.update('brightnessValue', value)
