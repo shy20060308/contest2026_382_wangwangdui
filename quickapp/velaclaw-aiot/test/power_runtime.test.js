@@ -87,6 +87,7 @@ const runtime = powerRuntimeCore.create({
 assert.throws(function () { runtime.start() }, /configured before start/, 'runtime must not invent Settings defaults')
 runtime.configure({ lowPowerEnabled: true, raiseWakeEnabled: true, activeBrightnessValue: 140 })
 runtime.start()
+assert.throws(function () { runtime.markActive() }, /activity reason/, 'runtime must not invent an activity reason')
 assert.strictEqual(runtime.getMode(), 'ACTIVE', 'runtime must start ACTIVE')
 assert.strictEqual(heartSubscribeCount, 1, 'ACTIVE start must subscribe heart rate exactly once')
 assert.strictEqual(heartEvents.length, 0, 'non-live cached heart state must never be promoted into Clock telemetry')
@@ -142,4 +143,4 @@ assert.strictEqual(runtime.getSnapshot().mainTimerActive, false, 'stop must clea
 assert.strictEqual(runtime.getSnapshot().heartTimerActive, false, 'stop must clear heart cadence')
 assert.ok(modes.indexOf('DIM') >= 0 && modes.indexOf('SLEEP') >= 0, 'mode callbacks must expose DIM and SLEEP transitions')
 
-console.log('Power Runtime executed: explicit Settings, async motion failure cleanup, ACTIVE/DIM/SLEEP, and official HR cadence')
+console.log('Power Runtime executed: explicit Settings/reasons, async motion failure cleanup, ACTIVE/DIM/SLEEP, and official HR cadence')
