@@ -3,7 +3,7 @@
   "name": "vela_band",
   "versionName": "3.0.0",
   "versionCode": 30,
-  "minAPILevel": 2,
+  "minAPILevel": 3,
   "minPlatformVersion": 1000,
   "icon": "/common/logo.png",
   "deviceTypeList": ["watch"],
