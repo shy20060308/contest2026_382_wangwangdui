@@ -10,6 +10,8 @@ const settingsCatalog = require('../src/v2/design/catalogs/settings')
 const workoutCatalog = require('../src/v2/design/workout_catalog')
 const watchfaceCatalog = require('../src/v2/design/watchface_catalog')
 const domainWatchfaceCatalog = require('../src/domain/watchface/catalog')
+const notificationFactory = require('../src/domain/notification/factory')
+const notificationView = require('../src/v2/design/apps/notification/view')
 const launcherLayout = require('../src/v2/design/apps/launcher/layout')
 const appRoutes = require('../src/runtime/app_routes')
 const clockView = require('../src/v2/design/apps/clock/view')
@@ -27,6 +29,14 @@ assert.throws(function () { domainWatchfaceCatalog.indexOf(['sport'], 'simple') 
 launcherLayout.base.appIds.forEach(function (id) {
   assert.ok(appRoutes.routeFor(id), 'Launcher Recipe app must resolve a runtime route: ' + id)
 })
+
+const canonicalNotification = notificationFactory.normalize({ type: 'app', title: '消息', content: '内容' })
+assert.strictEqual(canonicalNotification.appName, '消息')
+assert.strictEqual(canonicalNotification.content, '内容')
+assert.throws(function () { notificationFactory.normalize({ content: 123 }) }, /Notification field must be a string/)
+const blankCallView = notificationView.project({ visible: true, type: 'call', appName: '', appIcon: '', content: '', contact: '', phone: '', hangUp: false })
+assert.strictEqual(blankCallView.appName, '', 'Notification View must not invent an app label')
+assert.strictEqual(blankCallView.contact, '', 'Notification View must not invent a caller identity')
 
 const telemetry = clockView.project({
   faceId: 'sport',
