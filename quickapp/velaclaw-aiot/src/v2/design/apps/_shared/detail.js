@@ -1,4 +1,4 @@
-var freedom = require('../../freedom')
+var difference = require('../../difference')
 var adapter = require('../../adapter')
 
 function create(layout) {
@@ -6,7 +6,7 @@ function create(layout) {
 
   function resolve(profile, scene, safe) {
     var config = adapter.select(layout, profile)
-    var plan = adapter.createPlan(profile, scene, safe, freedom.AUTO, config.surface)
+    var plan = adapter.createPlan(profile, scene, safe, difference.L1, config.surface)
     plan.header = adapter.placeBand(profile, scene, safe, {
       top: config.headerTop,
       width: config.headerWidth,
@@ -30,7 +30,7 @@ function create(layout) {
     return plan
   }
 
-  return { freedomLevel: freedom.AUTO, contentWidth: contentWidth, resolve: resolve, layout: layout }
+  return { differenceLevel: difference.L1, contentWidth: contentWidth, resolve: resolve, layout: layout }
 }
 
 module.exports = { create: create }
