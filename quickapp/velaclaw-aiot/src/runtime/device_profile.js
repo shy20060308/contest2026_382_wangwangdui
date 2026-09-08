@@ -16,35 +16,34 @@ function positiveNumber(value, label) {
   return next
 }
 
-function optionalNumber(value) {
+function optionalPositiveNumber(value, label) {
+  if (value === undefined || value === null || value === '') return null
   var next = Number(value)
-  return isFinite(next) && next > 0 ? next : 0
+  if (!isFinite(next) || next <= 0) throw new Error('V3 Device Profile requires canonical ' + label)
+  return next
 }
 
-function text(value) { return value === undefined || value === null ? '' : String(value) }
+function optionalText(value) {
+  return value === undefined || value === null || value === '' ? null : String(value)
+}
+
 function contextDevice(context) { return context && context.$device ? context.$device : {} }
 function pick(primary, secondary, key) {
   if (primary && primary[key] !== undefined && primary[key] !== null && primary[key] !== '') return primary[key]
   return secondary && secondary[key]
 }
 
-function formFactor(shape) {
-  var normalized = String(shape || '').toLowerCase()
-  if (normalized === 'circle') return 'circle'
-  if (normalized === 'pill-shaped') return 'pill'
-  if (normalized === 'rect') return 'rect'
+function screenShape(value) {
+  var normalized = String(value || '').toLowerCase()
+  if (normalized === 'circle' || normalized === 'pill-shaped' || normalized === 'rect') return normalized
   throw new Error('V3 Device Profile requires canonical screenShape')
 }
 
-function family(shape, width, height) {
-  var size = width + 'x' + height
-  if (size === '192x490') return 'xiaomi_band'
-  if (size === '212x520') return 'xiaomi_band_10'
-  if (size === '336x480') return 'xiaomi_band_pro'
-  if (size === '432x514') return 'redmi_watch'
-  if (shape === 'circle' && size === '466x466') return 'xiaomi_round_466'
-  if (shape === 'circle' && size === '480x480') return 'xiaomi_round_480'
-  return shape + '_generic'
+function formFactor(shape) {
+  if (shape === 'circle') return 'circle'
+  if (shape === 'pill-shaped') return 'pill'
+  if (shape === 'rect') return 'rect'
+  throw new Error('V3 Device Profile requires canonical screenShape')
 }
 
 function declaredInsets(factor) {
@@ -55,12 +54,12 @@ function declaredInsets(factor) {
 
 function make(info, context) {
   var local = contextDevice(context)
-  var shapeText = text(pick(info, local, 'screenShape'))
+  var shapeText = screenShape(pick(info, local, 'screenShape'))
   var width = positiveNumber(pick(info, local, 'screenWidth'), 'screenWidth')
   var height = positiveNumber(pick(info, local, 'screenHeight'), 'screenHeight')
   var factor = formFactor(shapeText)
-  var model = text(pick(info, local, 'model'))
-  var platformVersionCode = optionalNumber(pick(info, local, 'platformVersionCode'))
+  var model = optionalText(pick(info, local, 'model'))
+  var platformVersionCode = optionalPositiveNumber(pick(info, local, 'platformVersionCode'), 'platformVersionCode')
 
   return {
     shape: shapeText,
@@ -71,7 +70,6 @@ function make(info, context) {
     screenWidth: width,
     screenHeight: height,
     safeInsets: declaredInsets(factor),
-    deviceFamily: family(factor, width, height),
     model: model,
     platformVersionCode: platformVersionCode,
     source: 'v3.capability.device'
