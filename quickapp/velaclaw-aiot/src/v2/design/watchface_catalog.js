@@ -7,7 +7,8 @@ var VISUALS = {
 }
 
 function get(id) {
-  var value = VISUALS[id] || VISUALS.sport
+  var value = VISUALS[id]
+  if (!value) throw new Error('Unknown V3 watchface visual: ' + id)
   return { background: value.background, accent: value.accent }
 }
 
