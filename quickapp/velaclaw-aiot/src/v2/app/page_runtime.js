@@ -1,4 +1,4 @@
-import deviceProfile from '../system/device_profile'
+import deviceProfile from '../../runtime/device_profile'
 var scene = require('../design/scene')
 
 function bind(page, callback) {
