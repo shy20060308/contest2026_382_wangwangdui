@@ -1,7 +1,7 @@
 import storage from '../../capabilities/storage'
 
-var SELECTED_FACE_KEY = 'selected_face_id'
-var RIGHT_FACE_TRANSITION_KEY = 'right_face_transition'
+var SELECTED_FACE_KEY = 'selected_face_id_v3'
+var RIGHT_FACE_TRANSITION_KEY = 'right_face_transition_v3'
 var RIGHT_FACE_TRANSITION_MAX_AGE = 3000
 var selectedFaceId = ''
 
