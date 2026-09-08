@@ -5,6 +5,7 @@ import workoutRepository from '../../../domain/workout/repository'
 import activityStore from '../../../domain/activity/store'
 import historyRepository from '../../../domain/history/repository'
 var distance = require('../../../domain/workout/distance')
+var healthMetrics = require('../../../domain/health/metrics')
 
 function emitValue(onChange, session) {
   if (typeof onChange === 'function') onChange(session)
@@ -67,7 +68,7 @@ export function createWorkoutController(onChange) {
   }
 
   function onHeartRate(snapshot) {
-    if (!runtimeActive || !snapshot || !snapshot.live || snapshot.source !== 'live') return
+    if (!runtimeActive || !snapshot || !snapshot.live || snapshot.source !== 'live' || !healthMetrics.isHeartRate(snapshot.value)) return
     var active = workoutState.getActive()
     if (!active || active.status !== 'running') return
     emit(workoutState.updateHeartRate(snapshot.value))
