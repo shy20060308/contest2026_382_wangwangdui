@@ -11,17 +11,15 @@ function timeText(timestamp) {
 }
 
 function phaseText(model) {
-  if (model.phase === 'idle') return '连接上位机后同步手环数据'
-  if (model.phase === 'connecting') return '正在建立同步链路'
-  if (model.phase === 'connected') return '模拟器链路已连接'
-  if (model.phase === 'disconnected') return '已断开上位机'
-  if (model.phase === 'connect-failed') return '连接失败，请重试'
-  if (model.phase === 'disconnect-blocked') return '同步中不能断开'
-  if (model.phase === 'connect-required') return '请先连接上位机'
+  if (model.phase === 'idle') return '检测手机连接后同步手环数据'
+  if (model.phase === 'checking') return '正在检测系统同步链路'
+  if (model.phase === 'connected') return '手机同步链路已就绪'
+  if (model.phase === 'disconnected') return '手机同步链路未连接'
+  if (model.phase === 'connect-failed') return '无法读取手机连接状态'
+  if (model.phase === 'connect-required') return '请先确认手机已连接'
   if (model.phase === 'collecting') return '正在收集健康与运动数据'
-  if (model.phase === 'waiting-ack') return '等待分包 ACK'
-  if (model.phase === 'sending') return '已确认 ' + model.ackSent + '/' + model.ackTotal + ' 包'
-  if (model.phase === 'completed') return '同步完成，对端已确认'
+  if (model.phase === 'sending') return '已发送 ' + model.packetSent + '/' + model.packetTotal + ' 包'
+  if (model.phase === 'completed') return '同步完成，数据已发送'
   if (model.phase === 'failed') return '同步失败，可重新尝试'
   throw new Error('Unknown sync phase: ' + model.phase)
 }
@@ -29,23 +27,19 @@ function phaseText(model) {
 function packetText(model) {
   if (model.packetCount > 0) return model.packetCount + ' 包 · ' + model.payloadChars + ' 字符'
   if (model.phase === 'connected') return '可开始同步'
-  if (model.phase === 'disconnected') return '等待连接'
+  if (model.phase === 'checking') return '正在检测连接'
+  if (model.phase === 'disconnected' || model.phase === 'connect-failed') return '等待手机连接'
   if (model.phase === 'collecting') return '正在打包'
   return '等待打包'
-}
-
-function transportText(mode) {
-  if (mode !== 'mock') throw new Error('Unknown sync transport mode: ' + mode)
-  return '模拟器分包链路'
 }
 
 function project(model) {
   return {
     statusText: model.connected ? '已连接' : '未连接',
     statusColor: model.connected ? '#30D158' : '#8E8E93',
-    connectButtonText: model.connected ? '断开' : '连接',
+    connectButtonText: model.connected ? '重检' : '检测',
     lastSyncText: timeText(model.lastSyncAt),
-    transportText: transportText(model.transportMode),
+    transportText: '系统 Interconnect',
     syncPercent: model.progress,
     syncWidth: model.progress + '%',
     syncMessage: phaseText(model),
