@@ -1,20 +1,5 @@
 import health from '@service.health'
 
-function safeNumber(value, fallback) {
-  var number = Number(value)
-  return isFinite(number) ? Math.round(number) : fallback
-}
-
-function sampleNumber(value) {
-  var number = Number(value)
-  return isFinite(number) ? Math.round(number) : null
-}
-
-function safeTimestamp(value) {
-  var number = Number(value)
-  return isFinite(number) && number > 0 ? Math.round(number) : Date.now()
-}
-
 function clone(snapshot) {
   return {
     value: snapshot.value,
@@ -27,7 +12,8 @@ function clone(snapshot) {
 }
 
 export default function createHealthChannel(options) {
-  var config = options || {}
+  if (!options || typeof options.dataTypeName !== 'string' || !options.dataTypeName) throw new Error('Health channel requires dataTypeName')
+
   var listeners = []
   var subscribed = false
   var state = {
@@ -40,13 +26,13 @@ export default function createHealthChannel(options) {
   }
 
   function dataType() {
-    if (!health || !health.DATA_TYPES) return config.fallbackDataType
-    var value = health.DATA_TYPES[config.dataTypeName]
-    return value === undefined || value === null ? config.fallbackDataType : value
+    if (!health || !health.DATA_TYPES) return null
+    var value = health.DATA_TYPES[options.dataTypeName]
+    return typeof value === 'number' ? value : null
   }
 
   function serviceAvailable() {
-    return !!(health && health.getRecentSamples && health.subscribeSample && health.unsubscribeSample)
+    return !!(health && health.getRecentSamples && health.subscribeSample && health.unsubscribeSample && dataType() !== null)
   }
 
   function emit() {
@@ -66,20 +52,18 @@ export default function createHealthChannel(options) {
   function setFailure(code) {
     state.live = false
     state.available = serviceAvailable()
-    state.errorCode = safeNumber(code, 200)
+    state.errorCode = typeof code === 'number' ? code : 200
     state.source = state.available ? 'error' : 'unavailable'
     emit()
   }
 
   function applySample(sample) {
-    if (!sample || sample.value === undefined || sample.value === null) return
-    var value = sampleNumber(sample.value)
-    if (value === null) return
-    state.value = value
+    if (!sample || typeof sample.value !== 'number' || !isFinite(sample.value)) return
+    state.value = Math.round(sample.value)
     state.live = true
     state.available = true
     state.errorCode = 0
-    state.updatedAt = safeTimestamp(sample.timeStamp)
+    state.updatedAt = typeof sample.timeStamp === 'number' && isFinite(sample.timeStamp) && sample.timeStamp > 0 ? Math.round(sample.timeStamp) : Date.now()
     state.source = 'live'
     emit()
   }
@@ -155,9 +139,7 @@ export default function createHealthChannel(options) {
 
   function unsubscribe(listener) {
     var next = []
-    for (var i = 0; i < listeners.length; i++) {
-      if (listeners[i] !== listener) next.push(listeners[i])
-    }
+    for (var i = 0; i < listeners.length; i++) if (listeners[i] !== listener) next.push(listeners[i])
     listeners = next
     if (listeners.length === 0) stopNative()
   }
@@ -165,10 +147,7 @@ export default function createHealthChannel(options) {
   return {
     subscribe: subscribe,
     unsubscribe: unsubscribe,
-    getLatest: function () { return state.value },
     getSnapshot: function () { return clone(state) },
-    isActive: function () { return listeners.length > 0 },
-    consumerCount: function () { return listeners.length },
     isAvailable: serviceAvailable
   }
 }
