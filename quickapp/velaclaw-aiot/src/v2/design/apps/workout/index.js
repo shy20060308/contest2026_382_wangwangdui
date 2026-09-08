@@ -8,7 +8,7 @@ function box(profile, scene, safe, source) {
   var spec = adapter.merge({}, source)
   if (spec.topFromBottom !== undefined) {
     spec.absoluteTop = true
-    spec.top = safe.bottom - Number(spec.topFromBottom)
+    spec.top = safe.bottom - spec.topFromBottom
     delete spec.topFromBottom
   }
   return adapter.placeBand(profile, scene, safe, spec)
