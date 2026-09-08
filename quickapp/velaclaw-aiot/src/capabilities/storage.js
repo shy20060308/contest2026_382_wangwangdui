@@ -150,9 +150,7 @@ var adapter = {
         })
       }, fallback)
     })
-  },
-
-  clearCache: function () { memoryCache = {} }
+  }
 }
 
 export default adapter
