@@ -1,5 +1,5 @@
 import motion from '../../../capabilities/motion'
-import haptics from '../../system/haptics'
+import haptics from '../../../runtime/haptics'
 var metrics = require('../../../domain/motion/metrics')
 
 var HAPTIC_OWNER = 'motion-diagnostics'
