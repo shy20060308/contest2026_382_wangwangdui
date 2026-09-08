@@ -148,7 +148,6 @@ export function createMotionController(onChange) {
       motion.unsubscribe(onSample)
       sensorActive = false
       sensorStatus = 'stopped'
-    },
-    refreshSensor: function () { return startSensor(true) }
+    }
   }
 }
