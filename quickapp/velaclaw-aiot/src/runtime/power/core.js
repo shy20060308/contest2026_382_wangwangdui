@@ -123,10 +123,10 @@ function create(dependencies, options) {
   }
 
   function markActive(reason) {
+    if (typeof reason !== 'string' || !reason) throw new Error('Power Runtime requires an activity reason')
     if (!started) return currentMode
-    var nextReason = reason || 'activity'
-    var snapshot = machine.markActive(nextReason, now())
-    if (snapshot.mode !== currentMode) applyMode(snapshot.mode, nextReason)
+    var snapshot = machine.markActive(reason, now())
+    if (snapshot.mode !== currentMode) applyMode(snapshot.mode, reason)
     return currentMode
   }
 
@@ -218,37 +218,40 @@ function create(dependencies, options) {
     heartTimer = clearTimer(heartTimer)
     releaseRaiseWake()
     stopHealth()
-    displayPower.setBrightness(activeBrightnessValue)
-    displayPower.setKeepScreenOn(true)
-    currentMode = stateMachine.MODE_ACTIVE
+  }
+
+  function forceMode(mode, reason) {
+    var snapshot = machine.force(mode, reason, now())
+    return applyMode(snapshot.mode, snapshot.reason)
+  }
+
+  function getMode() {
+    return currentMode
+  }
+
+  function getSnapshot() {
+    return {
+      started: started,
+      configured: configured,
+      mode: currentMode,
+      healthActive: healthActive,
+      raiseWakeSubscribed: raiseWakeSubscribed,
+      raiseWakeActive: raiseWakeActive,
+      idleTimerActive: idleTimer !== null,
+      mainTimerActive: mainTimer !== null,
+      heartTimerActive: heartTimer !== null
+    }
   }
 
   return {
+    configure: configure,
     start: start,
     stop: stop,
-    configure: configure,
     markActive: markActive,
     evaluateIdle: evaluateIdle,
-    forceMode: function (mode, reason) {
-      var nextReason = reason || 'force'
-      machine.force(mode, nextReason, now())
-      return applyMode(mode, nextReason)
-    },
-    getMode: function () { return currentMode },
-    getSnapshot: function () {
-      return {
-        started: started,
-        mode: currentMode,
-        policy: powerPolicy.get(currentMode),
-        lowPowerEnabled: lowPowerEnabled,
-        raiseWakeEnabled: raiseWakeEnabled,
-        healthActive: healthActive,
-        raiseWakeActive: raiseWakeActive,
-        idleTimerActive: idleTimer !== null,
-        mainTimerActive: mainTimer !== null,
-        heartTimerActive: heartTimer !== null
-      }
-    }
+    forceMode: forceMode,
+    getMode: getMode,
+    getSnapshot: getSnapshot
   }
 }
 
