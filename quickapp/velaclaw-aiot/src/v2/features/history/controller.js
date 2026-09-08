@@ -36,7 +36,6 @@ export function createHistoryController(onChange) {
   }
 
   return {
-    load: function () { historyRepository.getHistory(emit) },
-    summarize: summarize
+    load: function () { historyRepository.getHistory(emit) }
   }
 }
