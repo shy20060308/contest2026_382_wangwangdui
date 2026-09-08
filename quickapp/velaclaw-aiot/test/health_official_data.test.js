@@ -30,9 +30,14 @@ const live = healthView.project({
   heartZone: 'normal',
   spo2Zone: 'good',
   stressZone: 'relaxed',
-  heartSource: { live: true, mode: 'live' },
-  spo2Source: { live: true, mode: 'live' },
-  stressSource: { live: true, mode: 'live' },
+  dailyMin: 72,
+  dailyMax: 79,
+  stressMin: 18,
+  stressAvg: 21,
+  stressMax: 25,
+  heartSource: { live: true, errorCode: 0, mode: 'live' },
+  spo2Source: { live: true, errorCode: 0, mode: 'live' },
+  stressSource: { live: true, errorCode: 0, mode: 'live' },
   anyLive: true,
   serviceAvailable: true,
   updatedAt: new Date(2026, 8, 4, 15, 30).getTime(),
@@ -49,17 +54,23 @@ assert.ok(Math.max.apply(null, live.heartBars.map(item => item.height)) <= plan.
 assert.ok(Math.min.apply(null, live.heartBars.map(item => item.height)) >= plan.trendMinHeight)
 
 const waiting = healthView.project({
-  heartRate: 0,
-  spo2: 0,
+  heartRate: null,
+  spo2: null,
   stress: null,
   heartZone: 'waiting',
   spo2Zone: 'waiting',
   stressZone: 'waiting',
-  heartSource: { live: false, mode: 'unavailable' },
-  spo2Source: { live: false, mode: 'unavailable' },
-  stressSource: { live: false, mode: 'unavailable' },
+  dailyMin: 0,
+  dailyMax: 0,
+  stressMin: 0,
+  stressAvg: 0,
+  stressMax: 0,
+  heartSource: { live: false, errorCode: 0, mode: 'unavailable' },
+  spo2Source: { live: false, errorCode: 0, mode: 'unavailable' },
+  stressSource: { live: false, errorCode: 0, mode: 'unavailable' },
   anyLive: false,
   serviceAvailable: false,
+  updatedAt: 0,
   heartValues: [], spo2Values: [], stressValues: []
 }, plan)
 
@@ -79,9 +90,13 @@ const spo2Capability = read('src/capabilities/blood_oxygen.js')
 const stressCapability = read('src/capabilities/stress.js')
 assert.strictEqual(exists('src/domain/health/recent.js'), false, 'Official Health must not retain seeded compatibility samples')
 assert.ok(controller.includes("data[prefix + 'Source'] === 'live'"), 'Health controller must only promote official system samples into visible metric state')
+assert.ok(controller.includes('heartAvailable ? data.heartRate : null'), 'Unavailable heart rate must remain null through the Feature layer')
+assert.ok(controller.includes('spo2Available ? data.spo2 : null'), 'Unavailable SpO2 must remain null through the Feature layer')
+assert.ok(!controller.includes('Number(data.heartRate)') && !controller.includes('Number(data.spo2)') && !controller.includes('Number(data.stress)'), 'Health Feature must consume canonical Capability values without repeated numeric validation')
 assert.ok(!controller.includes('var heartValues = [72'), 'Health controller must not seed a fabricated trend')
 assert.ok(!controller.includes('historyRepository.loadHourlyHeartRate'), 'Health must not pull demo-backed hourly history into the official data surface')
 assert.ok(store.includes('heartRateSource: heart.source'), 'Health store must preserve capability source provenance')
+assert.ok(!store.includes("metrics : ['heartRate']"), 'Health Store must not silently default an unspecified subscription to heart rate')
 assert.ok(!healthChannel.includes('fallbackTimer') && !healthChannel.includes('fallbackValue'), 'Health capability runtime must not synthesize fallback measurements')
 ;[heartCapability, spo2Capability, stressCapability].forEach(function (source) {
   assert.ok(!source.includes('initialValue'), 'Health metric capabilities must not seed fabricated values')
@@ -95,4 +110,4 @@ assert.ok(page.includes('line-height: {{ metaLineHeight }}px'), 'Health metadata
 assert.ok(page.includes('padding-bottom: {{ scrollPaddingBottom }}px'), 'Health stream tail space must come from the recipe')
 assert.ok(page.includes('if="{{ ready }}"'), 'Health must not render product geometry before the recipe resolves')
 
-console.log('Health official-data contracts verified: unavailable health stays unknown and no synthetic measurements are generated')
+console.log('Health official-data contracts verified: one canonical null/provenance path and no synthetic measurements')
