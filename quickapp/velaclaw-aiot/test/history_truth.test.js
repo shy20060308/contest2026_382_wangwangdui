@@ -17,8 +17,9 @@ assert.ok(!repository.includes('makeDemoHourly'), 'History must not fabricate ho
 assert.ok(!repository.includes('hourlyHeartRate'), 'Retired demo hourly heart-rate state must stay removed')
 assert.ok(!repository.includes("../health/recent"), 'History must not depend on seeded compatibility health data')
 assert.ok(!repository.includes("'health_history_7d'"), 'V3 must not reopen the persistence namespace that may contain seeded legacy history')
-assert.ok(repository.includes('avgHeartRate: null'), 'History must represent unavailable daily heart-rate aggregates as unavailable')
-assert.ok(controller.includes('heartCount ? Math.round(totalHeart / heartCount) : 0'), 'History average heart rate must only include available truthful records')
-assert.ok(view.includes("avgHeartRate ? Math.round(source.avgHeartRate) + ' bpm' : '--'"), 'History UI must show unavailable heart-rate aggregates explicitly')
+assert.ok(repository.includes('avgHeartRate: null'), 'History Repository must preserve unavailable heart rate as null')
+assert.ok(controller.includes('heartCount ? Math.round(totalHeart / heartCount) : null'), 'History Feature must preserve unavailable aggregate heart rate as null')
+assert.ok(view.includes("model.avgHeartRate === null ? '--' : model.avgHeartRate + ' bpm'"), 'History View must convert null to display text only at presentation time')
+assert.ok(!controller.includes('Number(item.steps)') && !controller.includes('Number(item.avgHeartRate)'), 'History Feature must trust Repository-normalized records')
 
-console.log('History truth contracts verified: no seeded activity or heart-rate history')
+console.log('History truth contracts verified: no seeded data and no null-to-zero fallback chain')
