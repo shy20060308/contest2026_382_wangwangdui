@@ -134,19 +134,19 @@ var adapter = {
               if (callback) callback(makeResult(true, false))
               finishOperation(key)
             },
-            fail: function (error) {
-              if (callback) callback(makeResult(false, false, error))
+            fail: function (data, code) {
+              if (callback) callback(makeResult(false, true, storageFailure('delete', key, data, code)))
               finishOperation(key)
             }
           })
           return
         }
       } catch (error) {
-        if (callback) callback(makeResult(false, false, error))
+        if (callback) callback(makeResult(false, true, error))
         finishOperation(key)
         return
       }
-      if (callback) callback(makeResult(false, false, new Error('storage.delete unavailable')))
+      if (callback) callback(makeResult(false, true, new Error('storage.delete unavailable')))
       finishOperation(key)
     })
   },
