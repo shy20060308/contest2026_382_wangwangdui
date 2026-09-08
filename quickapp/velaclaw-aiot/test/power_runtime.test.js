@@ -11,6 +11,7 @@ let heartListener = null
 let heartSubscribeCount = 0
 let heartUnsubscribeCount = 0
 let motionListener = null
+let motionFail = null
 let motionSubscribeCount = 0
 let motionUnsubscribeCount = 0
 let batteryReads = 0
@@ -59,14 +60,16 @@ const runtime = powerRuntimeCore.create({
     }
   },
   motion: {
-    subscribe: function (listener) {
+    subscribe: function (listener, options) {
       motionSubscribeCount++
       motionListener = listener
+      motionFail = options.fail
       return true
     },
     unsubscribe: function (listener) {
       motionUnsubscribeCount++
       if (motionListener === listener) motionListener = null
+      motionFail = null
     }
   },
   battery: {
@@ -125,15 +128,18 @@ assert.strictEqual(runtime.getMode(), 'ACTIVE', 'semantic raise gesture must wak
 assert.strictEqual(wakeEvents.length, 1, 'raise detector must emit exactly one wake event')
 assert.strictEqual(heartSubscribeCount, 2, 'wake from SLEEP must restore heart subscription exactly once')
 
+motionFail('sensor-failed')
+assert.strictEqual(runtime.getSnapshot().raiseWakeActive, false, 'asynchronous sensor failure must clear active raise-wake state')
 runtime.configure({ lowPowerEnabled: false, raiseWakeEnabled: true, activeBrightnessValue: 180 })
 assert.strictEqual(runtime.getSnapshot().idleTimerActive, false, 'disabling low power must remove idle polling')
+assert.strictEqual(motionUnsubscribeCount, 1, 'disabled low power must still release a subscribed listener after native sensor failure')
 assert.ok(displayCalls.some(function (call) { return call[0] === 'brightness' && call[1] === 180 }), 'ACTIVE brightness changes must apply immediately')
 
 runtime.stop()
 assert.strictEqual(heartUnsubscribeCount, 2, 'stop must release the restored heart subscription')
-assert.strictEqual(motionUnsubscribeCount, 1, 'stop must release raise-wake consumer')
+assert.strictEqual(motionUnsubscribeCount, 1, 'stop must not double-release an already removed raise-wake consumer')
 assert.strictEqual(runtime.getSnapshot().mainTimerActive, false, 'stop must clear main cadence')
 assert.strictEqual(runtime.getSnapshot().heartTimerActive, false, 'stop must clear heart cadence')
 assert.ok(modes.indexOf('DIM') >= 0 && modes.indexOf('SLEEP') >= 0, 'mode callbacks must expose DIM and SLEEP transitions')
 
-console.log('Power Runtime executed: explicit Settings, truthful registration, ACTIVE/DIM/SLEEP, and official HR cadence')
+console.log('Power Runtime executed: explicit Settings, async motion failure cleanup, ACTIVE/DIM/SLEEP, and official HR cadence')
