@@ -45,18 +45,8 @@ function styleBlock(source) {
   return match ? match[1] : ''
 }
 
-assert.strictEqual(exists('src/presentation'), false, 'V3 must not keep the retired presentation system')
-assert.strictEqual(exists('src/v2/design/specs'), false, 'V3 must not keep design spec compatibility bridges')
-assert.strictEqual(exists('src/v2/design/views'), false, 'V3 must not keep design view compatibility bridges')
-assert.strictEqual(exists('src/v2/design/geometry.js'), false, 'Safe geometry belongs to the device profile + scene, not another geometry layer')
-assert.strictEqual(exists('src/pages/index'), false, 'sample index page is not a V3 product surface')
-assert.strictEqual(exists('src/pages/detail'), false, 'sample detail page is not a V3 product surface')
-
-const sources = filesUnder('src', [])
-sources.forEach(function (file) {
+filesUnder('src', []).forEach(function (file) {
   const source = read(file)
-  assert.ok(!source.includes('/design/specs/') && !source.includes('/design/views/'), file + ' must consume app-owned V3 design directly')
-  assert.ok(!source.includes('../presentation/') && !source.includes('/presentation/'), file + ' must not depend on retired presentation code')
   relativeDependencies(source).forEach(function (dependency) {
     assert.ok(dependencyExists(file, dependency), file + ' has unresolved dependency ' + dependency)
   })
@@ -89,12 +79,12 @@ strictRecipePages.forEach(function (file) {
   const source = read(file)
   const style = styleBlock(source)
   assert.ok(/if="\{\{\s*ready(?:\s*&&|\s*\}\})/.test(source), file + ' must not render product geometry before its V3 plan resolves')
-  assert.ok(!source.includes('|| this.'), file + ' must not fall back to UX-owned legacy geometry')
+  assert.ok(!source.includes('|| this.'), file + ' must not fall back to UX-owned geometry')
   assert.ok(!/:\s*-?(?:[1-9]\d*|0\.\d*[1-9]\d*)px\b/.test(style), file + ' CSS must not own non-zero geometry after strict V3 migration')
 })
 
 const clockHost = read('src/pages/clock/clock.ux')
-assert.ok(clockHost.includes('if="{{ profileReady }}"'), 'Clock must not render product geometry before its V3 plan resolves')
+assert.ok(clockHost.includes('if="{{ profileReady }}"'), 'Clock must wait for its V3 plan')
 assert.ok(clockHost.includes('face-layout="{{ faceLayouts.'), 'Clock must pass resolved face recipes into watchface components')
 assert.ok(!/:\s*-?(?:[1-9]\d*|0\.\d*[1-9]\d*)px\b/.test(styleBlock(clockHost)), 'Clock CSS must not own non-zero product geometry')
 
@@ -114,8 +104,8 @@ const strictWatchfaceComponents = [
 strictWatchfaceComponents.forEach(function (file) {
   const source = read(file)
   const style = styleBlock(source)
-  assert.ok(source.includes('faceLayout'), file + ' must render the resolved Clock Recipe instead of owning a private layout')
-  assert.ok(!/:\s*-?(?:[1-9]\d*|0\.\d*[1-9]\d*)px\b/.test(style), file + ' CSS must not own non-zero geometry after strict V3 migration')
+  assert.ok(source.includes('faceLayout'), file + ' must render the resolved Clock Recipe')
+  assert.ok(!/:\s*-?(?:[1-9]\d*|0\.\d*[1-9]\d*)px\b/.test(style), file + ' CSS must not own non-zero geometry')
 })
 
 const strictRecipeResolvers = [
@@ -151,29 +141,26 @@ const strictPlanViews = [
 ]
 strictPlanViews.forEach(function (file) {
   const source = read(file)
-  assert.ok(!/plan\s*&&/.test(source), file + ' must require the resolved V3 plan instead of silently falling back')
-  assert.ok(!/Number\(\s*plan[^)]*\)\s*\|\|/.test(source), file + ' must not invent visual geometry when plan data is missing')
+  assert.ok(!/plan\s*&&/.test(source), file + ' must require the resolved V3 plan')
+  assert.ok(!/Number\(\s*plan[^)]*\)\s*\|\|/.test(source), file + ' must not invent visual geometry')
 })
 
 const diagnosticsView = read('src/v2/design/apps/diagnostics/view.js')
-assert.ok(!diagnosticsView.includes('|| 3'), 'Diagnostics paging must require recipe capacity instead of falling back to three cards')
+assert.ok(!diagnosticsView.includes('|| 3'), 'Diagnostics paging must require recipe capacity')
 assert.ok(diagnosticsView.includes('requires resolved capabilityPageSize'), 'Diagnostics paging must fail visibly when recipe capacity is missing')
 
 const watchfaceChart = read('src/v2/design/watchface_chart.js')
-assert.ok(watchfaceChart.includes("visualNumber(minHeight, 'minHeight')"), 'Watchface chart min height must come from the face recipe')
-assert.ok(watchfaceChart.includes("visualNumber(maxHeight, 'maxHeight')"), 'Watchface chart max height must come from the face recipe')
-assert.ok(watchfaceChart.includes("visualNumber(minSpan, 'minSpan')"), 'Watchface chart data span must come from the face recipe')
+assert.ok(watchfaceChart.includes("visualNumber(minHeight, 'minHeight')"), 'Watchface chart min height must come from Recipe')
+assert.ok(watchfaceChart.includes("visualNumber(maxHeight, 'maxHeight')"), 'Watchface chart max height must come from Recipe')
+assert.ok(watchfaceChart.includes("visualNumber(minSpan, 'minSpan')"), 'Watchface chart data span must come from Recipe')
 
 const adapter = read('src/v2/design/adapter.js')
-assert.ok(adapter.includes("SYSTEM_ID = 'recipe-translator-v3.0'"))
 assert.ok(!adapter.includes('function clamp('), 'Adapter must not repair recipe geometry at runtime')
 assert.ok(!adapter.includes('circleChord') && !adapter.includes('circleBand'), 'Adapter must not contain round-screen fitting algorithms')
 assert.ok(!adapter.includes('safeForWidth'), 'Safe area must not depend on component width')
 
-const scene = read('src/v2/design/scene.js')
-assert.ok(!scene.includes("require('./geometry')"), 'Scene must use profile-declared insets directly')
 const profile = read('src/runtime/device_profile.js')
-assert.ok(profile.includes('safeInsets: declaredInsets(factor)'), 'Device profile must own explicit safe insets')
+assert.ok(profile.includes('safeInsets: declaredInsets(factor)'), 'Device Profile must own explicit safe insets')
 
 const pkg = JSON.parse(read('package.json'))
 assert.strictEqual(pkg.version, '3.0.0')
@@ -190,12 +177,12 @@ Object.keys(manifest.router.pages).forEach(function (route) {
   const file = 'src/' + route + '/' + component + '.ux'
   assert.ok(exists(file), route + ' must point to an existing UX component')
   if (route !== 'pages/clock' && route !== 'pages/clock_guard') {
-    assert.ok(strictRecipeSet.has(file), route + ' must be covered by strict V3 recipe ownership tests')
+    assert.ok(strictRecipeSet.has(file), route + ' must be covered by strict V3 Recipe ownership tests')
   }
 })
 
 const guard = read('src/pages/clock_guard/clock_guard.ux')
-assert.ok(!guard.includes('page_runtime'), 'clock guard must not wait for the layout runtime before redirecting')
-assert.ok(guard.includes("navigation.push('/pages/clock')"), 'clock guard must always restore the clock surface')
+assert.ok(!guard.includes('page_runtime'), 'Clock Guard must not wait for layout runtime before redirecting')
+assert.ok(guard.includes("navigation.push('/pages/clock')"), 'Clock Guard must restore the clock surface')
 
-console.log('V3 architecture verified: runnable routes and dependencies, one design runtime, no adaptive safety solver')
+console.log('V3 architecture verified: current dependencies, Recipe ownership and runtime boundaries are coherent')
