@@ -4,9 +4,8 @@ var SYSTEM_ID = 'recipe-translator-v3.0'
 var VERSION = '3.0'
 
 function requiredNumber(value, label) {
-  var next = Number(value)
-  if (!isFinite(next)) throw new Error('V3 Adapter requires ' + label)
-  return next
+  if (typeof value !== 'number' || !isFinite(value)) throw new Error('V3 Adapter requires ' + label)
+  return value
 }
 
 function optionalNumber(value, label, fallback) {
@@ -34,10 +33,12 @@ function merge(base, override) {
 
 function select(recipe, profile) {
   if (!recipe || typeof recipe !== 'object') throw new Error('V3 Adapter requires a recipe object')
+  if (!recipe.base || typeof recipe.base !== 'object') throw new Error('V3 Adapter requires recipe.base')
   var shape = profile.formFactor
-  var base = recipe.base && typeof recipe.base === 'object' ? recipe.base : {}
-  var override = recipe[shape] && typeof recipe[shape] === 'object' ? recipe[shape] : {}
-  return merge(base, override)
+  var base = recipe.base
+  var override = recipe[shape]
+  if (override !== undefined && (!override || typeof override !== 'object')) throw new Error('V3 Adapter requires recipe.' + shape + ' to be an object')
+  return merge(base, override || {})
 }
 
 function contentWidth(profile, recipe) {
