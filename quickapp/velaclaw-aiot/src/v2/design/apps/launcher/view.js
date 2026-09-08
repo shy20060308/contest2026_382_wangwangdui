@@ -11,17 +11,14 @@ function decorateGrid(items, gap) {
 }
 
 function project(state, plan) {
-  var source = state || {}
-  var pageCount = Math.max(1, Number(source.pageCount) || 1)
-  var pageNumber = Math.max(1, Number(source.pageNumber) || 1)
   return {
-    allApps: apps.list(source.all),
-    pageApps: apps.list(source.items),
-    gridApps: decorateGrid(source.items, Number(plan.gap)),
-    pageText: pageNumber + ' / ' + pageCount,
-    pageProgress: Math.round((pageNumber / pageCount) * 100) + '%',
-    previousColor: source.hasPrevious ? '#0A84FF' : '#3A3A3C',
-    nextColor: source.hasNext ? '#0A84FF' : '#3A3A3C'
+    allApps: apps.list(state.all),
+    pageApps: apps.list(state.items),
+    gridApps: decorateGrid(state.items, plan.gap),
+    pageText: state.pageNumber + ' / ' + state.pageCount,
+    pageProgress: Math.round((state.pageNumber / state.pageCount) * 100) + '%',
+    previousColor: state.hasPrevious ? '#0A84FF' : '#3A3A3C',
+    nextColor: state.hasNext ? '#0A84FF' : '#3A3A3C'
   }
 }
 
