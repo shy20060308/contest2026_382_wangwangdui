@@ -3,14 +3,21 @@ var difference = require('./difference')
 var SYSTEM_ID = 'recipe-translator-v3.0'
 var VERSION = '3.0'
 
-function number(value, fallback) {
+function requiredNumber(value, label) {
   var next = Number(value)
-  return isFinite(next) ? next : (fallback || 0)
+  if (!isFinite(next)) throw new Error('V3 Adapter requires ' + label)
+  return next
+}
+
+function optionalNumber(value, label, fallback) {
+  return value === undefined ? fallback : requiredNumber(value, label)
 }
 
 function shapeOf(profile) {
-  var shape = profile && profile.formFactor ? String(profile.formFactor) : 'rect'
-  return shape === 'circle' || shape === 'pill' || shape === 'rect' ? shape : 'rect'
+  if (!profile || !profile.formFactor) throw new Error('V3 Adapter requires profile.formFactor')
+  var shape = String(profile.formFactor)
+  if (shape !== 'circle' && shape !== 'pill' && shape !== 'rect') throw new Error('Unsupported V3 form factor: ' + shape)
+  return shape
 }
 
 function clone(value) {
@@ -33,20 +40,23 @@ function merge(base, override) {
 }
 
 function select(recipe, profile) {
-  var source = recipe || {}
-  return merge(source.base || {}, source[shapeOf(profile)] || {})
+  if (!recipe || typeof recipe !== 'object') throw new Error('V3 Adapter requires a recipe object')
+  var shape = shapeOf(profile)
+  var base = recipe.base && typeof recipe.base === 'object' ? recipe.base : {}
+  var override = recipe[shape] && typeof recipe[shape] === 'object' ? recipe[shape] : {}
+  return merge(base, override)
 }
 
 function contentWidth(profile, recipe) {
-  return number(select(recipe, profile).contentWidth, 192)
+  return requiredNumber(select(recipe, profile).contentWidth, 'recipe.contentWidth')
 }
 
 function region(left, top, width, height) {
   return {
-    left: Math.round(number(left, 0)),
-    top: Math.round(number(top, 0)),
-    width: Math.round(number(width, 0)),
-    height: Math.round(number(height, 0))
+    left: Math.round(requiredNumber(left, 'region.left')),
+    top: Math.round(requiredNumber(top, 'region.top')),
+    width: Math.round(requiredNumber(width, 'region.width')),
+    height: Math.round(requiredNumber(height, 'region.height'))
   }
 }
 
@@ -54,49 +64,73 @@ function region(left, top, width, height) {
 // coordinates into the Host Scene; it does not resize, clamp, scan or scale.
 function placeBand(profile, scene, safe, spec) {
   var config = spec || {}
-  var bounds = config.bounds === 'scene'
-    ? { left: 0, top: 0, width: number(scene && scene.width, 192), height: number(scene && scene.height, 192) }
-    : { left: number(safe && safe.left, 0), top: number(safe && safe.top, 0), width: number(safe && safe.width, 192), height: number(safe && safe.height, 192) }
-  var width = config.width === undefined ? bounds.width : number(config.width, bounds.width)
-  var relativeTop = number(config.top, 0)
+  shapeOf(profile)
+  var bounds
+  if (config.bounds === 'scene') {
+    bounds = {
+      left: 0,
+      top: 0,
+      width: requiredNumber(scene && scene.width, 'scene.width'),
+      height: requiredNumber(scene && scene.height, 'scene.height')
+    }
+  } else {
+    bounds = {
+      left: requiredNumber(safe && safe.left, 'safe.left'),
+      top: requiredNumber(safe && safe.top, 'safe.top'),
+      width: requiredNumber(safe && safe.width, 'safe.width'),
+      height: requiredNumber(safe && safe.height, 'safe.height')
+    }
+  }
+  var width = config.width === undefined ? bounds.width : requiredNumber(config.width, 'band.width')
+  var relativeTop = optionalNumber(config.top, 'band.top', 0)
   var top = config.absoluteTop === true ? relativeTop : bounds.top + relativeTop
-  var height = config.height === undefined ? bounds.top + bounds.height - top : number(config.height, 0)
+  var height = config.height === undefined ? bounds.top + bounds.height - top : requiredNumber(config.height, 'band.height')
   var left
-  if (config.absoluteLeft === true) left = number(config.left, 0)
-  else if (config.align === 'left') left = bounds.left + number(config.left, 0)
-  else if (config.align === 'right') left = bounds.left + bounds.width - width - number(config.right, 0)
-  else left = bounds.left + (bounds.width - width) / 2 + number(config.offsetX, 0)
+  if (config.absoluteLeft === true) left = optionalNumber(config.left, 'band.left', 0)
+  else if (config.align === 'left') left = bounds.left + optionalNumber(config.left, 'band.left', 0)
+  else if (config.align === 'right') left = bounds.left + bounds.width - width - optionalNumber(config.right, 'band.right', 0)
+  else left = bounds.left + (bounds.width - width) / 2 + optionalNumber(config.offsetX, 'band.offsetX', 0)
   return region(left, top, width, height)
 }
 
 function grid(regionValue, columns, gap) {
-  var width = number(regionValue && regionValue.width, 0)
-  var count = Math.round(number(columns, 1))
-  var spacing = number(gap, 0)
+  var width = requiredNumber(regionValue && regionValue.width, 'grid.region.width')
+  var count = Math.round(requiredNumber(columns, 'grid.columns'))
+  if (count < 1) throw new Error('V3 Adapter requires grid.columns >= 1')
+  var spacing = optionalNumber(gap, 'grid.gap', 0)
   return { columns: count, gap: spacing, itemWidth: Math.floor((width - spacing * (count - 1)) / count) }
 }
 
 // Vela treats explicit dimensions as content-box. Recipe dimensions are outer
 // design dimensions, so this is a single box-model translation, not a check.
 function contentBox(outerWidth, outerHeight, paddingX, paddingY) {
-  var px = number(paddingX, 0)
-  var py = number(paddingY, 0)
-  return {
-    width: Math.round(number(outerWidth, 0) - px * 2),
-    height: Math.round(number(outerHeight, 0) - py * 2)
-  }
+  var width = requiredNumber(outerWidth, 'contentBox.outerWidth')
+  var height = requiredNumber(outerHeight, 'contentBox.outerHeight')
+  var px = optionalNumber(paddingX, 'contentBox.paddingX', 0)
+  var py = optionalNumber(paddingY, 'contentBox.paddingY', 0)
+  var contentWidth = Math.round(width - px * 2)
+  var contentHeight = Math.round(height - py * 2)
+  if (contentWidth < 0 || contentHeight < 0) throw new Error('V3 Adapter content box cannot be negative')
+  return { width: contentWidth, height: contentHeight }
 }
 
 function createPlan(profile, scene, safe, level, surface) {
-  var differenceLevel = level || difference.L1
+  shapeOf(profile)
+  if (level !== difference.L1 && level !== difference.L2 && level !== difference.L3) throw new Error('V3 Adapter requires an explicit L1/L2/L3 difference level')
+  if (!surface || typeof surface !== 'string') throw new Error('V3 Adapter requires recipe.surface')
   return {
     designSystem: SYSTEM_ID,
     designSystemVersion: VERSION,
-    difference: difference.describe(differenceLevel),
-    differenceLevel: differenceLevel,
+    difference: difference.describe(level),
+    differenceLevel: level,
     shape: shapeOf(profile),
-    surface: surface || 'surface',
-    content: region(safe && safe.left, safe && safe.top, safe && safe.width, safe && safe.height)
+    surface: surface,
+    content: region(
+      requiredNumber(safe && safe.left, 'safe.left'),
+      requiredNumber(safe && safe.top, 'safe.top'),
+      requiredNumber(safe && safe.width, 'safe.width'),
+      requiredNumber(safe && safe.height, 'safe.height')
+    )
   }
 }
 
