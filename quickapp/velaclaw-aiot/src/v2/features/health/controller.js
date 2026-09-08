@@ -14,10 +14,11 @@ export function createHealthController(onChange) {
     return data[prefix + 'Live'] && data[prefix + 'Source'] === 'live'
   }
 
-  function available(data, prefix) {
+  function valid(data, prefix) {
     if (!official(data, prefix)) return false
-    var value = data[prefix]
-    return prefix === 'stress' ? value >= 0 : value > 0
+    if (prefix === 'heartRate') return healthMetrics.isHeartRate(data.heartRate)
+    if (prefix === 'spo2') return healthMetrics.isSpo2(data.spo2)
+    return healthMetrics.isStress(data.stress)
   }
 
   function updateWindow(values, changed, value, allowed) {
@@ -26,16 +27,16 @@ export function createHealthController(onChange) {
   }
 
   function seedCurrent(data) {
-    if (!heartValues.length && available(data, 'heartRate')) heartValues = [data.heartRate]
-    if (!spo2Values.length && available(data, 'spo2')) spo2Values = [data.spo2]
-    if (!stressValues.length && available(data, 'stress')) stressValues = [data.stress]
+    if (!heartValues.length && valid(data, 'heartRate')) heartValues = [data.heartRate]
+    if (!spo2Values.length && valid(data, 'spo2')) spo2Values = [data.spo2]
+    if (!stressValues.length && valid(data, 'stress')) stressValues = [data.stress]
   }
 
   function emit() {
     var data = latest || healthStore.getSnapshot()
-    var heartAvailable = available(data, 'heartRate')
-    var spo2Available = available(data, 'spo2')
-    var stressAvailable = available(data, 'stress')
+    var heartAvailable = valid(data, 'heartRate')
+    var spo2Available = valid(data, 'spo2')
+    var stressAvailable = valid(data, 'stress')
     var heart = heartAvailable ? data.heartRate : null
     var spo2 = spo2Available ? data.spo2 : null
     var stress = stressAvailable ? data.stress : null
@@ -72,9 +73,9 @@ export function createHealthController(onChange) {
     if (!started || generation !== lifecycleGeneration) return
     latest = data
     seedCurrent(data)
-    heartValues = updateWindow(heartValues, data.heartRateChanged, data.heartRate, available(data, 'heartRate'))
-    spo2Values = updateWindow(spo2Values, data.spo2Changed, data.spo2, available(data, 'spo2'))
-    stressValues = updateWindow(stressValues, data.stressChanged, data.stress, available(data, 'stress'))
+    heartValues = updateWindow(heartValues, data.heartRateChanged, data.heartRate, valid(data, 'heartRate'))
+    spo2Values = updateWindow(spo2Values, data.spo2Changed, data.spo2, valid(data, 'spo2'))
+    stressValues = updateWindow(stressValues, data.stressChanged, data.stress, valid(data, 'stress'))
     emit()
   }
 
