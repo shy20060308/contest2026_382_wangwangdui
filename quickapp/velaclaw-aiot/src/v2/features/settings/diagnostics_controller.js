@@ -8,8 +8,7 @@ function deviceSnapshot(profile) {
     screenWidth: source.screenWidth,
     screenHeight: source.screenHeight,
     formFactor: source.formFactor,
-    platformVersionCode: source.platformVersionCode,
-    isBetaPillViewport: !!source.isBetaPillViewport
+    platformVersionCode: source.platformVersionCode
   }
 }
 
