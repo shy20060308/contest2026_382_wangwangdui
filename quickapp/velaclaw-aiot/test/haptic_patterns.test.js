@@ -13,6 +13,7 @@ test('未知模式与强度直接失败', function () {
   assert.strictEqual(typeof patterns.normalize, 'undefined')
   assert.throws(function () { patterns.get('unknown', 'medium') }, /Unknown haptic pattern/)
   assert.throws(function () { patterns.get('tap', 'unknown') }, /Unknown haptic level/)
+  assert.throws(function () { patterns.get('tap') }, /Unknown haptic level/, 'Haptic intensity must be explicit')
 })
 
 test('四种模式保持独立节奏配置', function () {
