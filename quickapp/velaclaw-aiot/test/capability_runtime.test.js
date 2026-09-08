@@ -44,6 +44,8 @@ assert.ok(vibration.includes("from '@system.vibrator'"), 'vibration gateway must
 assert.ok(storage.includes("from '@system.storage'"), 'storage gateway must own storage API')
 assert.ok(systemEvent.includes("from '@system.event'"), 'event gateway must own system event API')
 assert.ok(interconnect.includes("from '@system.interconnect'"), 'interconnect gateway must own interconnect API')
+assert.ok(interconnect.includes('current.getReadyState') && interconnect.includes('current.send'), 'interconnect gateway must expose real connection state and outbound transport')
+assert.ok(interconnect.includes('connection.onopen') && interconnect.includes('connection.onclose') && interconnect.includes('connection.onerror'), 'interconnect gateway must own connection lifecycle events')
 
 assert.ok(!hasRawDeviceApi(introspection), 'capability introspection must compose gateways without probing native APIs')
 assert.ok(introspection.includes("import motion from './motion'"), 'introspection must consume motion gateway')
@@ -61,6 +63,7 @@ const motionFeature = read('src/v2/features/settings/motion_controller.js')
 const diagnosticsFeature = read('src/v2/features/settings/diagnostics_controller.js')
 const workoutFeature = read('src/v2/features/workout/controller.js')
 const notificationFeature = read('src/v2/features/notification/controller.js')
+const syncFeature = read('src/v2/features/sync/controller.js')
 const deviceProfile = read('src/runtime/device_profile.js')
 
 assert.ok(brightnessFeature.includes("../../../capabilities/display_power"), 'brightness Feature must use display gateway')
@@ -71,8 +74,11 @@ assert.ok(diagnosticsFeature.includes("../../../capabilities/introspection"), 'd
 assert.ok(!diagnosticsFeature.includes('isBetaPillViewport'), 'diagnostics must not expose retired beta viewport compatibility state')
 assert.ok(workoutFeature.includes("../../../capabilities/location"), 'workout Feature must use location gateway')
 assert.ok(notificationFeature.includes("../../../capabilities/system_event") && notificationFeature.includes("../../../capabilities/interconnect"), 'notification Feature must use event/interconnect gateways')
+assert.ok(syncFeature.includes("../../../capabilities/interconnect"), 'sync Feature must use the formal interconnect gateway')
+assert.ok(syncFeature.includes('activityStore.hydrate'), 'sync Feature must hydrate canonical Activity before building outbound payloads')
+assert.ok(!syncFeature.includes('mock_transport'), 'sync Feature must not restore simulated production transport')
 assert.ok(deviceProfile.includes("../capabilities/device"), 'Device Profile Runtime must use device gateway')
-;[brightnessFeature, motionFeature, diagnosticsFeature, workoutFeature, notificationFeature, deviceProfile].forEach(source => assert.ok(!hasRawDeviceApi(source), 'application/runtime layers must not bypass capability gateways'))
+;[brightnessFeature, motionFeature, diagnosticsFeature, workoutFeature, notificationFeature, syncFeature, deviceProfile].forEach(source => assert.ok(!hasRawDeviceApi(source), 'application/runtime layers must not bypass capability gateways'))
 
 Object.keys(manifest.router.pages || {}).forEach(route => {
   const page = manifest.router.pages[route]
