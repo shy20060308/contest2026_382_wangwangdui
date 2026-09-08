@@ -12,8 +12,8 @@ function call(api, params) {
 
 export default {
   setBrightness: function (value) {
-    var level = Math.max(0, Math.min(255, Math.round(Number(value) || 0)))
-    return call(brightness && brightness.setValue, { value: level })
+    if (typeof value !== 'number' || !isFinite(value) || value < 0 || value > 255) return false
+    return call(brightness && brightness.setValue, { value: Math.round(value) })
   },
   setMode: function (automatic) {
     return call(brightness && brightness.setMode, { mode: automatic ? 1 : 0 })
