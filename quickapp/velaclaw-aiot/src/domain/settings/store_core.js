@@ -1,3 +1,5 @@
+var hapticPatterns = require('../haptics/patterns')
+
 var KEY = 'device_settings_v1'
 
 var DEFAULTS = {
@@ -17,10 +19,6 @@ function clampBrightness(value) {
   return Math.max(0, Math.min(255, Math.round(number)))
 }
 
-function pattern(value) {
-  return value === 'tap' || value === 'goal' || value === 'countdown' || value === 'alert' ? value : 'goal'
-}
-
 function syncTimestamp(value) {
   var number = Number(value)
   return isFinite(number) && number > 0 ? Math.round(number) : 0
@@ -32,7 +30,7 @@ function normalize(source) {
     lastSyncAt: syncTimestamp(value.lastSyncAt),
     vibrationEnabled: value.vibrationEnabled !== false,
     vibrationLevel: value.vibrationLevel === 'light' || value.vibrationLevel === 'strong' ? value.vibrationLevel : 'medium',
-    vibrationPattern: pattern(value.vibrationPattern),
+    vibrationPattern: hapticPatterns.normalize(value.vibrationPattern),
     brightnessValue: clampBrightness(value.brightnessValue),
     autoBrightness: !!value.autoBrightness,
     raiseWakeEnabled: value.raiseWakeEnabled !== false,
