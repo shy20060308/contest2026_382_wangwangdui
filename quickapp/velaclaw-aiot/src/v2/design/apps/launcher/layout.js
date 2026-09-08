@@ -16,6 +16,7 @@ module.exports = {
     nameSize: 9,
     arrowSize: 20,
     iconSize: 30,
+    iconRadius: 15,
     itemRadius: 14,
     listChrome: {
       paddingX: 12,
@@ -66,6 +67,7 @@ module.exports = {
     nameSize: 14,
     arrowSize: 20,
     iconSize: 40,
+    iconRadius: 20,
     itemRadius: 20
   },
   rect: {
