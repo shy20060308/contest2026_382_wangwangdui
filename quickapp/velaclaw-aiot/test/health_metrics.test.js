@@ -10,6 +10,22 @@ function test(name, callback) {
   console.log('通过 - ' + name)
 }
 
+const plan = {
+  chartHeight: 30,
+  trendMinHeight: 6,
+  trendVisual: {
+    heartSpread: 20,
+    spo2Spread: 4,
+    stressSpread: 20,
+    heartInactive: '#5A1E2A',
+    heartActive: '#FF375F',
+    spo2Inactive: '#153B4A',
+    spo2Active: '#64D2FF',
+    stressInactive: '#3B2245',
+    stressActive: '#BF5AF2'
+  }
+}
+
 test('心率区间边界', function () {
   assert.strictEqual(metrics.classifyHeartRate(59), 'rest')
   assert.strictEqual(metrics.classifyHeartRate(60), 'normal')
@@ -36,7 +52,7 @@ test('统计最低平均最高', function () {
   assert.deepStrictEqual(metrics.stats([]), { min: 0, avg: 0, max: 0 })
 })
 
-test('健康展示只由 V2.3 Heart View 投影官方来源模型', function () {
+test('健康展示只投影 canonical V3 官方来源模型', function () {
   const view = healthView.project({
     heartRate: 105,
     spo2: 93,
@@ -44,21 +60,21 @@ test('健康展示只由 V2.3 Heart View 投影官方来源模型', function () 
     heartZone: 'elevated',
     spo2Zone: 'attention',
     stressZone: 'high',
-    dailyMin: 58,
-    dailyMax: 112,
+    dailyMin: 70,
+    dailyMax: 105,
     stressMin: 20,
-    stressAvg: 45,
+    stressAvg: 47,
     stressMax: 82,
     heartSource: { live: true, errorCode: 0, mode: 'live' },
-    spo2Source: { live: false, errorCode: 203, mode: 'fallback' },
-    stressSource: { live: false, errorCode: 1, mode: 'fallback' },
+    spo2Source: { live: false, errorCode: 203, mode: 'unavailable' },
+    stressSource: { live: false, errorCode: 1, mode: 'error' },
     anyLive: true,
     serviceAvailable: true,
     updatedAt: new Date(2026, 0, 2, 8, 5, 0).getTime(),
     heartValues: [70, 80, 100],
     spo2Values: [96, 97, 98],
     stressValues: [20, 40, 80]
-  }, { chartHeight: 30 })
+  }, plan)
 
   assert.strictEqual(view.heartStatus, '偏高')
   assert.strictEqual(view.spo2Status, '请关注')
