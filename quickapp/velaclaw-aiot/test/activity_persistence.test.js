@@ -113,9 +113,12 @@ const activityFeature = read('src/v2/features/activity/controller.js')
 const steps = read('src/pages/steps/steps.ux')
 const today = read('src/pages/today/today.ux')
 
+assert.ok(repository.includes("ACTIVITY_KEY = 'activity_today_v3'"), 'Activity must use a clean V3 persistence namespace')
+assert.ok(!repository.includes("'activity_today_v2'"), 'Activity must not reopen the potentially seeded V2 persistence namespace')
 assert.ok(repository.includes("../../capabilities/storage"), 'Activity Repository must persist through the storage gateway')
 assert.ok(storeWrapper.includes("require('./store_core')"), 'Activity Store must delegate concurrency to the executable core')
 assert.ok(!storeCore.includes('steps: 4567') && !storeCore.includes('calories: 180') && !storeCore.includes('standHours: 8'), 'Activity Domain must not seed fabricated current totals')
+assert.ok(!storeCore.includes('normalizeState'), 'Activity Store must trust Repository-normalized persisted records instead of normalizing them again')
 assert.ok(workout.includes('activityStore.addAndPersist(record.steps, record.calories'), 'Workout Feature must commit activity before finishing navigation flow')
 assert.ok(workout.includes('historyRepository.saveToday(activitySnapshot'), 'History must receive the exact committed Activity snapshot')
 assert.ok(activityFeature.includes("../../../domain/activity/store"), 'Activity Feature must own page-facing Activity access')
@@ -126,4 +129,4 @@ assert.ok(!steps.includes('design/specs/') && !steps.includes('design/views/'), 
 assert.ok(!steps.includes("../../domain/activity/store") && !steps.includes('profile.formFactor'), 'Steps Page must not bypass Feature or own shape policy')
 assert.ok(today.includes("../../v2/features/today/controller") && !today.includes("../../domain/activity/store"), 'Today Page must consume Activity only through its Feature orchestration')
 
-console.log('Activity persistence verified: truthful zero initial totals, one hydration source and ordered writes (' + passed + ' runtime tests)')
+console.log('Activity persistence verified: clean V3 storage, truthful totals and one normalization owner (' + passed + ' runtime tests)')
