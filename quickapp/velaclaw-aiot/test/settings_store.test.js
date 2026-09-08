@@ -101,13 +101,17 @@ test('persist callback 等到合并后的最终写入完成', function () {
   assert.strictEqual(callbackValue, 130)
 })
 
-test('未知 setting key 和非法 canonical value 必须失败', function () {
+test('未知 setting key、非法 canonical value 和半合法 patch 必须原子失败', function () {
   const storage = fakeStorage()
   const store = core.createStore(storage)
+  const before = store.getSnapshot()
   assert.throws(function () { store.update('bluetoothConnected', true) }, /Unknown setting/)
+  assert.throws(function () { store.update('brightnessValue', 300) }, /Invalid setting value/)
+  assert.throws(function () { store.update('brightnessValue', '100') }, /Invalid setting value/)
   assert.throws(function () { store.update('vibrationPattern', 'unknown') }, /Unknown haptic pattern/)
   assert.throws(function () { store.update('vibrationLevel', 'unknown') }, /Invalid setting value/)
   assert.throws(function () { store.updateMany({ brightnessValue: 100, extra: true }) }, /Unknown setting/)
+  assert.deepStrictEqual(store.getSnapshot(), before, 'failed updateMany must not partially mutate canonical settings')
 })
 
 test('load 回调拿到副本，外部修改不会污染 Store', function () {
