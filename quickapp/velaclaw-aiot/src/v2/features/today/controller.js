@@ -98,14 +98,12 @@ export function createTodayController(onChange) {
       lifecycleEpoch++
       healthStore.unsubscribe(onHealth)
     },
-    resetToday: function () { refreshDate(); emit() },
     shiftMonth: function (delta) {
       var next = calendar.shiftMonth(state.calendarYear, state.calendarMonth, delta)
       state.calendarYear = next.year
       state.calendarMonth = next.month
       refreshCalendar()
       emit()
-    },
-    getSnapshot: function () { return copy(state) }
+    }
   }
 }
