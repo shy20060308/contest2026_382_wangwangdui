@@ -1,6 +1,6 @@
 var hapticPatterns = require('../haptics/patterns')
 
-var KEY = 'device_settings_v1'
+var KEY = 'device_settings_v3'
 
 var DEFAULTS = {
   lastSyncAt: 0,
@@ -13,33 +13,50 @@ var DEFAULTS = {
   lowPowerEnabled: true
 }
 
-function clampBrightness(value) {
-  var number = Number(value)
-  if (!isFinite(number)) number = 140
-  return Math.max(0, Math.min(255, Math.round(number)))
+function copy(source) {
+  var result = {}
+  for (var key in source) result[key] = source[key]
+  return result
 }
 
-function syncTimestamp(value) {
-  var number = Number(value)
-  return isFinite(number) && number > 0 ? Math.round(number) : 0
+function requireKey(key) {
+  if (!Object.prototype.hasOwnProperty.call(DEFAULTS, key)) throw new Error('Unknown setting: ' + key)
+  return key
 }
 
-function normalize(source) {
-  var value = source || {}
-  return {
-    lastSyncAt: syncTimestamp(value.lastSyncAt),
-    vibrationEnabled: value.vibrationEnabled !== false,
-    vibrationLevel: value.vibrationLevel === 'light' || value.vibrationLevel === 'strong' ? value.vibrationLevel : 'medium',
-    vibrationPattern: hapticPatterns.normalize(value.vibrationPattern),
-    brightnessValue: clampBrightness(value.brightnessValue),
-    autoBrightness: !!value.autoBrightness,
-    raiseWakeEnabled: value.raiseWakeEnabled !== false,
-    lowPowerEnabled: value.lowPowerEnabled !== false
+function canonicalValue(key, value) {
+  requireKey(key)
+  if (key === 'lastSyncAt') {
+    var timestamp = Number(value)
+    if (!isFinite(timestamp) || timestamp < 0) throw new Error('Invalid setting value: ' + key)
+    return Math.round(timestamp)
   }
+  if (key === 'brightnessValue') {
+    var brightness = Number(value)
+    if (!isFinite(brightness)) throw new Error('Invalid setting value: ' + key)
+    return Math.max(0, Math.min(255, Math.round(brightness)))
+  }
+  if (key === 'vibrationLevel') {
+    if (value !== 'light' && value !== 'medium' && value !== 'strong') throw new Error('Invalid setting value: ' + key)
+    return value
+  }
+  if (key === 'vibrationPattern') {
+    hapticPatterns.get(value, 'medium')
+    return value
+  }
+  if (typeof value !== 'boolean') throw new Error('Invalid setting value: ' + key)
+  return value
+}
+
+function mergeStored(stored) {
+  var next = copy(DEFAULTS)
+  if (!stored) return next
+  for (var key in stored) next[requireKey(key)] = canonicalValue(key, stored[key])
+  return next
 }
 
 function createStore(storage) {
-  var cached = normalize(DEFAULTS)
+  var cached = copy(DEFAULTS)
   var loaded = false
   var loading = false
   var pending = {}
@@ -48,18 +65,7 @@ function createStore(storage) {
   var writeQueued = false
   var persistWaiters = []
 
-  function clone() {
-    var result = {}
-    for (var key in cached) result[key] = cached[key]
-    return result
-  }
-
-  function merge(stored) {
-    var next = clone()
-    var source = stored || {}
-    for (var key in next) if (source[key] !== undefined) next[key] = source[key]
-    return normalize(next)
-  }
+  function clone() { return copy(cached) }
 
   function flushPersist() {
     if (!loaded || loading || writeInFlight || !writeQueued) return
@@ -80,7 +86,7 @@ function createStore(storage) {
   }
 
   function finishLoad(stored) {
-    cached = merge(stored)
+    cached = mergeStored(stored)
     for (var key in pending) cached[key] = pending[key]
     pending = {}
     loaded = true
@@ -121,22 +127,18 @@ function createStore(storage) {
     },
     getSnapshot: clone,
     update: function (key, value, callback) {
-      var next = clone()
-      next[key] = value
-      cached = normalize(next)
-      rememberPending(key, cached[key])
+      var setting = requireKey(key)
+      cached[setting] = canonicalValue(setting, value)
+      rememberPending(setting, cached[setting])
       persist(callback)
       return clone()
     },
     updateMany: function (patch, callback) {
-      var next = clone()
-      var source = patch || {}
-      for (var key in source) next[key] = source[key]
-      cached = normalize(next)
-      if (!loaded) {
-        for (var pendingKey in source) {
-          if (Object.prototype.hasOwnProperty.call(cached, pendingKey)) pending[pendingKey] = cached[pendingKey]
-        }
+      if (!patch || typeof patch !== 'object' || Array.isArray(patch)) throw new Error('Settings updateMany requires a patch object')
+      for (var key in patch) {
+        var setting = requireKey(key)
+        cached[setting] = canonicalValue(setting, patch[key])
+        rememberPending(setting, cached[setting])
       }
       persist(callback)
       return clone()
@@ -147,6 +149,5 @@ function createStore(storage) {
 module.exports = {
   KEY: KEY,
   DEFAULTS: DEFAULTS,
-  normalize: normalize,
   createStore: createStore
 }
