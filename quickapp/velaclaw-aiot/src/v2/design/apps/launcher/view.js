@@ -2,7 +2,6 @@ var apps = require('../../catalogs/apps')
 
 function decorateGrid(items, columns, gap) {
   var source = apps.list(items)
-  if (typeof columns !== 'number' || !isFinite(columns) || columns < 1 || Math.floor(columns) !== columns) throw new Error('Launcher grid requires integer plan.columns')
   var result = []
   var rowCount = Math.ceil(source.length / columns)
   for (var i = 0; i < source.length; i++) {
