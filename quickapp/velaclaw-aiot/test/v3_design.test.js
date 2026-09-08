@@ -1,5 +1,6 @@
 const assert = require('assert')
 const adapter = require('../src/v2/design/adapter')
+const difference = require('../src/v2/design/difference')
 const scene = require('../src/v2/design/scene')
 
 const designs = [
@@ -31,6 +32,9 @@ const profiles = [
 assert.strictEqual(adapter.SYSTEM_ID, 'recipe-translator-v3.0')
 assert.strictEqual(adapter.VERSION, '3.0')
 assert.strictEqual(typeof adapter.clamp, 'undefined')
+assert.deepStrictEqual(difference.describe(difference.L1), { level: 1, id: 'L1', kind: 'shared-expression' })
+assert.deepStrictEqual(difference.describe(difference.L2), { level: 2, id: 'L2', kind: 'local-expression' })
+assert.deepStrictEqual(difference.describe(difference.L3), { level: 3, id: 'L3', kind: 'independent-surface' })
 
 const circleHost = scene.resolve(profiles[0])
 const circleSafe = scene.safe(profiles[0], circleHost)
@@ -44,9 +48,14 @@ profiles.forEach(function (profile) {
   const safe = scene.safe(profile, host)
   assert.ok(safe.width > 0 && safe.height > 0, profile.formFactor + ' profile must declare usable content space')
   designs.forEach(function (design) {
+    assert.ok([difference.L1, difference.L2, difference.L3].includes(design.differenceLevel), 'every app design must declare an L1/L2/L3 difference level')
     const plan = design.resolve(profile, host, safe)
     assert.ok(plan && plan.designSystemVersion === '3.0', 'app design must resolve through V3 for ' + profile.formFactor)
+    assert.strictEqual(plan.differenceLevel, design.differenceLevel, 'resolved plan must preserve the app design difference level')
+    assert.deepStrictEqual(plan.difference, difference.describe(design.differenceLevel), 'resolved plan must expose canonical difference metadata')
+    assert.strictEqual(Object.prototype.hasOwnProperty.call(plan, 'freedom'), false, 'V3 plans must not expose retired freedom metadata')
+    assert.strictEqual(Object.prototype.hasOwnProperty.call(plan, 'freedomLevel'), false, 'V3 plans must not expose retired freedom level metadata')
   })
 })
 
-console.log('V3 design runtime verified: explicit insets, direct recipe translation, all product designs resolve')
+console.log('V3 design runtime verified: explicit insets, direct recipe translation, canonical L1/L2/L3 difference metadata')
