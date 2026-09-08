@@ -186,6 +186,7 @@ assert.strictEqual(Object.keys(pkg.scripts).some(name => name.startsWith('v2:') 
 const manifest = JSON.parse(read('src/manifest.json'))
 assert.strictEqual(manifest.versionName, '3.0.0')
 assert.strictEqual(manifest.versionCode, 30)
+assert.ok(manifest.minAPILevel >= 3, 'V3 multi-shape runtime requires API3 canonical screenShape support')
 assert.ok(manifest.router.pages[manifest.router.entry], 'manifest entry must point to a registered page')
 const strictRecipeSet = new Set(strictRecipePages)
 Object.keys(manifest.router.pages).forEach(function (route) {
