@@ -6,7 +6,7 @@ function contentWidth(profile) { return adapter.contentWidth(profile, layout) }
 
 function fill(profile, scene, safe, spec) {
   var copy = adapter.merge({}, spec)
-  if (copy.height === undefined) copy.height = safe.bottom - (safe.top + Number(copy.top))
+  if (copy.height === undefined) copy.height = safe.bottom - (safe.top + copy.top)
   return adapter.placeBand(profile, scene, safe, copy)
 }
 
