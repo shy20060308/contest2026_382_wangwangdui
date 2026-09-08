@@ -34,10 +34,9 @@ function packetText(model) {
   return '等待打包'
 }
 
-function transportText(model) {
-  if (model.transportMode === 'mock') return '模拟器分包链路'
-  if (model.transportMode === 'device') return model.realBleAvailable ? '设备传输链路' : '传输不可用'
-  throw new Error('Unknown sync transport mode: ' + model.transportMode)
+function transportText(mode) {
+  if (mode !== 'mock') throw new Error('Unknown sync transport mode: ' + mode)
+  return '模拟器分包链路'
 }
 
 function project(model) {
@@ -46,7 +45,7 @@ function project(model) {
     statusColor: model.connected ? '#30D158' : '#8E8E93',
     connectButtonText: model.connected ? '断开' : '连接',
     lastSyncText: timeText(model.lastSyncAt),
-    transportText: transportText(model),
+    transportText: transportText(model.transportMode),
     syncPercent: model.progress,
     syncWidth: model.progress + '%',
     syncMessage: phaseText(model),
