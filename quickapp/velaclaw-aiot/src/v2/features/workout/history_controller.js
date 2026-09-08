@@ -1,21 +1,18 @@
 import workoutRepository from '../../../domain/workout/repository'
 
-function summarize(records) {
-  var source = Array.isArray(records) ? records : []
+function modelFor(records) {
   var totalSteps = 0
-  for (var i = 0; i < source.length; i++) totalSteps += Number(source[i].steps) || 0
-  return { totalSteps: totalSteps, records: source.slice() }
+  for (var i = 0; i < records.length; i++) totalSteps += records[i].steps
+  return { totalSteps: totalSteps, records: records.slice() }
 }
 
 export function createWorkoutHistoryController(onChange) {
   function emit(records) {
-    var model = summarize(records)
+    var model = modelFor(records)
     if (typeof onChange === 'function') onChange(model)
     return model
   }
   return {
-    refresh: function () { workoutRepository.getRecords(emit) },
-    markAllSynced: function () { workoutRepository.markAllSynced(function (records) { emit(records) }) },
-    summarize: summarize
+    refresh: function () { workoutRepository.getRecords(emit) }
   }
 }
