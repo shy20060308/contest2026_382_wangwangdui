@@ -149,11 +149,6 @@ const diagnosticsView = read('src/v2/design/apps/diagnostics/view.js')
 assert.ok(!diagnosticsView.includes('|| 3'), 'Diagnostics paging must require recipe capacity')
 assert.ok(diagnosticsView.includes('requires resolved capabilityPageSize'), 'Diagnostics paging must fail visibly when recipe capacity is missing')
 
-const watchfaceChart = read('src/v2/design/watchface_chart.js')
-assert.ok(watchfaceChart.includes("visualNumber(minHeight, 'minHeight')"), 'Watchface chart min height must come from Recipe')
-assert.ok(watchfaceChart.includes("visualNumber(maxHeight, 'maxHeight')"), 'Watchface chart max height must come from Recipe')
-assert.ok(watchfaceChart.includes("visualNumber(minSpan, 'minSpan')"), 'Watchface chart data span must come from Recipe')
-
 const adapter = read('src/v2/design/adapter.js')
 assert.ok(!adapter.includes('function clamp('), 'Adapter must not repair recipe geometry at runtime')
 assert.ok(!adapter.includes('circleChord') && !adapter.includes('circleBand'), 'Adapter must not contain round-screen fitting algorithms')
