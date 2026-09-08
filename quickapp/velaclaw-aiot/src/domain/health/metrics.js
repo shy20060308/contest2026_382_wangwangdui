@@ -1,37 +1,29 @@
-function toNumber(value, fallback) {
-  var number = Number(value)
-  return isFinite(number) ? number : fallback
-}
-
 function classifyHeartRate(value) {
-  var bpm = toNumber(value, 0)
-  if (bpm < 60) return 'rest'
-  if (bpm < 100) return 'normal'
-  if (bpm < 140) return 'elevated'
+  if (value < 60) return 'rest'
+  if (value < 100) return 'normal'
+  if (value < 140) return 'elevated'
   return 'peak'
 }
 
 function classifyStress(value) {
-  var stress = toNumber(value, 0)
-  if (stress < 30) return 'relaxed'
-  if (stress < 60) return 'normal'
-  if (stress < 80) return 'elevated'
+  if (value < 30) return 'relaxed'
+  if (value < 60) return 'normal'
+  if (value < 80) return 'elevated'
   return 'high'
 }
 
 function pushWindow(values, value, maxLength) {
-  var source = Array.isArray(values) ? values : []
-  var next = source.concat([Math.round(toNumber(value, 0))])
+  var next = values.concat([value])
   return next.length > maxLength ? next.slice(next.length - maxLength) : next
 }
 
 function stats(values) {
-  if (!values || !values.length) return { min: 0, avg: 0, max: 0 }
-  var min = toNumber(values[0], 0)
-  var max = min
+  if (!values.length) return { min: 0, avg: 0, max: 0 }
+  var min = values[0]
+  var max = values[0]
   var sum = 0
   for (var i = 0; i < values.length; i++) {
-    var value = toNumber(values[i], 0)
+    var value = values[i]
     if (value < min) min = value
     if (value > max) max = value
     sum += value
