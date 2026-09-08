@@ -96,6 +96,8 @@ assert.ok(!deviceProfile.includes('isBetaPillViewport'), 'Device Profile must no
 assert.ok(!deviceProfile.includes("|| 'pill-shaped'"), 'Device Profile must not default an unknown device to Pill')
 assert.ok(!deviceProfile.includes('width = 192; height = 490'), 'Device Profile must not fabricate Band dimensions')
 assert.ok(!deviceProfile.includes('logicalHeight'), 'Device Profile must not duplicate Scene-owned design projection')
+assert.ok(!deviceProfile.includes('width / height'), 'Device Profile must not infer screen shape from aspect ratio')
+assert.ok(deviceProfile.includes('requires canonical screenShape'), 'Device Profile must fail visibly when canonical screenShape is missing')
 const pageRuntime = read('src/runtime/page_runtime.js')
 assert.ok(!pageRuntime.includes('betaPill'), 'Page Runtime must not restore beta-pill compatibility branches')
 const sceneRuntime = read('src/v2/design/scene.js')
