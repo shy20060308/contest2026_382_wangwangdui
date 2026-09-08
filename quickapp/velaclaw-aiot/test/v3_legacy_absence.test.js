@@ -45,6 +45,7 @@ function inside(target, parent) {
 assert.strictEqual(exists('src/platform'), false, 'V3 must consume capabilities directly; platform aliases are retired')
 assert.strictEqual(exists('src/presentation'), false, 'V3 must not restore the retired presentation runtime')
 assert.strictEqual(exists('src/v2/system'), false, 'V3 runtime ownership must not restore the retired v2/system namespace')
+assert.strictEqual(exists('src/v2/app'), false, 'V3 app runtime ownership must not restore the retired v2/app namespace')
 assert.strictEqual(exists('src/v2/design/specs'), false, 'V3 must not restore Design Spec compatibility code')
 assert.strictEqual(exists('src/v2/design/views'), false, 'V3 must not restore Design View compatibility code')
 assert.strictEqual(exists('src/v2/design/geometry.js'), false, 'V3 must not restore the retired geometry solver')
@@ -55,6 +56,7 @@ assert.deepStrictEqual(commonLogic, [], 'src/common is a static-resource namespa
 
 filesUnder('src', /\.(?:js|ux)$/, []).forEach(function (file) {
   const source = read(file)
+  assert.ok(!source.includes('v2/app/'), file + ' must use the formal src/runtime app boundary instead of retired v2/app code')
   relativeDependencies(source).forEach(function (dependency) {
     const resolved = path.resolve(path.dirname(path.join(root, file)), dependency)
     assert.ok(!inside(resolved, commonRoot), file + ' must not depend on legacy src/common logic: ' + dependency)
@@ -88,8 +90,9 @@ filesUnder('test', /\.test\.js$/, []).forEach(function (file) {
   assert.ok(!source.includes('src/common/'), file + ' must not validate retired common logic')
   assert.ok(!source.includes('src/presentation/'), file + ' must not validate retired presentation logic')
   assert.ok(!source.includes('src/platform/'), file + ' must not validate retired platform aliases')
+  assert.ok(!source.includes('src/v2/app/'), file + ' must not validate retired v2 app runtime')
   assert.ok(!source.includes('design/views/'), file + ' must not validate retired Design Views')
   assert.ok(!source.includes('design/specs/'), file + ' must not validate retired Design Specs')
 })
 
-console.log('V3 legacy absence verified: no compatibility runtime, v2 system namespace, duplicate layout levels or retired design metadata')
+console.log('V3 legacy absence verified: no compatibility runtime, v2 app/system namespaces, duplicate layout levels or retired design metadata')
