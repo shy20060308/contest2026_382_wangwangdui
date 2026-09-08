@@ -91,16 +91,6 @@ test('连续运动提交按顺序落盘，旧写入不能覆盖新快照', funct
   assert.strictEqual(store.getSnapshot().steps, 5300)
 })
 
-test('较旧持久快照永远不能把今日累计值回滚', function () {
-  const repo = fakeRepository()
-  const store = core.createStore(repo)
-  store.add(1000, 100)
-  store.hydrate(function () {})
-  repo.resolveLoad({ steps: 3000, calories: 100, standHours: 2, stepsGoal: 6000, caloriesGoal: 300, standGoal: 12 })
-  assert.ok(store.getSnapshot().steps >= core.DEFAULT_STATE.steps + 1000)
-  assert.ok(store.getSnapshot().calories >= core.DEFAULT_STATE.calories + 100)
-})
-
 const repository = read('src/domain/activity/repository.js')
 const storeCore = read('src/domain/activity/store_core.js')
 const storeWrapper = read('src/domain/activity/store.js')
@@ -115,6 +105,8 @@ assert.ok(repository.includes("../../capabilities/storage"), 'Activity Repositor
 assert.ok(!repository.includes('loadSync') && !storage.includes('getSync:'), 'Activity hydration must not keep a second synchronous compatibility read')
 assert.ok(storeWrapper.includes("require('./store_core')"), 'Activity Store must delegate concurrency to the executable core')
 assert.ok(!storeCore.includes('repository.loadSync'), 'Activity Store must have one persistence read owner')
+assert.ok(!storeCore.includes('restoreTotals') && !storeCore.includes('persist: function') && !storeCore.includes('add: function'), 'Activity Store must not restore retired alternate mutation paths')
+assert.ok(!storeCore.includes('Math.max(state.steps') && !storeCore.includes('Math.max(state.calories'), 'Hydration must not retain repair logic required only by removed pre-hydration mutation APIs')
 assert.ok(!storeCore.includes('steps: 4567') && !storeCore.includes('calories: 180') && !storeCore.includes('standHours: 8'), 'Activity Domain must not seed fabricated current totals')
 assert.ok(workout.includes('activityStore.addAndPersist(record.steps, record.calories'), 'Workout Feature must commit activity before finishing navigation flow')
 assert.ok(workout.includes('historyRepository.saveToday(activitySnapshot'), 'History must receive the exact committed Activity snapshot')
