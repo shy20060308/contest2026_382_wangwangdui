@@ -48,7 +48,11 @@ function createStore(storage) {
   var writeQueued = false
   var persistWaiters = []
 
-  function clone() { return normalize(cached) }
+  function clone() {
+    var result = {}
+    for (var key in cached) result[key] = cached[key]
+    return result
+  }
 
   function merge(stored) {
     var next = clone()
@@ -78,7 +82,6 @@ function createStore(storage) {
   function finishLoad(stored) {
     cached = merge(stored)
     for (var key in pending) cached[key] = pending[key]
-    cached = normalize(cached)
     pending = {}
     loaded = true
     loading = false
@@ -137,8 +140,7 @@ function createStore(storage) {
       }
       persist(callback)
       return clone()
-    },
-    brightness: clampBrightness
+    }
   }
 }
 
