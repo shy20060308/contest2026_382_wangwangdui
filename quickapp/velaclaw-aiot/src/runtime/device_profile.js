@@ -1,6 +1,5 @@
 import device from '../capabilities/device'
 
-var DESIGN_WIDTH = 192
 var SAFE_INSETS = {
   circle: { left: 0, top: 10, right: 0, bottom: 10, gestureBar: 0 },
   pill: { left: 0, top: 52, right: 0, bottom: 52, gestureBar: 36 },
@@ -51,11 +50,6 @@ function family(shape, width, height) {
   return shape + '_generic'
 }
 
-function logicalHeight(width, height, factor) {
-  if (factor === 'circle') return DESIGN_WIDTH
-  return Math.ceil(height * DESIGN_WIDTH / width)
-}
-
 function declaredInsets(factor) {
   var source = SAFE_INSETS[factor]
   if (!source) throw new Error('V3 Device Profile has no safe insets for ' + factor)
@@ -79,7 +73,6 @@ function make(info, context) {
     isRect: factor === 'rect',
     screenWidth: width,
     screenHeight: height,
-    logicalHeight: logicalHeight(width, height, factor),
     safeInsets: declaredInsets(factor),
     deviceFamily: family(factor, width, height),
     model: model,
