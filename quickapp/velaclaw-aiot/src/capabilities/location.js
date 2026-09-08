@@ -4,22 +4,22 @@ var listeners = []
 var active = false
 var latest = null
 
-function toNumber(value) {
+function numberOrNull(value) {
   var number = Number(value)
-  return isNaN(number) ? null : number
+  return isFinite(number) ? number : null
 }
 
 function normalize(data) {
   if (!data) return null
-  var latitude = toNumber(data.latitude)
-  var longitude = toNumber(data.longitude)
+  var latitude = numberOrNull(data.latitude)
+  var longitude = numberOrNull(data.longitude)
   if (latitude === null || longitude === null) return null
   return {
     latitude: latitude,
     longitude: longitude,
-    altitude: toNumber(data.altitude),
-    accuracy: toNumber(data.accuracy),
-    speed: toNumber(data.speed),
+    altitude: numberOrNull(data.altitude),
+    accuracy: numberOrNull(data.accuracy),
+    speed: numberOrNull(data.speed),
     timestamp: Date.now()
   }
 }
