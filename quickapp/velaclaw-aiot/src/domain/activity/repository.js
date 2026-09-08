@@ -7,23 +7,29 @@ function pad2(value) {
 }
 
 function dateKey(date) {
-  var value = date || new Date()
-  return value.getFullYear() + '-' + pad2(value.getMonth() + 1) + '-' + pad2(value.getDate())
+  return date.getFullYear() + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate())
 }
 
 function clone(value) {
   return value ? JSON.parse(JSON.stringify(value)) : value
 }
 
+function requireInteger(record, key, minimum) {
+  var value = record[key]
+  if (typeof value !== 'number' || !isFinite(value) || Math.round(value) !== value || value < minimum) throw new Error('Invalid Activity record field: ' + key)
+  return value
+}
+
 function normalize(record) {
-  if (!record || record.date !== dateKey(new Date())) return null
+  if (!record) return null
+  if (record.date !== dateKey(new Date())) return null
   return {
-    steps: Math.max(0, Math.round(Number(record.steps) || 0)),
-    stepsGoal: Math.max(1, Math.round(Number(record.stepsGoal) || 6000)),
-    calories: Math.max(0, Math.round(Number(record.calories) || 0)),
-    caloriesGoal: Math.max(1, Math.round(Number(record.caloriesGoal) || 300)),
-    standHours: Math.max(0, Math.round(Number(record.standHours) || 0)),
-    standGoal: Math.max(1, Math.round(Number(record.standGoal) || 12))
+    steps: requireInteger(record, 'steps', 0),
+    stepsGoal: requireInteger(record, 'stepsGoal', 1),
+    calories: requireInteger(record, 'calories', 0),
+    caloriesGoal: requireInteger(record, 'caloriesGoal', 1),
+    standHours: requireInteger(record, 'standHours', 0),
+    standGoal: requireInteger(record, 'standGoal', 1)
   }
 }
 
