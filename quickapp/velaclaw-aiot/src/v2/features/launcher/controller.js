@@ -1,9 +1,15 @@
 function clamp(value, min, max) { return Math.max(min, Math.min(max, value)) }
 
-function pageCapacity(value) {
-  var size = Math.round(Number(value))
-  if (!isFinite(size) || size < 1) throw new Error('Launcher requires resolved pageSize')
+function requirePageSize(value) {
+  var size = Number(value)
+  if (!isFinite(size) || size < 1 || Math.round(size) !== size) throw new Error('Launcher requires resolved integer pageSize')
   return size
+}
+
+function requirePageIndex(value) {
+  var index = Number(value)
+  if (!isFinite(index) || Math.round(index) !== index) throw new Error('Launcher requires integer page index')
+  return index
 }
 
 function requireAppIds(ids) {
@@ -17,13 +23,12 @@ export function createLauncherController(onChange) {
   var pageSize = 0
 
   function snapshot() {
-    var size = pageCapacity(pageSize)
-    var count = Math.max(1, Math.ceil(all.length / size))
+    var count = Math.ceil(all.length / pageSize)
     pageIndex = clamp(pageIndex, 0, count - 1)
-    var start = pageIndex * size
+    var start = pageIndex * pageSize
     return {
       all: all.slice(),
-      items: all.slice(start, start + size),
+      items: all.slice(start, start + pageSize),
       pageIndex: pageIndex,
       pageNumber: pageIndex + 1,
       pageCount: count,
@@ -41,13 +46,13 @@ export function createLauncherController(onChange) {
   return {
     configure: function (ids, size) {
       all = requireAppIds(ids)
-      pageSize = pageCapacity(size)
+      pageSize = requirePageSize(size)
       pageIndex = 0
       return emit()
     },
     next: function () { pageIndex++; return emit() },
     previous: function () { pageIndex--; return emit() },
-    goToPage: function (index) { pageIndex = Math.round(Number(index) || 0); return emit() },
+    goToPage: function (index) { pageIndex = requirePageIndex(index); return emit() },
     refresh: emit
   }
 }
