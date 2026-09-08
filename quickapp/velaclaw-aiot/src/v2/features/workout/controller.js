@@ -38,7 +38,6 @@ export function createWorkoutController(onChange) {
     if (!active || active.status !== 'running') return
     clearTimeout(fallbackTimer)
     fallbackTimer = null
-    if (!point) return
     if (lastPoint) gpsDistance += distance.acceptedSegment(lastPoint, point)
     lastPoint = point
     emit(workoutState.updateGps({ status: 'active', point: point, distanceMeters: Math.round(gpsDistance) }))
@@ -71,9 +70,7 @@ export function createWorkoutController(onChange) {
     if (!runtimeActive || !snapshot || !snapshot.live || snapshot.source !== 'live') return
     var active = workoutState.getActive()
     if (!active || active.status !== 'running') return
-    var value = Number(snapshot.value)
-    if (!isFinite(value) || value <= 0) return
-    emit(workoutState.updateHeartRate(value))
+    emit(workoutState.updateHeartRate(snapshot.value))
   }
 
   function startHeartRate() {
@@ -190,13 +187,13 @@ export function createWorkoutController(onChange) {
         var savedRecord = record
         function done() { pending--; if (pending === 0 && callback) callback(savedRecord) }
         historyRepository.saveToday(activitySnapshot, done)
-        workoutRepository.saveRecord(record, function (saved) { savedRecord = saved || record; done() })
+        workoutRepository.saveRecord(record, function (saved) { savedRecord = saved; done() })
       })
     },
     cancel: function () { stopRuntime(false); workoutState.cancel(); workoutRepository.clearActive() },
     stop: function () { stopRuntime(true) },
     refresh: function () { var active = workoutState.getActive(); if (active) emit(workoutState.tick()) },
-    getRecords: function (callback) { workoutRepository.getRecords(function (records) { if (callback) callback(Array.isArray(records) ? records : []) }) },
-    markAllSynced: function (callback) { workoutRepository.markAllSynced(function (records, result) { if (callback) callback(Array.isArray(records) ? records : [], result) }) }
+    getRecords: function (callback) { workoutRepository.getRecords(callback) },
+    markAllSynced: function (callback) { workoutRepository.markAllSynced(callback) }
   }
 }
