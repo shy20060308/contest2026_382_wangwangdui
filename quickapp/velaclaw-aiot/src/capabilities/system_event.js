@@ -40,6 +40,5 @@ function unsubscribe(eventName, listener) {
 export default {
   isAvailable: isAvailable,
   subscribe: subscribe,
-  unsubscribe: unsubscribe,
-  consumerCount: function () { return subscriptions.length }
+  unsubscribe: unsubscribe
 }
