@@ -5,7 +5,7 @@ var layout = require('./layout')
 function contentWidth(profile) { return adapter.contentWidth(profile, layout) }
 
 function centeredBox(stream, top, width, height) {
-  return adapter.region(stream.left + Math.round((stream.width - width) / 2), top, width, height)
+  return adapter.region(stream.left + (stream.width - width) / 2, top, width, height)
 }
 
 function resolve(profile, scene, safe) {
