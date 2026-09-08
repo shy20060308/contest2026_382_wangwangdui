@@ -2,6 +2,7 @@ const assert = require('assert')
 const adapter = require('../src/v2/design/adapter')
 const difference = require('../src/v2/design/difference')
 const scene = require('../src/v2/design/scene')
+const watchfaceChart = require('../src/v2/design/watchface_chart')
 
 const designs = [
   require('../src/v2/design/apps/steps'),
@@ -38,6 +39,7 @@ assert.strictEqual(typeof adapter.shapeOf, 'undefined', 'Adapter must not duplic
 assert.deepStrictEqual(difference.describe(difference.L1), { level: 1, id: 'L1', kind: 'shared-expression' })
 assert.deepStrictEqual(difference.describe(difference.L2), { level: 2, id: 'L2', kind: 'local-expression' })
 assert.deepStrictEqual(difference.describe(difference.L3), { level: 3, id: 'L3', kind: 'independent-surface' })
+assert.throws(function () { difference.describe(99) }, /Unknown V3 difference level/)
 
 const circleHost = scene.resolve(profiles[0])
 const circleSafe = scene.safe(profiles[0], circleHost)
@@ -45,10 +47,11 @@ assert.deepStrictEqual(circleSafe, { left: 0, top: 10, right: 192, bottom: 182, 
 const translated = adapter.placeBand(profiles[0], circleHost, circleSafe, { top: 14, width: 120, height: 22 })
 assert.deepStrictEqual(translated, { left: 36, top: 24, width: 120, height: 22 })
 assert.deepStrictEqual(adapter.contentBox(82, 58, 7, 6), { width: 68, height: 46 })
+assert.strictEqual(watchfaceChart.sampleBarHeight([80, 90, 100], 1, 2, 10, 20), 6)
 
 assert.throws(function () { adapter.contentWidth(profiles[0], { base: {} }) }, /recipe\.contentWidth/)
 assert.throws(function () { adapter.grid({ width: 100 }, undefined, 0) }, /grid\.columns/)
-assert.throws(function () { adapter.createPlan(profiles[0], circleHost, circleSafe, undefined, 'test') }, /explicit L1\/L2\/L3/)
+assert.throws(function () { adapter.createPlan(profiles[0], circleHost, circleSafe, undefined, 'test') }, /Unknown V3 difference level/)
 assert.throws(function () { adapter.createPlan(profiles[0], circleHost, circleSafe, difference.L1, '') }, /recipe\.surface/)
 
 profiles.forEach(function (profile) {
