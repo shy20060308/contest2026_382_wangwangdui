@@ -20,9 +20,15 @@ function requireInteger(record, key, minimum) {
   return value
 }
 
+function requireDate(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new Error('Invalid Activity record date')
+  return value
+}
+
 function normalize(record) {
-  if (!record) return null
-  if (record.date !== dateKey(new Date())) return null
+  if (record === null || record === undefined) return null
+  if (typeof record !== 'object' || Array.isArray(record)) throw new Error('Invalid Activity record')
+  if (requireDate(record.date) !== dateKey(new Date())) return null
   return {
     steps: requireInteger(record, 'steps', 0),
     stepsGoal: requireInteger(record, 'stepsGoal', 1),
