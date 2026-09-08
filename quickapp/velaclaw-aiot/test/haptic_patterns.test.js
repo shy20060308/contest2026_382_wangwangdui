@@ -9,9 +9,10 @@ function test(name, callback) {
   console.log('通过 - ' + name)
 }
 
-test('旧持久化模式只在迁移入口回退为达标语义', function () {
-  assert.strictEqual(patterns.normalize('unknown'), 'goal')
+test('未知模式与强度直接失败', function () {
+  assert.strictEqual(typeof patterns.normalize, 'undefined')
   assert.throws(function () { patterns.get('unknown', 'medium') }, /Unknown haptic pattern/)
+  assert.throws(function () { patterns.get('tap', 'unknown') }, /Unknown haptic level/)
 })
 
 test('四种模式保持独立节奏配置', function () {
@@ -24,7 +25,6 @@ test('四种模式保持独立节奏配置', function () {
 test('强度只缩放持续时间，不改变模式语义', function () {
   assert.strictEqual(patterns.get('tap', 'strong').id, 'tap')
   assert.ok(patterns.get('tap', 'strong').duration > patterns.get('tap', 'light').duration)
-  assert.throws(function () { patterns.get('tap', 'unknown') }, /Unknown haptic level/)
 })
 
 test('Domain 不输出展示文案', function () {
