@@ -1,48 +1,39 @@
-function numericValues(values) {
-  var source = Array.isArray(values) ? values : []
-  var result = []
-  for (var i = 0; i < source.length; i++) {
-    var value = Number(source[i])
-    if (isFinite(value)) result.push(value)
-  }
-  return result
-}
+var WEEKDAY_LABELS = null
 
-function stats(values) {
-  var source = numericValues(values)
-  if (!source.length) return { min: 0, avg: 0, max: 0 }
-  var min = source[0], max = source[0], sum = 0
-  for (var i = 0; i < source.length; i++) { if (source[i] < min) min = source[i]; if (source[i] > max) max = source[i]; sum += source[i] }
-  return { min: Math.round(min), avg: Math.round(sum / source.length), max: Math.round(max) }
+function range(values) {
+  if (!values.length) return { min: 0, max: 0 }
+  var min = values[0]
+  var max = values[0]
+  for (var i = 1; i < values.length; i++) {
+    if (values[i] < min) min = values[i]
+    if (values[i] > max) max = values[i]
+  }
+  return { min: min, max: max }
 }
 
 function relativeBars(values, height, minHeight, minimumSpread, inactive, active) {
-  var source = numericValues(values)
-  if (!source.length) return []
-  var range = stats(source)
-  var chartHeight = Math.round(Number(height))
-  var floor = Math.round(Number(minHeight))
-  var spread = Math.max(Number(minimumSpread), range.max - range.min)
-  var center = (range.min + range.max) / 2
+  if (!values.length) return []
+  var bounds = range(values)
+  var spread = Math.max(minimumSpread, bounds.max - bounds.min)
+  var center = (bounds.min + bounds.max) / 2
   var visualMin = center - spread / 2
   var result = []
-  for (var i = 0; i < source.length; i++) {
-    var ratio = Math.max(0, Math.min(1, (source[i] - visualMin) / spread))
-    result.push({ height: floor + Math.round(ratio * (chartHeight - floor)), color: i === source.length - 1 ? active : inactive, index: i })
+  for (var i = 0; i < values.length; i++) {
+    var ratio = Math.max(0, Math.min(1, (values[i] - visualMin) / spread))
+    result.push({ height: minHeight + Math.round(ratio * (height - minHeight)), color: i === values.length - 1 ? active : inactive, index: i })
   }
   return result
 }
 
 function sourceText(source) {
-  var value = source || {}
-  if (value.live && value.mode === 'live') return '系统'
-  if (value.errorCode === 203) return '不支持'
-  if (value.errorCode) return '异常'
+  if (source.live && source.mode === 'live') return '系统'
+  if (source.errorCode === 203) return '不支持'
+  if (source.errorCode) return '异常'
   return '等待'
 }
 
 function heartStatus(zone, value) {
-  if (!(Number(value) > 0)) return { text: '等待', color: '#8E8E93' }
+  if (value === null) return { text: '等待', color: '#8E8E93' }
   if (zone === 'rest') return { text: '偏低', color: '#5AC8FA' }
   if (zone === 'elevated') return { text: '偏高', color: '#FF9F0A' }
   if (zone === 'peak') return { text: '峰值', color: '#FF453A' }
@@ -50,7 +41,7 @@ function heartStatus(zone, value) {
 }
 
 function stressStatus(zone, value) {
-  if (value === null || value === undefined || !isFinite(Number(value))) return { text: '等待', color: '#8E8E93' }
+  if (value === null) return { text: '等待', color: '#8E8E93' }
   if (zone === 'relaxed') return { text: '放松', color: '#30D158' }
   if (zone === 'normal') return { text: '正常', color: '#64D2FF' }
   if (zone === 'elevated') return { text: '偏高', color: '#FFD60A' }
@@ -65,54 +56,51 @@ function formatTime(timestamp) {
   return hours + ':' + minutes
 }
 
-function trendText(values) { var count = numericValues(values).length; return count > 1 ? '近' + count + '次' : (count ? '当前' : '等待') }
-function rangeText(values, unit) { var source = numericValues(values); var range = stats(source); if (!source.length) return '等待数据'; if (range.min === range.max) return '当前 ' + range.max + unit; return '本次 ' + range.min + '–' + range.max + unit }
+function trendText(values) { return values.length > 1 ? '近' + values.length + '次' : (values.length ? '当前' : '等待') }
+function rangeText(values, unit) { var bounds = range(values); if (!values.length) return '等待数据'; if (bounds.min === bounds.max) return '当前 ' + bounds.max + unit; return '本次 ' + bounds.min + '–' + bounds.max + unit }
 
 function summaryState(source) {
-  if (!source || !source.anyLive) return { text: source && source.serviceAvailable ? '等待系统数据' : '等待健康服务', color: '#8E8E93' }
+  if (!source.anyLive) return { text: source.serviceAvailable ? '等待系统数据' : '等待健康服务', color: '#8E8E93' }
   var attention = source.heartZone === 'elevated' || source.heartZone === 'peak' || source.spo2Zone === 'attention' || source.stressZone === 'elevated' || source.stressZone === 'high'
   return attention ? { text: '有指标需关注', color: '#FF9F0A' } : { text: '状态平稳', color: '#30D158' }
 }
 
 function project(model, plan) {
-  var source = model || {}
-  var chartHeight = Math.round(Number(plan.chartHeight))
-  var trendMinHeight = Math.round(Number(plan.trendMinHeight))
+  var source = model
   var visual = plan.trendVisual
-  var heartValue = Number(source.heartRate) || 0
-  var spo2Value = Number(source.spo2) || 0
-  var stressValue = source.stress === null || source.stress === undefined ? null : Number(source.stress)
+  var heartValue = source.heartRate
+  var spo2Value = source.spo2
+  var stressValue = source.stress
   var heart = heartStatus(source.heartZone, heartValue)
   var stress = stressStatus(source.stressZone, stressValue)
-  var spo2Attention = spo2Value > 0 && source.spo2Zone === 'attention'
+  var spo2Attention = spo2Value !== null && source.spo2Zone === 'attention'
   var summary = summaryState(source)
-  var heartValues = numericValues(source.heartValues)
-  var spo2Values = numericValues(source.spo2Values)
-  var stressValues = numericValues(source.stressValues)
-  var stressRange = stats(stressValues)
+  var heartValues = source.heartValues
+  var spo2Values = source.spo2Values
+  var stressValues = source.stressValues
   return {
-    heartRate: heartValue > 0 ? heartValue : '--',
-    spo2: spo2Value > 0 ? spo2Value : '--',
-    stress: stressValue !== null && isFinite(stressValue) ? stressValue : '--',
+    heartRate: heartValue === null ? '--' : heartValue,
+    spo2: spo2Value === null ? '--' : spo2Value,
+    stress: stressValue === null ? '--' : stressValue,
     heartStatus: heart.text, heartStatusColor: heart.color,
-    spo2Status: spo2Value <= 0 ? '等待' : (spo2Attention ? '请关注' : '良好'),
-    spo2StatusColor: spo2Value <= 0 ? '#8E8E93' : (spo2Attention ? '#FF9F0A' : '#30D158'),
+    spo2Status: spo2Value === null ? '等待' : (spo2Attention ? '请关注' : '良好'),
+    spo2StatusColor: spo2Value === null ? '#8E8E93' : (spo2Attention ? '#FF9F0A' : '#30D158'),
     stressStatus: stress.text, stressStatusColor: stress.color,
     summaryText: summary.text, summaryColor: summary.color,
-    dailyMin: Number(source.dailyMin) || (heartValues.length ? stats(heartValues).min : 0),
-    dailyMax: Number(source.dailyMax) || (heartValues.length ? stats(heartValues).max : 0),
-    stressMin: Number(source.stressMin) || stressRange.min,
-    stressAvg: Number(source.stressAvg) || stressRange.avg,
-    stressMax: Number(source.stressMax) || stressRange.max,
+    dailyMin: source.dailyMin,
+    dailyMax: source.dailyMax,
+    stressMin: source.stressMin,
+    stressAvg: source.stressAvg,
+    stressMax: source.stressMax,
     heartSource: sourceText(source.heartSource), spo2Source: sourceText(source.spo2Source), stressSource: sourceText(source.stressSource),
     sourceText: source.anyLive ? '系统健康数据' : (source.serviceAvailable ? '等待系统数据' : '等待健康服务'),
     updatedAtText: source.anyLive ? formatTime(source.updatedAt) : '--:--',
     heartTrendText: trendText(heartValues), spo2TrendText: trendText(spo2Values), stressTrendText: trendText(stressValues),
     heartRangeText: rangeText(heartValues, ' bpm'), spo2RangeText: rangeText(spo2Values, '%'),
-    stressRangeText: stressValues.length ? '本次 ' + stressRange.min + '–' + stressRange.max + ' · 均 ' + stressRange.avg : '等待数据',
-    heartBars: relativeBars(heartValues, chartHeight, trendMinHeight, visual.heartSpread, visual.heartInactive, visual.heartActive),
-    spo2Bars: relativeBars(spo2Values, chartHeight, trendMinHeight, visual.spo2Spread, visual.spo2Inactive, visual.spo2Active),
-    stressBars: relativeBars(stressValues, chartHeight, trendMinHeight, visual.stressSpread, visual.stressInactive, visual.stressActive)
+    stressRangeText: stressValues.length ? '本次 ' + source.stressMin + '–' + source.stressMax + ' · 均 ' + source.stressAvg : '等待数据',
+    heartBars: relativeBars(heartValues, plan.chartHeight, plan.trendMinHeight, visual.heartSpread, visual.heartInactive, visual.heartActive),
+    spo2Bars: relativeBars(spo2Values, plan.chartHeight, plan.trendMinHeight, visual.spo2Spread, visual.spo2Inactive, visual.spo2Active),
+    stressBars: relativeBars(stressValues, plan.chartHeight, plan.trendMinHeight, visual.stressSpread, visual.stressInactive, visual.stressActive)
   }
 }
 
