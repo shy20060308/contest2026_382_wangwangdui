@@ -36,11 +36,10 @@ export function createDiagnosticsController(onChange) {
 
   return {
     configureScene: function (nextProfile, nextScene) {
-      if (!nextProfile || !nextScene) throw new Error('Diagnostics requires resolved Device Profile and Host Scene')
       profile = nextProfile
       scene = nextScene
       return emit()
     },
-    refresh: function () { return profile && scene ? emit() : null }
+    refresh: emit
   }
 }
