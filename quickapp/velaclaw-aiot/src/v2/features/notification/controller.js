@@ -20,8 +20,14 @@ function externalPayload(value) {
   return source || {}
 }
 
+function initialState() {
+  var value = notificationFactory.normalize({})
+  value.visible = false
+  return value
+}
+
 export function createNotificationController(onChange) {
-  var state = { visible: false, type: '', appName: '', appIcon: '', content: '', contact: '', phone: '', hangUp: false }
+  var state = initialState()
   var started = false
   var settingsReady = false
   var externalRegistered = false
