@@ -7,7 +7,6 @@ import transportFactory from './mock_transport'
 var protocol = require('./protocol')
 
 export function createSyncController(onChange) {
-  var capability = transportFactory.capability()
   var transport = transportFactory.create()
   var active = false
   var lifecycleEpoch = 0
@@ -17,8 +16,7 @@ export function createSyncController(onChange) {
     progress: 0,
     phase: 'idle',
     lastSyncAt: 0,
-    transportMode: capability.mode,
-    realBleAvailable: capability.realBleAvailable,
+    transportMode: 'mock',
     packetCount: 0,
     payloadChars: 0,
     ackSent: 0,
@@ -66,7 +64,6 @@ export function createSyncController(onChange) {
       state.workoutCount = workouts.length
       var payload = {
         version: protocol.VERSION,
-        deviceId: 'vela-band-demo',
         syncedAt: Date.now(),
         health: { steps: activity.steps, calories: activity.calories, standHours: activity.standHours, heartRate: health.heartRate },
         history: history,
@@ -203,10 +200,8 @@ export function createSyncController(onChange) {
 
   return {
     load: loadSettings,
-    refreshPreview: function () { if (active) collect(null, lifecycleEpoch) },
     toggleConnection: toggleConnection,
     sync: sync,
-    stop: stop,
-    refresh: emit
+    stop: stop
   }
 }
