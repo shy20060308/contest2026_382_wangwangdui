@@ -41,7 +41,7 @@ export default {
   onShow() { this.controller.load() },
   onBackPress() { navigation.back(); return true },
   applyView(view) { this.brightnessValue = view.brightnessValue; this.brightnessText = view.brightnessText; this.brightnessDetail = view.brightnessDetail; this.manualStateText = view.manualStateText; this.autoText = view.autoText; this.autoColor = view.autoColor; this.raiseText = view.raiseText; this.raiseColor = view.raiseColor; this.lowPowerText = view.lowPowerText; this.lowPowerColor = view.lowPowerColor },
-  onBrightnessChange(event) { var value = this.brightnessValue; if (event && event.progress !== undefined) value = event.progress; else if (event && event.value !== undefined) value = event.value; else if (event && event.detail && event.detail.progress !== undefined) value = event.detail.progress; else if (event && event.detail && event.detail.value !== undefined) value = event.detail.value; this.controller.setBrightness(value) },
+  onBrightnessChange(event) { this.controller.setBrightness(event.progress) },
   toggleAuto() { this.controller.toggleAuto() },
   toggleRaiseWake() { this.controller.toggleRaiseWake() },
   toggleLowPower() { this.controller.toggleLowPower() },
