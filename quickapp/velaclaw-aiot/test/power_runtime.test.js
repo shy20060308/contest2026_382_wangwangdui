@@ -76,12 +76,13 @@ const runtime = powerRuntimeCore.create({
     }
   }
 }, {
-  activeBrightnessValue: 140,
   onMode: function (mode) { modes.push(mode) },
   onHeartRate: function (sample, source) { heartEvents.push([sample.value, source]) },
   onWake: function (reason) { wakeEvents.push(reason) }
 })
 
+assert.throws(function () { runtime.start() }, /configured before start/, 'runtime must not invent Settings defaults')
+runtime.configure({ lowPowerEnabled: true, raiseWakeEnabled: true, activeBrightnessValue: 140 })
 runtime.start()
 assert.strictEqual(runtime.getMode(), 'ACTIVE', 'runtime must start ACTIVE')
 assert.strictEqual(heartSubscribeCount, 1, 'ACTIVE start must subscribe heart rate exactly once')
@@ -94,8 +95,6 @@ assert.ok(displayCalls.some(function (call) { return call[0] === 'brightness' &&
 heartListener({ value: 91, updatedAt: 1100, live: true, source: 'live' })
 assert.deepStrictEqual(heartEvents[heartEvents.length - 1], [91, 'live'], 'ACTIVE must publish official live heart samples immediately')
 
-// Raw accelerometer samples are not wake events. Ordinary movement must not
-// continuously reset lastActiveAt and prevent the idle state machine from firing.
 clock = 2000
 motionListener({ x: 0, y: 0, z: 0 })
 clock = 2200
@@ -118,8 +117,6 @@ assert.strictEqual(runtime.getMode(), 'SLEEP', '15 seconds idle must enter SLEEP
 assert.strictEqual(heartUnsubscribeCount, 1, 'SLEEP must release heart sampling')
 assert.strictEqual(runtime.getSnapshot().healthActive, false, 'SLEEP health state must be inactive')
 
-// A real raise gesture is a semantic decision: establish a baseline then move
-// far enough to cross the preserved delta threshold after the cooldown.
 clock = 16100
 motionListener({ x: 0.2, y: 0.1, z: 0 })
 clock = 16300
@@ -128,7 +125,7 @@ assert.strictEqual(runtime.getMode(), 'ACTIVE', 'semantic raise gesture must wak
 assert.strictEqual(wakeEvents.length, 1, 'raise detector must emit exactly one wake event')
 assert.strictEqual(heartSubscribeCount, 2, 'wake from SLEEP must restore heart subscription exactly once')
 
-runtime.configure({ lowPowerEnabled: false, activeBrightnessValue: 180 })
+runtime.configure({ lowPowerEnabled: false, raiseWakeEnabled: true, activeBrightnessValue: 180 })
 assert.strictEqual(runtime.getSnapshot().idleTimerActive, false, 'disabling low power must remove idle polling')
 assert.ok(displayCalls.some(function (call) { return call[0] === 'brightness' && call[1] === 180 }), 'ACTIVE brightness changes must apply immediately')
 
@@ -139,4 +136,4 @@ assert.strictEqual(runtime.getSnapshot().mainTimerActive, false, 'stop must clea
 assert.strictEqual(runtime.getSnapshot().heartTimerActive, false, 'stop must clear heart cadence')
 assert.ok(modes.indexOf('DIM') >= 0 && modes.indexOf('SLEEP') >= 0, 'mode callbacks must expose DIM and SLEEP transitions')
 
-console.log('Power Runtime executed: non-live health data is rejected, ACTIVE/DIM/SLEEP works, and HR cadence is preserved')
+console.log('Power Runtime executed: explicit Settings, truthful registration, ACTIVE/DIM/SLEEP, and official HR cadence')
