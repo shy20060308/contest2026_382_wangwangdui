@@ -1,6 +1,6 @@
 import settingsStore from '../../../domain/settings/store'
 import vibration from '../../../capabilities/vibration'
-import haptics from '../../system/haptics'
+import haptics from '../../../runtime/haptics'
 var patterns = require('../../../domain/haptics/patterns')
 
 var HAPTIC_OWNER = 'settings-vibration'
