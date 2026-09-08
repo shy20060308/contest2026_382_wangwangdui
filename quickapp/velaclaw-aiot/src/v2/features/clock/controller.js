@@ -5,11 +5,14 @@ import watchfaceStore from '../../../domain/watchface/store'
 import settingsStore from '../../../domain/settings/store'
 import { createNotificationController } from '../notification/controller'
 
-function copyIds(ids) { return Array.isArray(ids) && ids.length ? ids.slice() : ['sport','simple','dashboard'] }
+function requireFaceIds(ids) {
+  if (!Array.isArray(ids) || !ids.length) throw new Error('Clock requires resolved faceIds')
+  return ids.slice()
+}
 
 export function createClockController(onChange, onNotification) {
-  var faceIds = ['sport','simple','dashboard']
-  var selectedFaceId = faceIds[0]
+  var faceIds = []
+  var selectedFaceId = ''
   var heartValues = []
   var started = false
   var powerRuntime = null
@@ -19,10 +22,10 @@ export function createClockController(onChange, onNotification) {
   })
   var state = {
     faceIndex: 0,
-    faceId: selectedFaceId,
+    faceId: '',
     timestamp: Date.now(),
-    batteryPercent: 75,
-    currentHeartRate: 88,
+    batteryPercent: null,
+    currentHeartRate: null,
     heartRateValues: [],
     steps: 0,
     stepsGoal: 0,
@@ -54,6 +57,7 @@ export function createClockController(onChange, onNotification) {
   }
 
   function applyFace(id) {
+    if (!faceIds.length) throw new Error('Clock requires configured faceIds')
     var nextId = faceIds.indexOf(id) >= 0 ? id : faceIds[0]
     selectedFaceId = nextId
     state.faceId = nextId
@@ -75,7 +79,9 @@ export function createClockController(onChange, onNotification) {
 
   function onHeartRate(sample) {
     if (!sample || sample.value === undefined || sample.value === null) return
-    state.currentHeartRate = Math.round(Number(sample.value) || state.currentHeartRate)
+    var value = Number(sample.value)
+    if (!isFinite(value) || value <= 0) return
+    state.currentHeartRate = Math.round(value)
     heartValues.push(state.currentHeartRate)
     if (heartValues.length > 10) heartValues.shift()
     state.heartRateValues = heartValues.slice()
@@ -83,7 +89,10 @@ export function createClockController(onChange, onNotification) {
   }
 
   function onBattery(percent) {
-    state.batteryPercent = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)))
+    if (percent === null || percent === undefined) return
+    var value = Number(percent)
+    if (!isFinite(value)) return
+    state.batteryPercent = Math.max(0, Math.min(100, Math.round(value)))
     emit()
   }
 
@@ -114,12 +123,13 @@ export function createClockController(onChange, onNotification) {
 
   return {
     configureFaces: function (allowedFaceIds) {
-      faceIds = copyIds(allowedFaceIds)
+      faceIds = requireFaceIds(allowedFaceIds)
       applyFace(selectedFaceId)
       emit()
     },
     start: function () {
       if (started) return
+      if (!faceIds.length) throw new Error('Clock must configure Recipe faceIds before start')
       started = true
       ensurePowerRuntime()
       refreshActivity()
