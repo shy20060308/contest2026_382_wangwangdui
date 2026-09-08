@@ -3,13 +3,6 @@ import storage from '@system.storage'
 var memoryCache = {}
 var operationQueues = {}
 
-function parseStorageValue(data) {
-  if (data && data.value !== undefined) return data.value
-  if (data && data.data !== undefined) return data.data
-  if (typeof data === 'string') return data
-  return ''
-}
-
 function safeJsonParse(value, fallback) {
   try {
     return JSON.parse(value)
@@ -39,6 +32,25 @@ function makeResult(persisted, memoryOnly, error) {
   return { persisted: persisted, memoryOnly: memoryOnly, error: error || null }
 }
 
+function persistString(key, stringValue, callback) {
+  memoryCache[key] = stringValue
+  try {
+    if (storage && storage.set) {
+      storage.set({
+        key: key,
+        value: stringValue,
+        success: function () { callback(makeResult(true, false)) },
+        fail: function (error) { callback(makeResult(false, true, error)) }
+      })
+      return
+    }
+  } catch (error) {
+    callback(makeResult(false, true, error))
+    return
+  }
+  callback(makeResult(false, true, new Error('storage.set unavailable')))
+}
+
 var adapter = {
   set: function (key, value, callback) {
     enqueueOperation(key, function () {
@@ -50,37 +62,16 @@ var adapter = {
         finishOperation(key)
         return
       }
-      memoryCache[key] = stringValue
-      try {
-        if (storage && storage.set) {
-          storage.set({
-            key: key,
-            value: stringValue,
-            success: function () {
-              if (callback) callback(makeResult(true, false))
-              finishOperation(key)
-            },
-            fail: function (error) {
-              if (callback) callback(makeResult(false, true, error))
-              finishOperation(key)
-            },
-            complete: function () {}
-          })
-          return
-        }
-      } catch (error) {
-        if (callback) callback(makeResult(false, true, error))
+      persistString(key, stringValue, function (result) {
+        if (callback) callback(result)
         finishOperation(key)
-        return
-      }
-      if (callback) callback(makeResult(false, true, new Error('storage.set unavailable')))
-      finishOperation(key)
+      })
     })
   },
 
-  get: function (key, callback, forceRefresh) {
+  get: function (key, callback) {
     if (!callback) return
-    if (memoryCache[key] !== undefined && !forceRefresh) {
+    if (memoryCache[key] !== undefined) {
       callback(memoryCache[key])
       return
     }
@@ -88,38 +79,18 @@ var adapter = {
       if (storage && storage.get) {
         storage.get({
           key: key,
-          success: function (data) {
-            var value = parseStorageValue(data)
+          success: function (value) {
             if (value !== '' && value !== undefined) memoryCache[key] = value
             callback(value)
           },
           fail: function () {
             callback(memoryCache[key] !== undefined ? memoryCache[key] : '')
-          },
-          complete: function () {}
+          }
         })
         return
       }
     } catch (error) {}
     callback(memoryCache[key] !== undefined ? memoryCache[key] : '')
-  },
-
-  getSync: function (key) {
-    if (memoryCache[key] !== undefined) return memoryCache[key]
-    try {
-      if (storage && storage.getSync) {
-        var raw
-        try { raw = storage.getSync({ key: key }) } catch (e1) {
-          try { raw = storage.getSync(key) } catch (e2) {}
-        }
-        var value = parseStorageValue(raw)
-        if (value !== '' && value !== undefined) {
-          memoryCache[key] = value
-          return value
-        }
-      }
-    } catch (error) {}
-    return undefined
   },
 
   getJSON: function (key, callback, fallback) {
@@ -146,8 +117,7 @@ var adapter = {
             fail: function (error) {
               if (callback) callback(makeResult(false, false, error))
               finishOperation(key)
-            },
-            complete: function () {}
+            }
           })
           return
         }
@@ -174,31 +144,10 @@ var adapter = {
           finishOperation(key)
           return
         }
-        memoryCache[key] = stringValue
-        try {
-          if (storage && storage.set) {
-            storage.set({
-              key: key,
-              value: stringValue,
-              success: function () {
-                if (callback) callback(nextValue, makeResult(true, false))
-                finishOperation(key)
-              },
-              fail: function (error) {
-                if (callback) callback(nextValue, makeResult(false, true, error))
-                finishOperation(key)
-              },
-              complete: function () {}
-            })
-            return
-          }
-        } catch (error) {
-          if (callback) callback(nextValue, makeResult(false, true, error))
+        persistString(key, stringValue, function (result) {
+          if (callback) callback(nextValue, result)
           finishOperation(key)
-          return
-        }
-        if (callback) callback(nextValue, makeResult(false, true, new Error('storage.set unavailable')))
-        finishOperation(key)
+        })
       }, fallback)
     })
   },
