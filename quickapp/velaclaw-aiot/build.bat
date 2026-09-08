@@ -43,5 +43,5 @@ echo.
 echo ========================================
 echo   vela_band - BUILD SUCCESS
 echo ========================================
-echo [vela_band] Output: dist\com.application.watch.demo.debug.1.0.0.rpk
+echo [vela_band] See dist\ for the toolkit-produced RPK.
 exit /b 0
