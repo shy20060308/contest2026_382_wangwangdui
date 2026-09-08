@@ -27,7 +27,11 @@ V3 Adapter translation
       ↓
 App Resolver
       ↓
-UX
+Resolved Plan
+      ↓
+Optional Recipe-bound Product Math Engine
+      ↓
+UX / Watchface renderer
 ```
 
 Responsibilities are strict:
@@ -39,6 +43,7 @@ Responsibilities are strict:
 - Recipe owns visual intent, geometry, typography, spacing, form-factor differences, and visual constraints.
 - Adapter translates Recipe data only; it does not scan, scale, clamp, fit, or invent geometry.
 - Resolvers only compose Recipe relationships that cannot be represented statically; they do not repair a Recipe.
+- A Product Math Engine is used only for genuine continuous geometry or interaction math. It consumes the resolved Recipe/Plan and may own inertia, damping, overscroll, or similar interaction physics, but it does not own a second set of static focus/icon/label design facts.
 - UX renders after the resolved plan is ready and does not retain private non-zero geometry fallbacks.
 - One fact has one owner and one normalization boundary. Downstream layers consume canonical data instead of repeatedly validating or silently repairing it.
 - `src/common` is a static-resource namespace only.
@@ -50,7 +55,7 @@ See [V3 Design Runtime](ARCHITECTURE_V3.md) and [Project Owner Guide](PROJECT_OW
 | Area | Current implementation |
 | --- | --- |
 | Watchfaces | Sport / Simple / Dashboard plus Circle Mechanical and Pill Alpine; layout comes from the Clock Recipe |
-| Launcher | Circle honeycomb, Pill paged list, Rect designed grid |
+| Launcher | Circle honeycomb, Pill paged list, Rect designed grid; the Honeycomb Engine is configured by the resolved Launcher Recipe |
 | Health | Heart rate, SpO2, stress, window trends, and explicit official-source provenance |
 | Activity & History | Today activity and seven-day V3-persisted trends |
 | Workout | Walk/run, pause/resume, official heart rate, location capability, workout history |
@@ -69,7 +74,7 @@ src/
 ├── runtime/               # formal Page/Navigation/Device/Haptics/Power runtime
 ├── v2/
 │   ├── features/          # current Feature Controllers (historical path name)
-│   └── design/            # current V3 Scene / Recipe / Adapter / Resolver / View
+│   └── design/            # current V3 Scene / Recipe / Adapter / Resolver / View / Engine
 ├── pages/                 # product pages; plan binding + feature state + interaction
 ├── components/watchfaces/ # watchface renderers driven by Clock Recipe data
 └── common/                # static images, icons, and watchface assets only
@@ -126,10 +131,11 @@ npm run v3:truth
 5. Product non-zero geometry does not belong in page CSS; it comes from the resolved Recipe.
 6. Product geometry is not rendered before its Recipe plan is ready.
 7. Full-bleed scene and safe content are separate concepts.
-8. Feature / Domain / Capability behavior must not move back into pages during visual work.
-9. Official health and workout surfaces do not fabricate system health data. Unknown telemetry stays `null`/unavailable until View renders `--`.
-10. A value is normalized once at its owner boundary; do not stack Number/clamp/normalize in Capability, Domain, Feature, and View.
-11. Breaking V3 persistence uses clean namespaces rather than permanent legacy migration code. Git history preserves retired implementations.
-12. Future tooling/templates must not become a second Recipe/Adapter/Device Profile specification.
+8. Product Math Engines must be configured by the resolved Recipe/Plan and must not become a second static visual owner or adaptation solver.
+9. Feature / Domain / Capability behavior must not move back into pages during visual work.
+10. Official health and workout surfaces do not fabricate system health data. Unknown telemetry stays `null`/unavailable until View renders `--`.
+11. A value is normalized once at its owner boundary; do not stack Number/clamp/normalize in Capability, Domain, Feature, and View.
+12. Breaking V3 persistence uses clean namespaces rather than permanent legacy migration code. Git history preserves retired implementations.
+13. Future tooling/templates must not become a second Recipe/Adapter/Device Profile specification.
 
 The final quality result for this refactor should be established by running `npm run check`, building the Vela package, and performing emulator/device regression locally.
