@@ -11,7 +11,7 @@ function requireFaceId(id) {
 export default {
   loadSelectedFaceId: function (callback) {
     storage.get(SELECTED_FACE_KEY, function (value) {
-      selectedFaceId = typeof value === 'string' ? value : ''
+      selectedFaceId = value
       if (callback) callback(selectedFaceId)
     })
   },
