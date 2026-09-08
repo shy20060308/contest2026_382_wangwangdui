@@ -7,14 +7,15 @@ var ITEMS = {
 }
 
 function get(id) {
-  var source = ITEMS[id] || {}
-  return { id: id, name: source.name || id || '', description: source.description || '', icon: source.icon || '' }
+  var source = ITEMS[id]
+  if (!source) throw new Error('Unknown V3 settings item: ' + id)
+  return { id: id, name: source.name, description: source.description, icon: source.icon }
 }
 
 function list(ids) {
-  var source = Array.isArray(ids) ? ids : []
+  if (!Array.isArray(ids) || !ids.length) throw new Error('Settings catalog requires explicit itemIds')
   var result = []
-  for (var i = 0; i < source.length; i++) result.push(get(source[i]))
+  for (var i = 0; i < ids.length; i++) result.push(get(ids[i]))
   return result
 }
 
