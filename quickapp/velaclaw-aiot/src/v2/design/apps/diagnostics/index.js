@@ -16,7 +16,7 @@ function resolve(profile, scene, safe) {
 }
 
 module.exports = {
-  freedomLevel: base.freedomLevel,
+  differenceLevel: base.differenceLevel,
   contentWidth: base.contentWidth,
   resolve: resolve,
   layout: layout
