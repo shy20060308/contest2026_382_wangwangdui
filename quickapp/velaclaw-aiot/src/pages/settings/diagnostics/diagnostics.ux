@@ -5,11 +5,11 @@
       <div class="content" style="left: {{ contentLeft }}px; top: {{ contentTop }}px; width: {{ contentWidth }}px; height: {{ contentHeight }}px;">
         <div class="device-card" if="{{ pageIndex === 0 }}" style="width: {{ contentWidth }}px; border-radius: {{ cardRadius }}px; padding: {{ chrome.devicePadding }}px;">
           <div class="device-head" style="height: {{ chrome.deviceHeadHeight }}px;"><div class="device-dot" style="width: {{ chrome.dotSize }}px; height: {{ chrome.dotSize }}px; border-radius: {{ chrome.dotRadius }}px; margin-right: {{ chrome.dotMarginRight }}px;"></div><text class="device-title" style="font-size: {{ chrome.deviceTitleSize }}px;">运行时设备档案</text></div>
-          <div class="info-row" style="min-height: {{ chrome.infoRowMinHeight }}px;"><text class="info-label" style="width: {{ chrome.infoLabelWidth }}px; font-size: {{ chrome.infoTextSize }}px;">设备族</text><text class="info-value" style="font-size: {{ chrome.infoTextSize }}px;">{{ deviceFamily }}</text></div>
+          <div class="info-row" style="min-height: {{ chrome.infoRowMinHeight }}px;"><text class="info-label" style="width: {{ chrome.infoLabelWidth }}px; font-size: {{ chrome.infoTextSize }}px;">设备型号</text><text class="info-value" style="font-size: {{ chrome.infoTextSize }}px;">{{ deviceModel }}</text></div>
           <div class="info-row" style="min-height: {{ chrome.infoRowMinHeight }}px;"><text class="info-label" style="width: {{ chrome.infoLabelWidth }}px; font-size: {{ chrome.infoTextSize }}px;">物理屏</text><text class="info-value" style="font-size: {{ chrome.infoTextSize }}px;">{{ screenSize }}</text></div>
           <div class="info-row" style="min-height: {{ chrome.infoRowMinHeight }}px;"><text class="info-label" style="width: {{ chrome.infoLabelWidth }}px; font-size: {{ chrome.infoTextSize }}px;">Host Scene</text><text class="info-value" style="font-size: {{ chrome.infoTextSize }}px;">{{ hostSceneText }}</text></div>
           <div class="info-row" style="min-height: {{ chrome.infoRowMinHeight }}px;"><text class="info-label" style="width: {{ chrome.infoLabelWidth }}px; font-size: {{ chrome.infoTextSize }}px;">形态</text><text class="info-value" style="font-size: {{ chrome.infoTextSize }}px;">{{ formFactor }}</text></div>
-          <div class="info-row" style="min-height: {{ chrome.infoRowMinHeight }}px;"><text class="info-label" style="width: {{ chrome.infoLabelWidth }}px; font-size: {{ chrome.infoTextSize }}px;">平台</text><text class="info-value" style="font-size: {{ chrome.infoTextSize }}px;">{{ platformText }}</text></div>
+          <div class="info-row" style="min-height: {{ chrome.infoRowMinHeight }}px;"><text class="info-label" style="width: {{ chrome.infoLabelWidth }}px; font-size: {{ chrome.infoTextSize }}px;">平台版本</text><text class="info-value" style="font-size: {{ chrome.infoTextSize }}px;">{{ platformText }}</text></div>
           <div class="info-row" style="min-height: {{ chrome.infoRowMinHeight }}px;"><text class="info-label" style="width: {{ chrome.infoLabelWidth }}px; font-size: {{ chrome.infoTextSize }}px;">视口策略</text><text class="info-value accent" style="font-size: {{ chrome.infoTextSize }}px;">{{ viewportMode }}</text></div>
           <text class="device-tip" style="font-size: {{ chrome.tipSize }}px; line-height: {{ chrome.tipLineHeight }}px; margin-top: {{ chrome.tipMarginTop }}px;">V3 页面只消费 Host Scene 与 Capability API；原生设备接口不会泄漏到页面。</text>
         </div>
@@ -37,7 +37,7 @@ import diagnosticsView from '../../../v2/design/apps/diagnostics/view'
 export default {
   private: {
     ready: false, pageIndex: 0, pageText: '1 / 1', pageProgress: '100%', capabilityPage: [], capabilities: [], capabilityPageSize: 0,
-    deviceFamily: '检测中', screenSize: '--', hostSceneText: '--', formFactor: '--', platformText: '--', viewportMode: '--',
+    deviceModel: '--', screenSize: '--', hostSceneText: '--', formFactor: '--', platformText: '--', viewportMode: '--',
     headerLeft: 0, headerTop: 0, headerWidth: 0, headerHeight: 0, contentLeft: 0, contentTop: 0, contentWidth: 0, contentHeight: 0,
     pagerLeft: 0, pagerTop: 0, pagerWidth: 0, pagerHeight: 0, titleSize: 0, cardRadius: 0, capabilityHeight: 0, capabilityGap: 0, chrome: {},
     sceneWidth: 0, sceneHeight: 0, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
@@ -60,7 +60,7 @@ export default {
   applyModel(model) {
     var view = diagnosticsView.project(model)
     var device = view.device
-    this.deviceFamily = device.deviceFamily; this.screenSize = device.screenSize; this.hostSceneText = device.hostSceneText; this.formFactor = device.formFactor; this.platformText = device.platformText; this.viewportMode = device.viewportMode
+    this.deviceModel = device.model; this.screenSize = device.screenSize; this.hostSceneText = device.hostSceneText; this.formFactor = device.formFactor; this.platformText = device.platformText; this.viewportMode = device.viewportMode
     this.capabilities = view.capabilities
     this.refreshPage()
   },
