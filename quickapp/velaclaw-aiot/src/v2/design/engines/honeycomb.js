@@ -20,7 +20,6 @@ var VISIBLE_MARGIN = 42
 var LABEL_CENTER_Y = 168
 var LABEL_HALF_HEIGHT = 9
 var LABEL_HALF_WIDTH = 43
-var DEFAULT_COORD_COUNT = 19
 
 var AXIAL_DIRECTIONS = [
   { q: 1, r: 0 }, { q: 0, r: 1 }, { q: -1, r: 1 },
@@ -30,6 +29,12 @@ var AXIAL_DIRECTIONS = [
 function clamp(value, min, max) { return value < min ? min : value > max ? max : value }
 function clamp01(value) { return clamp(value, 0, 1) }
 function smoothStep(value) { var t = clamp01(value); return t * t * (3 - 2 * t) }
+function requireArray(name, value) { if (!Array.isArray(value)) throw new Error('Honeycomb requires ' + name + ' array'); return value }
+function requireNumber(name, value) { if (typeof value !== 'number' || !isFinite(value)) throw new Error('Honeycomb requires numeric ' + name); return value }
+function requireCount(value) {
+  if (typeof value !== 'number' || !isFinite(value) || Math.round(value) !== value || value < 0) throw new Error('Honeycomb requires non-negative integer count')
+  return value
+}
 
 function axialPoint(q, r) {
   return {
@@ -41,7 +46,8 @@ function axialPoint(q, r) {
 }
 
 function buildCoords(count) {
-  var wanted = Math.max(1, Math.floor(Number(count) || DEFAULT_COORD_COUNT))
+  var wanted = requireCount(count)
+  if (wanted === 0) return []
   var coords = [axialPoint(0, 0)]
   var ring = 1
   while (coords.length < wanted) {
@@ -61,7 +67,7 @@ function buildCoords(count) {
 }
 
 function buildSlots(apps) {
-  var source = apps || []
+  var source = requireArray('apps', apps)
   var coords = buildCoords(source.length)
   var slots = []
   for (var index = 0; index < source.length; index++) {
@@ -72,7 +78,6 @@ function buildSlots(apps) {
       id: app.id,
       label: app.label,
       normalIcon: app.icon,
-      softIcon: app.softIcon,
       sourceIndex: index,
       q: coordinate.q,
       r: coordinate.r,
@@ -100,19 +105,28 @@ function projectPoint(x, y, panX, panY, offsetX, offsetY) {
 }
 
 function layoutFrame(coords, panX, panY, offsetX, offsetY) {
+  var source = requireArray('coords', coords)
+  var px = requireNumber('panX', panX)
+  var py = requireNumber('panY', panY)
+  var ox = requireNumber('offsetX', offsetX)
+  var oy = requireNumber('offsetY', offsetY)
   var result = []
-  for (var index = 0; index < coords.length; index++) result.push(projectPoint(coords[index].x, coords[index].y, panX, panY, offsetX, offsetY))
+  for (var index = 0; index < source.length; index++) result.push(projectPoint(source[index].x, source[index].y, px, py, ox, oy))
   return result
 }
 
 function layoutSlots(slots, panX, panY, offsetX, offsetY) {
-  var source = slots || []
+  var source = requireArray('slots', slots)
+  var px = requireNumber('panX', panX)
+  var py = requireNumber('panY', panY)
+  var ox = requireNumber('offsetX', offsetX)
+  var oy = requireNumber('offsetY', offsetY)
   var nextSlots = []
   var nearestIndex = -1
   var nearestDistance = Infinity
   for (var index = 0; index < source.length; index++) {
     var slot = source[index]
-    var point = projectPoint(slot.gridX, slot.gridY, panX, panY, offsetX, offsetY)
+    var point = projectPoint(slot.gridX, slot.gridY, px, py, ox, oy)
     if (point.distance < nearestDistance) { nearestDistance = point.distance; nearestIndex = index }
     var bandFadeY = clamp01(1 - Math.abs(point.centerY - LABEL_CENTER_Y) / (LABEL_HALF_HEIGHT + point.size / 2))
     var bandFadeX = clamp01(1 - Math.abs(point.centerX - FOCUS_X) / (LABEL_HALF_WIDTH + point.size / 2))
@@ -123,7 +137,6 @@ function layoutSlots(slots, panX, panY, offsetX, offsetY) {
       id: slot.id,
       label: slot.label,
       normalIcon: slot.normalIcon,
-      softIcon: slot.softIcon,
       sourceIndex: slot.sourceIndex,
       q: slot.q,
       r: slot.r,
@@ -133,7 +146,7 @@ function layoutSlots(slots, panX, panY, offsetX, offsetY) {
       size: point.size,
       radius: Math.round(point.size / 2),
       opacity: opacity,
-      icon: slot.normalIcon || slot.softIcon,
+      icon: slot.normalIcon,
       left: Math.round(point.centerX - point.size / 2),
       top: Math.round(point.centerY - point.size / 2),
       centerX: point.centerX,
@@ -144,7 +157,7 @@ function layoutSlots(slots, panX, panY, offsetX, offsetY) {
 }
 
 function visibleSlots(slots) {
-  var source = slots || []
+  var source = requireArray('slots', slots)
   var result = []
   var min = -VISIBLE_MARGIN
   var max = 192 + VISIBLE_MARGIN
@@ -158,7 +171,7 @@ function visibleSlots(slots) {
 }
 
 function panBounds(slots) {
-  var source = slots || []
+  var source = requireArray('slots', slots)
   if (!source.length) return { minX: 0, maxX: 0, minY: 0, maxY: 0 }
   var minX = source[0].gridX
   var maxX = source[0].gridX
@@ -180,19 +193,24 @@ function panBounds(slots) {
 
 function clampPan(slots, panX, panY, overscroll) {
   var bounds = panBounds(slots)
-  var extra = Math.max(0, Number(overscroll) || 0)
+  var px = requireNumber('panX', panX)
+  var py = requireNumber('panY', panY)
+  var extra = requireNumber('overscroll', overscroll)
+  if (extra < 0) throw new Error('Honeycomb overscroll must be non-negative')
   return {
-    x: clamp(Number(panX) || 0, bounds.minX - extra, bounds.maxX + extra),
-    y: clamp(Number(panY) || 0, bounds.minY - extra, bounds.maxY + extra)
+    x: clamp(px, bounds.minX - extra, bounds.maxX + extra),
+    y: clamp(py, bounds.minY - extra, bounds.maxY + extra)
   }
 }
 
 function nextPan(slots, panX, panY, deltaX, deltaY) {
   var bounds = panBounds(slots)
-  var dx = clamp(Number(deltaX) || 0, -MAX_FRAME_DELTA, MAX_FRAME_DELTA) * DRAG_DAMPING
-  var dy = clamp(Number(deltaY) || 0, -MAX_FRAME_DELTA, MAX_FRAME_DELTA) * DRAG_DAMPING
-  var nextX = (Number(panX) || 0) + dx
-  var nextY = (Number(panY) || 0) + dy
+  var px = requireNumber('panX', panX)
+  var py = requireNumber('panY', panY)
+  var dx = clamp(requireNumber('deltaX', deltaX), -MAX_FRAME_DELTA, MAX_FRAME_DELTA) * DRAG_DAMPING
+  var dy = clamp(requireNumber('deltaY', deltaY), -MAX_FRAME_DELTA, MAX_FRAME_DELTA) * DRAG_DAMPING
+  var nextX = px + dx
+  var nextY = py + dy
   if (nextX < bounds.minX) nextX = bounds.minX + (nextX - bounds.minX) * OVERSCROLL_DAMPING
   if (nextX > bounds.maxX) nextX = bounds.maxX + (nextX - bounds.maxX) * OVERSCROLL_DAMPING
   if (nextY < bounds.minY) nextY = bounds.minY + (nextY - bounds.minY) * OVERSCROLL_DAMPING
@@ -201,25 +219,27 @@ function nextPan(slots, panX, panY, deltaX, deltaY) {
 }
 
 function minimumEdgeGap(placed) {
+  var source = requireArray('placed points', placed)
   var worst = Infinity
-  for (var i = 0; i < placed.length; i++) for (var j = i + 1; j < placed.length; j++) {
-    var dx = placed[j].centerX - placed[i].centerX
-    var dy = placed[j].centerY - placed[i].centerY
-    var gap = Math.sqrt(dx * dx + dy * dy) - (placed[i].size + placed[j].size) / 2
+  for (var i = 0; i < source.length; i++) for (var j = i + 1; j < source.length; j++) {
+    var dx = source[j].centerX - source[i].centerX
+    var dy = source[j].centerY - source[i].centerY
+    var gap = Math.sqrt(dx * dx + dy * dy) - (source[i].size + source[j].size) / 2
     if (gap < worst) worst = gap
   }
   return worst
 }
 
 function pickByDirection(coords, currentIndex, direction) {
-  var current = coords[currentIndex]
+  var source = requireArray('coords', coords)
+  var current = source[currentIndex]
   if (!current || !direction) return -1
   var bestIndex = -1
   var bestScore = Infinity
-  for (var index = 0; index < coords.length; index++) {
+  for (var index = 0; index < source.length; index++) {
     if (index === currentIndex) continue
-    var dx = coords[index].x - current.x
-    var dy = coords[index].y - current.y
+    var dx = source[index].x - current.x
+    var dy = source[index].y - current.y
     var distance = Math.sqrt(dx * dx + dy * dy)
     if (!distance) continue
     var alignment = (dx * direction.x + dy * direction.y) / distance
@@ -232,7 +252,7 @@ function pickByDirection(coords, currentIndex, direction) {
 
 function panForSlot(slot, focusY) {
   if (!slot) return null
-  return { x: FOCUS_X - slot.gridX, y: (focusY === undefined ? FOCUS_Y : focusY) - slot.gridY }
+  return { x: FOCUS_X - slot.gridX, y: (focusY === undefined ? FOCUS_Y : requireNumber('focusY', focusY)) - slot.gridY }
 }
 
 var DIRECTIONS = {
