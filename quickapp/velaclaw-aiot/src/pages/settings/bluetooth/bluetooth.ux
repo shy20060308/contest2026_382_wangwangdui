@@ -14,8 +14,8 @@
 </template>
 
 <script>
-import pageRuntime from '../../../v2/app/page_runtime'
-import navigation from '../../../v2/app/navigation'
+import pageRuntime from '../../../runtime/page_runtime'
+import navigation from '../../../runtime/navigation'
 import { createSyncController } from '../../../v2/features/sync/controller'
 import detailDesign from '../../../v2/design/apps/sync'
 import syncView from '../../../v2/design/apps/sync/view'
