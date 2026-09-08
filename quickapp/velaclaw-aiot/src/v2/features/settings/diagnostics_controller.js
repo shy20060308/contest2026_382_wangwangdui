@@ -2,7 +2,6 @@ import capabilityIntrospection from '../../../capabilities/introspection'
 
 function deviceSnapshot(profile) {
   return {
-    deviceFamily: profile.deviceFamily,
     model: profile.model,
     screenWidth: profile.screenWidth,
     screenHeight: profile.screenHeight,
