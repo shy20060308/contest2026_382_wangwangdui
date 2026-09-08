@@ -17,7 +17,7 @@ function createTransport() {
       connectTimer = setTimeout(function () {
         connectTimer = null
         if (cancelled) return
-        options.success({ mode: 'mock', deviceName: 'Vela Sync Host' })
+        options.success()
       }, 700)
     },
     send: function (packets, options) {
