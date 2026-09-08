@@ -1,5 +1,4 @@
 module.exports = {
-  level: 1,
   base: {
     surface: 'vitals-stream',
     contentWidth: 164,
