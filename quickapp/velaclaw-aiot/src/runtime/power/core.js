@@ -138,6 +138,11 @@ function create(dependencies, options) {
     onWake('raise-wake')
   }
 
+  function handleMotionFailure() {
+    raiseWakeRegistered = false
+    raiseDetector.reset()
+  }
+
   function reconcileRaiseWake() {
     var shouldRegister = started && lowPowerEnabled && raiseWakeEnabled
     if (!shouldRegister) {
@@ -149,7 +154,7 @@ function create(dependencies, options) {
     if (!raiseWakeRegistered) {
       // Motion capability emits canonical acceleration. The semantic detector
       // decides whether a sequence is actually a raise-to-wake gesture.
-      raiseWakeRegistered = motion.subscribe(handleMotionSample, { interval: 'normal' }) === true
+      raiseWakeRegistered = motion.subscribe(handleMotionSample, { interval: 'normal', fail: handleMotionFailure }) === true
       raiseDetector.reset()
     }
   }
