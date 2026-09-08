@@ -44,7 +44,7 @@ export function createMotionController(onChange) {
   }
 
   function stopTimer() {
-    if (timer) clearInterval(timer)
+    if (timer !== null) clearInterval(timer)
     timer = null
   }
 
@@ -64,6 +64,20 @@ export function createMotionController(onChange) {
     resetMeasureState()
   }
 
+  function onSensorFailure() {
+    sensorActive = false
+    sensorStatus = 'unavailable'
+    if (measureActive) {
+      stopTimer()
+      haptics.stop(HAPTIC_OWNER)
+      measureActive = false
+      measureEndsAt = 0
+      remainingMs = 0
+      measurePhase = 'unavailable'
+    }
+    emit()
+  }
+
   function onSample(sample) {
     state = metrics.applySample(state, sample)
     sensorStatus = 'streaming'
@@ -73,9 +87,8 @@ export function createMotionController(onChange) {
 
   function startSensor(emitChange) {
     if (sensorActive) return true
-    var ok = motion.subscribe(onSample, { interval: 'game' })
-    sensorActive = !!ok
-    sensorStatus = ok ? 'waiting' : 'unavailable'
+    sensorActive = motion.subscribe(onSample, { interval: 'game', fail: onSensorFailure }) === true
+    sensorStatus = sensorActive ? 'waiting' : 'unavailable'
     if (emitChange !== false) emit()
     return sensorActive
   }
