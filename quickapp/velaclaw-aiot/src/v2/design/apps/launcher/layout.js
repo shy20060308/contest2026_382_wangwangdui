@@ -47,10 +47,22 @@ module.exports = {
     pageSize: 12,
     frame: 'scene',
     honeycomb: {
+      focus: { x: 96, y: 90 },
+      spacing: 46,
+      icon: {
+        baseSize: 34,
+        grow: 16,
+        emphasisFalloff: 60,
+        centerRadius: 27,
+        radiusRatio: 0.5,
+        opacityBase: 0.48,
+        opacityEmphasis: 0.52,
+        avoidanceOpacity: 0.72
+      },
       label: { left: 54, top: 159, width: 84, height: 18, radius: 9 },
       nameWidth: 78,
       nameSize: 8,
-      initialFocusDistance: 82
+      initialFocusY: 82
     }
   },
   pill: {
