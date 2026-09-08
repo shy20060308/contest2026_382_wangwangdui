@@ -48,7 +48,4 @@ function createTransport() {
   }
 }
 
-export default {
-  capability: function () { return { mode: 'mock', realBleAvailable: false } },
-  create: createTransport
-}
+export default { create: createTransport }
