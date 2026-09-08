@@ -57,6 +57,8 @@ assert.strictEqual(telemetry.currentHeartRate, '--')
 const batterySource = read('src/capabilities/battery.js')
 const storageSource = read('src/capabilities/storage.js')
 const powerControllerSource = read('src/runtime/power/controller.js')
+const navigationSource = read('src/runtime/navigation.js')
+const deviceProfileSource = read('src/runtime/device_profile.js')
 const clockControllerSource = read('src/v2/features/clock/controller.js')
 const clockPageSource = read('src/pages/clock/clock.ux')
 const launcherControllerSource = read('src/v2/features/launcher/controller.js')
@@ -68,6 +70,10 @@ const diagnosticsViewSource = read('src/v2/design/apps/diagnostics/view.js')
 assert.ok(!batterySource.includes('cachedPercent = 75'), 'Battery Capability must not seed fabricated battery data')
 assert.ok(storageSource.includes('Invalid persisted JSON for '), 'Malformed persisted JSON must fail visibly instead of becoming an empty fallback')
 assert.ok(!storageSource.includes('safeJsonParse'), 'Storage must not retain the legacy malformed-JSON fallback parser')
+
+assert.ok(!navigationSource.includes('catch (error)') && !navigationSource.includes('return false'), 'Navigation must not silently swallow router failures')
+assert.ok(!deviceProfileSource.includes('deviceFamily'), 'Device Profile must not invent device identity from geometry')
+assert.ok(!deviceProfileSource.includes("'_generic'"), 'Device Profile must not fabricate generic device-family labels')
 
 assert.ok(!powerControllerSource.includes('return core.create('), 'Product Power controller must not expose the entire testable Core')
 assert.ok(!powerControllerSource.includes('evaluateIdle') && !powerControllerSource.includes('forceMode') && !powerControllerSource.includes('getMode') && !powerControllerSource.includes('getSnapshot'), 'Power test hooks must stay inside Core')
@@ -103,5 +109,7 @@ assert.ok(!watchfacePageSource.includes("selectedName: '活力数字'"), 'Watchf
 
 assert.ok(!diagnosticsViewSource.includes('isBetaPillViewport'), 'Diagnostics must not retain retired beta viewport compatibility state')
 assert.ok(!diagnosticsViewSource.includes("formFactor || 'rect'"), 'Diagnostics must consume canonical Device Profile formFactor without fallback')
+assert.ok(!diagnosticsViewSource.includes('deviceFamily'), 'Diagnostics must display the native device model instead of an inferred family')
+assert.ok(diagnosticsViewSource.includes("value === null ? '--'"), 'Diagnostics View must render unavailable optional device facts explicitly')
 
 console.log('V3 truth contracts verified: canonical state has one owner, product APIs are narrow and invalid inputs are not silently repaired')
