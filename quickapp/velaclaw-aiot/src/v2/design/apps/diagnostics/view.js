@@ -12,15 +12,19 @@ function capability(entry) {
   }
 }
 
+function unavailable(value) {
+  return value === null ? '--' : String(value)
+}
+
 function project(model) {
   var capabilities = []
   for (var i = 0; i < model.capabilities.length; i++) capabilities.push(capability(model.capabilities[i]))
   return {
     device: {
-      deviceFamily: model.device.deviceFamily || model.device.model,
+      model: unavailable(model.device.model),
       screenSize: model.device.screenWidth + ' × ' + model.device.screenHeight,
       formFactor: model.device.formFactor,
-      platformText: model.device.model + ' / ' + model.device.platformVersionCode,
+      platformText: unavailable(model.device.platformVersionCode),
       hostSceneText: Math.round(model.host.width) + ' × ' + Math.round(model.host.height),
       viewportMode: '标准宿主视口'
     },
