@@ -69,6 +69,9 @@ assert.ok(!/currentHeartRate:\s*\d+/.test(clockPageSource), 'Clock page must not
 assert.ok(!clockPageSource.includes("faceId: 'sport'"), 'Clock page must not seed a watchface outside Recipe/controller ownership')
 assert.ok(clockControllerSource.includes('Clock requires resolved faceIds'), 'Clock must require Recipe-owned face IDs')
 assert.ok(!clockControllerSource.includes('getSnapshot: snapshot'), 'Clock must not expose a second snapshot access path outside its change callback')
+assert.ok(!clockControllerSource.includes('historyRepository'), 'Clock must not own History persistence; only real Activity mutation may write history')
+assert.ok(clockControllerSource.includes('activityStore.hydrate'), 'Clock must consume hydrated canonical Activity state before starting live runtime')
+assert.ok(clockControllerSource.includes('lifecycleGeneration'), 'Clock async startup must be guarded against late callbacks after stop')
 
 assert.ok(launcherControllerSource.includes('requirePageSize'), 'Launcher must validate pageSize at configuration boundary')
 assert.strictEqual((launcherControllerSource.match(/pageSize = requirePageSize/g) || []).length, 1, 'Launcher must not repeatedly validate canonical pageSize during snapshot')
