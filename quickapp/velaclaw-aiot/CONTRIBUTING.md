@@ -32,9 +32,8 @@ npm run build
 
 - `src/capabilities/*`：原生 Vela API 与能力边界。
 - `src/domain/*`：业务模型、状态机、持久化语义。
-- `src/runtime/*`：需要独立执行的 runtime core；不得承担页面设计。
+- `src/runtime/*`：Device Profile、页面 runtime 和需要独立执行的 runtime core；不得承担页面设计。
 - `src/v2/features/*`：应用级生命周期和业务编排。
-- `src/v2/system/*`：设备 profile 和系统级编排。
 - `src/v2/design/*`：Scene、Recipe、Adapter、Resolver 和明确的设计/交互 engine。
 - `src/pages/*`：绑定 resolved plan、feature state 和用户交互。
 - `src/components/watchfaces/*`：渲染 Clock Recipe 注入的表盘计划。
@@ -44,6 +43,8 @@ npm run build
 
 - `src/presentation`
 - `src/platform` capability aliases
+- `src/v2/system`
+- `src/v2/app`
 - `src/v2/design/specs`
 - `src/v2/design/views`
 - `src/v2/design/geometry.js`
@@ -60,7 +61,7 @@ npm run build
 5. Adapter 只做 Recipe → Host Scene 翻译和明确的 box-model 转换，不决定设计。
 6. Device Profile 显式声明 safe insets；safe area 不根据组件宽度重新求解。
 7. Circle / Pill / Rect 的真实产品差异写在 app-owned Recipe 中，不藏在共享 helper 里。
-8. 复杂交互 engine 可以计算动态状态，但不得重新成为页面适配 solver。
+8. 复杂交互 engine 可以计算动态状态，但必须消费 resolved Recipe/Plan，不得重新成为页面适配 solver 或静态视觉 owner。
 
 ## 业务与能力规则
 
@@ -105,6 +106,8 @@ refactor: change ownership or implementation structure
 test: strengthen a current contract
 chore: maintain tooling or dependencies
 ```
+
+提交格式是团队约定，不依赖仓库内隐式安装的 Git hook。需要强制提交规范时，应显式引入并维护完整工具链，而不是保留不可执行的 Husky/Commitlint 配置残片。
 
 ## 检查清单
 
