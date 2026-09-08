@@ -26,6 +26,17 @@ const plan = {
   }
 }
 
+test('健康语义合法性只由 Domain 定义', function () {
+  assert.strictEqual(metrics.isHeartRate(72), true)
+  assert.strictEqual(metrics.isHeartRate(0), false)
+  assert.strictEqual(metrics.isHeartRate('72'), false)
+  assert.strictEqual(metrics.isSpo2(98), true)
+  assert.strictEqual(metrics.isSpo2(101), false)
+  assert.strictEqual(metrics.isStress(0), true)
+  assert.strictEqual(metrics.isStress(100), true)
+  assert.strictEqual(metrics.isStress(101), false)
+})
+
 test('心率区间边界', function () {
   assert.strictEqual(metrics.classifyHeartRate(59), 'rest')
   assert.strictEqual(metrics.classifyHeartRate(60), 'normal')
