@@ -18,7 +18,7 @@ export function createSyncController(onChange) {
     phase: 'idle',
     lastSyncAt: 0,
     transportMode: capability.mode,
-    realBleAvailable: !!capability.realBleAvailable,
+    realBleAvailable: capability.realBleAvailable,
     packetCount: 0,
     payloadChars: 0,
     ackSent: 0,
@@ -44,8 +44,15 @@ export function createSyncController(onChange) {
     return active && epoch === lifecycleEpoch
   }
 
+  function resetTransfer() {
+    state.progress = 0
+    state.packetCount = 0
+    state.payloadChars = 0
+    state.ackSent = 0
+    state.ackTotal = 0
+  }
+
   function collect(callback, epoch) {
-    var expectedEpoch = epoch === undefined ? lifecycleEpoch : epoch
     var activity = activityStore.getSnapshot()
     var health = healthStore.getSnapshot()
     var history = []
@@ -53,8 +60,8 @@ export function createSyncController(onChange) {
     var pending = 2
     function done() {
       pending--
-      if (pending > 0 || !isLive(expectedEpoch)) return
-      state.todaySteps = Number(activity.steps) || 0
+      if (pending > 0 || !isLive(epoch)) return
+      state.todaySteps = activity.steps
       state.historyCount = history.length
       state.workoutCount = workouts.length
       var payload = {
@@ -69,13 +76,13 @@ export function createSyncController(onChange) {
       if (callback) callback(payload)
     }
     historyRepository.getHistory(function (value) {
-      if (!isLive(expectedEpoch)) return
-      history = Array.isArray(value) ? value : []
+      if (!isLive(epoch)) return
+      history = value
       done()
     })
     workoutRepository.getRecords(function (value) {
-      if (!isLive(expectedEpoch)) return
-      workouts = Array.isArray(value) ? value : []
+      if (!isLive(epoch)) return
+      workouts = value
       done()
     })
   }
@@ -87,15 +94,11 @@ export function createSyncController(onChange) {
     var epoch = lifecycleEpoch
     settingsStore.load(function (settings) {
       if (!isLive(epoch)) return
-      state.lastSyncAt = Number(settings.lastSyncAt) || 0
+      state.lastSyncAt = settings.lastSyncAt
       state.connected = false
       state.syncing = false
-      state.progress = 0
       state.phase = 'idle'
-      state.packetCount = 0
-      state.payloadChars = 0
-      state.ackSent = 0
-      state.ackTotal = 0
+      resetTransfer()
       emit()
       collect(null, epoch)
     })
@@ -114,12 +117,8 @@ export function createSyncController(onChange) {
     if (state.connected) {
       transport.disconnect()
       state.connected = false
-      state.progress = 0
       state.phase = 'disconnected'
-      state.packetCount = 0
-      state.payloadChars = 0
-      state.ackSent = 0
-      state.ackTotal = 0
+      resetTransfer()
       return emit()
     }
     var epoch = lifecycleEpoch
@@ -148,18 +147,14 @@ export function createSyncController(onChange) {
     if (state.syncing) return emit()
     var epoch = lifecycleEpoch
     state.syncing = true
-    state.progress = 0
-    state.packetCount = 0
-    state.payloadChars = 0
-    state.ackSent = 0
-    state.ackTotal = 0
+    resetTransfer()
     state.phase = 'collecting'
     emit()
     collect(function (payload) {
       if (!isLive(epoch) || !state.syncing) return
       var transfer = protocol.encode(payload, 96)
       state.packetCount = transfer.packets.length
-      state.payloadChars = Number(transfer.bytesText) || 0
+      state.payloadChars = transfer.bytesText
       state.ackTotal = transfer.packets.length
       state.phase = 'waiting-ack'
       emit()
@@ -202,10 +197,8 @@ export function createSyncController(onChange) {
     transport.disconnect()
     state.connected = false
     state.syncing = false
-    state.progress = 0
     state.phase = 'idle'
-    state.ackSent = 0
-    state.ackTotal = 0
+    resetTransfer()
   }
 
   return {
