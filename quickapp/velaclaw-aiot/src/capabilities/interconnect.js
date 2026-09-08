@@ -44,6 +44,5 @@ function unsubscribe(listener) {
 export default {
   isAvailable: isAvailable,
   subscribe: subscribe,
-  unsubscribe: unsubscribe,
-  consumerCount: function () { return listeners.length }
+  unsubscribe: unsubscribe
 }
