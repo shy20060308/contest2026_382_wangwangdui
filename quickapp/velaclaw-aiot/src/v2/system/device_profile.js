@@ -11,27 +11,30 @@ var cached = null
 var pending = []
 var loading = false
 
-function number(value) {
+function positiveNumber(value, label) {
+  var next = Number(value)
+  if (!isFinite(next) || next <= 0) throw new Error('V3 Device Profile requires ' + label)
+  return next
+}
+
+function optionalNumber(value) {
   var next = Number(value)
   return isFinite(next) && next > 0 ? next : 0
 }
 
 function text(value) { return value === undefined || value === null ? '' : String(value) }
 function contextDevice(context) { return context && context.$device ? context.$device : {} }
-function pick(info, fallback, key) {
-  if (info && info[key] !== undefined && info[key] !== null && info[key] !== '') return info[key]
-  return fallback && fallback[key]
-}
-function pickViewport(info, fallback, key) {
-  if (fallback && fallback[key] !== undefined && fallback[key] !== null && fallback[key] !== '') return fallback[key]
-  return info && info[key]
+function pick(primary, secondary, key) {
+  if (primary && primary[key] !== undefined && primary[key] !== null && primary[key] !== '') return primary[key]
+  return secondary && secondary[key]
 }
 
 function formFactor(shape, width, height) {
   var normalized = String(shape || '').toLowerCase()
   if (normalized === 'circle') return 'circle'
   if (normalized === 'pill' || normalized === 'pill-shaped') return 'pill'
-  var ratio = height > 0 ? width / height : 0
+  if (normalized === 'rect' || normalized === 'rectangle' || normalized === 'rectangular') return 'rect'
+  var ratio = width / height
   if (ratio >= 0.95 && ratio <= 1.05) return 'circle'
   if (ratio > 0.3 && ratio < 0.5) return 'pill'
   return 'rect'
@@ -54,40 +57,22 @@ function logicalHeight(width, height, factor) {
 }
 
 function declaredInsets(factor) {
-  var source = SAFE_INSETS[factor] || SAFE_INSETS.rect
+  var source = SAFE_INSETS[factor]
+  if (!source) throw new Error('V3 Device Profile has no safe insets for ' + factor)
   return { left: source.left, top: source.top, right: source.right, bottom: source.bottom, gestureBar: source.gestureBar }
 }
 
 function make(info, context) {
   var local = contextDevice(context)
-  var shapeText = text(pickViewport(info, local, 'screenShape')) || 'pill-shaped'
-  var width = number(pickViewport(info, local, 'screenWidth'))
-  var height = number(pickViewport(info, local, 'screenHeight'))
-  var infoWidth = number(info && info.screenWidth)
-  var infoHeight = number(info && info.screenHeight)
-  var normalized = shapeText.toLowerCase()
-  var ratio = height > 0 ? width / height : 0
-  var infoRatio = infoHeight > 0 ? infoWidth / infoHeight : 0
-  var ratioWrong = (normalized === 'circle' && (ratio < 0.9 || ratio > 1.1)) || ((normalized === 'pill' || normalized === 'pill-shaped') && (ratio < 0.3 || ratio >= 0.5))
-  var infoMatches = (normalized === 'circle' && infoRatio >= 0.9 && infoRatio <= 1.1) || ((normalized === 'pill' || normalized === 'pill-shaped') && infoRatio > 0.3 && infoRatio < 0.5)
-  if (ratioWrong && infoMatches) { width = infoWidth; height = infoHeight }
-
-  if (!width || !height) {
-    if (normalized === 'circle') { width = 466; height = 466 }
-    else if (normalized === 'pill' || normalized === 'pill-shaped') { width = 192; height = 490 }
-    else { width = 432; height = 514 }
-  }
-
-  var model = text(pick(info, local, 'model'))
-  var platformVersionCode = number(pick(info, local, 'platformVersionCode'))
-  if (model === 'Emulator-Vela' && platformVersionCode === 1200 && (normalized === 'pill' || normalized === 'pill-shaped') && width !== 192 && width !== 212) {
-    if (infoWidth === 192 || infoWidth === 212) { width = infoWidth; height = infoHeight }
-    else { width = 192; height = 490 }
-  }
-
+  var shapeText = text(pick(info, local, 'screenShape'))
+  var width = positiveNumber(pick(info, local, 'screenWidth'), 'screenWidth')
+  var height = positiveNumber(pick(info, local, 'screenHeight'), 'screenHeight')
   var factor = formFactor(shapeText, width, height)
+  var model = text(pick(info, local, 'model'))
+  var platformVersionCode = optionalNumber(pick(info, local, 'platformVersionCode'))
+
   return {
-    shape: shapeText,
+    shape: shapeText || factor,
     formFactor: factor,
     isCircle: factor === 'circle',
     isPill: factor === 'pill',
@@ -99,7 +84,6 @@ function make(info, context) {
     deviceFamily: family(factor, width, height),
     model: model,
     platformVersionCode: platformVersionCode,
-    isBetaPillViewport: model === 'Emulator-Vela' && platformVersionCode === 1200 && factor === 'pill' && (width === 192 || width === 212),
     source: 'v3.capability.device'
   }
 }
