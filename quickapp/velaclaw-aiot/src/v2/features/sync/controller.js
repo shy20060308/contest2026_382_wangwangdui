@@ -115,7 +115,7 @@ export function createSyncController(onChange) {
         emit()
       }
     })
-    return emit()
+    return snapshot()
   }
 
   function loadSettings() {
@@ -202,7 +202,7 @@ export function createSyncController(onChange) {
         emit()
       })
     }, epoch)
-    return emit()
+    return snapshot()
   }
 
   function stop() {
