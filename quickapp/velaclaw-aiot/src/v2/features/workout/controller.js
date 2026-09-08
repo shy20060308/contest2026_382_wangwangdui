@@ -121,18 +121,6 @@ export function createWorkoutController(onChange) {
   }
 
   return {
-    start: function (type, callback) {
-      var generation = ++lifecycleGeneration
-      persistTicks = 0
-      gpsDistance = 0
-      var session = workoutState.start(type)
-      workoutRepository.saveActive(session, function () {
-        if (!isCurrent(generation)) return
-        startRuntime()
-        emit(session)
-        if (callback) callback(session)
-      })
-    },
     loadActive: function (callback) {
       var generation = ++lifecycleGeneration
       var current = workoutState.getActive()
@@ -193,10 +181,6 @@ export function createWorkoutController(onChange) {
         workoutRepository.saveRecord(record, function (saved) { savedRecord = saved; done() })
       })
     },
-    cancel: function () { stopRuntime(false); workoutState.cancel(); workoutRepository.clearActive() },
-    stop: function () { stopRuntime(true) },
-    refresh: function () { var active = workoutState.getActive(); if (active) emit(workoutState.tick()) },
-    getRecords: function (callback) { workoutRepository.getRecords(callback) },
-    markAllSynced: function (callback) { workoutRepository.markAllSynced(callback) }
+    stop: function () { stopRuntime(true) }
   }
 }
