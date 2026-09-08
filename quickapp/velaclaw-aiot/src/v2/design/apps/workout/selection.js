@@ -9,7 +9,7 @@ function resolve(profile, scene, safe) {
   var plan = adapter.createPlan(profile, scene, safe, difference.L1, config.surface)
   plan.header = adapter.placeBand(profile, scene, safe, config.header)
   var streamSpec = adapter.merge({}, config.stream)
-  streamSpec.height = safe.bottom - (safe.top + Number(streamSpec.top))
+  streamSpec.height = safe.bottom - (safe.top + streamSpec.top)
   plan.stream = adapter.placeBand(profile, scene, safe, streamSpec)
   plan.titleSize = config.titleSize
   plan.cardHeight = config.cardHeight
