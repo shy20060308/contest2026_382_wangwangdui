@@ -88,7 +88,11 @@ function readJSON(key, fallback, success, fail) {
       success(fallback !== undefined ? fallback : null)
       return
     }
-    success(parseJson(key, value))
+    try {
+      success(parseJson(key, value))
+    } catch (error) {
+      fail(error)
+    }
   }, fail)
 }
 
