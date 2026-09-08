@@ -3,11 +3,10 @@ import healthStore from '../../../domain/health/store'
 import historyRepository from '../../../domain/history/repository'
 import workoutRepository from '../../../domain/workout/repository'
 import settingsStore from '../../../domain/settings/store'
-import transportFactory from './mock_transport'
+import interconnect from '../../../capabilities/interconnect'
 var protocol = require('./protocol')
 
 export function createSyncController(onChange) {
-  var transport = transportFactory.create()
   var active = false
   var lifecycleEpoch = 0
   var state = {
@@ -16,11 +15,10 @@ export function createSyncController(onChange) {
     progress: 0,
     phase: 'idle',
     lastSyncAt: 0,
-    transportMode: 'mock',
     packetCount: 0,
     payloadChars: 0,
-    ackSent: 0,
-    ackTotal: 0,
+    packetSent: 0,
+    packetTotal: 0,
     todaySteps: null,
     historyCount: 0,
     workoutCount: 0
@@ -46,19 +44,33 @@ export function createSyncController(onChange) {
     state.progress = 0
     state.packetCount = 0
     state.payloadChars = 0
-    state.ackSent = 0
-    state.ackTotal = 0
+    state.packetSent = 0
+    state.packetTotal = 0
+  }
+
+  function onConnectionState(connectionState) {
+    if (!active) return
+    state.connected = !!connectionState.connected
+    if (state.syncing && !state.connected) {
+      state.syncing = false
+      state.phase = 'failed'
+    } else if (!state.syncing) {
+      state.phase = connectionState.event === 'error'
+        ? 'connect-failed'
+        : (state.connected ? 'connected' : 'disconnected')
+    }
+    emit()
   }
 
   function collect(callback, epoch) {
-    var activity = activityStore.getSnapshot()
-    var health = healthStore.getSnapshot()
+    var activity = null
     var history = []
     var workouts = []
-    var pending = 2
+    var pending = 3
     function done() {
       pending--
       if (pending > 0 || !isLive(epoch)) return
+      var health = healthStore.getSnapshot()
       state.todaySteps = activity.steps
       state.historyCount = history.length
       state.workoutCount = workouts.length
@@ -72,6 +84,11 @@ export function createSyncController(onChange) {
       emit()
       if (callback) callback(payload)
     }
+    activityStore.hydrate(function (value) {
+      if (!isLive(epoch)) return
+      activity = value
+      done()
+    })
     historyRepository.getHistory(function (value) {
       if (!isLive(epoch)) return
       history = value
@@ -84,11 +101,29 @@ export function createSyncController(onChange) {
     })
   }
 
+  function refreshConnection() {
+    if (!active) return emit()
+    var epoch = lifecycleEpoch
+    state.phase = 'checking'
+    emit()
+    interconnect.getReadyState({
+      success: function () {},
+      fail: function () {
+        if (!isLive(epoch) || state.phase !== 'checking') return
+        state.connected = false
+        state.phase = 'connect-failed'
+        emit()
+      }
+    })
+    return emit()
+  }
+
   function loadSettings() {
     if (active) return emit()
     active = true
     lifecycleEpoch++
     var epoch = lifecycleEpoch
+    interconnect.subscribeState(onConnectionState)
     settingsStore.load(function (settings) {
       if (!isLive(epoch)) return
       state.lastSyncAt = settings.lastSyncAt
@@ -97,45 +132,39 @@ export function createSyncController(onChange) {
       state.phase = 'idle'
       resetTransfer()
       emit()
+      refreshConnection()
       collect(null, epoch)
     })
     return emit()
   }
 
-  function toggleConnection() {
-    if (!active) return emit()
-    if (state.syncing) { state.phase = 'disconnect-blocked'; return emit() }
-    if (state.phase === 'connecting') {
-      transport.disconnect()
-      state.connected = false
-      state.phase = 'disconnected'
-      return emit()
-    }
-    if (state.connected) {
-      transport.disconnect()
-      state.connected = false
-      state.phase = 'disconnected'
-      resetTransfer()
-      return emit()
-    }
-    var epoch = lifecycleEpoch
-    state.phase = 'connecting'
-    emit()
-    transport.connect({
-      success: function () {
-        if (!isLive(epoch) || state.phase !== 'connecting') return
-        state.connected = true
-        state.phase = 'connected'
-        emit()
-      },
-      fail: function () {
-        if (!isLive(epoch) || state.phase !== 'connecting') return
-        state.connected = false
-        state.phase = 'connect-failed'
-        emit()
+  function sendPackets(packets, epoch, success, fail) {
+    var index = 0
+    state.packetTotal = packets.length
+    function next() {
+      if (!isLive(epoch) || !state.syncing) return
+      if (index >= packets.length) {
+        success()
+        return
       }
-    })
-    return emit()
+      var packet = packets[index]
+      interconnect.send(packet, {
+        success: function () {
+          if (!isLive(epoch) || !state.syncing) return
+          index++
+          state.packetSent = index
+          state.progress = Math.round((index / packets.length) * 100)
+          state.phase = 'sending'
+          emit()
+          next()
+        },
+        fail: function () {
+          if (!isLive(epoch) || !state.syncing) return
+          fail()
+        }
+      })
+    }
+    next()
   }
 
   function sync() {
@@ -152,36 +181,25 @@ export function createSyncController(onChange) {
       var transfer = protocol.encode(payload, 96)
       state.packetCount = transfer.packets.length
       state.payloadChars = transfer.bytesText
-      state.ackTotal = transfer.packets.length
-      state.phase = 'waiting-ack'
+      state.packetTotal = transfer.packets.length
+      state.phase = 'sending'
       emit()
-      transport.send(transfer.packets, {
-        progress: function (progressState) {
-          if (!isLive(epoch) || !state.syncing) return
-          state.progress = progressState.percent
-          state.ackSent = progressState.sent
-          state.ackTotal = progressState.total
-          state.phase = 'sending'
-          emit()
-        },
-        success: function () {
-          if (!isLive(epoch) || !state.syncing) return
-          state.syncing = false
-          state.progress = 100
-          state.phase = 'completed'
-          state.lastSyncAt = Date.now()
-          settingsStore.update('lastSyncAt', state.lastSyncAt)
-          workoutRepository.markAllSynced(function () {
-            if (isLive(epoch)) collect(null, epoch)
-          })
-          emit()
-        },
-        fail: function () {
-          if (!isLive(epoch) || !state.syncing) return
-          state.syncing = false
-          state.phase = 'failed'
-          emit()
-        }
+      sendPackets(transfer.packets, epoch, function () {
+        if (!isLive(epoch) || !state.syncing) return
+        state.syncing = false
+        state.progress = 100
+        state.phase = 'completed'
+        state.lastSyncAt = Date.now()
+        settingsStore.update('lastSyncAt', state.lastSyncAt)
+        workoutRepository.markAllSynced(function () {
+          if (isLive(epoch)) collect(null, epoch)
+        })
+        emit()
+      }, function () {
+        if (!isLive(epoch) || !state.syncing) return
+        state.syncing = false
+        state.phase = 'failed'
+        emit()
       })
     }, epoch)
     return emit()
@@ -191,7 +209,7 @@ export function createSyncController(onChange) {
     if (!active) return
     active = false
     lifecycleEpoch++
-    transport.disconnect()
+    interconnect.unsubscribeState(onConnectionState)
     state.connected = false
     state.syncing = false
     state.phase = 'idle'
@@ -200,7 +218,7 @@ export function createSyncController(onChange) {
 
   return {
     load: loadSettings,
-    toggleConnection: toggleConnection,
+    refreshConnection: refreshConnection,
     sync: sync,
     stop: stop
   }
