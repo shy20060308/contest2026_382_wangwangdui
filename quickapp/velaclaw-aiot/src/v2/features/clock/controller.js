@@ -10,6 +10,11 @@ function requireFaceIds(ids) {
   return ids.slice()
 }
 
+function requireAllowedFace(faceIds, id) {
+  if (faceIds.indexOf(id) < 0) throw new Error('Clock watchface is not allowed by Recipe: ' + id)
+  return id
+}
+
 export function createClockController(onChange, onNotification) {
   var faceIds = []
   var selectedFaceId = ''
@@ -57,10 +62,9 @@ export function createClockController(onChange, onNotification) {
   }
 
   function applyFace(id) {
-    var nextId = faceIds.indexOf(id) >= 0 ? id : faceIds[0]
-    selectedFaceId = nextId
-    state.faceId = nextId
-    state.faceIndex = faceIds.indexOf(nextId)
+    selectedFaceId = requireAllowedFace(faceIds, id)
+    state.faceId = selectedFaceId
+    state.faceIndex = faceIds.indexOf(selectedFaceId)
   }
 
   function updateTime() {
@@ -95,7 +99,6 @@ export function createClockController(onChange, onNotification) {
   }
 
   function configurePower(settings) {
-    if (!powerRuntime) return
     powerRuntime.configure({
       lowPowerEnabled: settings.lowPowerEnabled,
       raiseWakeEnabled: settings.raiseWakeEnabled,
@@ -117,6 +120,7 @@ export function createClockController(onChange, onNotification) {
   return {
     configureFaces: function (allowedFaceIds) {
       faceIds = requireFaceIds(allowedFaceIds)
+      selectedFaceId = faceIds[0]
       applyFace(selectedFaceId)
       emit()
     },
@@ -127,8 +131,8 @@ export function createClockController(onChange, onNotification) {
       ensurePowerRuntime()
       refreshActivity()
       updateTime()
-      settingsStore.load(function (settings) { configurePower(settings); if (powerRuntime) powerRuntime.start() })
-      watchfaceStore.loadSelectedFaceId(function (id) { applyFace(id); emit() })
+      settingsStore.load(function (settings) { configurePower(settings); powerRuntime.start() })
+      watchfaceStore.loadSelectedFaceId(function (id) { if (id) applyFace(id); emit() })
       historyRepository.saveToday(activityStore.getSnapshot(), function () {})
       notification.start()
     },
@@ -141,9 +145,8 @@ export function createClockController(onChange, onNotification) {
     },
     markActive: function (reason) { if (powerRuntime) powerRuntime.markActive(reason || 'user') },
     switchFace: function (step) {
-      if (!faceIds.length) return ''
+      if (!faceIds.length) throw new Error('Clock must configure Recipe faceIds before switching')
       var current = faceIds.indexOf(selectedFaceId)
-      if (current < 0) current = 0
       var next = (current + step + faceIds.length) % faceIds.length
       applyFace(faceIds[next])
       watchfaceStore.setSelectedFaceId(selectedFaceId)
