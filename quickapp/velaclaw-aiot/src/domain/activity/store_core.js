@@ -54,15 +54,8 @@ function createStore(repository, defaults) {
     }
   }
 
-  function mergePersisted(source) {
-    if (!source) return snapshot()
-    state.steps = Math.max(state.steps, source.steps)
-    state.calories = Math.max(state.calories, source.calories)
-    state.standHours = Math.max(state.standHours, source.standHours)
-    if (source.stepsGoal !== undefined) state.stepsGoal = source.stepsGoal
-    if (source.caloriesGoal !== undefined) state.caloriesGoal = source.caloriesGoal
-    if (source.standGoal !== undefined) state.standGoal = source.standGoal
-    return snapshot()
+  function applyPersisted(persisted) {
+    state = persisted ? copyState(persisted) : copyState(base)
   }
 
   function applyAdd(steps, calories) {
@@ -92,13 +85,12 @@ function createStore(repository, defaults) {
     pendingMutations = []
     for (var i = 0; i < mutations.length; i++) {
       var mutation = mutations[i]
-      if (mutation.type === 'add') enqueueSave(applyAdd(mutation.steps, mutation.calories), mutation.callback)
-      else if (mutation.type === 'persist') enqueueSave(snapshot(), mutation.callback)
+      enqueueSave(applyAdd(mutation.steps, mutation.calories), mutation.callback)
     }
   }
 
   function finishHydrate(persisted) {
-    mergePersisted(persisted)
+    applyPersisted(persisted)
     hydrated = true
     loading = false
     applyPendingMutations()
@@ -124,24 +116,14 @@ function createStore(repository, defaults) {
       if (callback) hydrateWaiters.push(callback)
       startHydrate()
     },
-    add: function (steps, calories) { return applyAdd(steps, calories) },
     addAndPersist: function (steps, calories, callback) {
       if (!hydrated) {
-        pendingMutations.push({ type: 'add', steps: steps, calories: calories, callback: callback })
+        pendingMutations.push({ steps: steps, calories: calories, callback: callback })
         startHydrate()
         return
       }
       enqueueSave(applyAdd(steps, calories), callback)
-    },
-    persist: function (callback) {
-      if (!hydrated) {
-        pendingMutations.push({ type: 'persist', callback: callback })
-        startHydrate()
-        return
-      }
-      enqueueSave(snapshot(), callback)
-    },
-    restoreTotals: function (record) { return mergePersisted(record) }
+    }
   }
 }
 
