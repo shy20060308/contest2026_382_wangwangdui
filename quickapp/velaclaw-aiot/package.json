@@ -16,10 +16,12 @@
     "build": "aiot build --enable-jsc",
     "release": "aiot release --enable-jsc",
     "lint": "node scripts/lint.js",
+    "docs:check": "node scripts/check-docs.js",
     "studio": "node tools/layout-studio/server.js",
     "studio:check": "node test/layout_studio.test.js",
     "v3:architecture": "node test/v3_legacy_absence.test.js && node test/v3_architecture.test.js",
     "v3:design": "node test/v3_design.test.js",
+    "v3:truth": "node test/v3_truth_contracts.test.js",
     "capabilities:check": "node test/capability_runtime.test.js",
     "power:logic": "node test/power_state_machine.test.js",
     "power:runtime": "node test/power_runtime.test.js",
@@ -37,7 +39,7 @@
     "honeycomb:logic": "node test/honeycomb_layout.test.js",
     "icons:render": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-icons.ps1 && python scripts/render-soft-icons.py",
     "backgrounds:render": "python scripts/fade-watchface-background.py --input assets/watchfaces/alpine_night_source.jpg --output src/common/watchfaces/alpine_night.jpg",
-    "check": "npm run lint && npm run v3:architecture && npm run v3:design && npm run studio:check && npm run capabilities:check && npm run power:logic && npm run power:runtime && npm run health:logic && npm run health:official && npm run history:truth && npm run workout:experience && npm run activity:persistence && npm run settings:store && npm run motion:logic && npm run haptics:logic && npm run haptics:runtime && npm run calendar:logic && npm run analog:logic && npm run honeycomb:logic"
+    "check": "npm run lint && npm run docs:check && npm run v3:architecture && npm run v3:design && npm run v3:truth && npm run studio:check && npm run capabilities:check && npm run power:logic && npm run power:runtime && npm run health:logic && npm run health:official && npm run history:truth && npm run workout:experience && npm run activity:persistence && npm run settings:store && npm run motion:logic && npm run haptics:logic && npm run haptics:runtime && npm run calendar:logic && npm run analog:logic && npm run honeycomb:logic"
   },
   "lint-staged": {
     "*.{ux,js}": ["prettier --write", "node scripts/lint.js", "git add"],
