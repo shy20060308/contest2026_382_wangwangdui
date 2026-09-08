@@ -5,6 +5,11 @@ function safeNumber(value, fallback) {
   return isFinite(number) ? Math.round(number) : fallback
 }
 
+function sampleNumber(value) {
+  var number = Number(value)
+  return isFinite(number) ? Math.round(number) : null
+}
+
 function safeTimestamp(value) {
   var number = Number(value)
   return isFinite(number) && number > 0 ? Math.round(number) : Date.now()
@@ -25,15 +30,13 @@ export default function createHealthChannel(options) {
   var config = options || {}
   var listeners = []
   var subscribed = false
-  var fallbackTimer = null
-  var fallbackTick = 0
   var state = {
-    value: safeNumber(config.initialValue, 0),
+    value: null,
     live: false,
     updatedAt: 0,
     errorCode: 0,
     available: false,
-    source: 'fallback'
+    source: 'unavailable'
   }
 
   function dataType() {
@@ -52,45 +55,32 @@ export default function createHealthChannel(options) {
     for (var i = 0; i < current.length; i++) current[i](snapshot)
   }
 
-  function stopFallback() {
-    clearInterval(fallbackTimer)
-    fallbackTimer = null
-  }
-
-  function fallbackValue() {
-    fallbackTick++
-    if (typeof config.fallbackValue === 'function') return safeNumber(config.fallbackValue(fallbackTick, state.value), state.value)
-    return state.value
-  }
-
-  function startFallback() {
-    if (fallbackTimer || state.live || listeners.length === 0) return
-    var interval = Math.max(1000, safeNumber(config.fallbackInterval, 1000))
-    state.available = serviceAvailable()
-    state.source = 'fallback'
-    state.updatedAt = Date.now()
+  function setUnavailable() {
+    state.live = false
+    state.available = false
+    state.errorCode = 0
+    state.source = 'unavailable'
     emit()
-    fallbackTimer = setInterval(function () {
-      if (listeners.length === 0 || state.live) {
-        stopFallback()
-        return
-      }
-      state.value = fallbackValue()
-      state.updatedAt = Date.now()
-      state.source = 'fallback'
-      emit()
-    }, interval)
+  }
+
+  function setFailure(code) {
+    state.live = false
+    state.available = serviceAvailable()
+    state.errorCode = safeNumber(code, 200)
+    state.source = state.available ? 'error' : 'unavailable'
+    emit()
   }
 
   function applySample(sample) {
     if (!sample || sample.value === undefined || sample.value === null) return
-    state.value = safeNumber(sample.value, state.value)
+    var value = sampleNumber(sample.value)
+    if (value === null) return
+    state.value = value
     state.live = true
     state.available = true
     state.errorCode = 0
     state.updatedAt = safeTimestamp(sample.timeStamp)
     state.source = 'live'
-    stopFallback()
     emit()
   }
 
@@ -109,12 +99,11 @@ export default function createHealthChannel(options) {
           }
         },
         fail: function (data, code) {
-          state.errorCode = safeNumber(code, 200)
-          if (!state.live) startFallback()
+          if (!state.live) setFailure(code)
         }
       })
     } catch (error) {
-      if (!state.live) startFallback()
+      if (!state.live) setFailure(200)
     }
   }
 
@@ -122,9 +111,13 @@ export default function createHealthChannel(options) {
     if (subscribed || listeners.length === 0) return
     state.available = serviceAvailable()
     if (!state.available) {
-      startFallback()
+      setUnavailable()
       return
     }
+    state.live = false
+    state.errorCode = 0
+    state.source = state.value === null ? 'waiting' : 'cached'
+    emit()
     try {
       subscribed = true
       health.subscribeSample({
@@ -132,24 +125,17 @@ export default function createHealthChannel(options) {
         callback: applySample,
         fail: function (data, code) {
           subscribed = false
-          state.live = false
-          state.errorCode = safeNumber(code, 200)
-          state.source = 'fallback'
-          emit()
-          startFallback()
+          setFailure(code)
         }
       })
       loadRecent()
-      startFallback()
     } catch (error) {
       subscribed = false
-      state.live = false
-      startFallback()
+      setFailure(200)
     }
   }
 
   function stopNative() {
-    stopFallback()
     if (subscribed && health && health.unsubscribeSample) {
       try {
         health.unsubscribeSample({ dataType: dataType() })
@@ -157,13 +143,14 @@ export default function createHealthChannel(options) {
     }
     subscribed = false
     state.live = false
+    state.source = state.value === null ? (serviceAvailable() ? 'waiting' : 'unavailable') : 'cached'
   }
 
   function subscribe(listener) {
     if (typeof listener !== 'function' || listeners.indexOf(listener) >= 0) return
     listeners.push(listener)
-    listener(clone(state))
     if (listeners.length === 1) startNative()
+    else listener(clone(state))
   }
 
   function unsubscribe(listener) {
