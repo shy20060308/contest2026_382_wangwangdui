@@ -155,7 +155,6 @@ export function createClockController(onChange, onNotification) {
     },
     wake: function (reason) { if (powerRuntime) powerRuntime.markActive(reason || 'wake') },
     dismissNotification: function () { notification.dismiss() },
-    hangUpNotification: function () { notification.hangUp() },
-    getSnapshot: snapshot
+    hangUpNotification: function () { notification.hangUp() }
   }
 }
