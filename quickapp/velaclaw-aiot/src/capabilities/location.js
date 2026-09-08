@@ -2,30 +2,24 @@ import geolocation from '@system.geolocation'
 
 var listeners = []
 var active = false
-var latest = null
 
-function numberOrNull(value) {
-  var number = Number(value)
-  return isFinite(number) ? number : null
+function optionalNumber(value) {
+  return typeof value === 'number' && isFinite(value) ? value : null
 }
 
 function normalize(data) {
-  if (!data) return null
-  var latitude = numberOrNull(data.latitude)
-  var longitude = numberOrNull(data.longitude)
-  if (latitude === null || longitude === null) return null
+  if (!data || typeof data.latitude !== 'number' || !isFinite(data.latitude) || typeof data.longitude !== 'number' || !isFinite(data.longitude)) return null
   return {
-    latitude: latitude,
-    longitude: longitude,
-    altitude: numberOrNull(data.altitude),
-    accuracy: numberOrNull(data.accuracy),
-    speed: numberOrNull(data.speed),
+    latitude: data.latitude,
+    longitude: data.longitude,
+    altitude: optionalNumber(data.altitude),
+    accuracy: optionalNumber(data.accuracy),
+    speed: optionalNumber(data.speed),
     timestamp: Date.now()
   }
 }
 
 function emit(point) {
-  latest = point
   var current = listeners.slice()
   for (var i = 0; i < current.length; i++) current[i](point)
 }
@@ -68,8 +62,5 @@ export default {
     for (var i = 0; i < listeners.length; i++) if (listeners[i] !== listener) next.push(listeners[i])
     listeners = next
     if (listeners.length === 0) stopNative()
-  },
-  getSnapshot: function () { return latest },
-  consumerCount: function () { return listeners.length },
-  isActive: function () { return active }
+  }
 }
