@@ -16,6 +16,5 @@ function stop(owner) {
 
 export default {
   play: play,
-  stop: stop,
-  getActiveOwner: runtime.getActiveOwner
+  stop: stop
 }
