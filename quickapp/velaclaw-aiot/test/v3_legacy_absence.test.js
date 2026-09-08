@@ -51,6 +51,7 @@ function inside(target, parent) {
   ['src/v2/design/views', 'Design Views'],
   ['src/v2/design/geometry.js', 'geometry solver'],
   ['src/v2/design/freedom.js', 'freedom compatibility system'],
+  ['src/v2/features/sync/mock_transport.js', 'mock sync transport'],
   ['src/pages/index', 'sample index page'],
   ['src/pages/detail', 'sample detail page']
 ].forEach(function (entry) {
