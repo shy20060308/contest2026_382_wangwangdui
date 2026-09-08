@@ -26,9 +26,9 @@
 </template>
 
 <script>
-import pageRuntime from '../../v2/app/page_runtime'
-import navigation from '../../v2/app/navigation'
-import appRoutes from '../../v2/app/app_routes'
+import pageRuntime from '../../runtime/page_runtime'
+import navigation from '../../runtime/navigation'
+import appRoutes from '../../runtime/app_routes'
 import { createLauncherController } from '../../v2/features/launcher/controller'
 import launcherDesign from '../../v2/design/apps/launcher'
 import launcherView from '../../v2/design/apps/launcher/view'
@@ -117,7 +117,6 @@ export default {
       self.renderHoneycomb()
     }, honeycomb.FRAME_MS)
   },
-
   stopHoneycombMotion() {
     clearTimeout(this.honeyLayoutTimer)
     clearTimeout(this.honeyMotionTimer)
@@ -241,9 +240,7 @@ export default {
   nextPage() { this.controller.next() },
   openApp(item) {
     if (!item) return
-    var route = appRoutes.routeFor(item.id)
-    if (!route) navigation.back()
-    else navigation.push(route)
+    navigation.push(appRoutes.routeFor(item.id))
   }
 }
 </script>
