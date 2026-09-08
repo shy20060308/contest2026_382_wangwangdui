@@ -134,7 +134,7 @@ export function createWorkoutController(onChange) {
       }
       workoutRepository.loadActive(function (stored) {
         if (!isCurrent(generation)) return
-        if (!stored) { if (callback) callback(null); return }
+        if (stored === null) { if (callback) callback(null); return }
         var restored = workoutState.restore(stored)
         if (!restored) {
           workoutRepository.clearActive()
