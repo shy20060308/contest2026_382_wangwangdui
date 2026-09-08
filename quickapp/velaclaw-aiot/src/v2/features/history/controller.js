@@ -1,32 +1,30 @@
 import historyRepository from '../../../domain/history/repository'
 
-function summarize(history) {
-  var source = Array.isArray(history) ? history : []
-  if (!source.length) {
-    return { todaySteps: 0, avgSteps: 0, bestSteps: 0, bestDate: '', avgHeartRate: 0, goalPercent: 0, records: [] }
+function summarize(records) {
+  if (!records.length) {
+    return { todaySteps: 0, avgSteps: 0, bestSteps: 0, bestDate: '', avgHeartRate: null, goalPercent: 0, records: [] }
   }
 
   var totalSteps = 0
   var totalHeart = 0
   var heartCount = 0
-  var best = source[0]
-  for (var i = 0; i < source.length; i++) {
-    var item = source[i]
-    totalSteps += Number(item.steps) || 0
-    var heart = Number(item.avgHeartRate)
-    if (isFinite(heart) && heart > 0) { totalHeart += heart; heartCount++ }
-    if ((Number(item.steps) || 0) > (Number(best.steps) || 0)) best = item
+  var best = records[0]
+  for (var i = 0; i < records.length; i++) {
+    var item = records[i]
+    totalSteps += item.steps
+    if (item.avgHeartRate !== null) { totalHeart += item.avgHeartRate; heartCount++ }
+    if (item.steps > best.steps) best = item
   }
 
-  var today = source[source.length - 1]
+  var today = records[records.length - 1]
   return {
-    todaySteps: Number(today.steps) || 0,
-    avgSteps: Math.round(totalSteps / source.length),
-    bestSteps: Number(best.steps) || 0,
-    bestDate: best.date || '',
-    avgHeartRate: heartCount ? Math.round(totalHeart / heartCount) : 0,
-    goalPercent: Number(today.goalPercent) || 0,
-    records: source.slice()
+    todaySteps: today.steps,
+    avgSteps: Math.round(totalSteps / records.length),
+    bestSteps: best.steps,
+    bestDate: best.date,
+    avgHeartRate: heartCount ? Math.round(totalHeart / heartCount) : null,
+    goalPercent: today.goalPercent,
+    records: records.slice()
   }
 }
 
