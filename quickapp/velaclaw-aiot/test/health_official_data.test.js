@@ -55,11 +55,11 @@ const waiting = healthView.project({
   heartZone: 'waiting',
   spo2Zone: 'waiting',
   stressZone: 'waiting',
-  heartSource: { live: false, mode: 'fallback' },
-  spo2Source: { live: false, mode: 'fallback' },
-  stressSource: { live: false, mode: 'fallback' },
+  heartSource: { live: false, mode: 'unavailable' },
+  spo2Source: { live: false, mode: 'unavailable' },
+  stressSource: { live: false, mode: 'unavailable' },
   anyLive: false,
-  serviceAvailable: true,
+  serviceAvailable: false,
   heartValues: [], spo2Values: [], stressValues: []
 }, plan)
 
@@ -67,17 +67,27 @@ assert.strictEqual(waiting.heartRate, '--')
 assert.strictEqual(waiting.spo2, '--')
 assert.strictEqual(waiting.stress, '--')
 assert.strictEqual(waiting.heartSource, '等待')
-assert.strictEqual(waiting.sourceText, '等待系统数据')
+assert.strictEqual(waiting.sourceText, '等待健康服务')
 assert.strictEqual(waiting.heartBars.length, 0)
 
 const controller = read('src/v2/features/health/controller.js')
 const store = read('src/domain/health/store.js')
 const page = read('src/pages/heartrate/heartrate.ux')
+const healthChannel = read('src/capabilities/internal/health_channel.js')
+const heartCapability = read('src/capabilities/heart_rate.js')
+const spo2Capability = read('src/capabilities/blood_oxygen.js')
+const stressCapability = read('src/capabilities/stress.js')
 assert.strictEqual(exists('src/domain/health/recent.js'), false, 'Official Health must not retain seeded compatibility samples')
 assert.ok(controller.includes("data[prefix + 'Source'] === 'live'"), 'Health controller must only promote official system samples into visible metric state')
 assert.ok(!controller.includes('var heartValues = [72'), 'Health controller must not seed a fabricated trend')
 assert.ok(!controller.includes('historyRepository.loadHourlyHeartRate'), 'Health must not pull demo-backed hourly history into the official data surface')
 assert.ok(store.includes('heartRateSource: heart.source'), 'Health store must preserve capability source provenance')
+assert.ok(!healthChannel.includes('fallbackTimer') && !healthChannel.includes('fallbackValue'), 'Health capability runtime must not synthesize fallback measurements')
+;[heartCapability, spo2Capability, stressCapability].forEach(function (source) {
+  assert.ok(!source.includes('initialValue'), 'Health metric capabilities must not seed fabricated values')
+  assert.ok(!source.includes('fallbackValue'), 'Health metric capabilities must not generate fabricated values')
+  assert.ok(!source.includes('fallbackInterval'), 'Health metric capabilities must not run synthetic measurement timers')
+})
 assert.strictEqual((page.match(/class="health-stream"/g) || []).length, 1, 'Health must have one canonical stream')
 assert.ok(!page.includes('isCircle') && !page.includes('isPill') && !page.includes('isRect'), 'Health presentation must not fork by form factor')
 assert.ok(page.includes('width: {{ heartValueWidth }}px'), 'Health value width must come from the resolved recipe')
@@ -85,4 +95,4 @@ assert.ok(page.includes('line-height: {{ metaLineHeight }}px'), 'Health metadata
 assert.ok(page.includes('padding-bottom: {{ scrollPaddingBottom }}px'), 'Health stream tail space must come from the recipe')
 assert.ok(page.includes('if="{{ ready }}"'), 'Health must not render product geometry before the recipe resolves')
 
-console.log('Health official-data contracts verified on the V3 app-owned view')
+console.log('Health official-data contracts verified: unavailable health stays unknown and no synthetic measurements are generated')
