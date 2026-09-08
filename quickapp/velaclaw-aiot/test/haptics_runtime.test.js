@@ -1,5 +1,5 @@
 const assert = require('assert')
-const hapticsCore = require('../src/v2/system/haptics_core')
+const hapticsCore = require('../src/runtime/haptics/core')
 
 let passed = 0
 function test(name, callback) { callback(); passed++; console.log('通过 - ' + name) }
