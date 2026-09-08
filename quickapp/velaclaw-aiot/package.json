@@ -35,7 +35,7 @@
     "calendar:logic": "node test/calendar_utils.test.js",
     "analog:logic": "node test/analog_face.test.js",
     "honeycomb:logic": "node test/honeycomb_layout.test.js",
-    "icons:render": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-icons.ps1 && python scripts/render-soft-icons.py",
+    "icons:render": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-icons.ps1",
     "backgrounds:render": "python scripts/fade-watchface-background.py --input assets/watchfaces/alpine_night_source.jpg --output src/common/watchfaces/alpine_night.jpg",
     "check": "npm run lint && npm run docs:check && npm run v3:architecture && npm run v3:design && npm run v3:truth && npm run capabilities:check && npm run power:logic && npm run power:runtime && npm run health:logic && npm run health:official && npm run history:truth && npm run workout:experience && npm run activity:persistence && npm run settings:store && npm run motion:logic && npm run haptics:logic && npm run haptics:runtime && npm run calendar:logic && npm run analog:logic && npm run honeycomb:logic"
   },
