@@ -28,15 +28,12 @@ function pick(primary, secondary, key) {
   return secondary && secondary[key]
 }
 
-function formFactor(shape, width, height) {
+function formFactor(shape) {
   var normalized = String(shape || '').toLowerCase()
   if (normalized === 'circle') return 'circle'
-  if (normalized === 'pill' || normalized === 'pill-shaped') return 'pill'
-  if (normalized === 'rect' || normalized === 'rectangle' || normalized === 'rectangular') return 'rect'
-  var ratio = width / height
-  if (ratio >= 0.95 && ratio <= 1.05) return 'circle'
-  if (ratio > 0.3 && ratio < 0.5) return 'pill'
-  return 'rect'
+  if (normalized === 'pill-shaped') return 'pill'
+  if (normalized === 'rect') return 'rect'
+  throw new Error('V3 Device Profile requires canonical screenShape')
 }
 
 function family(shape, width, height) {
@@ -61,12 +58,12 @@ function make(info, context) {
   var shapeText = text(pick(info, local, 'screenShape'))
   var width = positiveNumber(pick(info, local, 'screenWidth'), 'screenWidth')
   var height = positiveNumber(pick(info, local, 'screenHeight'), 'screenHeight')
-  var factor = formFactor(shapeText, width, height)
+  var factor = formFactor(shapeText)
   var model = text(pick(info, local, 'model'))
   var platformVersionCode = optionalNumber(pick(info, local, 'platformVersionCode'))
 
   return {
-    shape: shapeText || factor,
+    shape: shapeText,
     formFactor: factor,
     isCircle: factor === 'circle',
     isPill: factor === 'pill',
