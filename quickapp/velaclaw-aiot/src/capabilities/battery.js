@@ -1,13 +1,8 @@
 import battery from '@system.battery'
 
-function normalizeLevel(level) {
-  var value = Number(level)
-  if (!isFinite(value)) return null
-  if (value <= 1) value = value * 100
-  value = Math.round(value)
-  if (value < 0) value = 0
-  if (value > 100) value = 100
-  return value
+function levelToPercent(level) {
+  if (typeof level !== 'number' || !isFinite(level) || level < 0 || level > 1) return null
+  return Math.round(level * 100)
 }
 
 export default {
@@ -16,7 +11,7 @@ export default {
     try {
       if (battery && battery.getStatus) {
         battery.getStatus({
-          success: function (data) { callback(normalizeLevel(data && data.level)) },
+          success: function (data) { callback(levelToPercent(data.level)) },
           fail: function () { callback(null) }
         })
         return
