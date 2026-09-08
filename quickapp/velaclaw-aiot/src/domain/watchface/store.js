@@ -3,7 +3,7 @@ import storage from '../../capabilities/storage'
 var SELECTED_FACE_KEY = 'selected_face_id'
 var RIGHT_FACE_TRANSITION_KEY = 'right_face_transition'
 var RIGHT_FACE_TRANSITION_MAX_AGE = 3000
-var selectedFaceId = 'sport'
+var selectedFaceId = ''
 
 function parseJson(value, fallback) {
   try {
@@ -13,6 +13,11 @@ function parseJson(value, fallback) {
   }
 }
 
+function requireFaceId(id) {
+  if (typeof id !== 'string' || !id) throw new Error('Watchface store requires explicit faceId')
+  return id
+}
+
 export default {
   getSelectedFaceId: function () {
     return selectedFaceId
@@ -20,19 +25,19 @@ export default {
 
   loadSelectedFaceId: function (callback) {
     storage.get(SELECTED_FACE_KEY, function (value) {
-      if (value) selectedFaceId = value
+      selectedFaceId = typeof value === 'string' ? value : ''
       if (callback) callback(selectedFaceId)
     }, true)
   },
 
   setSelectedFaceId: function (id, callback) {
-    selectedFaceId = id || 'sport'
+    selectedFaceId = requireFaceId(id)
     storage.set(SELECTED_FACE_KEY, selectedFaceId, callback)
   },
 
   markRightFaceTransition: function (faceId, callback) {
     storage.set(RIGHT_FACE_TRANSITION_KEY, JSON.stringify({
-      faceId: faceId,
+      faceId: requireFaceId(faceId),
       updatedAt: Date.now()
     }), callback)
   },
