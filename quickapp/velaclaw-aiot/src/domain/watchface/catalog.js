@@ -7,26 +7,32 @@ var FACE_CATALOG = {
 }
 
 function clone(face) {
-  if (!face) return null
   return { id: face.id, name: face.name, description: face.description, tag: face.tag }
 }
 
-function get(id) { return clone(FACE_CATALOG[id]) }
+function get(id) {
+  var face = FACE_CATALOG[id]
+  if (!face) throw new Error('Unknown watchface: ' + id)
+  return clone(face)
+}
+
+function requireIds(ids) {
+  if (!Array.isArray(ids) || !ids.length) throw new Error('Watchface catalog requires explicit faceIds')
+  return ids
+}
 
 function list(ids) {
-  var source = ids && ids.length ? ids : Object.keys(FACE_CATALOG)
+  var source = requireIds(ids)
   var result = []
-  for (var i = 0; i < source.length; i++) {
-    var face = get(source[i])
-    if (face) result.push(face)
-  }
+  for (var i = 0; i < source.length; i++) result.push(get(source[i]))
   return result
 }
 
 function indexOf(ids, faceId) {
-  var source = ids || []
-  for (var i = 0; i < source.length; i++) if (source[i] === faceId) return i
-  return 0
+  var source = requireIds(ids)
+  var index = source.indexOf(faceId)
+  if (index < 0) throw new Error('Watchface not allowed by Recipe: ' + faceId)
+  return index
 }
 
 module.exports = { get: get, list: list, indexOf: indexOf }
