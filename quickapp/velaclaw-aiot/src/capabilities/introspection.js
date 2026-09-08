@@ -7,13 +7,12 @@ import systemEvent from './system_event'
 import interconnect from './interconnect'
 import storage from './storage'
 
-function entry(id, name, api, available, fallback) {
+function entry(id, name, api, available) {
   return {
     id: id,
     name: name,
     api: api,
-    available: !!available,
-    fallback: !!fallback
+    available: !!available
   }
 }
 
@@ -27,7 +26,7 @@ export default {
       entry('brightness', '屏幕控制', 'displayPower.setBrightness', displayPower.isAvailable()),
       entry('event', '公共事件', 'systemEvent.isAvailable', systemEvent.isAvailable()),
       entry('interconnect', '设备互联', 'interconnect.isAvailable', interconnect.isAvailable()),
-      entry('storage', '本地存储', 'storage.get / set', !!(storage && storage.get && storage.set), true)
+      entry('storage', '本地存储', 'storage.get / set', !!(storage && storage.get && storage.set))
     ]
   }
 }
