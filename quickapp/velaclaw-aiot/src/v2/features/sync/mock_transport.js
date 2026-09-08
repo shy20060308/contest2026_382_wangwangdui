@@ -17,26 +17,25 @@ function createTransport() {
       connectTimer = setTimeout(function () {
         connectTimer = null
         if (cancelled) return
-        if (options && options.success) options.success({ mode: 'mock', deviceName: 'Vela Sync Host' })
+        options.success({ mode: 'mock', deviceName: 'Vela Sync Host' })
       }, 700)
     },
     send: function (packets, options) {
       cancelled = false
       clearTimeout(sendTimer)
-      var source = Array.isArray(packets) ? packets : []
       var index = 0
       function next() {
         if (cancelled) return
-        if (index >= source.length) {
-          if (options && options.success) options.success()
+        if (index >= packets.length) {
+          options.success()
           return
         }
-        var packet = source[index]
+        var packet = packets[index]
         sendTimer = setTimeout(function () {
           sendTimer = null
           if (cancelled) return
           index++
-          if (options && options.progress) options.progress({ sent: index, total: source.length, percent: source.length ? Math.round((index / source.length) * 100) : 100, sequence: packet.sequence })
+          options.progress({ sent: index, total: packets.length, percent: Math.round((index / packets.length) * 100), sequence: packet.sequence })
           next()
         }, 180)
       }
