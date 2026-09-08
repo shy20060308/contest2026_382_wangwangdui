@@ -1,6 +1,7 @@
 var stateMachine = require('../../domain/power/state_machine')
 var powerPolicy = require('../../domain/power/policy')
 var raiseWake = require('../../domain/power/raise_wake')
+var healthMetrics = require('../../domain/health/metrics')
 
 function noop() {}
 
@@ -49,7 +50,7 @@ function create(dependencies, options) {
   }
 
   function isOfficialHeartSample(sample) {
-    return !!(sample && sample.live === true && sample.source === 'live' && sample.value > 0)
+    return !!(sample && sample.live === true && sample.source === 'live' && healthMetrics.isHeartRate(sample.value))
   }
 
   function handleHeartSample(sample) {
