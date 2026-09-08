@@ -1,4 +1,4 @@
-var freedom = require('../../freedom')
+var difference = require('../../difference')
 var adapter = require('../../adapter')
 var layout = require('./layout')
 
@@ -10,7 +10,7 @@ function centeredBox(stream, top, width, height) {
 
 function resolve(profile, scene, safe) {
   var config = adapter.select(layout, profile)
-  var plan = adapter.createPlan(profile, scene, safe, freedom.AUTO, config.surface)
+  var plan = adapter.createPlan(profile, scene, safe, difference.L1, config.surface)
   plan.stream = adapter.placeBand(profile, scene, safe, {
     top: config.streamTop,
     width: config.contentWidth,
@@ -63,7 +63,7 @@ function resolve(profile, scene, safe) {
 }
 
 module.exports = {
-  freedomLevel: freedom.AUTO,
+  differenceLevel: difference.L1,
   contentWidth: contentWidth,
   resolve: resolve,
   layout: layout
