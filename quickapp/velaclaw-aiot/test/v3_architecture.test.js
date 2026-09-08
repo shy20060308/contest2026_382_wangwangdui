@@ -172,7 +172,7 @@ assert.ok(!adapter.includes('safeForWidth'), 'Safe area must not depend on compo
 
 const scene = read('src/v2/design/scene.js')
 assert.ok(!scene.includes("require('./geometry')"), 'Scene must use profile-declared insets directly')
-const profile = read('src/v2/system/device_profile.js')
+const profile = read('src/runtime/device_profile.js')
 assert.ok(profile.includes('safeInsets: declaredInsets(factor)'), 'Device profile must own explicit safe insets')
 
 const pkg = JSON.parse(read('package.json'))
