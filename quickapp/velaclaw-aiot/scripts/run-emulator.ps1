@@ -2,13 +2,22 @@
 param(
   [string]$Avd = 'mi-band10',
   [string]$Serial = '',
-  [string]$Package = 'com.application.watch.demo'
+  [string]$Package = ''
 )
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $adbPath = Join-Path $env:USERPROFILE '.vela\sdk\tools\adb\win\adb.exe'
 $sessionRoot = Join-Path $env:USERPROFILE '.vela\sessions'
+
+if (-not $Package) {
+  $manifestPath = Join-Path $projectRoot 'src\manifest.json'
+  $manifest = Get-Content -Raw -Encoding utf8 -LiteralPath $manifestPath | ConvertFrom-Json
+  $Package = [string]$manifest.package
+  if (-not $Package) {
+    throw "Manifest package is missing: $manifestPath"
+  }
+}
 
 if (-not (Test-Path -LiteralPath $adbPath)) {
   throw "ADB not found: $adbPath"
