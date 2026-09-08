@@ -133,6 +133,13 @@ strictRecipeResolvers.forEach(function (file) {
   assert.ok(!/Math\.(?:min|max)\s*\(/.test(source), file + ' must compose declared recipe geometry instead of repairing it')
 })
 
+const stepsResolver = read('src/v2/design/apps/steps/index.js')
+assert.ok(!/history\.height\s*\/\s*2/.test(stepsResolver), 'Steps radius must be declared by Recipe, not inferred from band height')
+assert.ok(!/progressTrackHeight\s*\/\s*2/.test(stepsResolver), 'Steps progress radius must be declared by Recipe')
+const launcherResolver = read('src/v2/design/apps/launcher/index.js')
+assert.ok(!/iconSize\s*\/\s*2/.test(launcherResolver), 'Launcher icon radius must be declared by Recipe')
+assert.ok(launcherResolver.includes('plan.honeycomb.viewport'), 'Launcher Resolver must project Scene dimensions into the Honeycomb plan')
+
 const strictPlanViews = [
   'src/v2/design/apps/launcher/view.js',
   'src/v2/design/apps/heart/view.js',
@@ -153,6 +160,20 @@ const adapter = read('src/v2/design/adapter.js')
 assert.ok(!adapter.includes('function clamp('), 'Adapter must not repair recipe geometry at runtime')
 assert.ok(!adapter.includes('circleChord') && !adapter.includes('circleBand'), 'Adapter must not contain round-screen fitting algorithms')
 assert.ok(!adapter.includes('safeForWidth'), 'Safe area must not depend on component width')
+
+const pager = read('src/v2/design/pager.js')
+assert.ok(!pager.includes('Number(pageSize)') && !pager.includes('Number(pageIndex)'), 'Pager must not coerce non-canonical numeric input')
+
+const honeycombEngine = read('src/v2/design/engines/honeycomb.js')
+assert.ok(honeycombEngine.includes('function create(recipe)'), 'Honeycomb Engine must bind to a resolved Launcher Recipe')
+assert.ok(!honeycombEngine.includes('var FOCUS_X') && !honeycombEngine.includes('var FOCUS_Y'), 'Honeycomb Engine must not own product focus coordinates')
+assert.ok(!honeycombEngine.includes('var ICON_BASE') && !honeycombEngine.includes('var ICON_GROW'), 'Honeycomb Engine must not own product icon sizing')
+assert.ok(!honeycombEngine.includes('LABEL_CENTER') && !honeycombEngine.includes('LABEL_HALF'), 'Honeycomb Engine must derive label avoidance from Recipe geometry')
+assert.ok(!honeycombEngine.includes('Number('), 'Honeycomb Engine must not repair numeric input')
+const launcherPage = read('src/pages/applist/applist.ux')
+assert.ok(launcherPage.includes('honeycomb.create(plan.honeycomb)'), 'Launcher page must bind Honeycomb math to its resolved plan')
+assert.ok(!launcherPage.includes('honeyInitialFocusDistance'), 'Launcher must use the corrected initialFocusY design meaning')
+assert.ok(!launcherPage.includes('Number(vx)') && !launcherPage.includes('Number(vy)'), 'Launcher inertia must keep canonical internal numeric state')
 
 const profile = read('src/runtime/device_profile.js')
 assert.ok(profile.includes('safeInsets: declaredInsets(factor)'), 'Device Profile must own explicit safe insets')
