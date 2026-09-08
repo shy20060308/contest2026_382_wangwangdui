@@ -27,7 +27,7 @@ POLICIES[stateMachine.MODE_SLEEP] = {
 }
 
 function get(mode) {
-  return POLICIES[mode] || POLICIES[stateMachine.MODE_ACTIVE]
+  return POLICIES[stateMachine.requireMode(mode)]
 }
 
 module.exports = {
