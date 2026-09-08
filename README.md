@@ -4,7 +4,7 @@
 
 `vela_band` 是面向 Xiaomi Vela Quick App 的智能手环 / 手表交互项目。当前 Quick App 工程版本为 **3.0.0**，在同一产品中支持 Pill / Circle / Rect 三类 wearable form factor，并围绕表盘、启动器、健康、活动趋势、运动、通知、Today、设置、同步和低功耗状态构建可验证的产品链。
 
-当前重构采用 Recipe-first 的 V3 设计运行时。不同屏幕形态不是通过页面 CSS 自动缩放或运行时拟合得到，而是由 Device Profile 提供物理设备事实，由 App Recipe 明确声明各形态的产品设计，再由 Adapter / Resolver 翻译成最终 Plan。复杂连续交互可以使用消费 resolved Plan 的 Product Math Engine，但 Engine 不拥有第二套静态视觉设计。
+当前重构采用 Recipe-first 的 V3 设计运行时。不同屏幕形态不是通过页面 CSS 自动缩放或运行时拟合得到，而是由 Device Profile 消费系统提供的 canonical `screenShape` 与物理尺寸，由 App Recipe 明确声明各形态的产品设计，再由 Adapter / Resolver 翻译成最终 Plan。复杂连续交互可以使用消费 resolved Plan 的 Product Math Engine，但 Engine 不拥有第二套静态视觉设计。
 
 > 本项目用于比赛演示、架构验证和可穿戴 UI 探索，不是医疗软件或生产级设备固件。健康和运动正式表面只提升官方实时健康样本；能力不可用时保持等待或 unavailable，不用模拟趋势替代真实数据。
 
@@ -34,7 +34,7 @@ Optional Recipe-bound Product Math Engine
 UX / Watchface renderer
 ```
 
-核心原则：一个事实只有一个 owner。Device Profile 拥有设备形态、物理尺寸与声明式 safe insets；Recipe 拥有静态产品构图；Adapter 只翻译，不做拟合/扫描/视觉修复；Resolver 只组合确实依赖 Scene/Safe 的关系；UX 在 Plan 就绪后渲染，不保存第二套非零几何 fallback。
+核心原则：一个事实只有一个 owner。Device Profile 验证系统提供的设备形态、物理尺寸与声明式 safe insets，不用宽高比猜形态；Recipe 拥有静态产品构图；Adapter 只翻译，不做拟合/扫描/视觉修复；Resolver 只组合确实依赖 Scene/Safe 的关系；UX 在 Plan 就绪后渲染，不保存第二套非零几何 fallback。
 
 ## 目录结构
 
@@ -77,14 +77,14 @@ packages/apps/contest2026_382_velaclaw_aiot
 - **Today**：日期、农历、活动摘要和月历。
 - **通知**：通知/来电状态演示与震动反馈。
 - **设置与诊断**：亮度、震动、动作诊断、设备能力诊断和同步入口。
-- **同步**：业务 payload、分包、ACK、进度，以及明确标识语义的 transport 行为。
+- **同步**：系统 Interconnect 连接状态、业务 payload、分包、发送进度与完成状态。
 - **Power**：ACTIVE / DIM / SLEEP runtime 与显示、电量、健康采样编排。
 
 更完整的当前实现说明见 `quickapp/velaclaw-aiot/README.md`、`quickapp/velaclaw-aiot/docs/ARCHITECTURE_V3.md` 和维护者指南。
 
 ## 构建与验证
 
-需要 Node.js 18 或更高版本、npm，以及 Xiaomi AIoT-IDE / Vela Quick App 开发环境。
+需要 Node.js 18 或更高版本、npm、Vela JS 应用 Framework API Level 3+，以及 Xiaomi AIoT-IDE / Vela Quick App 开发环境。
 
 ```bash
 cd quickapp/velaclaw-aiot
