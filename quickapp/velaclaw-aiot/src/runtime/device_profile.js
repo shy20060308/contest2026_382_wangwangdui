@@ -105,4 +105,4 @@ function resolve(context, callback) {
   })
 }
 
-export default { resolve: resolve, makeProfile: make, clearCache: function () { cached = null } }
+export default { resolve: resolve }
