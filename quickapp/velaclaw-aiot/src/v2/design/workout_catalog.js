@@ -4,14 +4,15 @@ var MODES = {
 }
 
 function get(type) {
-  var value = MODES[type] || MODES.walk
-  return { type: MODES[type] ? type : 'walk', name: value.name, desc: value.desc, color: value.color }
+  var value = MODES[type]
+  if (!value) throw new Error('Unknown V3 workout mode: ' + type)
+  return { type: type, name: value.name, desc: value.desc, color: value.color }
 }
 
 function list(types) {
-  var source = Array.isArray(types) && types.length ? types : ['walk', 'run']
+  if (!Array.isArray(types) || !types.length) throw new Error('Workout catalog requires explicit mode types')
   var result = []
-  for (var i = 0; i < source.length; i++) result.push(get(source[i]))
+  for (var i = 0; i < types.length; i++) result.push(get(types[i]))
   return result
 }
 
