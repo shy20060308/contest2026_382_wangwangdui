@@ -47,11 +47,11 @@ const runtime = powerRuntimeCore.create({
     setKeepScreenOn: function (value) { displayCalls.push(['keep', value]) }
   },
   heartRate: {
-    getSnapshot: function () { return { value: 88, updatedAt: 900, live: false } },
+    getSnapshot: function () { return { value: 88, updatedAt: 900, live: false, source: 'cached' } },
     subscribe: function (listener) {
       heartSubscribeCount++
       heartListener = listener
-      listener({ value: 88, updatedAt: clock, live: false })
+      listener({ value: 88, updatedAt: clock, live: false, source: 'cached' })
     },
     unsubscribe: function (listener) {
       heartUnsubscribeCount++
@@ -85,13 +85,14 @@ const runtime = powerRuntimeCore.create({
 runtime.start()
 assert.strictEqual(runtime.getMode(), 'ACTIVE', 'runtime must start ACTIVE')
 assert.strictEqual(heartSubscribeCount, 1, 'ACTIVE start must subscribe heart rate exactly once')
+assert.strictEqual(heartEvents.length, 0, 'non-live cached heart state must never be promoted into Clock telemetry')
 assert.strictEqual(motionSubscribeCount, 1, 'raise wake must register once')
 assert.strictEqual(batteryReads, 1, 'runtime start must read battery once')
 assert.strictEqual(runtime.getSnapshot().idleTimerActive, true, 'low-power runtime must start idle evaluation')
 assert.ok(displayCalls.some(function (call) { return call[0] === 'brightness' && call[1] === 140 }), 'ACTIVE must apply configured brightness')
 
-heartListener({ value: 91, updatedAt: 1100, live: true })
-assert.deepStrictEqual(heartEvents[heartEvents.length - 1], [91, 'live'], 'ACTIVE must publish live heart samples immediately')
+heartListener({ value: 91, updatedAt: 1100, live: true, source: 'live' })
+assert.deepStrictEqual(heartEvents[heartEvents.length - 1], [91, 'live'], 'ACTIVE must publish official live heart samples immediately')
 
 // Raw accelerometer samples are not wake events. Ordinary movement must not
 // continuously reset lastActiveAt and prevent the idle state machine from firing.
@@ -106,10 +107,10 @@ runtime.evaluateIdle()
 assert.strictEqual(runtime.getMode(), 'DIM', '8 seconds idle must enter DIM even while motion sampling is active')
 assert.strictEqual(heartUnsubscribeCount, 0, 'DIM must keep health subscribed')
 const beforeDimSample = heartEvents.length
-heartListener({ value: 96, updatedAt: 9100, live: true })
+heartListener({ value: 96, updatedAt: 9100, live: true, source: 'live' })
 assert.strictEqual(heartEvents.length, beforeDimSample, 'DIM must buffer raw heart samples instead of publishing at raw cadence')
 assert.strictEqual(runActiveTimer(30000), true, 'DIM must own a 30s heart business timer')
-assert.deepStrictEqual(heartEvents[heartEvents.length - 1], [96, 'cadence'], 'DIM cadence must publish the latest buffered heart sample')
+assert.deepStrictEqual(heartEvents[heartEvents.length - 1], [96, 'cadence'], 'DIM cadence must publish the latest buffered official heart sample')
 
 clock = 16000
 runtime.evaluateIdle()
@@ -138,4 +139,4 @@ assert.strictEqual(runtime.getSnapshot().mainTimerActive, false, 'stop must clea
 assert.strictEqual(runtime.getSnapshot().heartTimerActive, false, 'stop must clear heart cadence')
 assert.ok(modes.indexOf('DIM') >= 0 && modes.indexOf('SLEEP') >= 0, 'mode callbacks must expose DIM and SLEEP transitions')
 
-console.log('Power Runtime executed: raw motion is filtered, ACTIVE/DIM/SLEEP works, and HR cadence is preserved')
+console.log('Power Runtime executed: non-live health data is rejected, ACTIVE/DIM/SLEEP works, and HR cadence is preserved')
