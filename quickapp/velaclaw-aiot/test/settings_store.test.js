@@ -24,10 +24,11 @@ function fakeStorage() {
       assert.ok(write, 'expected pending storage write')
       write.resolved = true
       write.callback(result === undefined ? true : result)
-    },
-    pendingWrites: function () { return writes.filter(function (entry) { return !entry.resolved }) }
+    }
   }
 }
+
+assert.strictEqual(core.KEY, 'device_settings_v3', 'Settings must use a clean V3 persistence namespace')
 
 test('并发 load 合并为一次初始读取，后续 load 只读内存真源', function () {
   const storage = fakeStorage()
@@ -100,9 +101,13 @@ test('persist callback 等到合并后的最终写入完成', function () {
   assert.strictEqual(callbackValue, 130)
 })
 
-test('瞬时蓝牙连接状态不属于持久 Settings Domain', function () {
-  const normalized = core.normalize({ bluetoothConnected: true, brightnessValue: 140 })
-  assert.strictEqual(Object.prototype.hasOwnProperty.call(normalized, 'bluetoothConnected'), false)
+test('未知 setting key 和非法 canonical value 必须失败', function () {
+  const storage = fakeStorage()
+  const store = core.createStore(storage)
+  assert.throws(function () { store.update('bluetoothConnected', true) }, /Unknown setting/)
+  assert.throws(function () { store.update('vibrationPattern', 'unknown') }, /Unknown haptic pattern/)
+  assert.throws(function () { store.update('vibrationLevel', 'unknown') }, /Invalid setting value/)
+  assert.throws(function () { store.updateMany({ brightnessValue: 100, extra: true }) }, /Unknown setting/)
 })
 
 test('load 回调拿到副本，外部修改不会污染 Store', function () {
