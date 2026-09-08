@@ -1,15 +1,8 @@
 function clamp(value, min, max) { return Math.max(min, Math.min(max, value)) }
 
 function requirePageSize(value) {
-  var size = Number(value)
-  if (!isFinite(size) || size < 1 || Math.round(size) !== size) throw new Error('Launcher requires resolved integer pageSize')
-  return size
-}
-
-function requirePageIndex(value) {
-  var index = Number(value)
-  if (!isFinite(index) || Math.round(index) !== index) throw new Error('Launcher requires integer page index')
-  return index
+  if (typeof value !== 'number' || !isFinite(value) || value < 1 || Math.round(value) !== value) throw new Error('Launcher requires resolved integer pageSize')
+  return value
 }
 
 function requireAppIds(ids) {
@@ -51,8 +44,6 @@ export function createLauncherController(onChange) {
       return emit()
     },
     next: function () { pageIndex++; return emit() },
-    previous: function () { pageIndex--; return emit() },
-    goToPage: function (index) { pageIndex = requirePageIndex(index); return emit() },
-    refresh: emit
+    previous: function () { pageIndex--; return emit() }
   }
 }
