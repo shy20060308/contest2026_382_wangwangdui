@@ -1,7 +1,7 @@
 import systemEvent from '../../../capabilities/system_event'
 import interconnect from '../../../capabilities/interconnect'
 import settingsStore from '../../../domain/settings/store'
-import haptics from '../../system/haptics'
+import haptics from '../../../runtime/haptics'
 var notificationFactory = require('../../../domain/notification/factory')
 
 var EVENT_NAME = 'band.demo.notification'
