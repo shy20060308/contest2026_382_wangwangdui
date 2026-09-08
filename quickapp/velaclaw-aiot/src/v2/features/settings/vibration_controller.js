@@ -1,7 +1,6 @@
 import settingsStore from '../../../domain/settings/store'
 import vibration from '../../../capabilities/vibration'
 import haptics from '../../../runtime/haptics'
-var patterns = require('../../../domain/haptics/patterns')
 
 var HAPTIC_OWNER = 'settings-vibration'
 
@@ -37,8 +36,7 @@ export function createVibrationController(onChange) {
       feedbackCode = 'disabled'
       return emit()
     }
-    var normalized = patterns.normalize(name)
-    feedbackCode = haptics.play(normalized, state.vibrationLevel, HAPTIC_OWNER) ? 'played' : 'unavailable'
+    feedbackCode = haptics.play(name, state.vibrationLevel, HAPTIC_OWNER) ? 'played' : 'unavailable'
     return emit()
   }
 
@@ -58,9 +56,8 @@ export function createVibrationController(onChange) {
     },
     setLevel: function (level) { return commit('vibrationLevel', level) },
     selectPattern: function (name) {
-      var normalized = patterns.normalize(name)
-      state = settingsStore.update('vibrationPattern', normalized)
-      return play(normalized)
+      state = settingsStore.update('vibrationPattern', name)
+      return play(state.vibrationPattern)
     },
     playCurrent: function () { return play(state.vibrationPattern) },
     refresh: emit
