@@ -1,7 +1,7 @@
 var pager = require('../../pager')
 
 function capability(entry) {
-  var status = entry.available ? { text: '可用', color: '#30D158', background: '#102A19' } : { text: '不可用', color: '#FF453A', background: '#321519' }
+  var status = entry.available ? { text: '接口存在', color: '#30D158', background: '#102A19' } : { text: '接口缺失', color: '#FF453A', background: '#321519' }
   return {
     id: entry.id,
     name: entry.name,
