@@ -5,14 +5,14 @@ function notificationType(value) {
 }
 
 function normalize(payload) {
-  var source = payload || {}
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new Error('Notification payload must be an object')
   return {
-    type: notificationType(source.type),
-    appName: source.appName || source.title || '',
-    appIcon: source.appIcon || '',
-    content: source.content || '',
-    contact: source.contact || source.title || '',
-    phone: source.phone || '',
+    type: notificationType(payload.type),
+    appName: payload.appName || payload.title || '',
+    appIcon: payload.appIcon || '',
+    content: payload.content || '',
+    contact: payload.contact || payload.title || '',
+    phone: payload.phone || '',
     hangUp: false
   }
 }
