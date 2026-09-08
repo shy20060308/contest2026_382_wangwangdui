@@ -27,7 +27,11 @@ V3 Adapter translation
       ↓
 App Resolver
       ↓
-UX
+Resolved Plan
+      ↓
+Optional Recipe-bound Product Math Engine
+      ↓
+UX / Watchface renderer
 ```
 
 核心约束：
@@ -39,6 +43,7 @@ UX
 - Recipe 拥有页面/表盘的视觉意图、几何、字号、间距、形态差异和视觉约束。
 - Adapter 只翻译 Recipe，不扫描、缩放、clamp、拟合或发明几何。
 - Resolver 只组合无法直接静态表达的 Recipe 数据，不修复 Recipe。
+- Product Math Engine 只在确有连续几何/交互数学时使用，必须消费 resolved Recipe/Plan；可以拥有惯性、阻尼、overscroll 等交互物理，但不能持有第二套 focus/icon/label 静态设计。
 - UX 在 resolved plan 就绪后渲染，不保留私有非零几何 fallback。
 - 同一个事实只允许一个 owner 和一次规范化；下游消费 canonical 数据，不重复验证或静默兜底。
 - `src/common` 仅保留静态资源；运行时逻辑不得重新放回 common。
@@ -50,7 +55,7 @@ UX
 | 模块 | 当前实现 |
 | --- | --- |
 | 表盘 | Sport / Simple / Dashboard，以及 Circle Mechanical、Pill Alpine；表盘布局由 Clock Recipe 控制 |
-| 应用启动器 | Circle 蜂巢、Pill 分页列表、Rect 设计网格 |
+| 应用启动器 | Circle 蜂巢、Pill 分页列表、Rect 设计网格；Honeycomb Engine 由 resolved Launcher Recipe 配置 |
 | 健康 | 心率、血氧、压力与窗口趋势；只接受官方 live 数据并保留来源状态 |
 | 活动与趋势 | 今日活动、7 日历史趋势与 V3 持久化 |
 | 运动 | 步行/跑步、暂停/继续、官方心率、位置能力、运动历史 |
@@ -69,7 +74,7 @@ src/
 ├── runtime/               # Page/Navigation/Device/Profile/Haptics/Power 等正式运行时
 ├── v2/
 │   ├── features/          # 当前 Feature Controllers（历史路径名）
-│   └── design/            # 当前 V3 Scene / Recipe / Adapter / Resolver / View
+│   └── design/            # 当前 V3 Scene / Recipe / Adapter / Resolver / View / Engine
 ├── pages/                 # 产品页面，仅绑定 plan、feature state 和交互
 ├── components/watchfaces/ # 表盘渲染组件，布局由 Clock Recipe 注入
 └── common/                # 仅静态图片、图标和表盘资源
@@ -126,11 +131,12 @@ npm run v3:truth
 5. 页面 CSS 不拥有产品非零几何；几何必须来自 resolved Recipe。
 6. 页面在 Recipe plan 就绪前不渲染产品 geometry。
 7. Full-bleed scene 与 safe content 分离。
-8. Feature / Domain / Capability 逻辑不得因为视觉迁移重新塞回页面。
-9. 健康和运动正式表面不得伪造系统健康数据；未知值保持 `null`/unavailable 直到 View 显示为 `--`。
-10. 一个值只在其 owner 边界规范化一次；不要在 Capability、Domain、Feature、View 连续 Number/clamp/normalize。
-11. 旧持久化 schema 不通过长期兼容代码修补；破坏性 V3 迁移使用干净 namespace，历史实现由 Git 保存。
-12. 未来工具或模板不得成为第二套 Recipe/Adapter/Device Profile 规范。
+8. Product Math Engine 必须由 resolved Recipe/Plan 配置，不得成为第二套静态视觉 owner 或适配 solver。
+9. Feature / Domain / Capability 逻辑不得因为视觉迁移重新塞回页面。
+10. 健康和运动正式表面不得伪造系统健康数据；未知值保持 `null`/unavailable 直到 View 显示为 `--`。
+11. 一个值只在其 owner 边界规范化一次；不要在 Capability、Domain、Feature、View 连续 Number/clamp/normalize。
+12. 旧持久化 schema 不通过长期兼容代码修补；破坏性 V3 迁移使用干净 namespace，历史实现由 Git 保存。
+13. 未来工具或模板不得成为第二套 Recipe/Adapter/Device Profile 规范。
 
 ## 说明
 
