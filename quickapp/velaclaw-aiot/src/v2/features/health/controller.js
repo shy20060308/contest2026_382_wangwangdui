@@ -91,7 +91,6 @@ export function createHealthController(onChange) {
       started = false
       lifecycleGeneration++
       healthStore.unsubscribe(onHealth)
-    },
-    refresh: emit
+    }
   }
 }
