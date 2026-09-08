@@ -13,12 +13,10 @@ var APPS = {
   today: { label: '今日日历', icon: '/common/icons/calendar.jpg', accent: '#30D158' }
 }
 
-function softIcon(path) { return String(path).replace('/common/icons/', '/common/icons/soft/') }
-
 function get(id) {
   var source = APPS[id]
   if (!source) throw new Error('Unknown V3 launcher app: ' + id)
-  return { id: id, label: source.label, icon: source.icon, softIcon: softIcon(source.icon), accent: source.accent }
+  return { id: id, label: source.label, icon: source.icon, accent: source.accent }
 }
 
 function list(ids) {
