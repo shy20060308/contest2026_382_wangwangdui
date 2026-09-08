@@ -1,10 +1,10 @@
 import battery from '@system.battery'
 
-var cachedPercent = 75
+var cachedPercent = null
 
 function normalizeLevel(level) {
   var value = Number(level)
-  if (!isFinite(value)) return cachedPercent
+  if (!isFinite(value)) return null
   if (value <= 1) value = value * 100
   value = Math.round(value)
   if (value < 0) value = 0
@@ -18,8 +18,9 @@ export default {
       if (battery && battery.getStatus) {
         battery.getStatus({
           success: function (data) {
-            cachedPercent = normalizeLevel(data && data.level)
-            if (callback) callback(cachedPercent)
+            var next = normalizeLevel(data && data.level)
+            if (next !== null) cachedPercent = next
+            if (callback) callback(next !== null ? next : cachedPercent)
           },
           fail: function () {
             if (callback) callback(cachedPercent)
