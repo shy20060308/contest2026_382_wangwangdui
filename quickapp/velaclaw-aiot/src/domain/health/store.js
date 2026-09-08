@@ -100,8 +100,6 @@ function unsubscribe(listener) {
 
 export default {
   subscribeHeartRate: function (listener) { subscribe(listener, ['heartRate']) },
-  subscribeBloodOxygen: function (listener) { subscribe(listener, ['spo2']) },
-  subscribeStress: function (listener) { subscribe(listener, ['stress']) },
   subscribeAll: function (listener) { subscribe(listener, ['heartRate', 'spo2', 'stress']) },
   unsubscribe: unsubscribe,
   getSnapshot: function () { return latestState || buildState() }
