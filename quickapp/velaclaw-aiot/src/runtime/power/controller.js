@@ -6,12 +6,19 @@ import battery from '../../capabilities/battery'
 var core = require('./core')
 
 function create(options) {
-  return core.create({
+  var runtime = core.create({
     displayPower: displayPower,
     motion: motion,
     heartRate: heartRate,
     battery: battery
   }, options)
+
+  return {
+    configure: runtime.configure,
+    start: runtime.start,
+    stop: runtime.stop,
+    markActive: runtime.markActive
+  }
 }
 
 export default {
