@@ -1,8 +1,8 @@
 function createRuntime(options) {
-  var config = options || {}
-  var vibrate = typeof config.vibrate === 'function' ? config.vibrate : function () { return false }
-  var setTimer = typeof config.setTimeout === 'function' ? config.setTimeout : setTimeout
-  var clearTimer = typeof config.clearTimeout === 'function' ? config.clearTimeout : clearTimeout
+  if (!options || typeof options.vibrate !== 'function') throw new Error('Haptics Runtime requires vibrate dependency')
+  var vibrate = options.vibrate
+  var setTimer = typeof options.setTimeout === 'function' ? options.setTimeout : setTimeout
+  var clearTimer = typeof options.clearTimeout === 'function' ? options.clearTimeout : clearTimeout
   var timers = []
   var activeOwner = null
   var generation = 0
@@ -13,27 +13,26 @@ function createRuntime(options) {
   }
 
   function play(spec, owner) {
-    var source = spec || {}
-    if (!owner || !source.mode || !source.count) return false
+    if (!owner) return false
 
     generation++
     var run = generation
     clearScheduled()
     activeOwner = owner
 
-    var firstPlayed = !!vibrate(source.mode)
+    var firstPlayed = !!vibrate(spec.mode)
     if (!firstPlayed) {
       activeOwner = null
       return false
     }
 
-    for (var i = 1; i < source.count; i++) {
+    for (var i = 1; i < spec.count; i++) {
       ;(function (delay, mode, expectedOwner, expectedRun) {
         timers.push(setTimer(function () {
           if (generation !== expectedRun || activeOwner !== expectedOwner) return
           vibrate(mode)
         }, delay))
-      })(i * (source.duration + source.interval), source.mode, owner, run)
+      })(i * (spec.duration + spec.interval), spec.mode, owner, run)
     }
     return true
   }
