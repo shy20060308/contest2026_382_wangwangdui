@@ -2,14 +2,17 @@ var SAMPLE_THROTTLE_MS = 100
 var WAKE_COOLDOWN_MS = 3000
 var DELTA_THRESHOLD = 5
 
+function option(value, fallback, name) {
+  if (value === undefined) return fallback
+  if (typeof value !== 'number' || !isFinite(value) || value < 0) throw new Error('Invalid raise-wake ' + name)
+  return value
+}
+
 function create(options) {
   var config = options || {}
-  var threshold = Number(config.deltaThreshold)
-  if (!isFinite(threshold)) threshold = DELTA_THRESHOLD
-  var throttleMs = Number(config.sampleThrottleMs)
-  if (!isFinite(throttleMs) || throttleMs < 0) throttleMs = SAMPLE_THROTTLE_MS
-  var cooldownMs = Number(config.wakeCooldownMs)
-  if (!isFinite(cooldownMs) || cooldownMs < 0) cooldownMs = WAKE_COOLDOWN_MS
+  var threshold = option(config.deltaThreshold, DELTA_THRESHOLD, 'deltaThreshold')
+  var throttleMs = option(config.sampleThrottleMs, SAMPLE_THROTTLE_MS, 'sampleThrottleMs')
+  var cooldownMs = option(config.wakeCooldownMs, WAKE_COOLDOWN_MS, 'wakeCooldownMs')
 
   var lastAcceleration = null
   var lastWakeAt = 0
@@ -22,28 +25,21 @@ function create(options) {
   }
 
   function push(sample, now) {
-    if (!sample) return false
-    var time = Number(now)
-    if (!isFinite(time)) time = Date.now()
-    if (lastHandleAt && time - lastHandleAt < throttleMs) return false
-    lastHandleAt = time
+    if (typeof now !== 'number' || !isFinite(now)) throw new Error('Raise-wake requires numeric time')
+    if (lastHandleAt && now - lastHandleAt < throttleMs) return false
+    lastHandleAt = now
 
-    var current = {
-      x: Number(sample.x) || 0,
-      y: Number(sample.y) || 0,
-      z: Number(sample.z) || 0
-    }
     var wake = false
     if (lastAcceleration) {
-      var delta = Math.abs(current.x - lastAcceleration.x) +
-        Math.abs(current.y - lastAcceleration.y) +
-        Math.abs(current.z - lastAcceleration.z)
-      if (delta > threshold && time - lastWakeAt > cooldownMs) {
-        lastWakeAt = time
+      var delta = Math.abs(sample.x - lastAcceleration.x) +
+        Math.abs(sample.y - lastAcceleration.y) +
+        Math.abs(sample.z - lastAcceleration.z)
+      if (delta > threshold && now - lastWakeAt > cooldownMs) {
+        lastWakeAt = now
         wake = true
       }
     }
-    lastAcceleration = current
+    lastAcceleration = sample
     return wake
   }
 
