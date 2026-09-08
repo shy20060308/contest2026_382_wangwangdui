@@ -1,4 +1,4 @@
-var freedom = require('../../freedom')
+var difference = require('../../difference')
 var adapter = require('../../adapter')
 var layout = require('./layout')
 
@@ -6,7 +6,7 @@ function contentWidth(profile) { return adapter.contentWidth(profile, layout) }
 
 function resolve(profile, scene, safe) {
   var config = adapter.select(layout, profile)
-  var plan = adapter.createPlan(profile, scene, safe, freedom.ASSISTED, config.surface)
+  var plan = adapter.createPlan(profile, scene, safe, difference.L2, config.surface)
   var streamHeight = safe.bottom - (safe.top + config.streamTop)
   plan.stream = adapter.placeBand(profile, scene, safe, {
     top: config.streamTop,
@@ -76,7 +76,7 @@ function resolve(profile, scene, safe) {
 }
 
 module.exports = {
-  freedomLevel: freedom.ASSISTED,
+  differenceLevel: difference.L2,
   contentWidth: contentWidth,
   resolve: resolve,
   layout: layout
