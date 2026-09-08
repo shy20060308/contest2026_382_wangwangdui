@@ -3,10 +3,10 @@ function project(state) {
   return {
     visible: state.visible,
     type: state.type,
-    appName: state.appName || (state.type === 'call' ? '电话' : '通知'),
+    appName: state.appName,
     appIcon: state.appIcon || '/common/logo.png',
     content: state.content,
-    contact: state.contact || (state.type === 'call' ? '未知来电' : ''),
+    contact: state.contact,
     phone: state.phone,
     hangUp: state.hangUp,
     hangUpColor: state.hangUp ? '#777777' : '#FFFFFF'
