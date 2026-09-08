@@ -1,7 +1,7 @@
 import storage from '../../capabilities/storage'
 
-var ACTIVE_KEY = 'active_workout_v1'
-var RECORDS_KEY = 'workout_records_v1'
+var ACTIVE_KEY = 'active_workout_v3'
+var RECORDS_KEY = 'workout_records_v3'
 var MAX_RECORDS = 30
 
 function clone(value) {
@@ -10,16 +10,12 @@ function clone(value) {
 
 export default {
   saveActive: function (session, callback) {
-    if (!session) {
-      storage.delete(ACTIVE_KEY, callback)
-      return
-    }
     storage.set(ACTIVE_KEY, session, callback)
   },
 
   loadActive: function (callback) {
     storage.getJSON(ACTIVE_KEY, function (session) {
-      if (callback) callback(session && session.id ? clone(session) : null)
+      if (callback) callback(clone(session))
     }, null)
   },
 
