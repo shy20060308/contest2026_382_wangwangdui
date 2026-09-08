@@ -57,11 +57,10 @@ export function createClockController(onChange, onNotification) {
   }
 
   function applyFace(id) {
-    if (!faceIds.length) throw new Error('Clock requires configured faceIds')
     var nextId = faceIds.indexOf(id) >= 0 ? id : faceIds[0]
     selectedFaceId = nextId
     state.faceId = nextId
-    state.faceIndex = Math.max(0, faceIds.indexOf(nextId))
+    state.faceIndex = faceIds.indexOf(nextId)
   }
 
   function updateTime() {
@@ -71,41 +70,35 @@ export function createClockController(onChange, onNotification) {
 
   function refreshActivity() {
     var activity = activityStore.getSnapshot()
-    state.steps = Number(activity.steps) || 0
-    state.stepsGoal = Number(activity.stepsGoal) || 0
-    state.goalPercent = Math.max(0, Math.min(100, Number(activity.goalPercent) || 0))
-    state.stepsPercent = Math.max(0, Math.min(100, Number(activity.stepsPercent) || 0))
+    state.steps = activity.steps
+    state.stepsGoal = activity.stepsGoal
+    state.goalPercent = activity.goalPercent
+    state.stepsPercent = activity.stepsPercent
   }
 
   function onHeartRate(sample) {
-    if (!sample || sample.value === undefined || sample.value === null) return
-    var value = Number(sample.value)
-    if (!isFinite(value) || value <= 0) return
-    state.currentHeartRate = Math.round(value)
-    heartValues.push(state.currentHeartRate)
+    state.currentHeartRate = sample.value
+    heartValues.push(sample.value)
     if (heartValues.length > 10) heartValues.shift()
     state.heartRateValues = heartValues.slice()
     emit()
   }
 
   function onBattery(percent) {
-    if (percent === null || percent === undefined) return
-    var value = Number(percent)
-    if (!isFinite(value)) return
-    state.batteryPercent = Math.max(0, Math.min(100, Math.round(value)))
+    state.batteryPercent = percent
     emit()
   }
 
   function onPower(mode) {
-    state.powerMode = mode === 'SLEEP' || mode === 'DIM' ? mode : 'ACTIVE'
+    state.powerMode = mode
     emit()
   }
 
   function configurePower(settings) {
     if (!powerRuntime) return
     powerRuntime.configure({
-      lowPowerEnabled: settings.lowPowerEnabled !== false,
-      raiseWakeEnabled: settings.raiseWakeEnabled !== false,
+      lowPowerEnabled: settings.lowPowerEnabled,
+      raiseWakeEnabled: settings.raiseWakeEnabled,
       activeBrightnessValue: settings.brightnessValue
     })
   }
