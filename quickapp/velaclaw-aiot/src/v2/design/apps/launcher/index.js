@@ -40,7 +40,7 @@ function resolve(profile, scene, safe) {
   plan.nameSize = config.nameSize
   plan.arrowSize = config.arrowSize
   plan.iconSize = config.iconSize
-  plan.iconRadius = Math.round(config.iconSize / 2)
+  plan.iconRadius = config.iconRadius
   plan.itemRadius = config.itemRadius
   plan.listChrome = adapter.merge({}, config.listChrome)
   plan.gridChrome = adapter.merge({}, config.gridChrome)
