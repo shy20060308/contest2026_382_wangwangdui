@@ -4,6 +4,10 @@ const core = require('../src/domain/settings/store_core')
 let passed = 0
 function test(name, callback) { callback(); passed++; console.log('通过 - ' + name) }
 
+function persisted(overrides) {
+  return Object.assign({}, core.DEFAULTS, overrides || {})
+}
+
 function fakeStorage() {
   const reads = []
   const writes = []
@@ -39,7 +43,7 @@ test('并发 load 合并为一次初始读取，后续 load 只读内存真源',
   store.load(function (value) { first = value })
   store.load(function (value) { second = value })
   assert.strictEqual(storage.reads.length, 1)
-  storage.resolveRead({ brightnessValue: 88, vibrationLevel: 'strong' })
+  storage.resolveRead(persisted({ brightnessValue: 88, vibrationLevel: 'strong' }))
   assert.strictEqual(first.brightnessValue, 88)
   assert.strictEqual(second.vibrationLevel, 'strong')
   store.load(function (value) { third = value })
@@ -53,7 +57,7 @@ test('初始读取期间 update 不会用默认值提前覆盖已存配置', fun
   store.load(function () {})
   store.update('brightnessValue', 210)
   assert.strictEqual(storage.writes.length, 0, 'load 完成前不得写入基于默认值的快照')
-  storage.resolveRead({ brightnessValue: 80, vibrationLevel: 'strong', vibrationPattern: 'alert' })
+  storage.resolveRead(persisted({ brightnessValue: 80, vibrationLevel: 'strong', vibrationPattern: 'alert' }))
   const snapshot = store.getSnapshot()
   assert.strictEqual(snapshot.brightnessValue, 210, 'pending update must win over stored value')
   assert.strictEqual(snapshot.vibrationLevel, 'strong', 'unrelated stored fields must survive')
@@ -67,7 +71,7 @@ test('快速连续 update 串行写入，最终落盘一定是最新快照', fun
   const storage = fakeStorage()
   const store = core.createStore(storage)
   store.load(function () {})
-  storage.resolveRead({ brightnessValue: 100 })
+  storage.resolveRead(persisted({ brightnessValue: 100 }))
 
   store.update('brightnessValue', 150)
   store.update('brightnessValue', 160)
@@ -91,7 +95,7 @@ test('persist callback 等到合并后的最终写入完成', function () {
   const storage = fakeStorage()
   const store = core.createStore(storage)
   store.load(function () {})
-  storage.resolveRead({ brightnessValue: 100 })
+  storage.resolveRead(persisted({ brightnessValue: 100 }))
   let callbackValue = null
   store.update('brightnessValue', 120, function (value) { callbackValue = value.brightnessValue })
   store.update('brightnessValue', 130)
@@ -114,12 +118,19 @@ test('未知 setting key、非法 canonical value 和半合法 patch 必须原�
   assert.deepStrictEqual(store.getSnapshot(), before, 'failed updateMany must not partially mutate canonical settings')
 })
 
+test('已存在的 V3 settings 必须是完整 schema，不能用 DEFAULTS 修补损坏状态', function () {
+  const storage = fakeStorage()
+  const store = core.createStore(storage)
+  store.load(function () {})
+  assert.throws(function () { storage.resolveRead({ brightnessValue: 88 }) }, /Incomplete stored Settings state/)
+})
+
 test('load 回调拿到副本，外部修改不会污染 Store', function () {
   const storage = fakeStorage()
   const store = core.createStore(storage)
   let exposed = null
   store.load(function (value) { exposed = value })
-  storage.resolveRead({ vibrationPattern: 'countdown' })
+  storage.resolveRead(persisted({ vibrationPattern: 'countdown' }))
   exposed.vibrationPattern = 'alert'
   assert.strictEqual(store.getSnapshot().vibrationPattern, 'countdown')
 })
