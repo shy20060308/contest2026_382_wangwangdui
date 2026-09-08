@@ -101,8 +101,13 @@ function resolve(context, callback) {
   if (loading) return
   loading = true
   device.get(function (info) {
-    cached = make(info || {}, context)
     loading = false
+    try {
+      cached = make(info, context)
+    } catch (error) {
+      pending = []
+      throw error
+    }
     flush(cached)
   })
 }
