@@ -53,8 +53,6 @@ function region(left, top, width, height) {
   }
 }
 
-// Recipe owns geometry. Scene/Profile have already been resolved upstream, so
-// this function validates only recipe-owned offsets and dimensions.
 function placeBand(profile, scene, safe, spec) {
   var config = spec || {}
   var bounds = config.bounds === 'scene'
@@ -80,8 +78,6 @@ function grid(regionValue, columns, gap) {
   return { columns: count, gap: spacing, itemWidth: Math.floor((width - spacing * (count - 1)) / count) }
 }
 
-// Vela treats explicit dimensions as content-box. Recipe dimensions are outer
-// design dimensions, so this is a single box-model translation, not a check.
 function contentBox(outerWidth, outerHeight, paddingX, paddingY) {
   var width = requiredNumber(outerWidth, 'contentBox.outerWidth')
   var height = requiredNumber(outerHeight, 'contentBox.outerHeight')
@@ -94,12 +90,12 @@ function contentBox(outerWidth, outerHeight, paddingX, paddingY) {
 }
 
 function createPlan(profile, scene, safe, level, surface) {
-  if (level !== difference.L1 && level !== difference.L2 && level !== difference.L3) throw new Error('V3 Adapter requires an explicit L1/L2/L3 difference level')
+  var differenceInfo = difference.describe(level)
   if (!surface || typeof surface !== 'string') throw new Error('V3 Adapter requires recipe.surface')
   return {
     designSystem: SYSTEM_ID,
     designSystemVersion: VERSION,
-    difference: difference.describe(level),
+    difference: differenceInfo,
     differenceLevel: level,
     shape: profile.formFactor,
     surface: surface,
