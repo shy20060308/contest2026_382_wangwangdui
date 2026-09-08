@@ -6,18 +6,17 @@ function requireFaceIds(faceIds) {
   return faceIds.slice()
 }
 
+function requireAllowedFace(ids, id) {
+  if (ids.indexOf(id) < 0) throw new Error('Watchface is not allowed by Recipe: ' + id)
+  return id
+}
+
 export function createWatchfaceController(onChange) {
   var ids = []
   var selectedId = ''
 
-  function normalize(id) {
-    if (!ids.length) throw new Error('Watchface controller must be configured before use')
-    if (ids.indexOf(id) >= 0) return id
-    return ids[0]
-  }
-
   function snapshot() {
-    selectedId = normalize(selectedId)
+    if (!ids.length || !selectedId) throw new Error('Watchface controller must be configured before use')
     var faces = faceCatalog.list(ids)
     var selectedIndex = faceCatalog.indexOf(ids, selectedId)
     return { selectedId: selectedId, selectedIndex: selectedIndex, faces: faces }
@@ -32,16 +31,19 @@ export function createWatchfaceController(onChange) {
   return {
     configure: function (faceIds) {
       ids = requireFaceIds(faceIds)
-      selectedId = normalize(selectedId)
+      selectedId = ids[0]
       return emit()
     },
     load: function () {
       if (!ids.length) throw new Error('Watchface controller must be configured before load')
-      watchfaceStore.loadSelectedFaceId(function (id) { selectedId = normalize(id); emit() })
+      watchfaceStore.loadSelectedFaceId(function (id) {
+        if (id) selectedId = requireAllowedFace(ids, id)
+        emit()
+      })
     },
     select: function (id, callback) {
       if (!ids.length) throw new Error('Watchface controller must be configured before select')
-      selectedId = normalize(id)
+      selectedId = requireAllowedFace(ids, id)
       emit()
       watchfaceStore.setSelectedFaceId(selectedId, function () { if (callback) callback(selectedId) })
     },
