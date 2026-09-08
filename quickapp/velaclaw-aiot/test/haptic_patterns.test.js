@@ -9,21 +9,22 @@ function test(name, callback) {
   console.log('通过 - ' + name)
 }
 
-test('未知模式回退为达标语义', function () {
+test('旧持久化模式只在迁移入口回退为达标语义', function () {
   assert.strictEqual(patterns.normalize('unknown'), 'goal')
-  assert.strictEqual(patterns.get('unknown').id, 'goal')
+  assert.throws(function () { patterns.get('unknown', 'medium') }, /Unknown haptic pattern/)
 })
 
 test('四种模式保持独立节奏配置', function () {
-  assert.strictEqual(patterns.get('tap').count, 1)
-  assert.strictEqual(patterns.get('goal').count, 2)
-  assert.strictEqual(patterns.get('countdown').count, 3)
-  assert.strictEqual(patterns.get('alert').mode, 'long')
+  assert.strictEqual(patterns.get('tap', 'medium').count, 1)
+  assert.strictEqual(patterns.get('goal', 'medium').count, 2)
+  assert.strictEqual(patterns.get('countdown', 'medium').count, 3)
+  assert.strictEqual(patterns.get('alert', 'medium').mode, 'long')
 })
 
 test('强度只缩放持续时间，不改变模式语义', function () {
   assert.strictEqual(patterns.get('tap', 'strong').id, 'tap')
   assert.ok(patterns.get('tap', 'strong').duration > patterns.get('tap', 'light').duration)
+  assert.throws(function () { patterns.get('tap', 'unknown') }, /Unknown haptic level/)
 })
 
 test('Domain 不输出展示文案', function () {
