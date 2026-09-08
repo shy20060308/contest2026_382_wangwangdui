@@ -1,10 +1,10 @@
-var freedom = require('../../freedom')
+var difference = require('../../difference')
 var adapter = require('../../adapter')
 var layout = require('./layout')
 
 function resolve(profile, scene, safe) {
   var config = adapter.select(layout, profile)
-  var plan = adapter.createPlan(profile, scene, safe, freedom.FREE, config.surface)
+  var plan = adapter.createPlan(profile, scene, safe, difference.L3, config.surface)
   plan.faceIds = config.faceIds.slice()
   plan.notificationOverlay = !!config.notificationOverlay
   plan.faces = config.faces
@@ -12,4 +12,4 @@ function resolve(profile, scene, safe) {
   return plan
 }
 
-module.exports = { freedomLevel: freedom.FREE, resolve: resolve, layout: layout }
+module.exports = { differenceLevel: difference.L3, resolve: resolve, layout: layout }
