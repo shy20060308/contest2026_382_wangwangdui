@@ -43,6 +43,13 @@ const translated = adapter.placeBand(profiles[0], circleHost, circleSafe, { top:
 assert.deepStrictEqual(translated, { left: 36, top: 24, width: 120, height: 22 })
 assert.deepStrictEqual(adapter.contentBox(82, 58, 7, 6), { width: 68, height: 46 })
 
+assert.throws(function () { adapter.shapeOf({ formFactor: 'triangle' }) }, /Unsupported V3 form factor/)
+assert.throws(function () { adapter.contentWidth(profiles[0], { base: {} }) }, /recipe\.contentWidth/)
+assert.throws(function () { adapter.grid({ width: 100 }, undefined, 0) }, /grid\.columns/)
+assert.throws(function () { adapter.placeBand(profiles[0], {}, circleSafe, { bounds: 'scene', width: 50, height: 20 }) }, /scene\.width/)
+assert.throws(function () { adapter.createPlan(profiles[0], circleHost, circleSafe, undefined, 'test') }, /explicit L1\/L2\/L3/)
+assert.throws(function () { adapter.createPlan(profiles[0], circleHost, circleSafe, difference.L1, '') }, /recipe\.surface/)
+
 profiles.forEach(function (profile) {
   const host = scene.resolve(profile)
   const safe = scene.safe(profile, host)
@@ -58,4 +65,4 @@ profiles.forEach(function (profile) {
   })
 })
 
-console.log('V3 design runtime verified: explicit insets, direct recipe translation, canonical L1/L2/L3 difference metadata')
+console.log('V3 design runtime verified: direct recipe translation, canonical L1/L2/L3 metadata, missing design inputs fail fast')
