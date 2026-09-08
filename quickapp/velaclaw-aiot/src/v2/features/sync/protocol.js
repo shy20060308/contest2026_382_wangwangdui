@@ -1,15 +1,13 @@
 var VERSION = 1
-var DEFAULT_CHUNK = 96
 
 function splitText(text, chunkSize) {
-  var size = Math.max(16, Math.round(Number(chunkSize) || DEFAULT_CHUNK))
   var result = []
-  for (var i = 0; i < text.length; i += size) result.push(text.slice(i, i + size))
+  for (var i = 0; i < text.length; i += chunkSize) result.push(text.slice(i, i + chunkSize))
   return result
 }
 
 function encode(payload, chunkSize) {
-  var text = JSON.stringify(payload || {})
+  var text = JSON.stringify(payload)
   var pieces = splitText(text, chunkSize)
   var transferId = 'sync_' + Date.now()
   var packets = []
