@@ -60,25 +60,25 @@ const motionFeature = read('src/v2/features/settings/motion_controller.js')
 const diagnosticsFeature = read('src/v2/features/settings/diagnostics_controller.js')
 const workoutFeature = read('src/v2/features/workout/controller.js')
 const notificationFeature = read('src/v2/features/notification/controller.js')
-const deviceProfile = read('src/v2/system/device_profile.js')
+const deviceProfile = read('src/runtime/device_profile.js')
 
 assert.ok(brightnessFeature.includes("../../../capabilities/display_power"), 'brightness Feature must use display gateway')
 assert.ok(motionFeature.includes("../../../capabilities/motion"), 'motion Feature must use motion gateway')
 assert.ok(diagnosticsFeature.includes("../../../capabilities/introspection"), 'diagnostics Feature must use capability introspection')
 assert.ok(workoutFeature.includes("../../../capabilities/location"), 'workout Feature must use location gateway')
 assert.ok(notificationFeature.includes("../../../capabilities/system_event") && notificationFeature.includes("../../../capabilities/interconnect"), 'notification Feature must use event/interconnect gateways')
-assert.ok(deviceProfile.includes("../../capabilities/device"), 'V2 device profile must use device gateway')
-;[brightnessFeature, motionFeature, diagnosticsFeature, workoutFeature, notificationFeature, deviceProfile].forEach(source => assert.ok(!hasRawDeviceApi(source), 'V2 application layers must not bypass capability gateways'))
+assert.ok(deviceProfile.includes("../capabilities/device"), 'Device Profile Runtime must use device gateway')
+;[brightnessFeature, motionFeature, diagnosticsFeature, workoutFeature, notificationFeature, deviceProfile].forEach(source => assert.ok(!hasRawDeviceApi(source), 'application/runtime layers must not bypass capability gateways'))
 
 Object.keys(manifest.router.pages || {}).forEach(route => {
   const page = manifest.router.pages[route]
   const source = read(path.join('src', route, page.component + '.ux'))
   assert.ok(!source.includes('/capabilities/'), route + ' Page must not depend on Capability directly')
   assert.ok(!hasRawDeviceApi(source), route + ' Page must not access raw device APIs')
-  assert.ok(!source.includes('@system.router'), route + ' Page must delegate navigation to V2 app runtime')
+  assert.ok(!source.includes('@system.router'), route + ' Page must delegate navigation to app runtime')
 })
 
 const navigation = read('src/v2/app/navigation.js')
-assert.ok(navigation.includes("from '@system.router'"), 'V2 navigation must be the sole router framework boundary')
+assert.ok(navigation.includes("from '@system.router'"), 'navigation runtime must be the sole router framework boundary')
 
 console.log('Capability Runtime verified: raw Vela APIs stay in gateways and Pages stay capability-free')
