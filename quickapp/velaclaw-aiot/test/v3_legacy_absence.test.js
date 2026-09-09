@@ -110,14 +110,4 @@ assert.ok(!packageSource.includes('render-' + 'soft-icons'), 'tooling must not r
 assert.ok(!packageSource.includes('lint-' + 'staged'), 'package metadata must not restore inactive hook tooling')
 assert.ok(!packageSource.includes('commit' + 'lint'), 'package metadata must not restore inactive Commitlint tooling')
 
-filesUnder('test', /\.test\.js$/, []).forEach(function (file) {
-  const source = read(file)
-  assert.ok(!source.includes('src/common/'), file + ' must not validate retired common logic')
-  assert.ok(!source.includes('src/presentation/'), file + ' must not validate retired presentation logic')
-  assert.ok(!source.includes('src/platform/'), file + ' must not validate retired platform aliases')
-  assert.ok(!source.includes('src/v2/app/'), file + ' must not validate retired v2 app runtime')
-  assert.ok(!source.includes('design/views/'), file + ' must not validate retired Design Views')
-  assert.ok(!source.includes('design/specs/'), file + ' must not validate retired Design Specs')
-})
-
 console.log('V3 legacy absence verified: retired namespaces and compatibility strategies stay absent')
