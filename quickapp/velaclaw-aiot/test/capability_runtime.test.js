@@ -6,12 +6,32 @@ const root = path.resolve(__dirname, '..')
 const read = name => fs.readFileSync(path.join(root, name), 'utf8')
 const manifest = JSON.parse(read('src/manifest.json'))
 
+const RAW_DEVICE_APIS = new Set([
+  '@system.battery', '@system.brightness', '@system.device', '@system.event',
+  '@system.geolocation', '@system.interconnect', '@system.sensor', '@system.storage',
+  '@system.vibrator', '@service.health'
+])
+
+function importedModules(source) {
+  const modules = []
+  const patterns = [
+    /\bfrom\s+['"]([^'"]+)['"]/g,
+    /\brequire\(\s*['"]([^'"]+)['"]\s*\)/g,
+    /\bimport\s+['"]([^'"]+)['"]/g
+  ]
+  patterns.forEach(pattern => {
+    let match
+    while ((match = pattern.exec(source)) !== null) modules.push(match[1])
+  })
+  return modules
+}
+
 function hasRawDeviceApi(source) {
-  return [
-    '@system.battery', '@system.brightness', '@system.device', '@system.event',
-    '@system.geolocation', '@system.interconnect', '@system.sensor', '@system.storage',
-    '@system.vibrator', '@service.health'
-  ].some(token => source.includes(token))
+  return importedModules(source).some(moduleName => RAW_DEVICE_APIS.has(moduleName))
+}
+
+function importsCapabilityDirectly(source) {
+  return importedModules(source).some(moduleName => /(?:^|\/)capabilities\//.test(moduleName))
 }
 
 const healthChannel = read('src/capabilities/internal/health_channel.js')
@@ -73,26 +93,26 @@ const deviceProfile = read('src/runtime/device_profile.js')
 assert.ok(brightnessFeature.includes("../../../capabilities/display_power"), 'brightness Feature must use display gateway')
 assert.ok(motionFeature.includes("../../../capabilities/motion"), 'motion Feature must use motion gateway')
 assert.ok(motionFeature.includes("../../../runtime/haptics"), 'motion Feature must use the formal haptics runtime')
-assert.ok(!motionFeature.includes('/system/haptics'), 'motion Feature must not restore the retired v2/system haptics path')
+assert.ok(!importedModules(motionFeature).some(moduleName => moduleName.includes('/system/haptics')), 'motion Feature must not restore the retired v2/system haptics path')
 assert.ok(diagnosticsFeature.includes("../../../capabilities/introspection"), 'diagnostics Feature must use capability introspection')
 assert.ok(!diagnosticsFeature.includes('isBetaPillViewport'), 'diagnostics must not expose retired beta viewport compatibility state')
 assert.ok(workoutFeature.includes("../../../capabilities/location"), 'workout Feature must use location gateway')
 assert.ok(notificationFeature.includes("../../../capabilities/system_event") && notificationFeature.includes("../../../capabilities/interconnect"), 'notification Feature must use event/interconnect gateways')
 assert.ok(syncFeature.includes("../../../capabilities/interconnect"), 'sync Feature must use the formal interconnect gateway')
 assert.ok(syncFeature.includes('activityStore.hydrate'), 'sync Feature must hydrate canonical Activity before building outbound payloads')
-assert.ok(!syncFeature.includes('mock_transport'), 'sync Feature must not restore simulated production transport')
+assert.ok(!importedModules(syncFeature).some(moduleName => moduleName.includes('mock_transport')), 'sync Feature must not restore simulated production transport')
 assert.ok(deviceProfile.includes("../capabilities/device"), 'Device Profile Runtime must use device gateway')
 ;[brightnessFeature, motionFeature, diagnosticsFeature, workoutFeature, notificationFeature, syncFeature, deviceProfile].forEach(source => assert.ok(!hasRawDeviceApi(source), 'application/runtime layers must not bypass capability gateways'))
 
 Object.keys(manifest.router.pages || {}).forEach(route => {
   const page = manifest.router.pages[route]
   const source = read(path.join('src', route, page.component + '.ux'))
-  assert.ok(!source.includes('/capabilities/'), route + ' Page must not depend on Capability directly')
+  assert.ok(!importsCapabilityDirectly(source), route + ' Page must not depend on Capability directly')
   assert.ok(!hasRawDeviceApi(source), route + ' Page must not access raw device APIs')
-  assert.ok(!source.includes('@system.router'), route + ' Page must delegate navigation to runtime')
+  assert.ok(!importedModules(source).includes('@system.router'), route + ' Page must delegate navigation to runtime')
 })
 
 const navigation = read('src/runtime/navigation.js')
-assert.ok(navigation.includes("from '@system.router'"), 'Runtime navigation must be the sole router framework boundary')
+assert.ok(importedModules(navigation).includes('@system.router'), 'Runtime navigation must be the sole router framework boundary')
 
 console.log('Capability Runtime verified: raw Vela APIs stay in gateways, synthetic health is banned and Pages stay capability-free')
