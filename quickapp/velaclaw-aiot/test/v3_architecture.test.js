@@ -51,6 +51,9 @@ function hasPlanToUxGeometryFallback(source) {
   })
 }
 
+assert.strictEqual(hasPlanToUxGeometryFallback("if (!event || this.surface === 'honeycomb') return"), false, 'ordinary business OR conditions must not be treated as geometry fallback')
+assert.strictEqual(hasPlanToUxGeometryFallback('this.left = plan.left || this.left'), true, 'plan-to-UX geometry fallback must remain detectable')
+
 filesUnder('src', []).forEach(function (file) {
   const source = read(file)
   relativeDependencies(source).forEach(function (dependency) {
@@ -85,7 +88,7 @@ strictRecipePages.forEach(function (file) {
   const source = read(file)
   const style = styleBlock(source)
   assert.ok(/if="\{\{\s*ready(?:\s*&&|\s*\}\})/.test(source), file + ' must not render product geometry before its V3 plan resolves')
-  assert.ok(!hasPlanToUxGeometryFallback(source), file + ' must not fall back from resolved Plan geometry to UX-owned geometry')
+  assert.ok(!hasPlanToUxGeometryFallback(source), file + ' must not fall back from resolved plan geometry to UX-owned geometry')
   assert.ok(!/:\s*-?(?:[1-9]\d*|0\.\d*[1-9]\d*)px\b/.test(style), file + ' CSS must not own non-zero geometry after strict V3 migration')
 })
 
@@ -158,9 +161,11 @@ strictPlanViews.forEach(function (file) {
   assert.ok(!/Number\(\s*plan[^)]*\)\s*\|\|/.test(source), file + ' must not invent visual geometry')
 })
 
-const diagnosticsView = read('src/v2/design/apps/diagnostics/view.js')
-assert.ok(!diagnosticsView.includes('|| 3'), 'Diagnostics paging must require recipe capacity')
-assert.ok(diagnosticsView.includes('requires resolved capabilityPageSize'), 'Diagnostics paging must fail visibly when recipe capacity is missing')
+const diagnosticsViewSource = read('src/v2/design/apps/diagnostics/view.js')
+const diagnosticsView = require('../src/v2/design/apps/diagnostics/view')
+assert.ok(!diagnosticsViewSource.includes('|| 3'), 'Diagnostics paging must not invent recipe capacity')
+assert.throws(function () { diagnosticsView.page([], 0) }, /capabilityPageSize/, 'Diagnostics paging must fail visibly when recipe capacity is missing')
+assert.throws(function () { diagnosticsView.page([], 0, 0) }, /capabilityPageSize/, 'Diagnostics paging must reject non-positive recipe capacity')
 
 const adapter = read('src/v2/design/adapter.js')
 assert.ok(!adapter.includes('function clamp('), 'Adapter must not repair recipe geometry at runtime')
