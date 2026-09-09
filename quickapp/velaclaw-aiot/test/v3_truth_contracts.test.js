@@ -12,6 +12,7 @@ const watchfaceCatalog = require('../src/v2/design/watchface_catalog')
 const domainWatchfaceCatalog = require('../src/domain/watchface/catalog')
 const notificationFactory = require('../src/domain/notification/factory')
 const notificationView = require('../src/v2/design/apps/notification/view')
+const diagnosticsView = require('../src/v2/design/apps/diagnostics/view')
 const launcherLayout = require('../src/v2/design/apps/launcher/layout')
 const appRoutes = require('../src/runtime/app_routes')
 const clockView = require('../src/v2/design/apps/clock/view')
@@ -54,6 +55,14 @@ assert.strictEqual(telemetry.batteryPercent, '--')
 assert.strictEqual(telemetry.batteryWidth, '0%')
 assert.strictEqual(telemetry.currentHeartRate, '--')
 
+const diagnosticsProjection = diagnosticsView.project({
+  device: { model: null, screenWidth: 192, screenHeight: 490, formFactor: 'pill', platformVersionCode: null },
+  host: { width: 192, height: 490 },
+  capabilities: []
+})
+assert.strictEqual(diagnosticsProjection.device.model, '--', 'Diagnostics View must render unavailable model explicitly')
+assert.strictEqual(diagnosticsProjection.device.platformText, '--', 'Diagnostics View must render unavailable platform version explicitly')
+
 const batterySource = read('src/capabilities/battery.js')
 const storageSource = read('src/capabilities/storage.js')
 const powerControllerSource = read('src/runtime/power/controller.js')
@@ -83,7 +92,7 @@ assert.ok(!clockControllerSource.includes('currentHeartRate: 88'), 'Clock contro
 assert.ok(!/batteryPercent:\s*\d+/.test(clockPageSource), 'Clock page must not seed fabricated battery data')
 assert.ok(!/currentHeartRate:\s*\d+/.test(clockPageSource), 'Clock page must not seed fabricated heart-rate data')
 assert.ok(!clockPageSource.includes("faceId: 'sport'"), 'Clock page must not seed a watchface outside Recipe/controller ownership')
-assert.ok(clockControllerSource.includes('Clock requires resolved faceIds'), 'Clock must require Recipe-owned face IDs')
+assert.ok(clockControllerSource.includes('function requireFaceIds(ids)') && clockControllerSource.includes('faceIds = requireFaceIds(allowedFaceIds)'), 'Clock must validate Recipe-owned face IDs at configuration boundary')
 assert.ok(!clockControllerSource.includes('getSnapshot: snapshot'), 'Clock must not expose a second snapshot access path outside its change callback')
 assert.ok(!clockControllerSource.includes('historyRepository'), 'Clock must not own History persistence; only real Activity mutation may write history')
 assert.ok(clockControllerSource.includes('activityStore.hydrate'), 'Clock must consume hydrated canonical Activity state before starting live runtime')
@@ -102,14 +111,13 @@ assert.ok(!watchfaceStoreSource.includes('right_face_transition_v3'), 'Retired r
 assert.ok(!watchfaceStoreSource.includes('markRightFaceTransition') && !watchfaceStoreSource.includes('consumeRightFaceTransition') && !watchfaceStoreSource.includes('clearRightFaceTransition'), 'Watchface Store must expose only current selection persistence')
 assert.ok(!watchfaceStoreSource.includes('getSelectedFaceId'), 'Watchface Store must not expose a second synchronous selection read path')
 assert.ok(!watchfaceControllerSource.includes("selectedId = 'sport'"), 'Watchface Feature must not own a hardcoded face default')
-assert.ok(watchfaceControllerSource.includes('requires Recipe faceIds'), 'Watchface Feature must require Recipe-owned face IDs')
-assert.ok(watchfaceControllerSource.includes('Watchface is not allowed by Recipe'), 'Watchface Feature must reject non-empty invalid selections instead of normalizing them')
+assert.ok(watchfaceControllerSource.includes('function requireFaceIds(faceIds)') && watchfaceControllerSource.includes('ids = requireFaceIds(faceIds)'), 'Watchface Feature must validate Recipe-owned face IDs at configuration boundary')
+assert.ok(watchfaceControllerSource.includes('function requireAllowedFace(ids, id)') && watchfaceControllerSource.includes('selectedId = requireAllowedFace(ids, id)'), 'Watchface Feature must reject non-empty selections outside the Recipe-owned set')
 assert.ok(!watchfaceControllerSource.includes('refresh: emit'), 'Watchface Feature must not expose an unused refresh facade')
 assert.ok(!watchfacePageSource.includes("selectedName: '活力数字'"), 'Watchface page must not seed selected-face content before controller state')
 
 assert.ok(!diagnosticsViewSource.includes('isBetaPillViewport'), 'Diagnostics must not retain retired beta viewport compatibility state')
 assert.ok(!diagnosticsViewSource.includes("formFactor || 'rect'"), 'Diagnostics must consume canonical Device Profile formFactor without fallback')
 assert.ok(!diagnosticsViewSource.includes('deviceFamily'), 'Diagnostics must display the native device model instead of an inferred family')
-assert.ok(diagnosticsViewSource.includes("value === null ? '--'"), 'Diagnostics View must render unavailable optional device facts explicitly')
 
 console.log('V3 truth contracts verified: canonical state has one owner, product APIs are narrow and invalid inputs are not silently repaired')
