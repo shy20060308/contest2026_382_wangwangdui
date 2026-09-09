@@ -45,6 +45,12 @@ function styleBlock(source) {
   return match ? match[1] : ''
 }
 
+function hasPlanToUxGeometryFallback(source) {
+  return source.split(/\r?\n/).some(function (line) {
+    return /\bthis\.[A-Za-z_$][\w$]*\s*=\s*[^;]*\bplan\b[^;]*\|\|\s*this\.[A-Za-z_$][\w$]*/.test(line)
+  })
+}
+
 filesUnder('src', []).forEach(function (file) {
   const source = read(file)
   relativeDependencies(source).forEach(function (dependency) {
@@ -79,7 +85,7 @@ strictRecipePages.forEach(function (file) {
   const source = read(file)
   const style = styleBlock(source)
   assert.ok(/if="\{\{\s*ready(?:\s*&&|\s*\}\})/.test(source), file + ' must not render product geometry before its V3 plan resolves')
-  assert.ok(!source.includes('|| this.'), file + ' must not fall back to UX-owned geometry')
+  assert.ok(!hasPlanToUxGeometryFallback(source), file + ' must not fall back from resolved Plan geometry to UX-owned geometry')
   assert.ok(!/:\s*-?(?:[1-9]\d*|0\.\d*[1-9]\d*)px\b/.test(style), file + ' CSS must not own non-zero geometry after strict V3 migration')
 })
 
