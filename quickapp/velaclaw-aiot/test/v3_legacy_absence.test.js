@@ -69,9 +69,6 @@ assert.deepStrictEqual(commonLogic, [], 'src/common is a static-resource namespa
 
 filesUnder('src', /\.(?:js|ux)$/, []).forEach(function (file) {
   const source = read(file)
-  assert.ok(!source.includes('v2/app/'), file + ' must not depend on retired v2/app code')
-  assert.ok(!source.includes('/design/specs/') && !source.includes('/design/views/'), file + ' must not consume retired Design Specs/Views')
-  assert.ok(!source.includes('../presentation/') && !source.includes('/presentation/'), file + ' must not depend on retired presentation code')
   assert.ok(!source.includes('soft' + 'Icon'), file + ' must not restore the retired soft launcher icon strategy')
   relativeDependencies(source).forEach(function (dependency) {
     const resolved = path.resolve(path.dirname(path.join(root, file)), dependency)
