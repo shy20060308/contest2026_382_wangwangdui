@@ -42,13 +42,17 @@ function inside(target, parent) {
   return relative === '' || (!relative.startsWith('..' + path.sep) && relative !== '..' && !path.isAbsolute(relative))
 }
 
-[
+const retiredRoots = [
   ['src/platform', 'platform aliases'],
   ['src/presentation', 'presentation runtime'],
   ['src/v2/system', 'v2/system namespace'],
   ['src/v2/app', 'v2/app namespace'],
   ['src/v2/design/specs', 'Design Specs'],
-  ['src/v2/design/views', 'Design Views'],
+  ['src/v2/design/views', 'Design Views']
+]
+
+[
+  ...retiredRoots,
   ['src/v2/design/geometry.js', 'geometry solver'],
   ['src/v2/design/freedom.js', 'freedom compatibility system'],
   ['src/v2/features/sync/mock_transport.js', 'mock sync transport'],
@@ -64,6 +68,7 @@ function inside(target, parent) {
   assert.strictEqual(exists(entry[0]), false, 'V3 must not restore retired ' + entry[1])
 })
 
+const retiredAbsoluteRoots = retiredRoots.map(function (entry) { return { root: path.join(root, entry[0]), label: entry[1] } })
 const commonLogic = filesUnder('src/common', /\.(?:js|ux)$/, [])
 assert.deepStrictEqual(commonLogic, [], 'src/common is a static-resource namespace only')
 
@@ -73,6 +78,9 @@ filesUnder('src', /\.(?:js|ux)$/, []).forEach(function (file) {
   relativeDependencies(source).forEach(function (dependency) {
     const resolved = path.resolve(path.dirname(path.join(root, file)), dependency)
     assert.ok(!inside(resolved, commonRoot), file + ' must not depend on legacy src/common logic: ' + dependency)
+    retiredAbsoluteRoots.forEach(function (retired) {
+      assert.ok(!inside(resolved, retired.root), file + ' must not depend on retired ' + retired.label + ': ' + dependency)
+    })
   })
 })
 
@@ -94,7 +102,7 @@ assert.ok(!deviceProfile.includes("|| 'pill-shaped'"), 'Device Profile must not 
 assert.ok(!deviceProfile.includes('width = 192; height = 490'), 'Device Profile must not fabricate Band dimensions')
 assert.ok(!deviceProfile.includes('logicalHeight'), 'Device Profile must not duplicate Scene-owned design projection')
 assert.ok(!deviceProfile.includes('width / height'), 'Device Profile must not infer screen shape from aspect ratio')
-assert.ok(deviceProfile.includes('requires canonical screenShape'), 'Device Profile must fail visibly when canonical screenShape is missing')
+assert.ok(deviceProfile.includes("screenShape(pick(info, local, 'screenShape'))"), 'Device Profile must derive form factor from canonical screenShape input')
 const pageRuntime = read('src/runtime/page_runtime.js')
 assert.ok(!pageRuntime.includes('betaPill'), 'Page Runtime must not restore beta-pill compatibility branches')
 const sceneRuntime = read('src/v2/design/scene.js')
