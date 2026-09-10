@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "id": "workout-select",
+  "route": "pages/workout_select",
+  "renderer": "surface-v1",
+  "controller": "workout-selection",
+  "modules": [
+    {
+      "id": "title",
+      "type": "header",
+      "copy": { "text": "开始运动" },
+      "tokens": {
+        "frame": { "top": 0, "width": 164, "height": 24 },
+        "fontSize": 15,
+        "foreground": "#FFFFFF",
+        "fontWeight": "bold",
+        "textAlign": "center"
+      }
+    },
+    {
+      "id": "continue",
+      "type": "button",
+      "visibleWhen": "hasActive",
+      "copy": { "title": "继续运动", "subtitle": "恢复未完成记录" },
+      "actions": { "tap": "workout-continue" },
+      "tokens": {
+        "flow": true,
+        "height": 42,
+        "marginBottom": 9,
+        "radius": 14,
+        "paddingX": 12,
+        "background": "#15171B",
+        "titleSize": 10,
+        "titleColor": "#30D158",
+        "titleWeight": "bold",
+        "subtitleSize": 7,
+        "subtitleTop": 3,
+        "subtitleColor": "#8E8E93",
+        "chevronWidth": 18,
+        "chevronSize": 18,
+        "chevronColor": "#636366",
+        "chevronText": "›"
+      }
+    },
+    {
+      "id": "modes",
+      "type": "list",
+      "bind": { "items": "modeTypes" },
+      "props": {
+        "layout": "menu",
+        "items": [
+          {
+            "id": "walk",
+            "copy": { "title": "步行", "subtitle": "轻量有氧与日常健走" },
+            "actions": { "tap": "workout-select:walk" },
+            "tokens": { "accent": "#30D158" }
+          },
+          {
+            "id": "run",
+            "copy": { "title": "跑步", "subtitle": "更高步频与热量消耗" },
+            "actions": { "tap": "workout-select:run" },
+            "tokens": { "accent": "#FF9F0A" }
+          }
+        ]
+      },
+      "tokens": {
+        "flow": true,
+        "heightMode": "items",
+        "marginBottom": 9,
+        "itemHeight": 62,
+        "itemGap": 9,
+        "itemRadius": 14,
+        "itemPaddingX": 12,
+        "itemBackground": "#15171B",
+        "accentWidth": 5,
+        "accentHeight": "70%",
+        "accentRadius": 3,
+        "copyGap": 10,
+        "titleSize": 12,
+        "titleColor": "#FFFFFF",
+        "titleWeight": "bold",
+        "subtitleSize": 7,
+        "subtitleTop": 4,
+        "subtitleColor": "#8E8E93",
+        "chevronWidth": 18,
+        "chevronSize": 18,
+        "chevronColor": "#636366",
+        "chevronText": "›"
+      }
+    },
+    {
+      "id": "history",
+      "type": "button",
+      "copy": { "title": "运动记录", "subtitle": "查看已完成训练" },
+      "actions": { "tap": "/pages/workout_history" },
+      "tokens": {
+        "flow": true,
+        "height": 42,
+        "marginBottom": 9,
+        "radius": 14,
+        "paddingX": 12,
+        "background": "#15171B",
+        "titleSize": 10,
+        "titleColor": "#FFFFFF",
+        "titleWeight": "bold",
+        "subtitleSize": 7,
+        "subtitleTop": 3,
+        "subtitleColor": "#8E8E93",
+        "chevronWidth": 18,
+        "chevronSize": 18,
+        "chevronColor": "#636366",
+        "chevronText": "›"
+      }
+    }
+  ],
+  "tokens": {
+    "background": "#000000",
+    "stream": { "top": 34, "width": 164, "heightMode": "scene-bottom" },
+    "streamPaddingBottom": 18
+  },
+  "variants": {
+    "base": {},
+    "circle": {
+      "tokens": { "stream": { "top": 39, "width": 148, "heightMode": "scene-bottom" }, "streamPaddingBottom": 18 },
+      "modules": {
+        "title": { "frame": { "top": 14, "width": 124, "height": 20 }, "fontSize": 13 },
+        "continue": { "height": 38, "radius": 14 },
+        "modes": { "itemHeight": 52, "itemRadius": 14, "titleSize": 10, "subtitleSize": 6 },
+        "history": { "height": 38, "radius": 14 }
+      }
+    },
+    "pill": {
+      "tokens": { "stream": { "top": 40, "width": 168, "heightMode": "scene-bottom" }, "streamPaddingBottom": 52 },
+      "modules": {
+        "title": { "frame": { "top": 0, "width": 168, "height": 30 }, "fontSize": 18 },
+        "continue": { "height": 50, "radius": 12, "titleSize": 12, "subtitleSize": 8 },
+        "modes": { "itemHeight": 76, "itemRadius": 12, "titleSize": 15, "subtitleSize": 9 },
+        "history": { "height": 50, "radius": 12, "titleSize": 12, "subtitleSize": 8 }
+      }
+    },
+    "rect": {}
+  }
+}
