@@ -34,6 +34,7 @@ function createStore(repository, defaults) {
   var pendingMutations = []
   var saveQueue = []
   var saveInFlight = false
+  var listeners = []
 
   function snapshot() {
     var stepsPercent = clampPercent(state.steps, state.stepsGoal)
@@ -52,6 +53,13 @@ function createStore(repository, defaults) {
       stepsPercent: stepsPercent,
       goalPercent: goalPercent
     }
+  }
+
+  function publish() {
+    var value = snapshot()
+    var current = listeners.slice()
+    for (var i = 0; i < current.length; i++) current[i](value)
+    return value
   }
 
   function applyPersisted(persisted) {
@@ -94,9 +102,9 @@ function createStore(repository, defaults) {
     hydrated = true
     loading = false
     applyPendingMutations()
+    var value = publish()
     var waiters = hydrateWaiters
     hydrateWaiters = []
-    var value = snapshot()
     for (var i = 0; i < waiters.length; i++) waiters[i](value)
   }
 
@@ -108,6 +116,14 @@ function createStore(repository, defaults) {
 
   return {
     getSnapshot: snapshot,
+    subscribe: function (listener) {
+      if (typeof listener !== 'function' || listeners.indexOf(listener) >= 0) return
+      listeners.push(listener)
+    },
+    unsubscribe: function (listener) {
+      var index = listeners.indexOf(listener)
+      if (index >= 0) listeners.splice(index, 1)
+    },
     hydrate: function (callback) {
       if (hydrated) {
         if (callback) callback(snapshot())
@@ -122,7 +138,9 @@ function createStore(repository, defaults) {
         startHydrate()
         return
       }
-      enqueueSave(applyAdd(steps, calories), callback)
+      var value = applyAdd(steps, calories)
+      publish()
+      enqueueSave(value, callback)
     }
   }
 }
