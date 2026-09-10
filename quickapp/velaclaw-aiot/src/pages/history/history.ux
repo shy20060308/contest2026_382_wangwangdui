@@ -87,7 +87,7 @@ export default {
   onDestroy() { this.historyModel = null; this.bars = [] },
   onBackPress() { navigation.back(); return true },
   acceptModel(model) { this.historyModel = model; if (this.designPlan) this.applyModel(historyView.project(model, this.designPlan)) },
-  applyModel(model) { this.todayStepsText = model.todayStepsText; this.avgStepsText = model.avgStepsText; this.bestStepsText = model.bestStepsText; this.bestDayText = model.bestDayText; this.avgHeartText = model.avgHeartText; this.goalText = model.goalText; this.bars = model.bars }
+  applyModel(model) { this.todayStepsText = model.todayStepsText; this.avgStepsText = model.avgStepsText; this.bestStepsText = model.bestStepsText; this.bestDayText = model.bestDayText; this.avgHeartText = model.avgHeartText; this.goalText = model.goalText; this.trendHeight = model.trendHeight; this.bars = model.bars }
 }
 </script>
 
