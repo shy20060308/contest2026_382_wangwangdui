@@ -67,9 +67,27 @@ function destroy(page) {
   page.surfaceReady = false
 }
 
+function actionName(event) {
+  if (typeof event === 'string') return event
+  if (!event) return ''
+  if (typeof event.action === 'string') return event.action
+  if (event.detail && typeof event.detail.action === 'string') return event.detail.action
+  if (event.detail && typeof event.detail === 'string') return event.detail
+  return ''
+}
+
+function action(page, event) {
+  var name = actionName(event)
+  if (!name) return
+  if (!page || !page._surfaceController || typeof page._surfaceController.action !== 'function') {
+    throw new Error('V3 Surface Page has no action controller for ' + name)
+  }
+  page._surfaceController.action(name)
+}
+
 function back() {
   navigation.back()
   return true
 }
 
-export default { bind: bind, show: show, hide: hide, destroy: destroy, back: back }
+export default { bind: bind, show: show, hide: hide, destroy: destroy, action: action, back: back }
