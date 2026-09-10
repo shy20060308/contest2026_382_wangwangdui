@@ -1,117 +1,22 @@
+<import name="surfacehost" src="../../components/surface_host.ux"></import>
+
 <template>
-  <stack class="workout-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
-    <div class="workout-scene" if="{{ ready }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
-      <div class="workout-header" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;">
-        <text class="mode-name" style="font-size: {{ titleSize }}px; color: {{ accentColor }}; height: {{ headerHeight }}px; line-height: {{ headerHeight }}px;">{{ modeName }}</text>
-        <div class="status-chip" style="height: {{ statusChipHeight }}px; min-width: {{ statusChipMinWidth }}px; border-radius: {{ statusChipRadius }}px; padding-left: {{ statusChipPaddingX }}px; padding-right: {{ statusChipPaddingX }}px; background-color: {{ statusSurface }};"><div class="status-dot" style="width: {{ statusDotSize }}px; height: {{ statusDotSize }}px; border-radius: {{ statusDotRadius }}px; margin-right: {{ statusDotGap }}px; background-color: {{ statusColor }};"></div><text class="status-text" style="font-size: {{ statusSize }}px; color: {{ statusColor }};">{{ statusText }}</text></div>
-      </div>
-      <div class="hero" style="left: {{ heroLeft }}px; top: {{ heroTop }}px; width: {{ heroWidth }}px; height: {{ heroHeight }}px; border-radius: {{ radius }}px; background-color: {{ heroBackground }};">
-        <text class="duration" style="font-size: {{ durationSize }}px; height: {{ durationLineHeight }}px; line-height: {{ durationLineHeight }}px;">{{ durationText }}</text>
-        <text class="duration-label" style="font-size: {{ durationLabelSize }}px;">{{ durationLabelText }}</text>
-        <text class="gps-status" style="font-size: {{ gpsSize }}px; color: {{ gpsColor }}; margin-top: {{ gpsTop }}px;">{{ gpsText }}</text>
-      </div>
-      <div class="metric-grid" style="left: {{ metricsLeft }}px; top: {{ metricsTop }}px; width: {{ metricsWidth }}px; height: {{ metricsHeight }}px; opacity: {{ metricOpacity }};">
-        <div class="metric-card metric-right metric-bottom" style="width: {{ metricItemWidth }}px; height: {{ metricHeight }}px; margin-right: {{ metricGap }}px; margin-bottom: {{ metricGap }}px; border-radius: {{ radius }}px;"><text class="metric-value steps-color" style="font-size: {{ metricValueSize }}px;">{{ stepsText }}</text><text class="metric-label" style="font-size: {{ metricLabelSize }}px; margin-top: {{ metricLabelTop }}px;">步数</text></div>
-        <div class="metric-card metric-bottom" style="width: {{ metricItemWidth }}px; height: {{ metricHeight }}px; margin-bottom: {{ metricGap }}px; border-radius: {{ radius }}px;"><text class="metric-value calorie-color" style="font-size: {{ metricValueSize }}px;">{{ caloriesText }}</text><text class="metric-label" style="font-size: {{ metricLabelSize }}px; margin-top: {{ metricLabelTop }}px;">千卡</text></div>
-        <div class="metric-card metric-right" style="width: {{ metricItemWidth }}px; height: {{ metricHeight }}px; margin-right: {{ metricGap }}px; border-radius: {{ radius }}px;"><text class="metric-value distance-color" style="font-size: {{ metricValueSize }}px;">{{ distanceText }}</text><text class="metric-label" style="font-size: {{ metricLabelSize }}px; margin-top: {{ metricLabelTop }}px;">距离</text></div>
-        <div class="metric-card" style="width: {{ metricItemWidth }}px; height: {{ metricHeight }}px; border-radius: {{ radius }}px;"><text class="metric-value heart-color" style="font-size: {{ metricValueSize }}px;">{{ heartRateText }}</text><text class="metric-label" style="font-size: {{ metricLabelSize }}px; margin-top: {{ metricLabelTop }}px;">{{ heartRateLabel }}</text></div>
-      </div>
-      <div class="actions" style="left: {{ actionsLeft }}px; top: {{ actionsTop }}px; width: {{ actionsWidth }}px; height: {{ actionsHeight }}px;">
-        <text class="action pause-action" @click="togglePause" style="width: {{ actionWidth }}px; height: {{ actionsHeight }}px; margin-right: {{ actionGap }}px; border-radius: {{ radius }}px; font-size: {{ actionSize }}px; background-color: {{ pauseButtonBackground }}; color: {{ pauseButtonColor }};">{{ pauseButtonText }}</text>
-        <text class="action finish-action" @click="requestFinish" style="width: {{ actionWidth }}px; height: {{ actionsHeight }}px; border-radius: {{ radius }}px; font-size: {{ actionSize }}px;">结束</text>
-      </div>
-      <div class="confirm-cover" if="{{ confirmVisible }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
-        <div class="confirm-box" style="width: {{ confirmBoxWidth }}px; min-height: {{ confirmBoxMinHeight }}px; border-radius: {{ confirmBoxRadius }}px; padding: {{ confirmBoxPaddingY }}px {{ confirmBoxPaddingX }}px;"><text class="confirm-title" style="font-size: {{ confirmTitleSize }}px;">结束本次运动？</text><text class="confirm-copy" style="width: {{ confirmCopyWidth }}px; font-size: {{ confirmCopySize }}px; line-height: {{ confirmCopyLineHeight }}px; margin-top: {{ confirmCopyTop }}px;">记录会保存并计入今日活动和 7 日趋势。</text><div class="confirm-actions" style="width: {{ confirmActionsWidth }}px; margin-top: {{ confirmActionsTop }}px;"><text class="confirm-button" @click="cancelFinish" style="width: {{ confirmButtonWidth }}px; height: {{ confirmButtonHeight }}px; border-radius: {{ confirmButtonRadius }}px; font-size: {{ confirmButtonSize }}px;">继续</text><text class="confirm-button confirm-finish" @click="confirmFinish" style="width: {{ confirmButtonWidth }}px; height: {{ confirmButtonHeight }}px; border-radius: {{ confirmButtonRadius }}px; font-size: {{ confirmButtonSize }}px;">保存</text></div></div>
-      </div>
-    </div>
-  </stack>
+  <surfacehost if="{{ surfaceReady }}" plan="{{ surfacePlan }}" @surfaceaction="onSurfaceAction"></surfacehost>
 </template>
 
 <script>
-import pageRuntime from '../../runtime/page_runtime'
-import navigation from '../../runtime/navigation'
-import { createWorkoutController } from '../../v2/features/workout/controller'
-import workoutDesign from '../../v2/design/apps/workout'
-import workoutView from '../../v2/design/apps/workout/view'
-
-function applyRegion(page, prefix, value) {
-  page[prefix + 'Left'] = value.left
-  page[prefix + 'Top'] = value.top
-  page[prefix + 'Width'] = value.width
-  page[prefix + 'Height'] = value.height
-}
+import surfacePage from '../../runtime/surface_page'
 
 export default {
   private: {
-    ready: false,
-    sessionStatus: '', modeName: '运动', accentColor: '#30D158', statusText: '准备中', statusColor: '#8E8E93', statusSurface: '#15171B', durationText: '00:00', durationLabelText: '运动时长', stepsText: '0', caloriesText: '0', distanceText: '0 m', heartRateText: '--', heartRateLabel: '等待心率', gpsText: '正在定位', gpsColor: '#8E8E93', pauseButtonText: '暂停', pauseButtonBackground: '#2C2C2E', pauseButtonColor: '#FFFFFF', heroBackground: '#10151A', metricOpacity: 1, confirmVisible: false,
-    headerLeft: 0, headerTop: 0, headerWidth: 0, headerHeight: 0, heroLeft: 0, heroTop: 0, heroWidth: 0, heroHeight: 0, metricsLeft: 0, metricsTop: 0, metricsWidth: 0, metricsHeight: 0, actionsLeft: 0, actionsTop: 0, actionsWidth: 0, actionsHeight: 0,
-    metricItemWidth: 0, metricHeight: 0, metricGap: 0, actionWidth: 0, actionGap: 0, titleSize: 0, statusSize: 0, durationSize: 0, durationLineHeight: 0, durationLabelSize: 0, gpsSize: 0, metricValueSize: 0, metricLabelSize: 0, actionSize: 0, radius: 0,
-    statusChipHeight: 0, statusChipMinWidth: 0, statusChipRadius: 0, statusChipPaddingX: 0, statusDotSize: 0, statusDotRadius: 0, statusDotGap: 0, gpsTop: 0, metricLabelTop: 0,
-    confirmBoxWidth: 0, confirmBoxMinHeight: 0, confirmBoxRadius: 0, confirmBoxPaddingY: 0, confirmBoxPaddingX: 0, confirmTitleSize: 0, confirmCopyWidth: 0, confirmCopySize: 0, confirmCopyLineHeight: 0, confirmCopyTop: 0, confirmActionsWidth: 0, confirmActionsTop: 0, confirmButtonWidth: 0, confirmButtonHeight: 0, confirmButtonRadius: 0, confirmButtonSize: 0,
-    sceneWidth: 0, sceneHeight: 0, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
+    surfaceReady: false,
+    surfacePlan: null
   },
-  onInit() {
-    var self = this
-    this.controller = createWorkoutController(function (session) { self.acceptSession(session) })
-    pageRuntime.bind(this, function (profile, scene, safe) {
-      self.applyPlan(workoutDesign.resolve(profile, scene, safe))
-      self.ready = true
-    })
-  },
-  onShow() { this.controller.loadActive(function (session) { if (!session) navigation.back() }) },
-  onHide() { if (this.controller) this.controller.stop() },
-  onDestroy() { if (this.controller) this.controller.stop() },
+  onInit() { surfacePage.bind(this, 'workout') },
+  onShow() { surfacePage.show(this) },
+  onHide() { surfacePage.hide(this) },
+  onDestroy() { surfacePage.destroy(this) },
   onBackPress() { return true },
-  applyPlan(plan) {
-    var chrome = plan.chrome
-    var confirm = plan.confirm
-    applyRegion(this, 'header', plan.header); applyRegion(this, 'hero', plan.hero); applyRegion(this, 'metrics', plan.metrics); applyRegion(this, 'actions', plan.actions)
-    this.metricItemWidth = plan.metricItemWidth; this.metricHeight = plan.metricHeight; this.metricGap = plan.metricGap; this.actionWidth = plan.actionWidth; this.actionGap = plan.actionGap
-    this.titleSize = plan.titleSize; this.statusSize = plan.statusSize; this.durationSize = plan.durationSize; this.durationLineHeight = plan.durationLineHeight; this.durationLabelSize = plan.durationLabelSize; this.gpsSize = plan.gpsSize; this.metricValueSize = plan.metricValueSize; this.metricLabelSize = plan.metricLabelSize; this.actionSize = plan.actionSize; this.radius = plan.radius
-    this.statusChipHeight = chrome.statusChipHeight; this.statusChipMinWidth = chrome.statusChipMinWidth; this.statusChipRadius = chrome.statusChipRadius; this.statusChipPaddingX = chrome.statusChipPaddingX; this.statusDotSize = chrome.statusDotSize; this.statusDotRadius = chrome.statusDotRadius; this.statusDotGap = chrome.statusDotGap; this.gpsTop = chrome.gpsTop; this.metricLabelTop = chrome.metricLabelTop
-    this.confirmBoxWidth = confirm.boxWidth; this.confirmBoxMinHeight = confirm.boxMinHeight; this.confirmBoxRadius = confirm.boxRadius; this.confirmBoxPaddingY = confirm.boxPaddingY; this.confirmBoxPaddingX = confirm.boxPaddingX; this.confirmTitleSize = confirm.titleSize; this.confirmCopyWidth = confirm.copyWidth; this.confirmCopySize = confirm.copySize; this.confirmCopyLineHeight = confirm.copyLineHeight; this.confirmCopyTop = confirm.copyTop; this.confirmActionsWidth = confirm.actionsWidth; this.confirmActionsTop = confirm.actionsTop; this.confirmButtonWidth = confirm.buttonWidth; this.confirmButtonHeight = confirm.buttonHeight; this.confirmButtonRadius = confirm.buttonRadius; this.confirmButtonSize = confirm.buttonSize
-  },
-  acceptSession(session) {
-    if (!session) return
-    this.sessionStatus = session.status
-    this.applySession(workoutView.project(session))
-  },
-  applySession(view) {
-    if (!view) return
-    this.modeName = view.modeName; this.accentColor = view.accentColor; this.statusText = view.statusText; this.statusColor = view.statusColor; this.statusSurface = view.statusSurface
-    this.durationText = view.durationText; this.durationLabelText = view.durationLabelText; this.stepsText = view.stepsText; this.caloriesText = view.caloriesText; this.distanceText = view.distanceText
-    this.heartRateText = view.heartRateText; this.heartRateLabel = view.heartRateLabel; this.gpsText = view.gpsText; this.gpsColor = view.gpsColor; this.pauseButtonText = view.pauseButtonText
-    this.pauseButtonBackground = view.pauseButtonBackground; this.pauseButtonColor = view.pauseButtonColor; this.heroBackground = view.heroBackground; this.metricOpacity = view.metricOpacity
-  },
-  togglePause() { if (!this.controller) return; if (this.sessionStatus === 'running') this.controller.pause(); else if (this.sessionStatus === 'paused') this.controller.resume() },
-  requestFinish() { this.confirmVisible = true },
-  cancelFinish() { this.confirmVisible = false },
-  confirmFinish() { this.confirmVisible = false; this.controller.finish(function () { navigation.replace('/pages/workout_history') }) }
+  onSurfaceAction(event) { surfacePage.action(this, event) }
 }
 </script>
-
-<style>
-.workout-root, .workout-scene { background-color: #000000; }
-.workout-scene { position: absolute; left: 0px; top: 0px; }
-.workout-header, .hero, .metric-grid, .actions { position: absolute; }
-.workout-header { flex-direction: row; justify-content: space-between; align-items: center; }
-.mode-name { font-weight: bold; }
-.status-chip { flex-direction: row; justify-content: center; align-items: center; }
-.status-text { font-weight: bold; text-align: right; }
-.hero { flex-direction: column; justify-content: center; align-items: center; }
-.duration { width: 100%; color: #FFFFFF; font-weight: bold; text-align: center; }
-.duration-label { color: #8E8E93; }
-.metric-grid { flex-direction: row; flex-wrap: wrap; align-content: flex-start; }
-.metric-card { background-color: #111317; flex-direction: column; justify-content: center; align-items: center; }
-.metric-value { width: 100%; font-weight: bold; text-align: center; lines: 1; } .metric-label { color: #8E8E93; }
-.steps-color { color: #FFD60A; } .calorie-color { color: #FF9F0A; } .distance-color { color: #30D158; } .heart-color { color: #FF375F; }
-.actions { flex-direction: row; align-items: center; }
-.action { font-weight: bold; text-align: center; } .finish-action { background-color: #C83245; color: #FFFFFF; }
-.confirm-cover { position: absolute; left: 0px; top: 0px; background-color: #000000; opacity: 0.97; justify-content: center; align-items: center; }
-.confirm-box { background-color: #17191D; flex-direction: column; align-items: center; }
-.confirm-title { color: #FFFFFF; font-weight: bold; }
-.confirm-copy { color: #8E8E93; text-align: center; }
-.confirm-actions { flex-direction: row; justify-content: space-between; }
-.confirm-button { background-color: #2C2C2E; color: #FFFFFF; text-align: center; } .confirm-finish { background-color: #C83245; }
-</style>
