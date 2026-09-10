@@ -60,6 +60,11 @@ function declaredInsets(factor) {
   return { left: source.left, top: source.top, right: source.right, bottom: source.bottom, gestureBar: source.gestureBar }
 }
 
+function isContestBetaPill(model, platformVersionCode, factor, width, height) {
+  if (model !== 'Emulator-Vela' || platformVersionCode !== 1200 || factor !== 'pill') return false
+  return (width === 192 && height === 490) || (width === 212 && height === 520)
+}
+
 function make(info, context) {
   info = info || {}
   var local = contextDevice(context)
@@ -70,6 +75,7 @@ function make(info, context) {
   var apiLevel = optionalPositiveNumber(pick(info, local, 'APILevel'), 'APILevel')
   var shapeText = screenShape(pick(info, local, 'screenShape'), width, height, model, platformVersionCode)
   var factor = formFactor(shapeText)
+  var betaPill = isContestBetaPill(model, platformVersionCode, factor, width, height)
 
   return {
     shape: shapeText,
@@ -77,6 +83,7 @@ function make(info, context) {
     isCircle: factor === 'circle',
     isPill: factor === 'pill',
     isRect: factor === 'rect',
+    isBetaPillViewport: betaPill,
     screenWidth: width,
     screenHeight: height,
     safeInsets: declaredInsets(factor),
