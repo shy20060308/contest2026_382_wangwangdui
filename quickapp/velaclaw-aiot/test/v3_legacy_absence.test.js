@@ -101,8 +101,8 @@ assert.ok(!deviceProfile.includes('isBetaPillViewport'), 'Device Profile must no
 assert.ok(!deviceProfile.includes("|| 'pill-shaped'"), 'Device Profile must not default an unknown device to Pill')
 assert.ok(!deviceProfile.includes('width = 192; height = 490'), 'Device Profile must not fabricate Band dimensions')
 assert.ok(!deviceProfile.includes('logicalHeight'), 'Device Profile must not duplicate Scene-owned design projection')
-assert.ok(!deviceProfile.includes('width / height'), 'Device Profile must not infer screen shape from aspect ratio')
-assert.ok(deviceProfile.includes("screenShape(pick(info, local, 'screenShape'))"), 'Device Profile must derive form factor from canonical screenShape input')
+assert.ok(deviceProfile.includes('var ratio = width / height'), 'Device Profile must normalize missing screenShape from physical geometry')
+assert.ok(deviceProfile.includes("screenShape(pick(info, local, 'screenShape'), width, height)"), 'Device Profile must prefer native screenShape and use geometry only as fallback')
 const pageRuntime = read('src/runtime/page_runtime.js')
 assert.ok(!pageRuntime.includes('betaPill'), 'Page Runtime must not restore beta-pill compatibility branches')
 const sceneRuntime = read('src/v2/design/scene.js')
@@ -115,4 +115,4 @@ assert.ok(!packageSource.includes('render-' + 'soft-icons'), 'tooling must not r
 assert.ok(!packageSource.includes('lint-' + 'staged'), 'package metadata must not restore inactive hook tooling')
 assert.ok(!packageSource.includes('commit' + 'lint'), 'package metadata must not restore inactive Commitlint tooling')
 
-console.log('V3 legacy absence verified: retired namespaces and compatibility strategies stay absent')
+console.log('V3 legacy absence verified: retired namespaces stay absent and device geometry has one normalization owner')
