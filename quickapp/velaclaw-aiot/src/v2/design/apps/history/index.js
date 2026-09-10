@@ -15,7 +15,7 @@ function resolve(profile, scene, safe) {
     width: config.contentWidth,
     height: scene.height - streamTop
   })
-  plan.streamPaddingBottom = Math.max(config.streamPaddingBottom, safe.bottom)
+  plan.streamPaddingBottom = Math.max(config.streamPaddingBottom, scene.height - safe.bottom)
 
   plan.headerWidth = config.headerWidth
   plan.headerHeight = config.headerHeight
