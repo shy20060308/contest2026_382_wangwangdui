@@ -5,6 +5,7 @@ import { createHealthController } from './features/health/controller'
 import workoutSelectionFeature from './features/workout/selection'
 import { createWorkoutController } from './features/workout/controller'
 import { createWorkoutHistoryController } from './features/workout/history_controller'
+import { createTodayController } from './features/today/controller'
 
 function noop() {}
 
@@ -139,6 +140,35 @@ function workoutHistory(onChange) {
   return { start: function () { controller.refresh() }, stop: noop, destroy: noop, action: noop }
 }
 
+function today(onChange) {
+  var calendarOpen = false
+  var latest = {}
+  function emit(model) {
+    if (model) latest = model
+    var cells = Array.isArray(latest.calendarCells) ? latest.calendarCells : []
+    var state = {}
+    for (var key in latest) state[key] = latest[key]
+    state.calendarOpen = calendarOpen
+    state.summaryOpen = !calendarOpen
+    state.calendarMonthNumber = latest.calendarMonth === undefined ? null : latest.calendarMonth + 1
+    state.calendarCells = cells.slice()
+    if (typeof onChange === 'function') onChange(state)
+  }
+  var controller = createTodayController(emit)
+  return {
+    start: function () { controller.start() },
+    stop: function () { controller.stop() },
+    destroy: function () { controller.stop() },
+    action: function (name) {
+      if (name === 'today-open-calendar') { calendarOpen = true; emit(); return }
+      if (name === 'today-close-calendar') { calendarOpen = false; emit(); return }
+      if (name === 'today-previous-month') { controller.shiftMonth(-1); return }
+      if (name === 'today-next-month') { controller.shiftMonth(1); return }
+      throw new Error('Unknown today action: ' + name)
+    }
+  }
+}
+
 function create(id, onChange) {
   if (id === 'activity') return activity(onChange)
   if (id === 'history') return history(onChange)
@@ -146,6 +176,7 @@ function create(id, onChange) {
   if (id === 'workout-selection') return workoutSelection(onChange)
   if (id === 'workout') return workout(onChange)
   if (id === 'workout-history') return workoutHistory(onChange)
+  if (id === 'today') return today(onChange)
   if (id === null || id === undefined || id === '') return { start: noop, stop: noop, destroy: noop, action: noop }
   throw new Error('Unknown V3 surface controller: ' + id)
 }
