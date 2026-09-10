@@ -1,16 +1,6 @@
 import deviceProfile from './device_profile'
 var scene = require('../v2/design/scene')
 
-function applyViewport(page, profile, host) {
-  var betaPill = !!(profile && profile.isBetaPillViewport)
-  page.viewportClass = betaPill ? 'beta-pill-viewport-' + profile.screenWidth : ''
-  page.viewportPosition = betaPill ? 'absolute' : 'relative'
-  page.viewportLeft = '0px'
-  page.viewportTop = '0px'
-  page.viewportWidth = betaPill ? host.width + 'px' : '100%'
-  page.viewportHeight = betaPill ? host.height + 'px' : '100%'
-}
-
 function bind(page, callback) {
   if (!page) throw new Error('V3 Page Runtime requires a page instance')
   if (typeof callback !== 'function') throw new Error('V3 Page Runtime requires a resolve callback')
@@ -18,7 +8,12 @@ function bind(page, callback) {
     var host = scene.resolve(profile)
     var safe = scene.safe(profile, host)
 
-    applyViewport(page, profile, host)
+    page.viewportClass = ''
+    page.viewportPosition = 'absolute'
+    page.viewportLeft = '0px'
+    page.viewportTop = '0px'
+    page.viewportWidth = host.width + 'px'
+    page.viewportHeight = host.height + 'px'
     page.sceneWidth = host.width
     page.sceneHeight = host.height
 
@@ -26,4 +21,4 @@ function bind(page, callback) {
   })
 }
 
-export default { bind: bind, applyViewport: applyViewport }
+export default { bind: bind }
