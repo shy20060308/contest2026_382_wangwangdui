@@ -1,4 +1,5 @@
 import pageRuntime from './page_runtime'
+import navigation from './navigation'
 import controllerRegistry from '../product/controller_registry'
 
 var surfaces = require('../product/frontend/generated/surfaces')
@@ -66,4 +67,9 @@ function destroy(page) {
   page.surfaceReady = false
 }
 
-export default { bind: bind, show: show, hide: hide, destroy: destroy }
+function back() {
+  navigation.back()
+  return true
+}
+
+export default { bind: bind, show: show, hide: hide, destroy: destroy, back: back }
