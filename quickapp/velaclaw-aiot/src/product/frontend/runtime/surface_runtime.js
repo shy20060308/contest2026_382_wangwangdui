@@ -22,6 +22,14 @@ function formatDateShort(value) {
   return text.length >= 10 ? text.slice(5).replace('-', '/') : text
 }
 
+function formatTime(value) {
+  if (!value) return '--:--'
+  var date = new Date(value)
+  var hours = date.getHours() < 10 ? '0' + date.getHours() : '' + date.getHours()
+  var minutes = date.getMinutes() < 10 ? '0' + date.getMinutes() : '' + date.getMinutes()
+  return hours + ':' + minutes
+}
+
 function weekday(value) {
   if (!value) return '--'
   var parts = String(value).split('-')
@@ -37,6 +45,7 @@ function formatValue(value, format, nullText) {
   if (format === 'number') return formatNumber(value)
   if (format === 'percent') return formatNumber(value) + '%'
   if (format === 'date-short') return formatDateShort(value)
+  if (format === 'time') return formatTime(value)
   if (format === 'weekday') return weekday(value)
   if (format === 'weekday-short') return weekday(value).replace('周', '')
   if (String(format).indexOf('suffix:') === 0) return formatNumber(value) + String(format).slice(7)
@@ -48,6 +57,11 @@ function fill(template, values) {
     var value = values[key]
     return value === undefined || value === null ? '' : String(value)
   })
+}
+
+function mappedStatus(map, key, label) {
+  if (!map || !map[key]) throw new Error('V3 surface has no JSON status mapping for ' + label + ': ' + key)
+  return { text: String(map[key].text || ''), color: String(map[key].color || '') }
 }
 
 function variant(surface, profile) {
@@ -88,12 +102,13 @@ function metricListData(module, tokens, frame, state) {
   var raw = valueAt(state, module.bind && module.bind.items) || []
   var rawById = definitionMap(raw)
   var definitions = module.props && module.props.items ? module.props.items : []
+  var definitionsById = definitionMap(definitions)
   var copy = module.copy || {}
   var trackWidth = frame.width - (tokens.itemPadding || 0) * 2
   var result = []
 
   for (var rawIndex = 0; rawIndex < raw.length; rawIndex++) {
-    if (!definitionMap(definitions)[raw[rawIndex].id]) throw new Error('V3 metric-list has no JSON definition for ' + raw[rawIndex].id)
+    if (!definitionsById[raw[rawIndex].id]) throw new Error('V3 metric-list has no JSON definition for ' + raw[rawIndex].id)
   }
 
   for (var i = 0; i < definitions.length; i++) {
@@ -151,6 +166,20 @@ function flowFrame(stream, module, tokens, cursor, state) {
 function resolveHeader(module, tokens, frame, state) {
   var bind = module.bind || {}
   var props = module.props || {}
+  var trailing = bind.trailing ? formatValue(valueAt(state, bind.trailing), props.trailingFormat, props.trailingNullText) : ''
+  var trailingColor = tokens.trailingColor
+  var subtitleTrailing = bind.subtitleTrailing ? formatValue(valueAt(state, bind.subtitleTrailing), props.subtitleTrailingFormat, props.subtitleTrailingNullText) : ''
+  var subtitleTrailingColor = tokens.subtitleTrailingColor
+  if (bind.trailing && props.trailingMap) {
+    var trailingState = mappedStatus(props.trailingMap, valueAt(state, bind.trailing), module.id + '.trailing')
+    trailing = trailingState.text
+    trailingColor = trailingState.color
+  }
+  if (bind.subtitleTrailing && props.subtitleTrailingMap) {
+    var subtitleState = mappedStatus(props.subtitleTrailingMap, valueAt(state, bind.subtitleTrailing), module.id + '.subtitleTrailing')
+    subtitleTrailing = subtitleState.text
+    subtitleTrailingColor = subtitleState.color
+  }
   return {
     id: module.id,
     type: module.type,
@@ -159,8 +188,10 @@ function resolveHeader(module, tokens, frame, state) {
     tokens: tokens,
     title: module.copy && module.copy.title ? module.copy.title : (module.copy && module.copy.text ? module.copy.text : ''),
     subtitle: module.copy && module.copy.subtitle ? module.copy.subtitle : '',
-    trailing: bind.trailing ? formatValue(valueAt(state, bind.trailing), props.trailingFormat, props.trailingNullText) : '',
-    subtitleTrailing: bind.subtitleTrailing ? formatValue(valueAt(state, bind.subtitleTrailing), props.subtitleTrailingFormat, props.subtitleTrailingNullText) : ''
+    trailing: trailing,
+    trailingColor: trailingColor,
+    subtitleTrailing: subtitleTrailing,
+    subtitleTrailingColor: subtitleTrailingColor
   }
 }
 
@@ -181,7 +212,13 @@ function metricGridData(module, tokens, frame, state) {
     var col = i % columns
     var row = Math.floor(i / columns)
     var detail = definition.copy && definition.copy.detail ? definition.copy.detail : ''
+    var detailColor = definition.tokens && definition.tokens.detailColor ? definition.tokens.detailColor : tokens.detailColor
     if (bind.detail) detail = formatValue(valueAt(state, bind.detail), props.detailFormat, props.detailNullText)
+    if (bind.status && props.statusMap) {
+      var status = mappedStatus(props.statusMap, valueAt(state, bind.status), module.id + '.' + definition.id + '.status')
+      detail = status.text
+      detailColor = status.color
+    }
     result.push({
       id: module.id + '-' + definition.id,
       frame: {
@@ -193,6 +230,7 @@ function metricGridData(module, tokens, frame, state) {
       label: definition.copy && definition.copy.label ? definition.copy.label : definition.id,
       value: formatValue(valueAt(state, bind.value), props.valueFormat, props.valueNullText),
       detail: detail,
+      detailColor: detailColor,
       accent: definition.tokens && definition.tokens.accent ? definition.tokens.accent : tokens.valueColor,
       tokens: adapter.merge(tokens, definition.tokens || {})
     })
@@ -200,27 +238,98 @@ function metricGridData(module, tokens, frame, state) {
   return result
 }
 
+function itemValue(item, field) {
+  if (!field) return item
+  if (item && typeof item === 'object') return item[field]
+  return item
+}
+
+function numericValues(raw, field) {
+  var values = []
+  for (var i = 0; i < raw.length; i++) {
+    var value = Number(itemValue(raw[i], field))
+    if (isFinite(value)) values.push(value)
+  }
+  return values
+}
+
+function bounds(values) {
+  if (!values.length) return { min: 0, max: 0, avg: 0 }
+  var min = values[0]
+  var max = values[0]
+  var total = 0
+  for (var i = 0; i < values.length; i++) {
+    min = Math.min(min, values[i])
+    max = Math.max(max, values[i])
+    total += values[i]
+  }
+  return { min: min, max: max, avg: Math.round(total / values.length) }
+}
+
+function chartRatio(value, values, props, tokens) {
+  if (props.scale === 'relative-range') {
+    var range = bounds(values)
+    var spread = Math.max(tokens.minimumSpread || 1, range.max - range.min)
+    var center = (range.min + range.max) / 2
+    var visualMin = center - spread / 2
+    return Math.max(0, Math.min(1, (value - visualMin) / spread))
+  }
+  var maxValue = 1
+  for (var i = 0; i < values.length; i++) maxValue = Math.max(maxValue, values[i])
+  return value / maxValue
+}
+
+function chartCaption(module, raw) {
+  var copy = module.copy || {}
+  if (!copy.trendEmpty && !copy.trendOne && !copy.trendMany) return copy.caption || ''
+  if (!raw.length) return copy.trendEmpty || ''
+  if (raw.length === 1) return copy.trendOne || ''
+  return fill(copy.trendMany || '', { count: raw.length })
+}
+
+function chartFooter(module, values) {
+  var copy = module.copy || {}
+  if (!copy.rangeEmpty && !copy.rangeSingle && !copy.rangeSpan) return copy.footer || ''
+  if (!values.length) return copy.rangeEmpty || ''
+  var range = bounds(values)
+  var valuesForCopy = { min: formatNumber(range.min), max: formatNumber(range.max), avg: formatNumber(range.avg), unit: copy.unit || '' }
+  if (range.min === range.max) return fill(copy.rangeSingle || '', valuesForCopy)
+  return fill(copy.rangeSpan || '', valuesForCopy)
+}
+
 function chartCardData(module, tokens, frame, state) {
   var raw = valueAt(state, module.bind && module.bind.items) || []
   var props = module.props || {}
-  var valueField = props.valueField || 'value'
-  var labelField = props.labelField || 'label'
-  var maxValue = 1
-  var i
-  for (i = 0; i < raw.length; i++) maxValue = Math.max(maxValue, Number(raw[i][valueField]) || 0)
+  var bind = module.bind || {}
+  var valueField = props.valueField || ''
+  var labelField = props.labelField || ''
+  var values = numericValues(raw, valueField)
+  var statusText = ''
+  var statusColor = tokens.statusColor || ''
+  if (bind.status && props.statusMap) {
+    var status = mappedStatus(props.statusMap, valueAt(state, bind.status), module.id + '.status')
+    statusText = status.text
+    statusColor = status.color
+  }
 
   var card = {
     id: module.id,
     frame: frame,
     title: module.copy && module.copy.title ? module.copy.title : '',
-    caption: module.copy && module.copy.caption ? module.copy.caption : '',
+    caption: chartCaption(module, raw),
+    value: bind.value ? formatValue(valueAt(state, bind.value), props.valueFormat, props.valueNullText) : '',
+    unit: module.copy && module.copy.unit ? module.copy.unit : '',
+    status: statusText,
+    statusColor: statusColor,
+    footer: chartFooter(module, values),
     tokens: tokens,
     mode: tokens.mode || 'columns'
   }
   var columns = []
   var rows = []
   var contentLeft = frame.left + (tokens.paddingX || 0)
-  var chartTop = frame.top + (tokens.paddingY || 0) + (tokens.headHeight || 0) + (tokens.chartTop || 0)
+  var valueBlockHeight = bind.value ? (tokens.valueBlockHeight || 0) : 0
+  var chartTop = frame.top + (tokens.paddingY || 0) + (tokens.headHeight || 0) + valueBlockHeight + (tokens.chartTop || 0)
   var contentWidth = frame.width - (tokens.paddingX || 0) * 2
 
   if (card.mode === 'rows') {
@@ -228,12 +337,12 @@ function chartCardData(module, tokens, frame, state) {
     var valueWidth = tokens.rowValueWidth || 0
     var sideGap = tokens.rowTrackGap || 0
     var trackWidth = contentWidth - labelWidth - valueWidth - sideGap * 2
-    for (i = 0; i < raw.length; i++) {
+    for (var i = 0; i < raw.length; i++) {
       var rowItem = raw[i]
-      var rowValue = Number(rowItem[valueField]) || 0
-      var rowRatio = rowValue / maxValue
+      var rowValue = Number(itemValue(rowItem, valueField)) || 0
+      var rowRatio = chartRatio(rowValue, values, props, tokens)
       var isLastRow = i === raw.length - 1
-      var label = isLastRow && module.copy && module.copy.todayLabel ? module.copy.todayLabel : formatValue(rowItem[labelField], props.labelFormat, '--')
+      var label = isLastRow && module.copy && module.copy.todayLabel ? module.copy.todayLabel : formatValue(itemValue(rowItem, labelField), props.labelFormat, '--')
       var fillWidth = Math.round((tokens.rowMinWidth || 0) + rowRatio * ((tokens.rowMaxWidth || trackWidth) - (tokens.rowMinWidth || 0)))
       rows.push({
         id: module.id + '-row-' + i,
@@ -256,20 +365,20 @@ function chartCardData(module, tokens, frame, state) {
   } else {
     var columnCount = tokens.columns || Math.max(1, raw.length)
     var cellWidth = Math.floor(contentWidth / columnCount)
-    for (i = 0; i < raw.length; i++) {
-      var item = raw[i]
-      var value = Number(item[valueField]) || 0
-      var ratio = value / maxValue
-      var isLast = i === raw.length - 1
+    for (var columnIndex = 0; columnIndex < raw.length; columnIndex++) {
+      var item = raw[columnIndex]
+      var value = Number(itemValue(item, valueField)) || 0
+      var ratio = chartRatio(value, values, props, tokens)
+      var isLast = columnIndex === raw.length - 1
       var height = Math.max(tokens.barMinHeight || 0, Math.round(ratio * (tokens.chartHeight || 0)))
-      var compactLabel = isLast && module.copy && module.copy.todayCompactLabel ? module.copy.todayCompactLabel : formatValue(item[labelField], props.labelFormat || 'raw', '--')
+      var compactLabel = labelField ? (isLast && module.copy && module.copy.todayCompactLabel ? module.copy.todayCompactLabel : formatValue(itemValue(item, labelField), props.labelFormat || 'raw', '--')) : ''
       columns.push({
-        id: module.id + '-column-' + i,
-        barLeft: contentLeft + i * cellWidth + Math.round((cellWidth - (tokens.barWidth || 0)) / 2),
+        id: module.id + '-column-' + columnIndex,
+        barLeft: contentLeft + columnIndex * cellWidth + Math.round((cellWidth - (tokens.barWidth || 0)) / 2),
         barTop: chartTop + (tokens.chartHeight || 0) - height,
         barWidth: tokens.barWidth || 0,
         barHeight: height,
-        labelLeft: contentLeft + i * cellWidth,
+        labelLeft: contentLeft + columnIndex * cellWidth,
         labelTop: chartTop + (tokens.chartHeight || 0) + (tokens.labelTop || 0),
         labelWidth: cellWidth,
         label: compactLabel,
@@ -280,6 +389,19 @@ function chartCardData(module, tokens, frame, state) {
     }
   }
   return { card: card, columns: columns, rows: rows }
+}
+
+function resolveText(module, tokens, frame, state) {
+  var bind = module.bind || {}
+  var props = module.props || {}
+  var value = bind.value ? formatValue(valueAt(state, bind.value), props.valueFormat, props.valueNullText) : ''
+  return {
+    id: module.id,
+    type: module.type,
+    frame: frame,
+    tokens: tokens,
+    text: module.copy && module.copy.template ? fill(module.copy.template, { value: value }) : (module.copy && module.copy.text ? module.copy.text : value)
+  }
 }
 
 function resolveModule(surfaceModule, moduleOverride, profile, scene, safe, state, flow) {
@@ -294,6 +416,7 @@ function resolveModule(surfaceModule, moduleOverride, profile, scene, safe, stat
     action: surfaceModule.actions && surfaceModule.actions.tap ? surfaceModule.actions.tap : ''
   }
   if (surfaceModule.type === 'header') return resolveHeader(surfaceModule, tokens, frame, state || {})
+  if (surfaceModule.type === 'text') return resolveText(surfaceModule, tokens, frame, state || {})
   if (surfaceModule.type === 'metric-list') resolved.items = metricListData(surfaceModule, tokens, frame, state || {})
   if (surfaceModule.type === 'metric-grid') resolved.items = metricGridData(surfaceModule, tokens, frame, state || {})
   if (surfaceModule.type === 'chart-card') resolved.chart = chartCardData(surfaceModule, tokens, frame, state || {})
@@ -311,6 +434,7 @@ function resolve(surface, profile, scene, safe, state) {
   var buttons = []
   var metricList = null
   var flowHeaders = []
+  var flowTexts = []
   var flowMetricItems = []
   var flowChartCards = []
   var flowColumnBars = []
@@ -332,6 +456,7 @@ function resolve(surface, profile, scene, safe, state) {
 
     if (isFlow) {
       if (module.type === 'header') flowHeaders.push(module)
+      else if (module.type === 'text') flowTexts.push(module)
       else if (module.type === 'metric-grid') flowMetricItems = flowMetricItems.concat(module.items)
       else if (module.type === 'chart-card') {
         flowChartCards.push(module.chart.card)
@@ -365,6 +490,7 @@ function resolve(surface, profile, scene, safe, state) {
     streamPaddingBottom: selected.tokens.streamPaddingBottom || 0,
     flowContentHeight: cursor + (selected.tokens.streamPaddingBottom || 0),
     flowHeaders: flowHeaders,
+    flowTexts: flowTexts,
     flowMetricItems: flowMetricItems,
     flowChartCards: flowChartCards,
     flowColumnBars: flowColumnBars,
