@@ -18,7 +18,7 @@ module.exports = {
   },
   pill: {
     contentWidth: 168, headerTop: 0, headerWidth: 168, headerHeight: 32, headerGap: 8, streamWidth: 168,
-    titleSize: 14, cardRadius: 20, cardGap: 8, bodySize: 9, valueSize: 22, testTitleSize: 12,
+    titleSize: 14, cardRadius: 12, cardGap: 8, bodySize: 9, valueSize: 22, testTitleSize: 12,
     controls: { statusCardHeight: 82, levelRowHeight: 44, levelButtonWidth: 50, levelButtonHeight: 44, testCardHeight: 70, capabilityCardHeight: 82, patternCardHeight: 64, pagerHeight: 34 }
   },
   rect: { contentWidth: 164 }
