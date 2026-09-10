@@ -8,6 +8,7 @@ const productRoot = path.join(srcRoot, 'product')
 const surfacesRoot = path.join(productRoot, 'frontend', 'surfaces')
 const frontendRuntimeRoot = path.join(productRoot, 'frontend', 'runtime')
 const strict = process.argv.includes('--strict')
+const staged = process.argv.includes('--staged')
 
 const allowedModuleTypes = new Set([
   'header', 'text', 'metric-card', 'metric-pair', 'metric-list', 'chart-card',
@@ -170,32 +171,42 @@ const rows = []
 routes.forEach(function (route) {
   const ux = expectedUx(route, routeMap[route])
   const surface = expectedSurface(route)
+  const hasSurface = exists(surface)
   expectedUxFiles.add(path.resolve(ux))
   expectedSurfaceFiles.add(path.resolve(surface))
 
   const issues = auditUx(ux)
-  if (!exists(surface)) issues.push('surface:missing')
+  if (!hasSurface) issues.push('surface:missing')
   else issues.push.apply(issues, validateSurface(surface, route, seenIds, seenSurfaceRoutes, seenControllers).issues)
 
-  rows.push({ route: route, ux: relative(ux), surface: relative(surface), issues: Array.from(new Set(issues)) })
+  rows.push({ route: route, ux: relative(ux), surface: relative(surface), hasSurface: hasSurface, issues: Array.from(new Set(issues)) })
 })
 
 const globalIssues = []
+const stagedGlobalIssues = []
 if (exists(path.join(srcRoot, 'v2'))) globalIssues.push('legacy namespace still exists: src/v2')
 
 filesUnder(pagesRoot, /\.ux$/, []).forEach(function (file) {
-  if (!expectedUxFiles.has(path.resolve(file))) globalIssues.push('unrouted page UX: ' + relative(file))
+  if (!expectedUxFiles.has(path.resolve(file))) {
+    const issue = 'unrouted page UX: ' + relative(file)
+    globalIssues.push(issue)
+    stagedGlobalIssues.push(issue)
+  }
 })
 filesUnder(pagesRoot, /\.js$/, []).forEach(function (file) {
-  globalIssues.push('page-local JS can hide a second frontend authority: ' + relative(file))
+  const issue = 'page-local JS can hide a second frontend authority: ' + relative(file)
+  globalIssues.push(issue)
+  stagedGlobalIssues.push(issue)
 })
 
 filesUnder(surfacesRoot, /\.json$/, []).forEach(function (file) {
-  if (!expectedSurfaceFiles.has(path.resolve(file))) globalIssues.push('unbound surface JSON: ' + relative(file))
+  if (!expectedSurfaceFiles.has(path.resolve(file))) {
+    const issue = 'unbound surface JSON: ' + relative(file)
+    globalIssues.push(issue)
+    stagedGlobalIssues.push(issue)
+  }
 })
 
-// Final V3 has no page-specific visual Recipe JS. Static product visual intent must
-// live in the route-owned JSON Surface, not a renamed design/apps directory.
 filesUnder(path.join(productRoot, 'design', 'apps'), /\.(?:js|json)$/, []).forEach(function (file) {
   globalIssues.push('page-specific design authority outside Surface JSON: ' + relative(file))
 })
@@ -211,7 +222,6 @@ filesUnder(srcRoot, /\.ux$/, []).forEach(function (file) {
   globalIssues.push('secondary product UX authority: ' + relative(file))
 })
 
-// Feature code may emit semantic state, but may not own visual color constants.
 filesUnder(path.join(productRoot, 'features'), /\.js$/, []).forEach(function (file) {
   if (/#[0-9a-f]{3,8}\b/i.test(read(file))) globalIssues.push('feature leaks visual color authority: ' + relative(file))
 })
@@ -223,28 +233,42 @@ filesUnder(frontendRuntimeRoot, /\.(?:js|ux)$/, genericRendererFiles)
 genericRendererFiles.forEach(function (file) {
   const source = read(file)
   routes.forEach(function (route) {
-    if (source.includes(route)) globalIssues.push('generic renderer contains route-specific branch: ' + relative(file) + ' -> ' + route)
+    if (source.includes(route)) {
+      const issue = 'generic renderer contains route-specific branch: ' + relative(file) + ' -> ' + route
+      globalIssues.push(issue); stagedGlobalIssues.push(issue)
+    }
   })
   seenIds.forEach(function (id) {
     const quoted = new RegExp("['\"]" + id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "['\"]")
-    if (quoted.test(source)) globalIssues.push('generic renderer contains surface-specific branch: ' + relative(file) + ' -> ' + id)
+    if (quoted.test(source)) {
+      const issue = 'generic renderer contains surface-specific branch: ' + relative(file) + ' -> ' + id
+      globalIssues.push(issue); stagedGlobalIssues.push(issue)
+    }
   })
   seenControllers.forEach(function (id) {
     const quoted = new RegExp("['\"]" + id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "['\"]")
-    if (quoted.test(source)) globalIssues.push('generic renderer contains controller-specific branch: ' + relative(file) + ' -> ' + id)
+    if (quoted.test(source)) {
+      const issue = 'generic renderer contains controller-specific branch: ' + relative(file) + ' -> ' + id
+      globalIssues.push(issue); stagedGlobalIssues.push(issue)
+    }
   })
-  if (/#[0-9a-f]{3,8}\b/i.test(source)) globalIssues.push('generic renderer owns literal visual color: ' + relative(file))
+  if (/#[0-9a-f]{3,8}\b/i.test(source)) {
+    const issue = 'generic renderer owns literal visual color: ' + relative(file)
+    globalIssues.push(issue); stagedGlobalIssues.push(issue)
+  }
   if (/\b(?:width|height|radius|fontSize|gap|padding|margin|left|top|right|bottom)\s*:\s*-?\d+(?:\.\d+)?\b/.test(source)) {
-    globalIssues.push('generic renderer owns literal visual geometry: ' + relative(file))
+    const issue = 'generic renderer owns literal visual geometry: ' + relative(file)
+    globalIssues.push(issue); stagedGlobalIssues.push(issue)
   }
 })
 
 const passed = rows.filter(function (row) { return row.issues.length === 0 }).length
-console.log('V3 Frontend Authority Audit' + (strict ? ' [STRICT]' : ' [REPORT]'))
+const mode = strict ? 'STRICT' : (staged ? 'STAGED' : 'REPORT')
+console.log('V3 Frontend Authority Audit [' + mode + ']')
 console.log('Manifest routes: ' + rows.length + '; compliant: ' + passed + '; pending: ' + (rows.length - passed))
 console.log('')
 rows.forEach(function (row) {
-  const state = row.issues.length ? 'PENDING' : 'OK'
+  const state = row.issues.length ? (row.hasSurface ? 'INVALID' : 'PENDING') : 'OK'
   console.log(state.padEnd(8) + ' ' + row.route.padEnd(30) + ' ' + (row.issues.join(', ') || '-'))
 })
 if (globalIssues.length) {
@@ -253,5 +277,9 @@ if (globalIssues.length) {
 }
 
 const issueCount = rows.reduce(function (count, row) { return count + row.issues.length }, 0) + globalIssues.length
+const stagedRouteIssueCount = rows.filter(function (row) { return row.hasSurface }).reduce(function (count, row) { return count + row.issues.length }, 0)
+const stagedIssueCount = stagedRouteIssueCount + stagedGlobalIssues.length
 console.log('\nTotal authority violations: ' + issueCount)
+if (staged) console.log('Migrated-surface violations: ' + stagedIssueCount)
 if (strict && issueCount) process.exit(1)
+if (staged && stagedIssueCount) process.exit(1)
