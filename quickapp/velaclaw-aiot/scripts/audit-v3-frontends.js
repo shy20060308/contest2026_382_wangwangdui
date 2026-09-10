@@ -78,6 +78,14 @@ function allowedPageDependency(dependency) {
     /(?:^|\/)runtime\/surface_page$/.test(normalized)
 }
 
+function declaredSurfaceIds(source) {
+  const ids = []
+  const pattern = /surfacePage\.bind\(\s*this\s*,\s*['"]([^'"]+)['"]\s*\)/g
+  let match
+  while ((match = pattern.exec(source)) !== null) ids.push(match[1])
+  return ids
+}
+
 function validateSurface(file, route, seenIds, seenRoutes, seenControllers) {
   const issues = []
   let surface
@@ -124,12 +132,12 @@ function validateSurface(file, route, seenIds, seenRoutes, seenControllers) {
   return { issues: issues, surface: surface }
 }
 
-function auditUx(file) {
+function auditUx(file, expectedSurfaceId) {
   if (!exists(file)) return ['ux:missing']
   const source = read(file)
   const issues = []
 
-  if (!source.includes('surface-host')) issues.push('ux:not-thin-surface-host')
+  if (!/surface[_-]host/.test(source)) issues.push('ux:not-thin-surface-host')
   if (/(?:^|[/'"])(?:v2)(?:[/'"]|$)/.test(source)) issues.push('ux:legacy-v2-dependency')
 
   dependencies(source).forEach(function (dependency) {
@@ -155,6 +163,11 @@ function auditUx(file) {
   const style = (source.match(/<style>([\s\S]*?)<\/style>/) || [])[1]
   if (style && style.trim()) issues.push('ux:page-style-authority')
 
+  if (expectedSurfaceId) {
+    const ids = declaredSurfaceIds(source)
+    if (ids.length !== 1 || ids[0] !== expectedSurfaceId) issues.push('ux:surface-id-binding')
+  }
+
   return Array.from(new Set(issues))
 }
 
@@ -175,9 +188,17 @@ routes.forEach(function (route) {
   expectedUxFiles.add(path.resolve(ux))
   expectedSurfaceFiles.add(path.resolve(surface))
 
-  const issues = auditUx(ux)
+  let parsed = null
+  let validationIssues = []
+  if (hasSurface) {
+    const validation = validateSurface(surface, route, seenIds, seenSurfaceRoutes, seenControllers)
+    parsed = validation.surface
+    validationIssues = validation.issues
+  }
+
+  const issues = auditUx(ux, parsed && parsed.id)
   if (!hasSurface) issues.push('surface:missing')
-  else issues.push.apply(issues, validateSurface(surface, route, seenIds, seenSurfaceRoutes, seenControllers).issues)
+  else issues.push.apply(issues, validationIssues)
 
   rows.push({ route: route, ux: relative(ux), surface: relative(surface), hasSurface: hasSurface, issues: Array.from(new Set(issues)) })
 })
@@ -228,7 +249,9 @@ filesUnder(path.join(productRoot, 'features'), /\.js$/, []).forEach(function (fi
 
 const genericRendererFiles = []
 const surfaceHost = path.join(srcRoot, 'components', 'surface_host.ux')
+const surfacePage = path.join(srcRoot, 'runtime', 'surface_page.js')
 if (exists(surfaceHost)) genericRendererFiles.push(surfaceHost)
+if (exists(surfacePage)) genericRendererFiles.push(surfacePage)
 filesUnder(frontendRuntimeRoot, /\.(?:js|ux)$/, genericRendererFiles)
 genericRendererFiles.forEach(function (file) {
   const source = read(file)
