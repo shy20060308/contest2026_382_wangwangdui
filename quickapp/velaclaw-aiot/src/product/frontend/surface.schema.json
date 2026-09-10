@@ -11,10 +11,7 @@
     "route": { "type": "string", "pattern": "^pages/[a-z0-9_/-]+$" },
     "renderer": { "const": "surface-v1" },
     "controller": { "type": ["string", "null"], "pattern": "^[a-z][a-z0-9-]*$" },
-    "modules": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/module" }
-    },
+    "modules": { "type": "array", "items": { "$ref": "#/$defs/module" } },
     "tokens": { "$ref": "#/$defs/tokenMap" },
     "variants": {
       "type": "object",
@@ -37,24 +34,9 @@
         "id": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9-]*$" },
         "type": {
           "enum": [
-            "header",
-            "text",
-            "metric-card",
-            "metric-pair",
-            "metric-grid",
-            "metric-list",
-            "chart-card",
-            "progress-card",
-            "list",
-            "grid",
-            "calendar",
-            "button",
-            "slider",
-            "status",
-            "image",
-            "watchface-preview",
-            "honeycomb",
-            "spacer"
+            "header", "text", "metric-card", "metric-pair", "metric-grid", "metric-list", "chart-card",
+            "progress-card", "list", "grid", "calendar", "button", "slider", "status", "dialog",
+            "image", "watchface-preview", "honeycomb", "spacer"
           ]
         },
         "copy": { "type": "object", "additionalProperties": { "type": "string" } },
@@ -67,19 +49,14 @@
     },
     "tokenMap": {
       "type": "object",
-      "additionalProperties": {
-        "type": ["number", "string", "boolean", "null", "object", "array"]
-      }
+      "additionalProperties": { "type": ["number", "string", "boolean", "null", "object", "array"] }
     },
     "variant": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "tokens": { "$ref": "#/$defs/tokenMap" },
-        "modules": {
-          "type": "object",
-          "additionalProperties": { "$ref": "#/$defs/tokenMap" }
-        }
+        "modules": { "type": "object", "additionalProperties": { "$ref": "#/$defs/tokenMap" } }
       }
     }
   }
