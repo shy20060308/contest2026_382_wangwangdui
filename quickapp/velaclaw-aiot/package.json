@@ -21,6 +21,8 @@
     "v3:architecture": "node test/v3_legacy_absence.test.js && node test/v3_architecture.test.js",
     "v3:design": "node test/v3_design.test.js",
     "v3:surfaces": "node test/v3_surface_geometry.test.js",
+    "v3:frontend-audit": "node scripts/audit-v3-frontends.js",
+    "v3:frontend-contract": "node scripts/audit-v3-frontends.js --strict",
     "v3:truth": "node test/v3_truth_contracts.test.js",
     "v3:package-hygiene": "node test/v3_package_hygiene.test.js",
     "capabilities:check": "node test/capability_runtime.test.js",
