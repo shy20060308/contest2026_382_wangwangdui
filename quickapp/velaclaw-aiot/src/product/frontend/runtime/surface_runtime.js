@@ -53,15 +53,16 @@ function definitionMap(definitions) {
 
 function metricListData(module, tokens, frame, state) {
   var raw = valueAt(state, module.bind && module.bind.items) || []
-  var definitions = definitionMap(module.props && module.props.items ? module.props.items : [])
+  var rawById = definitionMap(raw)
+  var definitions = module.props && module.props.items ? module.props.items : []
   var copy = module.copy || {}
   var trackWidth = frame.width - (tokens.itemPadding || 0) * 2
   var result = []
 
-  for (var i = 0; i < raw.length; i++) {
-    var metric = raw[i]
-    var definition = definitions[metric.id]
-    if (!definition) throw new Error('V3 metric-list has no JSON definition for ' + metric.id)
+  for (var i = 0; i < definitions.length; i++) {
+    var definition = definitions[i]
+    var metric = rawById[definition.id]
+    if (!metric) continue
     var current = Number(metric.current) || 0
     var goal = Number(metric.goal) || 0
     var ratio = goal > 0 ? current / goal : 0
@@ -72,6 +73,7 @@ function metricListData(module, tokens, frame, state) {
     var accent = definition.tokens && definition.tokens.accent
     var unit = definition.copy && definition.copy.unit ? definition.copy.unit : ''
     var values = {
+      percent: percent,
       goal: formatNumber(goal),
       remaining: formatNumber(remaining),
       extra: formatNumber(extra),
@@ -82,12 +84,12 @@ function metricListData(module, tokens, frame, state) {
       : fill(copy.remaining, values)
 
     result.push({
-      id: metric.id,
-      name: definition.copy && definition.copy.label ? definition.copy.label : metric.id,
+      id: definition.id,
+      name: definition.copy && definition.copy.label ? definition.copy.label : definition.id,
       current: formatNumber(current),
       unit: unit,
       accent: accent,
-      progressText: percent > 999 ? '999%+' : percent + '%',
+      progressText: percent > 999 ? fill(copy.percentCap, values) : fill(copy.percent, values),
       progressWidth: Math.round(Math.max(0, Math.min(1, ratio)) * trackWidth),
       goalText: fill(copy.goal, values),
       statusText: statusText,
@@ -117,17 +119,34 @@ function resolve(surface, profile, scene, safe, state) {
   if (!surface || surface.renderer !== 'surface-v1') throw new Error('V3 Surface Runtime requires surface-v1 JSON')
   var selected = variant(surface, profile)
   var modules = []
+  var headers = []
+  var texts = []
+  var buttons = []
+  var metricList = null
+
   for (var i = 0; i < surface.modules.length; i++) {
-    var module = surface.modules[i]
-    modules.push(resolveModule(module, selected.modules[module.id], profile, scene, safe, state || {}))
+    var module = resolveModule(surface.modules[i], selected.modules[surface.modules[i].id], profile, scene, safe, state || {})
+    modules.push(module)
+    if (module.type === 'header') headers.push(module)
+    else if (module.type === 'text') texts.push(module)
+    else if (module.type === 'button') buttons.push(module)
+    else if (module.type === 'metric-list') {
+      if (metricList) throw new Error('surface-v1 currently permits one metric-list module per surface')
+      metricList = module
+    }
   }
+
   return {
     id: surface.id,
     shape: profile.formFactor,
     sceneWidth: scene.width,
     sceneHeight: scene.height,
     background: selected.tokens.background,
-    modules: modules
+    modules: modules,
+    headers: headers,
+    texts: texts,
+    buttons: buttons,
+    metricList: metricList
   }
 }
 
