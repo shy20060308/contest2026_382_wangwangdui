@@ -80,7 +80,7 @@ module.exports = {
     arrowSize: 20,
     iconSize: 40,
     iconRadius: 20,
-    itemRadius: 20
+    itemRadius: 12
   },
   rect: {
     contentWidth: 164,
