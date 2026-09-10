@@ -41,6 +41,7 @@
             "text",
             "metric-card",
             "metric-pair",
+            "metric-grid",
             "metric-list",
             "chart-card",
             "progress-card",
