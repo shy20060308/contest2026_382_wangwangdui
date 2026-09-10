@@ -55,9 +55,14 @@ function metricListData(module, tokens, frame, state) {
   var raw = valueAt(state, module.bind && module.bind.items) || []
   var rawById = definitionMap(raw)
   var definitions = module.props && module.props.items ? module.props.items : []
+  var definitionById = definitionMap(definitions)
   var copy = module.copy || {}
   var trackWidth = frame.width - (tokens.itemPadding || 0) * 2
   var result = []
+
+  for (var rawIndex = 0; rawIndex < raw.length; rawIndex++) {
+    if (!definitionById[raw[rawIndex].id]) throw new Error('V3 metric-list received undeclared semantic id ' + raw[rawIndex].id)
+  }
 
   for (var i = 0; i < definitions.length; i++) {
     var definition = definitions[i]
