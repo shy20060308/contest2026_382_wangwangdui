@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "id": "history",
+  "route": "pages/history",
+  "renderer": "surface-v1",
+  "controller": "history",
+  "modules": [
+    {
+      "id": "head",
+      "type": "header",
+      "copy": { "title": "7日趋势", "subtitle": "活动与健康摘要" },
+      "bind": { "trailing": "goalPercent" },
+      "props": { "trailingFormat": "percent", "trailingNullText": "0%" },
+      "tokens": {
+        "flow": true,
+        "width": 156,
+        "height": 30,
+        "titleWidth": 96,
+        "trailingWidth": 48,
+        "subtitleWidth": 156,
+        "subtitleTrailingWidth": 0,
+        "titleSize": 14,
+        "subtitleSize": 7,
+        "trailingSize": 15,
+        "subtitleTrailingSize": 0,
+        "titleLineHeight": 18,
+        "subtitleLineHeight": 10,
+        "titleColor": "#FFFFFF",
+        "subtitleColor": "#8E8E93",
+        "trailingColor": "#30D158",
+        "subtitleTrailingColor": "#8E8E93",
+        "titleWeight": "bold",
+        "trailingWeight": "bold"
+      }
+    },
+    {
+      "id": "summary",
+      "type": "metric-grid",
+      "props": {
+        "items": [
+          { "id": "today", "bind": { "value": "todaySteps" }, "props": { "valueFormat": "number" }, "copy": { "label": "今日步数" }, "tokens": { "accent": "#FFD60A" } },
+          { "id": "average", "bind": { "value": "avgSteps" }, "props": { "valueFormat": "number" }, "copy": { "label": "日均步数" }, "tokens": { "accent": "#64D2FF" } }
+        ]
+      },
+      "tokens": {
+        "flow": true,
+        "marginTop": 6,
+        "height": 46,
+        "columns": 2,
+        "gap": 6,
+        "itemHeight": 46,
+        "itemRadius": 16,
+        "itemPaddingX": 8,
+        "itemPaddingY": 7,
+        "itemBackground": "#111317",
+        "labelSize": 7,
+        "labelColor": "#8E8E93",
+        "valueSize": 15,
+        "valueTop": 3,
+        "valueWeight": "bold",
+        "valueColor": "#FFFFFF",
+        "detailSize": 0,
+        "detailTop": 0,
+        "detailColor": "#8E8E93"
+      }
+    },
+    {
+      "id": "trend",
+      "type": "chart-card",
+      "copy": { "title": "步数趋势", "caption": "近7日", "todayCompactLabel": "今", "todayLabel": "今天" },
+      "bind": { "items": "records" },
+      "props": { "valueField": "steps", "labelField": "date", "valueFormat": "number", "labelFormat": "weekday-short" },
+      "tokens": {
+        "flow": true,
+        "marginTop": 6,
+        "width": 150,
+        "height": 96,
+        "mode": "columns",
+        "radius": 16,
+        "paddingX": 8,
+        "paddingY": 8,
+        "background": "#111317",
+        "headHeight": 14,
+        "titleSize": 9,
+        "titleColor": "#FFFFFF",
+        "titleWeight": "bold",
+        "captionSize": 6,
+        "captionColor": "#8E8E93",
+        "chartTop": 3,
+        "chartHeight": 48,
+        "columns": 7,
+        "barWidth": 9,
+        "barMinHeight": 5,
+        "barRadius": 4,
+        "labelTop": 2,
+        "labelSize": 6,
+        "labelLineHeight": 9,
+        "labelColor": "#8E8E93",
+        "labelWeight": "normal",
+        "activeWeight": "bold",
+        "activeColor": "#FFD60A",
+        "inactiveColor": "#4C7CF3",
+        "valueColor": "#FFFFFF",
+        "trackBackground": "#24262C"
+      }
+    },
+    {
+      "id": "insights",
+      "type": "metric-grid",
+      "props": {
+        "items": [
+          { "id": "best", "bind": { "value": "bestSteps", "detail": "bestDate" }, "props": { "valueFormat": "number", "detailFormat": "date-short" }, "copy": { "label": "最佳" }, "tokens": { "accent": "#FFFFFF" } },
+          { "id": "heart", "bind": { "value": "avgHeartRate" }, "props": { "valueFormat": "suffix: bpm", "valueNullText": "--" }, "copy": { "label": "平均心率", "detail": "7日" }, "tokens": { "accent": "#FF375F" } },
+          { "id": "goal", "bind": { "value": "goalPercent" }, "props": { "valueFormat": "percent", "valueNullText": "0%" }, "copy": { "label": "今日达成", "detail": "目标" }, "tokens": { "accent": "#FFD60A" } }
+        ]
+      },
+      "tokens": {
+        "flow": true,
+        "marginTop": 6,
+        "height": 42,
+        "columns": 3,
+        "gap": 6,
+        "itemHeight": 42,
+        "itemRadius": 16,
+        "itemPaddingX": 6,
+        "itemPaddingY": 6,
+        "itemBackground": "#111317",
+        "labelSize": 6,
+        "labelColor": "#8E8E93",
+        "valueSize": 9,
+        "valueTop": 3,
+        "valueWeight": "bold",
+        "valueColor": "#FFFFFF",
+        "detailSize": 5,
+        "detailTop": 2,
+        "detailColor": "#8E8E93"
+      }
+    }
+  ],
+  "tokens": {
+    "background": "#000000",
+    "stream": { "top": 0, "width": 164, "heightMode": "scene-bottom" },
+    "streamPaddingBottom": 18
+  },
+  "variants": {
+    "base": {},
+    "circle": {
+      "tokens": { "stream": { "top": 14, "width": 136, "heightMode": "scene-bottom" }, "streamPaddingBottom": 18 },
+      "modules": {
+        "head": { "width": 128, "height": 26, "titleWidth": 78, "trailingWidth": 42, "subtitleWidth": 128, "titleSize": 13, "subtitleSize": 6, "trailingSize": 13, "titleLineHeight": 17, "subtitleLineHeight": 9 },
+        "summary": { "marginTop": 4, "height": 38, "gap": 4, "itemHeight": 38, "itemRadius": 14, "itemPaddingX": 7, "itemPaddingY": 6, "labelSize": 6, "valueSize": 13 },
+        "trend": { "marginTop": 4, "width": 124, "height": 68, "radius": 14, "paddingX": 7, "paddingY": 6, "headHeight": 12, "titleSize": 8, "captionSize": 5, "chartTop": 3, "chartHeight": 30, "barWidth": 7, "barMinHeight": 5, "labelSize": 5, "labelLineHeight": 8 },
+        "insights": { "marginTop": 4, "height": 36, "gap": 4, "itemHeight": 36, "itemRadius": 14, "itemPaddingX": 5, "itemPaddingY": 5, "labelSize": 5, "valueSize": 8 }
+      }
+    },
+    "pill": {
+      "tokens": { "stream": { "top": 0, "width": 168, "heightMode": "scene-bottom" }, "streamPaddingBottom": 52 },
+      "modules": {
+        "head": { "width": 168, "height": 36, "titleWidth": 108, "trailingWidth": 50, "subtitleWidth": 168, "titleSize": 18, "subtitleSize": 9, "trailingSize": 18, "titleLineHeight": 23, "subtitleLineHeight": 12 },
+        "summary": { "marginTop": 9, "height": 64, "gap": 9, "itemHeight": 64, "itemRadius": 9, "itemPaddingX": 10, "itemPaddingY": 10, "labelSize": 9, "valueSize": 20 },
+        "trend": { "marginTop": 9, "width": 168, "height": 190, "heightMode": "rows", "maxHeight": 190, "mode": "rows", "radius": 9, "paddingX": 9, "paddingY": 9, "headHeight": 18, "titleSize": 11, "captionSize": 8, "chartTop": 4, "rowHeight": 20, "rowLabelWidth": 28, "rowLabelSize": 7, "rowTrackHeight": 10, "rowTrackGap": 4, "rowTrackRadius": 5, "rowValueWidth": 44, "rowValueSize": 8, "rowMinWidth": 14, "rowMaxWidth": 70 },
+        "insights": { "marginTop": 9, "height": 44, "gap": 6, "itemHeight": 44, "itemRadius": 9, "itemPaddingX": 5, "itemPaddingY": 5, "labelSize": 7, "valueSize": 11, "detailSize": 5 }
+      }
+    },
+    "rect": {}
+  }
+}
