@@ -33,18 +33,16 @@ function pick(primary, secondary, key) {
   return secondary && secondary[key]
 }
 
-function screenShape(value, width, height, model, platformVersionCode) {
+function screenShape(value, width, height) {
   var normalized = String(value || '').toLowerCase()
   if (normalized === 'circle') return 'circle'
   if (normalized === 'pill' || normalized === 'pill-shaped') return 'pill-shaped'
   if (normalized === 'rect') return 'rect'
 
-  var ratio = height > 0 ? width / height : 0
+  var ratio = width / height
   if (ratio >= 0.9 && ratio <= 1.1) return 'circle'
   if (ratio > 0.3 && ratio < 0.5) return 'pill-shaped'
-  if (model === 'Emulator-Vela' && platformVersionCode === 1200 && ((width === 192 && height === 490) || (width === 212 && height === 520))) return 'pill-shaped'
-  if (width > 0 && height > 0) return 'rect'
-  throw new Error('V3 Device Profile requires screenShape or usable screen dimensions')
+  return 'rect'
 }
 
 function formFactor(shape) {
@@ -60,22 +58,13 @@ function declaredInsets(factor) {
   return { left: source.left, top: source.top, right: source.right, bottom: source.bottom, gestureBar: source.gestureBar }
 }
 
-function isContestBetaPill(model, platformVersionCode, factor, width, height) {
-  if (model !== 'Emulator-Vela' || platformVersionCode !== 1200 || factor !== 'pill') return false
-  return (width === 192 && height === 490) || (width === 212 && height === 520)
-}
-
 function make(info, context) {
   info = info || {}
   var local = contextDevice(context)
   var width = positiveNumber(pick(info, local, 'screenWidth'), 'screenWidth')
   var height = positiveNumber(pick(info, local, 'screenHeight'), 'screenHeight')
-  var model = optionalText(pick(info, local, 'model'))
-  var platformVersionCode = optionalPositiveNumber(pick(info, local, 'platformVersionCode'), 'platformVersionCode')
-  var apiLevel = optionalPositiveNumber(pick(info, local, 'APILevel'), 'APILevel')
-  var shapeText = screenShape(pick(info, local, 'screenShape'), width, height, model, platformVersionCode)
+  var shapeText = screenShape(pick(info, local, 'screenShape'), width, height)
   var factor = formFactor(shapeText)
-  var betaPill = isContestBetaPill(model, platformVersionCode, factor, width, height)
 
   return {
     shape: shapeText,
@@ -83,13 +72,12 @@ function make(info, context) {
     isCircle: factor === 'circle',
     isPill: factor === 'pill',
     isRect: factor === 'rect',
-    isBetaPillViewport: betaPill,
     screenWidth: width,
     screenHeight: height,
     safeInsets: declaredInsets(factor),
-    model: model,
-    platformVersionCode: platformVersionCode,
-    apiLevel: apiLevel,
+    model: optionalText(pick(info, local, 'model')),
+    platformVersionCode: optionalPositiveNumber(pick(info, local, 'platformVersionCode'), 'platformVersionCode'),
+    apiLevel: optionalPositiveNumber(pick(info, local, 'APILevel'), 'APILevel'),
     source: 'v3.capability.device'
   }
 }
