@@ -29,6 +29,43 @@
           </div>
         </div>
       </scroll>
+
+      <scroll class="surface-flow" if="{{ plan.stream }}" scroll-y="true" style="left: {{ plan.stream.left }}px; top: {{ plan.stream.top }}px; width: {{ plan.stream.width }}px; height: {{ plan.stream.height }}px;">
+        <stack class="surface-flow-content" style="width: {{ plan.stream.width }}px; height: {{ plan.flowContentHeight }}px;">
+          <div class="flow-header" for="{{ plan.flowHeaders }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px;">
+            <div class="flow-header-row" style="height: {{ $item.tokens.titleLineHeight }}px;">
+              <text class="flow-header-title" style="width: {{ $item.tokens.titleWidth }}px; height: {{ $item.tokens.titleLineHeight }}px; line-height: {{ $item.tokens.titleLineHeight }}px; font-size: {{ $item.tokens.titleSize }}px; color: {{ $item.tokens.titleColor }}; font-weight: {{ $item.tokens.titleWeight }};">{{ $item.title }}</text>
+              <text class="flow-header-trailing" style="width: {{ $item.tokens.trailingWidth }}px; height: {{ $item.tokens.titleLineHeight }}px; line-height: {{ $item.tokens.titleLineHeight }}px; font-size: {{ $item.tokens.trailingSize }}px; color: {{ $item.tokens.trailingColor }}; font-weight: {{ $item.tokens.trailingWeight }}; text-align: right;">{{ $item.trailing }}</text>
+            </div>
+            <div class="flow-header-row" style="height: {{ $item.tokens.subtitleLineHeight }}px;">
+              <text class="flow-header-subtitle" style="width: {{ $item.tokens.subtitleWidth }}px; height: {{ $item.tokens.subtitleLineHeight }}px; line-height: {{ $item.tokens.subtitleLineHeight }}px; font-size: {{ $item.tokens.subtitleSize }}px; color: {{ $item.tokens.subtitleColor }};">{{ $item.subtitle }}</text>
+              <text class="flow-header-subtitle-trailing" style="width: {{ $item.tokens.subtitleTrailingWidth }}px; height: {{ $item.tokens.subtitleLineHeight }}px; line-height: {{ $item.tokens.subtitleLineHeight }}px; font-size: {{ $item.tokens.subtitleTrailingSize }}px; color: {{ $item.tokens.subtitleTrailingColor }}; text-align: right;">{{ $item.subtitleTrailing }}</text>
+            </div>
+          </div>
+
+          <div class="flow-metric-card" for="{{ plan.flowMetricItems }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.itemRadius }}px; padding: {{ $item.tokens.itemPaddingY }}px {{ $item.tokens.itemPaddingX }}px; background-color: {{ $item.tokens.itemBackground }};">
+            <text class="flow-metric-label" style="font-size: {{ $item.tokens.labelSize }}px; color: {{ $item.tokens.labelColor }};">{{ $item.label }}</text>
+            <text class="flow-metric-value" style="font-size: {{ $item.tokens.valueSize }}px; margin-top: {{ $item.tokens.valueTop }}px; color: {{ $item.accent }}; font-weight: {{ $item.tokens.valueWeight }};">{{ $item.value }}</text>
+            <text class="flow-metric-detail" if="{{ $item.detail }}" style="font-size: {{ $item.tokens.detailSize }}px; margin-top: {{ $item.tokens.detailTop }}px; color: {{ $item.tokens.detailColor }};">{{ $item.detail }}</text>
+          </div>
+
+          <div class="flow-chart-card" for="{{ plan.flowChartCards }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.radius }}px; padding: {{ $item.tokens.paddingY }}px {{ $item.tokens.paddingX }}px; background-color: {{ $item.tokens.background }};">
+            <div class="flow-chart-head" style="height: {{ $item.tokens.headHeight }}px;">
+              <text class="flow-chart-title" style="font-size: {{ $item.tokens.titleSize }}px; color: {{ $item.tokens.titleColor }}; font-weight: {{ $item.tokens.titleWeight }};">{{ $item.title }}</text>
+              <text class="flow-chart-caption" style="font-size: {{ $item.tokens.captionSize }}px; color: {{ $item.tokens.captionColor }};">{{ $item.caption }}</text>
+            </div>
+          </div>
+
+          <div class="flow-column-bar" for="{{ plan.flowColumnBars }}" tid="id" style="left: {{ $item.barLeft }}px; top: {{ $item.barTop }}px; width: {{ $item.barWidth }}px; height: {{ $item.barHeight }}px; border-radius: {{ $item.tokens.barRadius }}px; background-color: {{ $item.color }};"></div>
+          <text class="flow-column-label" for="{{ plan.flowColumnBars }}" tid="id" style="left: {{ $item.labelLeft }}px; top: {{ $item.labelTop }}px; width: {{ $item.labelWidth }}px; height: {{ $item.tokens.labelLineHeight }}px; line-height: {{ $item.tokens.labelLineHeight }}px; font-size: {{ $item.tokens.labelSize }}px; color: {{ $item.isActive ? $item.tokens.activeColor : $item.tokens.labelColor }}; font-weight: {{ $item.isActive ? $item.tokens.activeWeight : $item.tokens.labelWeight }}; text-align: center;">{{ $item.label }}</text>
+
+          <div class="flow-row" for="{{ plan.flowRowBars }}" tid="id" style="left: 0px; top: {{ $item.top }}px; width: {{ plan.stream.width }}px; height: {{ $item.height }}px;">
+            <text class="flow-row-label" style="position: absolute; left: {{ $item.labelLeft }}px; width: {{ $item.labelWidth }}px; font-size: {{ $item.tokens.rowLabelSize }}px; color: {{ $item.isActive ? $item.tokens.activeColor : $item.tokens.labelColor }}; font-weight: {{ $item.isActive ? $item.tokens.activeWeight : $item.tokens.labelWeight }};">{{ $item.label }}</text>
+            <div class="flow-row-track" style="position: absolute; left: {{ $item.trackLeft }}px; width: {{ $item.trackWidth }}px; height: {{ $item.tokens.rowTrackHeight }}px; border-radius: {{ $item.tokens.rowTrackRadius }}px; background-color: {{ $item.tokens.trackBackground }}; overflow: hidden;"><div class="flow-row-fill" style="width: {{ $item.fillWidth }}px; height: {{ $item.tokens.rowTrackHeight }}px; border-radius: {{ $item.tokens.rowTrackRadius }}px; background-color: {{ $item.color }};"></div></div>
+            <text class="flow-row-value" style="position: absolute; left: {{ $item.valueLeft }}px; width: {{ $item.valueWidth }}px; font-size: {{ $item.tokens.rowValueSize }}px; color: {{ $item.isActive ? $item.tokens.activeColor : $item.tokens.valueColor }}; font-weight: {{ $item.tokens.valueWeight }}; text-align: right;">{{ $item.value }}</text>
+          </div>
+        </stack>
+      </scroll>
     </stack>
   </stack>
 </template>
@@ -40,24 +77,18 @@ export default {
   props: ['plan'],
   activate(action) {
     if (!action) return
-    if (action === '$back') {
-      navigation.back()
-      return
-    }
-    if (String(action).charAt(0) === '/') {
-      navigation.push(action)
-      return
-    }
+    if (action === '$back') { navigation.back(); return }
+    if (String(action).charAt(0) === '/') { navigation.push(action); return }
     throw new Error('Unsupported V3 surface action: ' + action)
   }
 }
 </script>
 
 <style>
-.surface-host, .surface-scene, .surface-header, .surface-text, .surface-button, .surface-metric-list { position: absolute; }
-.surface-button, .surface-metric-head, .surface-metric-value-row, .surface-metric-foot { flex-direction: row; align-items: center; }
-.surface-button, .surface-metric-head, .surface-metric-foot { justify-content: space-between; }
-.surface-metric-list, .surface-metric-card { flex-direction: column; }
+.surface-host, .surface-scene, .surface-header, .surface-text, .surface-button, .surface-metric-list, .surface-flow, .surface-flow-content, .flow-header, .flow-metric-card, .flow-chart-card, .flow-column-bar, .flow-column-label, .flow-row { position: absolute; }
+.surface-button, .surface-metric-head, .surface-metric-value-row, .surface-metric-foot, .flow-header-row, .flow-chart-head { flex-direction: row; align-items: center; }
+.surface-button, .surface-metric-head, .surface-metric-foot, .flow-header-row, .flow-chart-head { justify-content: space-between; }
+.surface-metric-list, .surface-metric-card, .flow-header, .flow-metric-card, .flow-chart-card { flex-direction: column; }
 .surface-metric-value-row { align-items: flex-end; }
 .surface-progress-track { overflow: hidden; flex-direction: row; align-items: center; }
 .surface-metric-status { text-align: right; }
