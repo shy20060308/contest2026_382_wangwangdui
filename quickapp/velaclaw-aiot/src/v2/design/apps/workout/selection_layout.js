@@ -45,9 +45,9 @@ module.exports = {
     stream: { top: 40, width: 168 },
     titleSize: 18,
     cardHeight: 76,
-    cardRadius: 24,
+    cardRadius: 12,
     actionHeight: 50,
-    actionRadius: 25,
+    actionRadius: 12,
     modeNameSize: 15,
     modeDescSize: 9
   },
