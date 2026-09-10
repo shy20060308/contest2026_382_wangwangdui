@@ -10,7 +10,6 @@ function semanticMetrics(snapshot) {
 
 export function createActivityController(onChange) {
   var active = false
-  var lifecycleEpoch = 0
 
   function emit(snapshot) {
     var value = semanticMetrics(snapshot)
@@ -18,21 +17,24 @@ export function createActivityController(onChange) {
     return value
   }
 
+  function onActivity(snapshot) {
+    if (active) emit(snapshot)
+  }
+
   return {
     start: function () {
       if (active) return emit(activityStore.getSnapshot())
       active = true
-      var epoch = ++lifecycleEpoch
+      activityStore.subscribe(onActivity)
       emit(activityStore.getSnapshot())
       activityStore.hydrate(function (snapshot) {
-        if (!active || epoch !== lifecycleEpoch) return
-        emit(snapshot)
+        if (active) emit(snapshot)
       })
     },
     stop: function () {
       if (!active) return
       active = false
-      lifecycleEpoch++
+      activityStore.unsubscribe(onActivity)
     }
   }
 }
