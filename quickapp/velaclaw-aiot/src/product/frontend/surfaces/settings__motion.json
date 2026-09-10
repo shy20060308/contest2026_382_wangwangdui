@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "id": "motion",
+  "route": "pages/settings/motion",
+  "renderer": "surface-v1",
+  "controller": "motion",
+  "modules": [
+    {
+      "id": "head",
+      "type": "header",
+      "copy": { "title": "动作与加速度", "subtitle": "真实三轴传感器" },
+      "bind": { "trailing": "sensorStatus", "subtitleTrailing": "intensityKey" },
+      "props": {
+        "trailingMap": {
+          "idle": { "text": "未启动", "color": "#8E8E93" },
+          "waiting": { "text": "等待样本", "color": "#64D2FF" },
+          "streaming": { "text": "正在出数", "color": "#30D158" },
+          "unavailable": { "text": "不可用", "color": "#FF453A" },
+          "stopped": { "text": "已停止", "color": "#8E8E93" },
+          "recalibrating": { "text": "校准中", "color": "#FFD60A" }
+        },
+        "subtitleTrailingMap": {
+          "stable": { "text": "平稳", "color": "#30D158" },
+          "light": { "text": "轻微", "color": "#64D2FF" },
+          "medium": { "text": "中等", "color": "#FFD60A" },
+          "strong": { "text": "强烈", "color": "#FF453A" }
+        }
+      },
+      "tokens": { "flow": true, "height": 32, "titleWidth": 98, "trailingWidth": 58, "subtitleWidth": 104, "subtitleTrailingWidth": 52, "titleSize": 13, "subtitleSize": 7, "trailingSize": 7, "subtitleTrailingSize": 7, "titleLineHeight": 18, "subtitleLineHeight": 11, "titleColor": "#BF5AF2", "subtitleColor": "#8E8E93", "trailingColor": "#8E8E93", "subtitleTrailingColor": "#30D158", "titleWeight": "bold", "trailingWeight": "bold" }
+    },
+    {
+      "id": "axes",
+      "type": "metric-grid",
+      "props": {
+        "items": [
+          { "id": "x", "bind": { "value": "x" }, "props": { "valueFormat": "number" }, "copy": { "label": "X" }, "tokens": { "accent": "#64D2FF" } },
+          { "id": "y", "bind": { "value": "y" }, "props": { "valueFormat": "number" }, "copy": { "label": "Y" }, "tokens": { "accent": "#30D158" } },
+          { "id": "z", "bind": { "value": "z" }, "props": { "valueFormat": "number" }, "copy": { "label": "Z" }, "tokens": { "accent": "#FF9F0A" } }
+        ]
+      },
+      "tokens": { "flow": true, "marginTop": 8, "height": 66, "columns": 3, "gap": 7, "rowGap": 0, "itemHeight": 66, "itemRadius": 13, "itemPaddingX": 6, "itemPaddingY": 8, "itemBackground": "#111317", "labelSize": 8, "labelColor": "#8E8E93", "valueSize": 14, "valueTop": 5, "valueWeight": "bold", "valueColor": "#FFFFFF", "detailSize": 0, "detailTop": 0, "detailColor": "#8E8E93" }
+    },
+    {
+      "id": "motionMetrics",
+      "type": "metric-grid",
+      "props": {
+        "items": [
+          { "id": "magnitude", "bind": { "value": "magnitude" }, "props": { "valueFormat": "number" }, "copy": { "label": "合加速度" }, "tokens": { "accent": "#FFFFFF" } },
+          { "id": "score", "bind": { "value": "score" }, "props": { "valueFormat": "number" }, "copy": { "label": "动作强度" }, "tokens": { "accent": "#BF5AF2" } },
+          { "id": "samples", "bind": { "value": "sampleCount" }, "props": { "valueFormat": "number" }, "copy": { "label": "样本数" }, "tokens": { "accent": "#64D2FF" } },
+          { "id": "peak", "bind": { "value": "measurePeak" }, "props": { "valueFormat": "number" }, "copy": { "label": "测量峰值" }, "tokens": { "accent": "#FF9F0A" } }
+        ]
+      },
+      "tokens": { "flow": true, "marginTop": 8, "height": 116, "columns": 2, "gap": 8, "rowGap": 8, "itemHeight": 54, "itemRadius": 13, "itemPaddingX": 8, "itemPaddingY": 7, "itemBackground": "#111317", "labelSize": 7, "labelColor": "#8E8E93", "valueSize": 14, "valueTop": 4, "valueWeight": "bold", "valueColor": "#FFFFFF", "detailSize": 0, "detailTop": 0, "detailColor": "#8E8E93" }
+    },
+    {
+      "id": "sensorToggle",
+      "type": "button",
+      "copy": { "title": "开始诊断", "subtitle": "订阅真实加速度样本" },
+      "bind": { "state": "sensorActive" },
+      "props": { "stateMap": { "true": { "text": "停止诊断", "color": "#FFFFFF", "background": "#2C2C2E" }, "false": { "text": "开始诊断", "color": "#FFFFFF", "background": "#0A84FF" } } },
+      "actions": { "tap": "motion-toggle" },
+      "tokens": { "flow": true, "marginTop": 9, "height": 48, "radius": 13, "paddingX": 12, "background": "#0A84FF", "titleSize": 11, "titleColor": "#FFFFFF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#D1D1D6", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
+    },
+    {
+      "id": "reset",
+      "type": "button",
+      "copy": { "title": "重新校准", "subtitle": "清空当前采样统计" },
+      "actions": { "tap": "motion-reset" },
+      "tokens": { "flow": true, "marginTop": 6, "height": 44, "radius": 13, "paddingX": 12, "background": "#1C1C1E", "titleSize": 10, "titleColor": "#FFFFFF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#8E8E93", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
+    },
+    {
+      "id": "measureState",
+      "type": "header",
+      "copy": { "title": "动作测量", "subtitle": "3 秒窗口" },
+      "bind": { "trailing": "measurePhase", "subtitleTrailing": "measureIntensityKey" },
+      "props": {
+        "trailingMap": {
+          "idle": { "text": "待测量", "color": "#8E8E93" },
+          "measuring": { "text": "测量中", "color": "#64D2FF" },
+          "complete": { "text": "完成", "color": "#30D158" },
+          "no-samples": { "text": "无样本", "color": "#FF453A" },
+          "unavailable": { "text": "不可用", "color": "#FF453A" }
+        },
+        "subtitleTrailingMap": {
+          "stable": { "text": "平稳", "color": "#30D158" },
+          "light": { "text": "轻微", "color": "#64D2FF" },
+          "medium": { "text": "中等", "color": "#FFD60A" },
+          "strong": { "text": "强烈", "color": "#FF453A" }
+        }
+      },
+      "tokens": { "flow": true, "marginTop": 12, "height": 32, "titleWidth": 86, "trailingWidth": 70, "subtitleWidth": 90, "subtitleTrailingWidth": 66, "titleSize": 11, "subtitleSize": 7, "trailingSize": 8, "subtitleTrailingSize": 7, "titleLineHeight": 18, "subtitleLineHeight": 11, "titleColor": "#FFFFFF", "subtitleColor": "#8E8E93", "trailingColor": "#8E8E93", "subtitleTrailingColor": "#30D158", "titleWeight": "bold", "trailingWeight": "bold" }
+    },
+    {
+      "id": "remaining",
+      "type": "text",
+      "copy": { "template": "剩余 {value} ms" },
+      "bind": { "value": "remainingMs" },
+      "props": { "valueFormat": "number" },
+      "tokens": { "flow": true, "marginTop": 5, "height": 42, "fontSize": 14, "lineHeight": 42, "foreground": "#64D2FF", "textAlign": "center" }
+    },
+    {
+      "id": "measure",
+      "type": "button",
+      "copy": { "title": "开始测量", "subtitle": "完成一次自然动作" },
+      "bind": { "state": "measureActive" },
+      "props": { "stateMap": { "true": { "text": "正在测量", "color": "#64D2FF", "background": "#102029" }, "false": { "text": "开始测量", "color": "#FFFFFF", "background": "#BF5AF2" } } },
+      "actions": { "tap": "motion-measure" },
+      "tokens": { "flow": true, "marginTop": 7, "height": 48, "radius": 13, "paddingX": 12, "background": "#BF5AF2", "titleSize": 11, "titleColor": "#FFFFFF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#E5D2ED", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
+    }
+  ],
+  "tokens": { "background": "#000000", "stream": { "top": 0, "width": 164, "heightMode": "scene-bottom" }, "streamPaddingBottom": 20 },
+  "variants": {
+    "base": {},
+    "circle": { "tokens": { "stream": { "top": 14, "width": 148, "heightMode": "scene-bottom" }, "streamPaddingBottom": 20 }, "modules": { "head": { "height": 26, "titleSize": 11, "trailingSize": 6 }, "axes": { "height": 58, "itemHeight": 58, "gap": 5, "itemRadius": 12, "labelSize": 7, "valueSize": 12 }, "motionMetrics": { "height": 100, "itemHeight": 47, "gap": 6, "rowGap": 6, "itemRadius": 12 }, "sensorToggle": { "height": 42, "radius": 12, "titleSize": 9, "subtitleSize": 6 }, "reset": { "height": 38, "radius": 12, "titleSize": 9, "subtitleSize": 6 }, "measureState": { "height": 28, "titleSize": 10, "trailingSize": 7 }, "remaining": { "height": 36, "fontSize": 12, "lineHeight": 36 }, "measure": { "height": 42, "radius": 12, "titleSize": 9, "subtitleSize": 6 } } },
+    "pill": { "tokens": { "stream": { "top": 0, "width": 168, "heightMode": "scene-bottom" }, "streamPaddingBottom": 52 }, "modules": { "head": { "height": 38, "titleSize": 15, "subtitleSize": 9, "trailingSize": 8, "subtitleTrailingSize": 8, "titleLineHeight": 22, "subtitleLineHeight": 14 }, "axes": { "height": 82, "itemHeight": 82, "gap": 8, "itemRadius": 12, "labelSize": 9, "valueSize": 17 }, "motionMetrics": { "height": 144, "itemHeight": 68, "gap": 8, "rowGap": 8, "itemRadius": 12, "labelSize": 8, "valueSize": 18 }, "sensorToggle": { "height": 58, "radius": 12, "titleSize": 13, "subtitleSize": 8 }, "reset": { "height": 50, "radius": 12, "titleSize": 12, "subtitleSize": 8 }, "measureState": { "height": 38, "titleSize": 13, "trailingSize": 9, "subtitleSize": 8, "subtitleTrailingSize": 8 }, "remaining": { "height": 54, "fontSize": 17, "lineHeight": 54 }, "measure": { "height": 58, "radius": 12, "titleSize": 13, "subtitleSize": 8 } } },
+    "rect": {}
+  }
+}
