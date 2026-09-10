@@ -6,10 +6,10 @@ const watchfaceChart = require('../src/product/design/watchface_chart')
 const launcherView = require('../src/product/design/apps/launcher/view')
 const surfaceRuntime = require('../src/product/frontend/runtime/surface_runtime')
 const stepsSurface = require('../src/product/frontend/surfaces/steps.json')
+const historySurface = require('../src/product/frontend/surfaces/history.json')
+const healthSurface = require('../src/product/frontend/surfaces/heartrate.json')
 
 const pendingDesigns = [
-  require('../src/product/design/apps/heart'),
-  require('../src/product/design/apps/history'),
   require('../src/product/design/apps/workout'),
   require('../src/product/design/apps/workout/selection'),
   require('../src/product/design/apps/workout/history'),
@@ -94,6 +94,48 @@ profiles.forEach(function (profile) {
   assert.strictEqual(stepsPlan.shape, profile.formFactor)
   assert.deepStrictEqual(stepsPlan.metricList.items.map(function (item) { return item.id }), ['steps', 'calories', 'stand'], 'JSON item declaration must own metric order')
   assert.strictEqual(stepsPlan.metricList.items[0].progressText, '50%', 'JSON copy template must own progress presentation')
+
+  const historyPlan = surfaceRuntime.resolve(historySurface, profile, host, safe, {
+    todaySteps: 5200,
+    avgSteps: 4800,
+    bestSteps: 7200,
+    bestDate: '2026-09-08',
+    avgHeartRate: 76,
+    goalPercent: 86,
+    records: [
+      { date: '2026-09-08', steps: 7200 },
+      { date: '2026-09-09', steps: 4200 },
+      { date: '2026-09-10', steps: 5200 }
+    ]
+  })
+  assert.strictEqual(historyPlan.id, 'history')
+  assert.deepStrictEqual(historyPlan.modules.map(function (module) { return module.id }), ['head', 'summary', 'trend', 'insights'])
+  assert.strictEqual(historyPlan.flowMetricItems[0].label, '今日步数')
+  assert.strictEqual(historyPlan.flowMetricItems[0].value, '5,200')
+  assert.strictEqual(historyPlan.flowMetricItems[3].value, '76 bpm')
+  assert.strictEqual(historyPlan.flowChartCards.length, 1)
+
+  const healthPlan = surfaceRuntime.resolve(healthSurface, profile, host, safe, {
+    heartRate: 76,
+    spo2: 98,
+    stress: 22,
+    heartZone: 'normal',
+    spo2Zone: 'good',
+    stressZone: 'relaxed',
+    summaryState: 'stable',
+    sourceState: 'live',
+    updatedAt: new Date(2026, 8, 10, 15, 30).getTime(),
+    heartValues: [72, 74, 76],
+    spo2Values: [97, 99, 98],
+    stressValues: [18, 25, 22]
+  })
+  assert.strictEqual(healthPlan.id, 'heartrate')
+  assert.deepStrictEqual(healthPlan.modules.map(function (module) { return module.id }), ['head', 'heart', 'mini', 'spo2Trend', 'stressTrend', 'updated'])
+  assert.strictEqual(healthPlan.flowHeaders[0].trailing, '状态平稳')
+  assert.strictEqual(healthPlan.flowHeaders[0].trailingColor, '#30D158')
+  assert.strictEqual(healthPlan.flowMetricItems[0].value, '98%')
+  assert.strictEqual(healthPlan.flowMetricItems[0].detail, '良好')
+  assert.strictEqual(healthPlan.flowChartCards.length, 3)
 })
 
 console.log('V3 design runtime verified across pending Recipes and migrated JSON surfaces')
