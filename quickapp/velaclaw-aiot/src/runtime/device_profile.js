@@ -33,17 +33,25 @@ function pick(primary, secondary, key) {
   return secondary && secondary[key]
 }
 
-function screenShape(value) {
+function screenShape(value, width, height, model, platformVersionCode) {
   var normalized = String(value || '').toLowerCase()
-  if (normalized === 'circle' || normalized === 'pill-shaped' || normalized === 'rect') return normalized
-  throw new Error('V3 Device Profile requires canonical screenShape')
+  if (normalized === 'circle') return 'circle'
+  if (normalized === 'pill' || normalized === 'pill-shaped') return 'pill-shaped'
+  if (normalized === 'rect') return 'rect'
+
+  var ratio = height > 0 ? width / height : 0
+  if (ratio >= 0.9 && ratio <= 1.1) return 'circle'
+  if (ratio > 0.3 && ratio < 0.5) return 'pill-shaped'
+  if (model === 'Emulator-Vela' && platformVersionCode === 1200 && ((width === 192 && height === 490) || (width === 212 && height === 520))) return 'pill-shaped'
+  if (width > 0 && height > 0) return 'rect'
+  throw new Error('V3 Device Profile requires screenShape or usable screen dimensions')
 }
 
 function formFactor(shape) {
   if (shape === 'circle') return 'circle'
   if (shape === 'pill-shaped') return 'pill'
   if (shape === 'rect') return 'rect'
-  throw new Error('V3 Device Profile requires canonical screenShape')
+  throw new Error('V3 Device Profile requires a normalized screen shape')
 }
 
 function declaredInsets(factor) {
@@ -53,13 +61,15 @@ function declaredInsets(factor) {
 }
 
 function make(info, context) {
+  info = info || {}
   var local = contextDevice(context)
-  var shapeText = screenShape(pick(info, local, 'screenShape'))
   var width = positiveNumber(pick(info, local, 'screenWidth'), 'screenWidth')
   var height = positiveNumber(pick(info, local, 'screenHeight'), 'screenHeight')
-  var factor = formFactor(shapeText)
   var model = optionalText(pick(info, local, 'model'))
   var platformVersionCode = optionalPositiveNumber(pick(info, local, 'platformVersionCode'), 'platformVersionCode')
+  var apiLevel = optionalPositiveNumber(pick(info, local, 'APILevel'), 'APILevel')
+  var shapeText = screenShape(pick(info, local, 'screenShape'), width, height, model, platformVersionCode)
+  var factor = formFactor(shapeText)
 
   return {
     shape: shapeText,
@@ -72,6 +82,7 @@ function make(info, context) {
     safeInsets: declaredInsets(factor),
     model: model,
     platformVersionCode: platformVersionCode,
+    apiLevel: apiLevel,
     source: 'v3.capability.device'
   }
 }
@@ -100,4 +111,4 @@ function resolve(context, callback) {
   })
 }
 
-export default { resolve: resolve }
+export default { resolve: resolve, makeProfile: make }
