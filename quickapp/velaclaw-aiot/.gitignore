@@ -6,6 +6,7 @@
 !/dist/*.release.rpk
 /build/
 /outputs/
+/src/product/frontend/generated/
 /.codebuddy/
 /.idea/
 
