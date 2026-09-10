@@ -32,6 +32,12 @@ export function createHealthController(onChange) {
     if (!stressValues.length && valid(data, 'stress')) stressValues = [data.stress]
   }
 
+  function semanticSummaryState(anyLive, serviceAvailable, heartZone, spo2Zone, stressZone) {
+    if (!anyLive) return serviceAvailable ? 'waiting-data' : 'waiting-service'
+    if (heartZone === 'elevated' || heartZone === 'peak' || spo2Zone === 'attention' || stressZone === 'elevated' || stressZone === 'high') return 'attention'
+    return 'stable'
+  }
+
   function emit() {
     var data = latest || healthStore.getSnapshot()
     var heartAvailable = valid(data, 'heartRate')
@@ -40,15 +46,22 @@ export function createHealthController(onChange) {
     var heart = heartAvailable ? data.heartRate : null
     var spo2 = spo2Available ? data.spo2 : null
     var stress = stressAvailable ? data.stress : null
+    var heartZone = heartAvailable ? healthMetrics.classifyHeartRate(heart) : 'waiting'
+    var spo2Zone = spo2Available ? (spo2 < 95 ? 'attention' : 'good') : 'waiting'
+    var stressZone = stressAvailable ? healthMetrics.classifyStress(stress) : 'waiting'
     var heartStats = healthMetrics.stats(heartValues)
     var stressStats = healthMetrics.stats(stressValues)
+    var anyLive = heartAvailable || spo2Available || stressAvailable
+    var summaryState = semanticSummaryState(anyLive, data.serviceAvailable, heartZone, spo2Zone, stressZone)
     var model = {
       heartRate: heart,
       spo2: spo2,
       stress: stress,
-      heartZone: heartAvailable ? healthMetrics.classifyHeartRate(heart) : 'waiting',
-      spo2Zone: spo2Available ? (spo2 < 95 ? 'attention' : 'good') : 'waiting',
-      stressZone: stressAvailable ? healthMetrics.classifyStress(stress) : 'waiting',
+      heartZone: heartZone,
+      spo2Zone: spo2Zone,
+      stressZone: stressZone,
+      summaryState: summaryState,
+      sourceState: anyLive ? 'live' : (data.serviceAvailable ? 'waiting-data' : 'waiting-service'),
       dailyMin: heartStats.min,
       dailyMax: heartStats.max,
       stressMin: stressStats.min,
@@ -57,7 +70,7 @@ export function createHealthController(onChange) {
       heartSource: { live: heartAvailable, errorCode: data.heartRateErrorCode, mode: data.heartRateSource },
       spo2Source: { live: spo2Available, errorCode: data.spo2ErrorCode, mode: data.spo2Source },
       stressSource: { live: stressAvailable, errorCode: data.stressErrorCode, mode: data.stressSource },
-      anyLive: heartAvailable || spo2Available || stressAvailable,
+      anyLive: anyLive,
       serviceAvailable: data.serviceAvailable,
       updatedAt: data.updatedAt,
       heartValues: heartValues.slice(),
