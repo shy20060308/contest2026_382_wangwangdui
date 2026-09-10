@@ -98,7 +98,7 @@ module.exports = {
     headSubtitleWidth: 100,
     headSourceWidth: 64,
     cardGap: 9,
-    cardRadius: 20,
+    cardRadius: 11,
     cardPaddingX: 10,
     cardPaddingY: 10,
     heroOuterHeight: 116,
