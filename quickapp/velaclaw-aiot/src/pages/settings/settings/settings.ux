@@ -1,74 +1,21 @@
+<import name="surfacehost" src="../../../components/surface_host.ux"></import>
+
 <template>
-  <stack class="settings-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
-    <div class="settings-scene" if="{{ ready }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;" @swipe="handleSwipe">
-      <div class="header" style="left: {{ layout.header.left }}px; top: {{ layout.header.top }}px; width: {{ layout.header.width }}px; height: {{ layout.header.height }}px;"><text class="title" style="font-size: {{ layout.chrome.titleSize }}px;">设置</text><text class="page-text" style="font-size: {{ layout.chrome.pageTextSize }}px;">{{ pageText }}</text></div>
-      <div class="settings-list" style="left: {{ layout.list.left }}px; top: {{ layout.list.top }}px; width: {{ layout.list.width }}px; height: {{ layout.list.height }}px;">
-        <div class="setting-card" for="{{ pageItems }}" tid="id" @click="openSetting($item)" style="width: {{ layout.list.width }}px; height: {{ layout.itemHeight }}px; margin-bottom: {{ $item.marginBottom }}px; border-radius: {{ layout.chrome.itemRadius }}px; padding: {{ layout.chrome.itemPadding }}px;"><image class="item-icon" src="{{ $item.icon }}" style="width: {{ layout.chrome.iconSize }}px; height: {{ layout.chrome.iconSize }}px; border-radius: {{ layout.chrome.iconRadius }}px;"></image><div class="item-copy" style="margin-left: {{ layout.chrome.itemCopyMarginLeft }}px;"><text class="item-name" style="font-size: {{ layout.chrome.itemNameSize }}px;">{{ $item.name }}</text><text class="item-desc" style="font-size: {{ layout.chrome.itemDescSize }}px; line-height: {{ layout.chrome.itemDescLineHeight }}px; margin-top: {{ layout.chrome.itemDescMarginTop }}px;">{{ $item.description }}</text></div><text class="item-arrow" style="width: {{ layout.chrome.arrowWidth }}px; font-size: {{ layout.chrome.arrowSize }}px;">›</text></div>
-      </div>
-      <div class="pager" style="left: {{ layout.footer.left }}px; top: {{ layout.footer.top }}px; width: {{ layout.footer.width }}px; height: {{ layout.footer.height }}px;"><text class="pager-button" style="width: {{ layout.chrome.pagerButtonWidth }}px; height: {{ layout.chrome.pagerButtonHeight }}px; font-size: {{ layout.chrome.pagerButtonSize }}px;" @click="previousPage">‹</text><div class="dots" style="width: {{ layout.chrome.dotsWidth }}px;"><div class="dot" for="{{ dots }}" style="width: {{ layout.chrome.dotSize }}px; height: {{ layout.chrome.dotSize }}px; border-radius: {{ layout.chrome.dotRadius }}px; margin-left: {{ layout.chrome.dotMarginX }}px; margin-right: {{ layout.chrome.dotMarginX }}px; background-color: {{ $item.color }};"></div></div><text class="pager-button" style="width: {{ layout.chrome.pagerButtonWidth }}px; height: {{ layout.chrome.pagerButtonHeight }}px; font-size: {{ layout.chrome.pagerButtonSize }}px;" @click="nextPage">›</text></div>
-    </div>
-  </stack>
+  <surfacehost if="{{ surfaceReady }}" plan="{{ surfacePlan }}"></surfacehost>
 </template>
 
 <script>
-import pageRuntime from '../../../runtime/page_runtime'
-import navigation from '../../../runtime/navigation'
-import appRoutes from '../../../runtime/app_routes'
-import settingsMenuDesign from '../../../v2/design/apps/settings'
-import settingsMenuView from '../../../v2/design/apps/settings/view'
-
-function consumeSwipe(event) {
-  if (!event) return
-  if (event.preventDefault) event.preventDefault()
-  if (event.stopPropagation) event.stopPropagation()
-}
+import surfacePage from '../../../runtime/surface_page'
 
 export default {
   private: {
-    ready: false, layout: {}, pageItems: [], dots: [], pageIndex: 0, pageText: '1 / 1',
-    sceneWidth: 0, sceneHeight: 0, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
+    surfaceReady: false,
+    surfacePlan: null
   },
-  onInit() {
-    var self = this
-    pageRuntime.bind(this, function (profile, scene, safe) {
-      self.layout = settingsMenuDesign.resolve(profile, scene, safe)
-      self.ready = true
-      self.refreshPage()
-    })
-  },
-  onShow() { this.refreshPage() },
-  onBackPress() { navigation.back(); return true },
-  refreshPage() {
-    if (!this.ready) return
-    var view = settingsMenuView.project(this.layout, this.pageIndex)
-    this.pageIndex = view.pageIndex; this.pageText = view.pageText; this.pageItems = view.pageItems; this.dots = view.dots
-  },
-  previousPage() { this.pageIndex--; this.refreshPage() },
-  nextPage() { this.pageIndex++; this.refreshPage() },
-  handleSwipe(event) {
-    if (!event || !event.direction) return
-    if (event.direction === 'left') { consumeSwipe(event); this.nextPage() }
-    else if (event.direction === 'right' && this.pageIndex > 0) { consumeSwipe(event); this.previousPage() }
-  },
-  openSetting(item) {
-    if (!item) return
-    navigation.push(appRoutes.routeFor(item.id))
-  }
+  onInit() { surfacePage.bind(this, 'settings') },
+  onShow() { surfacePage.show(this) },
+  onHide() { surfacePage.hide(this) },
+  onDestroy() { surfacePage.destroy(this) },
+  onBackPress() { return surfacePage.back(this) }
 }
 </script>
-
-<style>
-.settings-root, .settings-scene { background-color: #000000; }
-.settings-scene { position: absolute; left: 0px; top: 0px; }
-.header, .settings-list, .pager { position: absolute; }
-.header, .pager, .setting-card { flex-direction: row; align-items: center; }
-.header, .pager { justify-content: space-between; }
-.title { color: #FFFFFF; font-weight: bold; } .page-text { color: #8E8E93; }
-.settings-list { flex-direction: column; }
-.setting-card { background-color: #12171C; }
-.item-icon { object-fit: cover; } .item-copy { flex: 1; flex-direction: column; }
-.item-name { color: #FFFFFF; font-weight: bold; } .item-desc { color: #8E8E93; lines: 2; }
-.item-arrow { color: #636366; text-align: right; }
-.pager-button { color: #0A84FF; text-align: center; }
-.dots { flex-direction: row; justify-content: center; align-items: center; }
-</style>
