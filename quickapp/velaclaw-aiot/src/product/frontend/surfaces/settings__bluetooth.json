@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "id": "sync",
+  "route": "pages/settings/bluetooth",
+  "renderer": "surface-v1",
+  "controller": "sync",
+  "modules": [
+    {
+      "id": "head",
+      "type": "header",
+      "copy": { "title": "蓝牙同步", "subtitle": "系统 Interconnect" },
+      "bind": { "trailing": "connected", "subtitleTrailing": "phase" },
+      "props": {
+        "trailingMap": { "true": { "text": "已连接", "color": "#30D158" }, "false": { "text": "未连接", "color": "#8E8E93" } },
+        "subtitleTrailingMap": {
+          "idle": { "text": "待检测", "color": "#8E8E93" },
+          "checking": { "text": "检测中", "color": "#64D2FF" },
+          "connected": { "text": "已就绪", "color": "#30D158" },
+          "disconnected": { "text": "未连接", "color": "#8E8E93" },
+          "connect-failed": { "text": "检测失败", "color": "#FF453A" },
+          "connect-required": { "text": "需要连接", "color": "#FFD60A" },
+          "collecting": { "text": "收集中", "color": "#64D2FF" },
+          "sending": { "text": "发送中", "color": "#64D2FF" },
+          "completed": { "text": "完成", "color": "#30D158" },
+          "failed": { "text": "失败", "color": "#FF453A" }
+        }
+      },
+      "tokens": { "flow": true, "height": 32, "titleWidth": 86, "trailingWidth": 70, "subtitleWidth": 96, "subtitleTrailingWidth": 60, "titleSize": 14, "subtitleSize": 7, "trailingSize": 8, "subtitleTrailingSize": 7, "titleLineHeight": 18, "subtitleLineHeight": 11, "titleColor": "#64D2FF", "subtitleColor": "#8E8E93", "trailingColor": "#8E8E93", "subtitleTrailingColor": "#8E8E93", "titleWeight": "bold", "trailingWeight": "bold" }
+    },
+    {
+      "id": "progress",
+      "type": "text",
+      "copy": { "template": "{value}" },
+      "bind": { "value": "progress" },
+      "props": { "valueFormat": "percent", "valueNullText": "0%" },
+      "tokens": { "flow": true, "marginTop": 10, "height": 68, "fontSize": 28, "lineHeight": 68, "foreground": "#64D2FF", "textAlign": "center" }
+    },
+    {
+      "id": "summary",
+      "type": "metric-grid",
+      "props": {
+        "items": [
+          { "id": "steps", "bind": { "value": "todaySteps" }, "props": { "valueFormat": "number", "valueNullText": "--" }, "copy": { "label": "今日步数" }, "tokens": { "accent": "#FFD60A" } },
+          { "id": "history", "bind": { "value": "historyCount" }, "props": { "valueFormat": "number" }, "copy": { "label": "趋势记录" }, "tokens": { "accent": "#64D2FF" } },
+          { "id": "workout", "bind": { "value": "workoutCount" }, "props": { "valueFormat": "number" }, "copy": { "label": "运动记录" }, "tokens": { "accent": "#30D158" } },
+          { "id": "last", "bind": { "value": "lastSyncAt" }, "props": { "valueFormat": "time", "valueNullText": "--:--" }, "copy": { "label": "最近同步" }, "tokens": { "accent": "#FFFFFF" } }
+        ]
+      },
+      "tokens": { "flow": true, "marginTop": 8, "height": 118, "columns": 2, "gap": 8, "rowGap": 8, "itemHeight": 55, "itemRadius": 13, "itemPaddingX": 8, "itemPaddingY": 8, "itemBackground": "#111317", "labelSize": 7, "labelColor": "#8E8E93", "valueSize": 14, "valueTop": 4, "valueWeight": "bold", "valueColor": "#FFFFFF", "detailSize": 0, "detailTop": 0, "detailColor": "#8E8E93" }
+    },
+    {
+      "id": "packets",
+      "type": "metric-grid",
+      "props": {
+        "items": [
+          { "id": "sent", "bind": { "value": "packetSent" }, "props": { "valueFormat": "number" }, "copy": { "label": "已发送包" }, "tokens": { "accent": "#64D2FF" } },
+          { "id": "total", "bind": { "value": "packetTotal" }, "props": { "valueFormat": "number" }, "copy": { "label": "总包数" }, "tokens": { "accent": "#64D2FF" } },
+          { "id": "count", "bind": { "value": "packetCount" }, "props": { "valueFormat": "number" }, "copy": { "label": "打包数量" }, "tokens": { "accent": "#BF5AF2" } },
+          { "id": "chars", "bind": { "value": "payloadChars" }, "props": { "valueFormat": "number" }, "copy": { "label": "字符数" }, "tokens": { "accent": "#BF5AF2" } }
+        ]
+      },
+      "tokens": { "flow": true, "marginTop": 8, "height": 102, "columns": 2, "gap": 8, "rowGap": 8, "itemHeight": 47, "itemRadius": 13, "itemPaddingX": 8, "itemPaddingY": 6, "itemBackground": "#111317", "labelSize": 6, "labelColor": "#8E8E93", "valueSize": 12, "valueTop": 3, "valueWeight": "bold", "valueColor": "#FFFFFF", "detailSize": 0, "detailTop": 0, "detailColor": "#8E8E93" }
+    },
+    {
+      "id": "refresh",
+      "type": "button",
+      "copy": { "title": "检测连接", "subtitle": "重新读取手机连接状态" },
+      "actions": { "tap": "sync-refresh" },
+      "tokens": { "flow": true, "marginTop": 9, "height": 48, "radius": 13, "paddingX": 12, "background": "#2C2C2E", "titleSize": 11, "titleColor": "#FFFFFF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#8E8E93", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
+    },
+    {
+      "id": "syncNow",
+      "type": "button",
+      "copy": { "title": "开始同步", "subtitle": "发送健康、趋势和运动数据" },
+      "actions": { "tap": "sync-start" },
+      "tokens": { "flow": true, "marginTop": 7, "height": 52, "radius": 13, "paddingX": 12, "background": "#0A84FF", "titleSize": 12, "titleColor": "#FFFFFF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#D5E9FF", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
+    }
+  ],
+  "tokens": { "background": "#000000", "stream": { "top": 0, "width": 164, "heightMode": "scene-bottom" }, "streamPaddingBottom": 20 },
+  "variants": {
+    "base": {},
+    "circle": { "tokens": { "stream": { "top": 14, "width": 148, "heightMode": "scene-bottom" }, "streamPaddingBottom": 20 }, "modules": { "head": { "height": 26, "titleSize": 12 }, "progress": { "height": 54, "fontSize": 23, "lineHeight": 54 }, "summary": { "height": 102, "itemHeight": 47, "gap": 6, "rowGap": 6, "itemRadius": 12 }, "packets": { "height": 90, "itemHeight": 42, "gap": 6, "rowGap": 6, "itemRadius": 12 }, "refresh": { "height": 42, "radius": 12, "titleSize": 9, "subtitleSize": 6 }, "syncNow": { "height": 44, "radius": 12, "titleSize": 10, "subtitleSize": 6 } } },
+    "pill": { "tokens": { "stream": { "top": 0, "width": 168, "heightMode": "scene-bottom" }, "streamPaddingBottom": 52 }, "modules": { "head": { "height": 38, "titleSize": 16, "subtitleSize": 9, "trailingSize": 9, "subtitleTrailingSize": 8, "titleLineHeight": 22, "subtitleLineHeight": 14 }, "progress": { "height": 82, "fontSize": 34, "lineHeight": 82 }, "summary": { "height": 142, "itemHeight": 67, "gap": 8, "rowGap": 8, "itemRadius": 12, "labelSize": 8, "valueSize": 17 }, "packets": { "height": 122, "itemHeight": 57, "gap": 8, "rowGap": 8, "itemRadius": 12, "labelSize": 8, "valueSize": 15 }, "refresh": { "height": 58, "radius": 12, "titleSize": 13, "subtitleSize": 8 }, "syncNow": { "height": 62, "radius": 12, "titleSize": 14, "subtitleSize": 8 } } },
+    "rect": {}
+  }
+}
