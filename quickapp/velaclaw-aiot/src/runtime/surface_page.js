@@ -35,6 +35,9 @@ function bind(page, surfaceId) {
     page._surfaceProfile = profile
     page._surfaceScene = scene
     page._surfaceSafe = safe
+    if (page._surfaceController && typeof page._surfaceController.configure === 'function') {
+      page._surfaceController.configure(profile, scene, safe)
+    }
     rebuild(page)
     page.surfaceReady = true
     if (page._surfaceVisible && page._surfaceController) page._surfaceController.start()
@@ -76,13 +79,19 @@ function actionName(event) {
   return ''
 }
 
+function actionPayload(event) {
+  if (!event || typeof event === 'string') return {}
+  if (event.detail && typeof event.detail === 'object') return event.detail
+  return event
+}
+
 function action(page, event) {
   var name = actionName(event)
   if (!name) return
   if (!page || !page._surfaceController || typeof page._surfaceController.action !== 'function') {
     throw new Error('V3 Surface Page has no action controller for ' + name)
   }
-  page._surfaceController.action(name)
+  page._surfaceController.action(name, actionPayload(event))
 }
 
 function back() {
