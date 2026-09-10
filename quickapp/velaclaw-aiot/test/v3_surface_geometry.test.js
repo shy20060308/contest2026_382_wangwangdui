@@ -5,10 +5,9 @@ const surfaceRuntime = require('../src/product/frontend/runtime/surface_runtime'
 const stepsSurface = require('../src/product/frontend/surfaces/steps.json')
 const healthSurface = require('../src/product/frontend/surfaces/heartrate.json')
 const historySurface = require('../src/product/frontend/surfaces/history.json')
-const workoutHistory = require('../src/product/design/apps/workout/history')
-const workoutLayout = require('../src/product/design/apps/workout/layout')
-const workoutSelectionLayout = require('../src/product/design/apps/workout/selection_layout')
-const workoutHistoryLayout = require('../src/product/design/apps/workout/history_layout')
+const workoutSelectSurface = require('../src/product/frontend/surfaces/workout_select.json')
+const workoutSurface = require('../src/product/frontend/surfaces/workout.json')
+const workoutHistorySurface = require('../src/product/frontend/surfaces/workout_history.json')
 const settingsLayout = require('../src/product/design/apps/settings/layout')
 const launcherLayout = require('../src/product/design/apps/launcher/layout')
 const facesLayout = require('../src/product/design/apps/faces/layout')
@@ -61,9 +60,30 @@ assert.strictEqual(historyPlan.flowChartCards[0].frame.width, 168, 'pill history
 assert.strictEqual(historyPlan.flowChartCards[0].tokens.radius, 9)
 assert.ok(historyPlan.flowChartCards[0].frame.height < 190, 'row history height must shrink to actual record count instead of leaving a fixed empty card')
 
-const workoutHistoryPlan = workoutHistory.resolve(pillProfile, host, safe)
-assert.strictEqual(workoutHistoryPlan.recordWidth, workoutHistoryPlan.stream.width, 'workout record cards must use the stream outer width')
-assert.strictEqual(workoutHistoryPlan.recordHeight, workoutHistoryLayout.pill.itemHeight, 'workout record cards must keep their Recipe outer height')
+const selectionPlan = surfaceRuntime.resolve(workoutSelectSurface, pillProfile, host, safe, { modeTypes: ['walk', 'run'], hasActive: true })
+assert.strictEqual(selectionPlan.stream.width, 168)
+selectionPlan.flowMenuItems.forEach(function (item) {
+  assert.strictEqual(item.frame.width, selectionPlan.stream.width, 'workout mode cards must fill the stream width')
+  assert.ok(item.tokens.itemRadius <= 14, 'workout mode information cards must remain rectangular')
+})
+
+const workoutPlan = surfaceRuntime.resolve(workoutSurface, pillProfile, host, safe, {
+  confirming: false, type: 'run', status: 'running', durationMs: 65000,
+  steps: 420, calories: 31, distanceMeters: 720, currentHeartRate: 136, gpsStatus: 'active'
+})
+const workoutMetrics = workoutPlan.flowMetricItems.filter(function (item) { return item.id.indexOf('metrics-') === 0 })
+assertGridFramesFit(workoutPlan.stream.width, workoutMetrics, 'workout metric grid')
+assert.strictEqual(workoutSurface.variants.pill.modules.metrics.itemRadius, 12)
+assert.strictEqual(workoutSurface.variants.pill.modules.pause.radius, 12)
+assert.strictEqual(workoutSurface.variants.pill.modules.finish.radius, 12)
+
+const workoutHistoryPlan = surfaceRuntime.resolve(workoutHistorySurface, pillProfile, host, safe, {
+  totalSteps: 420, recordCount: 1, empty: false, hasRecords: true,
+  records: [{ id: 'r1', type: 'run', synced: false, startTime: Date.now(), durationSec: 65, steps: 420, distanceMeters: 720, calories: 31, avgHeartRate: 136 }]
+})
+assert.strictEqual(workoutHistoryPlan.flowRecordItems[0].frame.width, workoutHistoryPlan.stream.width, 'workout record cards must use the stream outer width')
+assert.strictEqual(workoutHistoryPlan.flowRecordItems[0].frame.height, workoutHistorySurface.variants.pill.modules.records.itemHeight, 'workout record cards must keep their JSON outer height')
+assert.strictEqual(workoutHistorySurface.variants.pill.modules.records.itemRadius, 12)
 
 const stepsPill = stepsSurface.variants.pill.modules
 const informationRadii = [
@@ -71,10 +91,10 @@ const informationRadii = [
   ['steps metric', stepsPill.metrics.itemRadius],
   ['health', healthSurface.variants.pill.modules.heart.radius],
   ['history', historySurface.variants.pill.modules.trend.radius],
-  ['workout', workoutLayout.pill.radius],
-  ['workout selector', workoutSelectionLayout.pill.cardRadius],
-  ['workout selector action', workoutSelectionLayout.pill.actionRadius],
-  ['workout history', workoutHistoryLayout.pill.radius],
+  ['workout', workoutSurface.variants.pill.modules.metrics.itemRadius],
+  ['workout selector', workoutSelectSurface.variants.pill.modules.modes.itemRadius],
+  ['workout selector action', workoutSelectSurface.variants.pill.modules.history.radius],
+  ['workout history', workoutHistorySurface.variants.pill.modules.records.itemRadius],
   ['settings row', settingsLayout.pill.chrome.itemRadius],
   ['launcher row', launcherLayout.pill.itemRadius],
   ['watchface card', facesLayout.pill.chrome.pill.cardRadius],
