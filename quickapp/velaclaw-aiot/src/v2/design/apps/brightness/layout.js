@@ -46,7 +46,7 @@ module.exports = {
     headerGap: 8,
     streamWidth: 168,
     titleSize: 14,
-    cardRadius: 20,
+    cardRadius: 12,
     cardGap: 8,
     valueSize: 22
   },
