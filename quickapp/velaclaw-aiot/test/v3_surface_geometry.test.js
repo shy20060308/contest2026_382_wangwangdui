@@ -1,13 +1,11 @@
 const assert = require('assert')
 const scene = require('../src/product/design/scene')
-
-const health = require('../src/product/design/apps/heart')
-const history = require('../src/product/design/apps/history')
-const workoutHistory = require('../src/product/design/apps/workout/history')
+const surfaceRuntime = require('../src/product/frontend/runtime/surface_runtime')
 
 const stepsSurface = require('../src/product/frontend/surfaces/steps.json')
-const healthLayout = require('../src/product/design/apps/heart/layout')
-const historyLayout = require('../src/product/design/apps/history/layout')
+const healthSurface = require('../src/product/frontend/surfaces/heartrate.json')
+const historySurface = require('../src/product/frontend/surfaces/history.json')
+const workoutHistory = require('../src/product/design/apps/workout/history')
 const workoutLayout = require('../src/product/design/apps/workout/layout')
 const workoutSelectionLayout = require('../src/product/design/apps/workout/selection_layout')
 const workoutHistoryLayout = require('../src/product/design/apps/workout/history_layout')
@@ -30,26 +28,40 @@ const pillProfile = {
 const host = scene.resolve(pillProfile)
 const safe = scene.safe(pillProfile, host)
 
-function assertGridFits(total, item, count, gap, label) {
-  const used = item * count + gap * (count - 1)
-  assert.ok(used <= total, label + ' must not overflow its container')
-  assert.ok(total - used < count, label + ' must not create a synthetic center void')
+function assertGridFramesFit(total, items, label) {
+  const right = Math.max.apply(null, items.map(function (item) { return item.frame.left + item.frame.width }))
+  const left = Math.min.apply(null, items.map(function (item) { return item.frame.left }))
+  assert.ok(left >= 0, label + ' must stay inside the stream')
+  assert.ok(right <= total, label + ' must not overflow its stream')
 }
 
-const healthPlan = health.resolve(pillProfile, host, safe)
-assert.strictEqual(healthPlan.cardWidth, healthPlan.stream.width, 'health full-width cards must use the stream outer width')
-assert.strictEqual(healthPlan.heroHeight, healthLayout.pill.heroOuterHeight, 'health hero must keep its Recipe outer height')
-assert.strictEqual(healthPlan.miniHeight, healthLayout.pill.miniOuterHeight, 'health mini cards must keep their Recipe outer height')
-assert.strictEqual(healthPlan.detailHeight, healthLayout.pill.detailOuterHeight, 'health detail cards must keep their Recipe outer height')
-assertGridFits(healthPlan.stream.width, healthPlan.miniWidth, 2, healthPlan.cardGap, 'health two-column cards')
+const healthPlan = surfaceRuntime.resolve(healthSurface, pillProfile, host, safe, {
+  heartRate: 76, spo2: 98, stress: 22,
+  heartZone: 'normal', spo2Zone: 'good', stressZone: 'normal',
+  summaryState: 'stable', sourceState: 'live', updatedAt: Date.now(),
+  heartValues: [72, 74, 76], spo2Values: [97, 98, 98], stressValues: [18, 21, 22]
+})
+const heartCard = healthPlan.flowChartCards.filter(function (card) { return card.id === 'heart' })[0]
+assert.strictEqual(heartCard.frame.width, healthPlan.stream.width, 'health hero must use the full stream outer width')
+assert.strictEqual(heartCard.frame.height, healthSurface.variants.pill.modules.heart.height, 'health hero outer height must be JSON-owned')
+assert.strictEqual(heartCard.tokens.radius, 11, 'pill health card radius must remain rectangular')
+assertGridFramesFit(healthPlan.stream.width, healthPlan.flowMetricItems, 'health mini cards')
+assert.strictEqual(healthPlan.flowMetricItems[1].frame.left - (healthPlan.flowMetricItems[0].frame.left + healthPlan.flowMetricItems[0].frame.width), 9, 'health mini gap must be exactly the JSON grid gap')
 
-const historyPlan = history.resolve(pillProfile, host, safe)
-assertGridFits(historyPlan.stream.width, historyPlan.summaryWidth, 2, historyPlan.summaryGap, 'history summary cards')
-assertGridFits(historyPlan.stream.width, historyPlan.insightWidth, 3, historyPlan.insightGap, 'history insight cards')
-assert.strictEqual(historyPlan.trendWidth, historyLayout.pill.trend.outerWidth, 'history trend card must keep its Recipe outer width')
+const historyPlan = surfaceRuntime.resolve(historySurface, pillProfile, host, safe, {
+  todaySteps: 5200, avgSteps: 4800, bestSteps: 7200, bestDate: '2026-09-08', avgHeartRate: 76, goalPercent: 86,
+  records: [{ date: '2026-09-08', steps: 7200 }, { date: '2026-09-09', steps: 4200 }, { date: '2026-09-10', steps: 5200 }]
+})
+const summaries = historyPlan.flowMetricItems.filter(function (item) { return item.id.indexOf('summary-') === 0 })
+const insights = historyPlan.flowMetricItems.filter(function (item) { return item.id.indexOf('insights-') === 0 })
+assertGridFramesFit(historyPlan.stream.width, summaries, 'history summary cards')
+assertGridFramesFit(historyPlan.stream.width, insights, 'history insight cards')
+assert.strictEqual(summaries[1].frame.left - (summaries[0].frame.left + summaries[0].frame.width), 9, 'history summary gap must come from JSON')
+assert.strictEqual(historyPlan.flowChartCards[0].frame.width, 168, 'pill history trend must preserve its declared outer width')
+assert.strictEqual(historyPlan.flowChartCards[0].tokens.radius, 9)
+assert.ok(historyPlan.flowChartCards[0].frame.height < 190, 'row history height must shrink to actual record count instead of leaving a fixed empty card')
 
 const workoutHistoryPlan = workoutHistory.resolve(pillProfile, host, safe)
-assertGridFits(workoutHistoryPlan.summary.width, workoutHistoryPlan.summaryCardWidth, 2, workoutHistoryPlan.summaryGap, 'workout history summary cards')
 assert.strictEqual(workoutHistoryPlan.recordWidth, workoutHistoryPlan.stream.width, 'workout record cards must use the stream outer width')
 assert.strictEqual(workoutHistoryPlan.recordHeight, workoutHistoryLayout.pill.itemHeight, 'workout record cards must keep their Recipe outer height')
 
@@ -57,8 +69,8 @@ const stepsPill = stepsSurface.variants.pill.modules
 const informationRadii = [
   ['steps history', stepsPill.history.radius],
   ['steps metric', stepsPill.metrics.itemRadius],
-  ['health', healthLayout.pill.cardRadius],
-  ['history', historyLayout.pill.cardRadius],
+  ['health', healthSurface.variants.pill.modules.heart.radius],
+  ['history', historySurface.variants.pill.modules.trend.radius],
   ['workout', workoutLayout.pill.radius],
   ['workout selector', workoutSelectionLayout.pill.cardRadius],
   ['workout selector action', workoutSelectionLayout.pill.actionRadius],
@@ -80,4 +92,4 @@ informationRadii.forEach(function (entry) {
   assert.ok(entry[1] <= 14, entry[0] + ' is an information surface and must not become a capsule')
 })
 
-console.log('V3 surface geometry verified: JSON and pending Recipe surfaces keep their declared outer boxes')
+console.log('V3 surface geometry verified: migrated JSON grids fill their streams and pill information surfaces remain rectangular')
