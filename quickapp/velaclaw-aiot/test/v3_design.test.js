@@ -8,11 +8,11 @@ const surfaceRuntime = require('../src/product/frontend/runtime/surface_runtime'
 const stepsSurface = require('../src/product/frontend/surfaces/steps.json')
 const historySurface = require('../src/product/frontend/surfaces/history.json')
 const healthSurface = require('../src/product/frontend/surfaces/heartrate.json')
+const workoutSelectSurface = require('../src/product/frontend/surfaces/workout_select.json')
+const workoutSurface = require('../src/product/frontend/surfaces/workout.json')
+const workoutHistorySurface = require('../src/product/frontend/surfaces/workout_history.json')
 
 const pendingDesigns = [
-  require('../src/product/design/apps/workout'),
-  require('../src/product/design/apps/workout/selection'),
-  require('../src/product/design/apps/workout/history'),
   require('../src/product/design/apps/launcher'),
   require('../src/product/design/apps/clock'),
   require('../src/product/design/apps/faces'),
@@ -136,6 +136,47 @@ profiles.forEach(function (profile) {
   assert.strictEqual(healthPlan.flowMetricItems[0].value, '98%')
   assert.strictEqual(healthPlan.flowMetricItems[0].detail, '良好')
   assert.strictEqual(healthPlan.flowChartCards.length, 3)
+
+  const selectionPlan = surfaceRuntime.resolve(workoutSelectSurface, profile, host, safe, { modeTypes: ['walk', 'run'], hasActive: true })
+  assert.strictEqual(selectionPlan.id, 'workout-select')
+  assert.deepStrictEqual(selectionPlan.flowMenuItems.map(function (item) { return item.title }), ['步行', '跑步'])
+  assert.deepStrictEqual(selectionPlan.flowMenuItems.map(function (item) { return item.action }), ['workout-select:walk', 'workout-select:run'])
+  assert.ok(selectionPlan.flowButtons.some(function (item) { return item.id === 'continue' }), 'active workout must expose the JSON continue action')
+
+  const workoutPlan = surfaceRuntime.resolve(workoutSurface, profile, host, safe, {
+    confirming: false,
+    type: 'run',
+    status: 'running',
+    durationMs: 65000,
+    steps: 420,
+    calories: 31,
+    distanceMeters: 720,
+    currentHeartRate: 136,
+    gpsStatus: 'active'
+  })
+  assert.strictEqual(workoutPlan.id, 'workout')
+  assert.strictEqual(workoutPlan.flowHeaders[0].trailing, '跑步')
+  assert.strictEqual(workoutPlan.flowHeaders[0].subtitleTrailing, '运动中')
+  assert.strictEqual(workoutPlan.flowTexts[0].text, '01:05')
+  assert.deepStrictEqual(workoutPlan.flowMetricItems.map(function (item) { return item.value }), ['420', '31', '720 m', '136'])
+  assert.strictEqual(workoutPlan.flowButtons.filter(function (item) { return item.id === 'pause' })[0].copy.title, '暂停')
+
+  const confirmPlan = surfaceRuntime.resolve(workoutSurface, profile, host, safe, { confirming: true })
+  assert.deepStrictEqual(confirmPlan.modules.map(function (module) { return module.id }), ['confirmCard', 'confirmCancel', 'confirmSave'])
+
+  const workoutHistoryPlan = surfaceRuntime.resolve(workoutHistorySurface, profile, host, safe, {
+    totalSteps: 420,
+    recordCount: 1,
+    empty: false,
+    hasRecords: true,
+    records: [{ id: 'r1', type: 'run', synced: false, startTime: new Date(2026, 8, 10, 9, 30).getTime(), durationSec: 65, steps: 420, distanceMeters: 720, calories: 31, avgHeartRate: 136 }]
+  })
+  assert.strictEqual(workoutHistoryPlan.id, 'workout-history')
+  assert.strictEqual(workoutHistoryPlan.flowMetricItems[0].value, '1')
+  assert.strictEqual(workoutHistoryPlan.flowMetricItems[1].value, '420')
+  assert.strictEqual(workoutHistoryPlan.flowRecordItems[0].title, '跑步')
+  assert.strictEqual(workoutHistoryPlan.flowRecordItems[0].trailing, '待同步')
+  assert.strictEqual(workoutHistoryPlan.flowRecordItems[0].metric1, '420 步')
 })
 
 console.log('V3 design runtime verified across pending Recipes and migrated JSON surfaces')
