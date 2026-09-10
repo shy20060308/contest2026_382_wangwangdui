@@ -3,6 +3,8 @@ import { createActivityController } from './features/activity/controller'
 import { createHistoryController } from './features/history/controller'
 import { createHealthController } from './features/health/controller'
 import workoutSelectionFeature from './features/workout/selection'
+import { createWorkoutController } from './features/workout/controller'
+import { createWorkoutHistoryController } from './features/workout/history_controller'
 
 function noop() {}
 
@@ -65,11 +67,85 @@ function workoutSelection(onChange) {
   }
 }
 
+function workoutState(session, confirming) {
+  if (!session) return { hasSession: false, confirming: !!confirming }
+  return {
+    hasSession: true,
+    confirming: !!confirming,
+    type: session.type,
+    status: session.status,
+    durationMs: session.durationMs,
+    steps: session.steps,
+    calories: session.calories,
+    distanceMeters: session.distanceMeters,
+    currentHeartRate: session.currentHeartRate,
+    gpsStatus: session.gpsStatus,
+    gpsDistanceMeters: session.gpsDistanceMeters
+  }
+}
+
+function workout(onChange) {
+  var current = null
+  var confirming = false
+  function emit() {
+    if (typeof onChange === 'function') onChange(workoutState(current, confirming))
+  }
+  var controller = createWorkoutController(function (session) {
+    current = session
+    emit()
+  })
+  return {
+    start: function () {
+      controller.loadActive(function (session) {
+        if (!session) { navigation.back(); return }
+        current = session
+        emit()
+      })
+    },
+    stop: function () { controller.stop() },
+    destroy: function () { controller.stop() },
+    action: function (name) {
+      if (name === 'workout-toggle-pause') {
+        if (!current) return
+        if (current.status === 'running') controller.pause()
+        else if (current.status === 'paused') controller.resume()
+        else throw new Error('Unsupported workout state: ' + current.status)
+        return
+      }
+      if (name === 'workout-request-finish') { confirming = true; emit(); return }
+      if (name === 'workout-cancel-finish') { confirming = false; emit(); return }
+      if (name === 'workout-confirm-finish') {
+        confirming = false
+        controller.finish(function () { navigation.replace('/pages/workout_history') })
+        return
+      }
+      throw new Error('Unknown workout action: ' + name)
+    }
+  }
+}
+
+function workoutHistory(onChange) {
+  var controller = createWorkoutHistoryController(function (model) {
+    var source = model || { totalSteps: 0, records: [] }
+    var records = Array.isArray(source.records) ? source.records : []
+    if (typeof onChange === 'function') onChange({
+      totalSteps: source.totalSteps,
+      recordCount: records.length,
+      empty: records.length === 0,
+      hasRecords: records.length > 0,
+      records: records
+    })
+  })
+  return { start: function () { controller.refresh() }, stop: noop, destroy: noop, action: noop }
+}
+
 function create(id, onChange) {
   if (id === 'activity') return activity(onChange)
   if (id === 'history') return history(onChange)
   if (id === 'health') return health(onChange)
   if (id === 'workout-selection') return workoutSelection(onChange)
+  if (id === 'workout') return workout(onChange)
+  if (id === 'workout-history') return workoutHistory(onChange)
   if (id === null || id === undefined || id === '') return { start: noop, stop: noop, destroy: noop, action: noop }
   throw new Error('Unknown V3 surface controller: ' + id)
 }
