@@ -83,10 +83,10 @@ module.exports = {
     chrome: {
       pill: {
         cardBorderWidth: 1,
-        cardRadius: 24,
+        cardRadius: 14,
         cardPadding: 10,
         previewBorderWidth: 1,
-        previewRadius: 20,
+        previewRadius: 12,
         previewTimeSize: 30,
         previewMinuteSize: 17,
         copyMarginLeft: 10,
