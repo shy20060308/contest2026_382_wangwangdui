@@ -36,10 +36,9 @@ function resolve(profile, scene, safe) {
   plan.summaryPaddingX = config.summaryPaddingX
   plan.summaryPaddingY = config.summaryPaddingY
   var summaryOuter = adapter.grid(plan.stream, 2, plan.summaryGap).itemWidth
-  var summaryBox = adapter.contentBox(summaryOuter, config.summaryOuterHeight, plan.summaryPaddingX, plan.summaryPaddingY)
   plan.summaryOuterWidth = summaryOuter
-  plan.summaryWidth = summaryBox.width
-  plan.summaryHeight = summaryBox.height
+  plan.summaryWidth = summaryOuter
+  plan.summaryHeight = config.summaryOuterHeight
   plan.summaryLabelSize = config.summaryLabelSize
   plan.summaryValueSize = config.summaryValueSize
 
@@ -47,10 +46,9 @@ function resolve(profile, scene, safe) {
   plan.insightRowHeight = config.insightOuterHeight
   plan.insightPadding = config.insightPadding
   var insightOuter = adapter.grid(plan.stream, 3, plan.insightGap).itemWidth
-  var insightBox = adapter.contentBox(insightOuter, config.insightOuterHeight, plan.insightPadding, plan.insightPadding)
   plan.insightOuterWidth = insightOuter
-  plan.insightWidth = insightBox.width
-  plan.insightHeight = insightBox.height
+  plan.insightWidth = insightOuter
+  plan.insightHeight = config.insightOuterHeight
   plan.insightLabelSize = config.insightLabelSize
   plan.insightValueSize = config.insightValueSize
 
@@ -60,9 +58,9 @@ function resolve(profile, scene, safe) {
   plan.trendOuterHeight = trend.outerHeight
   plan.trendPaddingX = trend.paddingX
   plan.trendPaddingY = trend.paddingY
-  var trendBox = adapter.contentBox(plan.trendOuterWidth, plan.trendOuterHeight, plan.trendPaddingX, plan.trendPaddingY)
-  plan.trendWidth = trendBox.width
-  plan.trendHeight = trendBox.height
+  var trendContent = adapter.contentBox(plan.trendOuterWidth, plan.trendOuterHeight, plan.trendPaddingX, plan.trendPaddingY)
+  plan.trendWidth = plan.trendOuterWidth
+  plan.trendHeight = plan.trendOuterHeight
   plan.trendHeadHeight = trend.headHeight
   plan.trendTitleSize = trend.titleSize
   plan.trendCaptionSize = trend.captionSize
@@ -73,7 +71,7 @@ function resolve(profile, scene, safe) {
   plan.barMinHeight = trend.barMinHeight
   plan.pillTrendMinWidth = trend.rowMinWidth
   plan.pillTrendMaxWidth = trend.rowMaxWidth
-  plan.columnCellWidth = plan.trendMode === 'compact-column' ? adapter.grid({ width: plan.trendWidth }, 7, 0).itemWidth : 0
+  plan.columnCellWidth = plan.trendMode === 'compact-column' ? adapter.grid({ width: trendContent.width }, 7, 0).itemWidth : 0
   plan.chrome = adapter.merge({}, config.chrome)
   return plan
 }
