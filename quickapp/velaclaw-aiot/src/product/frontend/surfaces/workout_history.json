@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "id": "workout-history",
+  "route": "pages/workout_history",
+  "renderer": "surface-v1",
+  "controller": "workout-history",
+  "modules": [
+    {
+      "id": "head",
+      "type": "header",
+      "copy": { "title": "运动记录", "subtitle": "已完成训练" },
+      "tokens": {
+        "flow": true,
+        "width": 164,
+        "height": 24,
+        "titleWidth": 110,
+        "trailingWidth": 0,
+        "subtitleWidth": 164,
+        "subtitleTrailingWidth": 0,
+        "titleSize": 14,
+        "subtitleSize": 7,
+        "trailingSize": 0,
+        "subtitleTrailingSize": 0,
+        "titleLineHeight": 16,
+        "subtitleLineHeight": 8,
+        "titleColor": "#FFFFFF",
+        "subtitleColor": "#8E8E93",
+        "trailingColor": "#8E8E93",
+        "subtitleTrailingColor": "#8E8E93",
+        "titleWeight": "bold",
+        "trailingWeight": "normal"
+      }
+    },
+    {
+      "id": "summary",
+      "type": "metric-grid",
+      "props": {
+        "items": [
+          { "id": "count", "bind": { "value": "recordCount" }, "props": { "valueFormat": "number" }, "copy": { "label": "运动次数" }, "tokens": { "accent": "#FFFFFF" } },
+          { "id": "steps", "bind": { "value": "totalSteps" }, "props": { "valueFormat": "number" }, "copy": { "label": "累计步数" }, "tokens": { "accent": "#FFD60A" } }
+        ]
+      },
+      "tokens": {
+        "flow": true,
+        "marginTop": 8,
+        "height": 46,
+        "columns": 2,
+        "gap": 6,
+        "itemHeight": 46,
+        "itemRadius": 14,
+        "itemPaddingX": 10,
+        "itemPaddingY": 7,
+        "itemBackground": "#14181F",
+        "labelSize": 7,
+        "labelColor": "#8E8E93",
+        "valueSize": 16,
+        "valueTop": 2,
+        "valueWeight": "bold",
+        "valueColor": "#FFFFFF",
+        "detailSize": 0,
+        "detailTop": 0,
+        "detailColor": "#8E8E93"
+      }
+    },
+    {
+      "id": "emptyTitle",
+      "type": "text",
+      "visibleWhen": "empty",
+      "copy": { "text": "暂无运动记录" },
+      "tokens": { "flow": true, "marginTop": 26, "height": 22, "fontSize": 12, "lineHeight": 22, "foreground": "#FFFFFF", "textAlign": "center" }
+    },
+    {
+      "id": "emptyCopy",
+      "type": "text",
+      "visibleWhen": "empty",
+      "copy": { "text": "完成一次步行或跑步后会显示在这里" },
+      "tokens": { "flow": true, "marginTop": 6, "width": 130, "height": 30, "fontSize": 8, "lineHeight": 13, "foreground": "#8E8E93", "textAlign": "center" }
+    },
+    {
+      "id": "records",
+      "type": "list",
+      "visibleWhen": "hasRecords",
+      "bind": { "items": "records" },
+      "props": {
+        "layout": "record",
+        "fields": {
+          "title": {
+            "path": "type",
+            "map": {
+              "walk": { "text": "步行", "color": "#30D158" },
+              "run": { "text": "跑步", "color": "#FF9F0A" }
+            }
+          },
+          "trailing": {
+            "path": "synced",
+            "map": {
+              "true": { "text": "已同步", "color": "#0A84FF" },
+              "false": { "text": "待同步", "color": "#8E8E93" }
+            }
+          },
+          "subtitle": { "path": "startTime", "format": "date-time" },
+          "metric1": { "path": "steps", "format": "suffix: 步" },
+          "metric2": { "path": "distanceMeters", "format": "distance" },
+          "metric3": { "path": "calories", "format": "suffix: kcal" },
+          "footer": { "path": "durationSec", "format": "duration-seconds" },
+          "footerTrailing": { "path": "avgHeartRate", "format": "suffix: bpm", "nullText": "-- bpm" }
+        }
+      },
+      "tokens": {
+        "flow": true,
+        "marginTop": 8,
+        "heightMode": "items",
+        "itemHeight": 78,
+        "itemGap": 7,
+        "itemRadius": 14,
+        "itemPadding": 9,
+        "itemBackground": "#111317",
+        "titleSize": 12,
+        "titleColor": "#FFFFFF",
+        "titleWeight": "bold",
+        "metaSize": 7,
+        "trailingColor": "#0A84FF",
+        "secondaryColor": "#8E8E93",
+        "metricColor": "#D1D1D6",
+        "footerColor": "#30D158",
+        "footerTrailingColor": "#8E8E93",
+        "subtitleTop": 4,
+        "metricsTop": 7,
+        "footerTop": 4
+      }
+    }
+  ],
+  "tokens": {
+    "background": "#000000",
+    "stream": { "top": 0, "width": 164, "heightMode": "scene-bottom" },
+    "streamPaddingBottom": 18
+  },
+  "variants": {
+    "base": {},
+    "circle": {
+      "tokens": { "stream": { "top": 14, "width": 140, "heightMode": "scene-bottom" }, "streamPaddingBottom": 20 },
+      "modules": {
+        "head": { "width": 128, "height": 20, "titleWidth": 128, "titleSize": 11, "subtitleSize": 0, "titleLineHeight": 20, "subtitleLineHeight": 0 },
+        "summary": { "marginTop": 5, "height": 38, "gap": 6, "itemHeight": 38, "itemRadius": 14, "itemPaddingX": 7, "itemPaddingY": 6, "labelSize": 6, "valueSize": 13 },
+        "emptyTitle": { "marginTop": 18, "height": 18, "fontSize": 10, "lineHeight": 18 },
+        "emptyCopy": { "marginTop": 5, "width": 118, "height": 26, "fontSize": 6, "lineHeight": 11 },
+        "records": { "marginTop": 5, "itemHeight": 66, "itemGap": 7, "itemRadius": 14, "itemPadding": 7, "titleSize": 10, "metaSize": 6 }
+      }
+    },
+    "pill": {
+      "tokens": { "stream": { "top": 0, "width": 168, "heightMode": "scene-bottom" }, "streamPaddingBottom": 52 },
+      "modules": {
+        "head": { "width": 168, "height": 30, "titleWidth": 168, "subtitleWidth": 168, "titleSize": 18, "subtitleSize": 8, "titleLineHeight": 20, "subtitleLineHeight": 10 },
+        "summary": { "marginTop": 8, "height": 58, "gap": 9, "itemHeight": 58, "itemRadius": 12, "itemPaddingX": 10, "itemPaddingY": 9, "labelSize": 9, "valueSize": 20 },
+        "emptyTitle": { "marginTop": 32, "height": 26, "fontSize": 15, "lineHeight": 26 },
+        "emptyCopy": { "marginTop": 7, "width": 150, "height": 36, "fontSize": 9, "lineHeight": 15 },
+        "records": { "marginTop": 10, "itemHeight": 94, "itemGap": 10, "itemRadius": 12, "itemPadding": 12, "titleSize": 14, "metaSize": 9 }
+      }
+    },
+    "rect": {}
+  }
+}
