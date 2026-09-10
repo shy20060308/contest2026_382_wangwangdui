@@ -38,19 +38,18 @@ function resolve(profile, scene, safe) {
   plan.trendVisual = adapter.merge({}, config.trendVisual)
   plan.scrollPaddingBottom = config.scrollPaddingBottom > bottomInset ? config.scrollPaddingBottom : bottomInset
 
-  var hero = adapter.contentBox(plan.stream.width, config.heroOuterHeight, config.cardPaddingX, config.cardPaddingY)
-  plan.cardWidth = hero.width
-  plan.heroHeight = hero.height
+  // Recipe dimensions describe component outer boxes. Padding belongs inside
+  // those boxes; do not shrink the component itself by its own padding.
+  plan.cardWidth = plan.stream.width
+  plan.heroHeight = config.heroOuterHeight
 
   var miniGrid = adapter.grid(plan.stream, 2, config.cardGap)
-  var mini = adapter.contentBox(miniGrid.itemWidth, config.miniOuterHeight, config.cardPaddingX, config.cardPaddingY)
   plan.miniOuterWidth = miniGrid.itemWidth
-  plan.miniWidth = mini.width
+  plan.miniWidth = miniGrid.itemWidth
   plan.miniRowHeight = config.miniOuterHeight
-  plan.miniHeight = mini.height
+  plan.miniHeight = config.miniOuterHeight
 
-  var detail = adapter.contentBox(plan.stream.width, config.detailOuterHeight, config.cardPaddingX, config.cardPaddingY)
-  plan.detailHeight = detail.height
+  plan.detailHeight = config.detailOuterHeight
 
   plan.headerBox = centeredBox(plan.stream, plan.stream.top, plan.headerWidth, plan.headerHeight)
   plan.heroBox = centeredBox(plan.stream, plan.stream.top + plan.headerHeight + plan.cardGap, plan.cardWidth, plan.heroHeight)
