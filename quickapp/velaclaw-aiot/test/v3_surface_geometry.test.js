@@ -8,10 +8,10 @@ const historySurface = require('../src/product/frontend/surfaces/history.json')
 const workoutSelectSurface = require('../src/product/frontend/surfaces/workout_select.json')
 const workoutSurface = require('../src/product/frontend/surfaces/workout.json')
 const workoutHistorySurface = require('../src/product/frontend/surfaces/workout_history.json')
+const todaySurface = require('../src/product/frontend/surfaces/today.json')
 const settingsLayout = require('../src/product/design/apps/settings/layout')
 const launcherLayout = require('../src/product/design/apps/launcher/layout')
 const facesLayout = require('../src/product/design/apps/faces/layout')
-const todayLayout = require('../src/product/design/apps/today/layout')
 const brightnessLayout = require('../src/product/design/apps/brightness/layout')
 const vibrationLayout = require('../src/product/design/apps/vibration/layout')
 const motionLayout = require('../src/product/design/apps/motion/layout')
@@ -85,6 +85,15 @@ assert.strictEqual(workoutHistoryPlan.flowRecordItems[0].frame.width, workoutHis
 assert.strictEqual(workoutHistoryPlan.flowRecordItems[0].frame.height, workoutHistorySurface.variants.pill.modules.records.itemHeight, 'workout record cards must keep their JSON outer height')
 assert.strictEqual(workoutHistorySurface.variants.pill.modules.records.itemRadius, 12)
 
+const cells = []
+for (let i = 0; i < 42; i++) cells.push({ key: 'c' + i, day: (i % 31) + 1, inMonth: i >= 3 && i < 34, isToday: i === 10 })
+const todayPlan = surfaceRuntime.resolve(todaySurface, pillProfile, host, safe, { summaryOpen: false, calendarOpen: true, calendarYear: 2026, calendarMonth: 8, calendarCells: cells })
+const calendarCells = todayPlan.flowMetricItems.filter(function (item) { return item.id.indexOf('calendarGrid-') === 0 })
+assert.strictEqual(calendarCells.length, 42)
+assertGridFramesFit(todayPlan.stream.width, calendarCells, 'today calendar grid')
+assert.strictEqual(todaySurface.variants.pill.modules.calendarGrid.itemRadius, 11, 'today cells may be round but must be JSON-owned')
+assert.strictEqual(calendarCells[10].tokens.itemBackground, '#0A84FF', 'today highlight is a JSON style rule')
+
 const stepsPill = stepsSurface.variants.pill.modules
 const informationRadii = [
   ['steps history', stepsPill.history.radius],
@@ -95,12 +104,10 @@ const informationRadii = [
   ['workout selector', workoutSelectSurface.variants.pill.modules.modes.itemRadius],
   ['workout selector action', workoutSelectSurface.variants.pill.modules.history.radius],
   ['workout history', workoutHistorySurface.variants.pill.modules.records.itemRadius],
+  ['today metric card', todaySurface.variants.pill.modules.summaryMetrics.itemRadius],
   ['settings row', settingsLayout.pill.chrome.itemRadius],
   ['launcher row', launcherLayout.pill.itemRadius],
   ['watchface card', facesLayout.pill.chrome.pill.cardRadius],
-  ['today date hero', todayLayout.pill.summary.dateHero.radius],
-  ['today metric card', todayLayout.pill.summary.card.radius],
-  ['today calendar card', todayLayout.pill.calendar.card.radius],
   ['brightness', brightnessLayout.pill.cardRadius],
   ['vibration', vibrationLayout.pill.cardRadius],
   ['motion', motionLayout.pill.cardRadius],
