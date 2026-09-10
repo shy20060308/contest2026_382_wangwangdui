@@ -1,25 +1,25 @@
 const assert = require('assert')
-const scene = require('../src/v2/design/scene')
+const scene = require('../src/product/design/scene')
 
-const health = require('../src/v2/design/apps/heart')
-const history = require('../src/v2/design/apps/history')
-const workoutHistory = require('../src/v2/design/apps/workout/history')
+const health = require('../src/product/design/apps/heart')
+const history = require('../src/product/design/apps/history')
+const workoutHistory = require('../src/product/design/apps/workout/history')
 
-const stepsLayout = require('../src/v2/design/apps/steps/layout')
-const healthLayout = require('../src/v2/design/apps/heart/layout')
-const historyLayout = require('../src/v2/design/apps/history/layout')
-const workoutLayout = require('../src/v2/design/apps/workout/layout')
-const workoutSelectionLayout = require('../src/v2/design/apps/workout/selection_layout')
-const workoutHistoryLayout = require('../src/v2/design/apps/workout/history_layout')
-const settingsLayout = require('../src/v2/design/apps/settings/layout')
-const launcherLayout = require('../src/v2/design/apps/launcher/layout')
-const facesLayout = require('../src/v2/design/apps/faces/layout')
-const todayLayout = require('../src/v2/design/apps/today/layout')
-const brightnessLayout = require('../src/v2/design/apps/brightness/layout')
-const vibrationLayout = require('../src/v2/design/apps/vibration/layout')
-const motionLayout = require('../src/v2/design/apps/motion/layout')
-const diagnosticsLayout = require('../src/v2/design/apps/diagnostics/layout')
-const syncLayout = require('../src/v2/design/apps/sync/layout')
+const stepsSurface = require('../src/product/frontend/surfaces/steps.json')
+const healthLayout = require('../src/product/design/apps/heart/layout')
+const historyLayout = require('../src/product/design/apps/history/layout')
+const workoutLayout = require('../src/product/design/apps/workout/layout')
+const workoutSelectionLayout = require('../src/product/design/apps/workout/selection_layout')
+const workoutHistoryLayout = require('../src/product/design/apps/workout/history_layout')
+const settingsLayout = require('../src/product/design/apps/settings/layout')
+const launcherLayout = require('../src/product/design/apps/launcher/layout')
+const facesLayout = require('../src/product/design/apps/faces/layout')
+const todayLayout = require('../src/product/design/apps/today/layout')
+const brightnessLayout = require('../src/product/design/apps/brightness/layout')
+const vibrationLayout = require('../src/product/design/apps/vibration/layout')
+const motionLayout = require('../src/product/design/apps/motion/layout')
+const diagnosticsLayout = require('../src/product/design/apps/diagnostics/layout')
+const syncLayout = require('../src/product/design/apps/sync/layout')
 
 const pillProfile = {
   formFactor: 'pill',
@@ -53,9 +53,10 @@ assertGridFits(workoutHistoryPlan.summary.width, workoutHistoryPlan.summaryCardW
 assert.strictEqual(workoutHistoryPlan.recordWidth, workoutHistoryPlan.stream.width, 'workout record cards must use the stream outer width')
 assert.strictEqual(workoutHistoryPlan.recordHeight, workoutHistoryLayout.pill.itemHeight, 'workout record cards must keep their Recipe outer height')
 
+const stepsPill = stepsSurface.variants.pill.modules
 const informationRadii = [
-  ['steps history', stepsLayout.pill.historyRadius],
-  ['steps metric', stepsLayout.pill.metricRadius],
+  ['steps history', stepsPill.history.radius],
+  ['steps metric', stepsPill.metrics.itemRadius],
   ['health', healthLayout.pill.cardRadius],
   ['history', historyLayout.pill.cardRadius],
   ['workout', workoutLayout.pill.radius],
@@ -79,4 +80,4 @@ informationRadii.forEach(function (entry) {
   assert.ok(entry[1] <= 14, entry[0] + ' is an information surface and must not become a capsule')
 })
 
-console.log('V3 surface geometry verified: card outer boxes fill their grids and pill information surfaces remain rectangular')
+console.log('V3 surface geometry verified: JSON and pending Recipe surfaces keep their declared outer boxes')
