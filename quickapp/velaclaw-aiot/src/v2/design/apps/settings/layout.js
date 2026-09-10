@@ -61,7 +61,7 @@ module.exports = {
     itemHeight: 76,
     itemGap: 9,
     chrome: {
-      itemRadius: 22,
+      itemRadius: 12,
       itemPadding: 10,
       iconSize: 40,
       iconRadius: 20,
