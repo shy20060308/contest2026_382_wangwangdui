@@ -1,0 +1,300 @@
+{
+  "schemaVersion": 1,
+  "id": "workout",
+  "route": "pages/workout",
+  "renderer": "surface-v1",
+  "controller": "workout",
+  "modules": [
+    {
+      "id": "head",
+      "type": "header",
+      "visibleWhen": "!confirming",
+      "copy": { "title": "运动", "subtitle": "训练进行中" },
+      "bind": { "trailing": "type", "subtitleTrailing": "status" },
+      "props": {
+        "trailingMap": {
+          "walk": { "text": "步行", "color": "#30D158" },
+          "run": { "text": "跑步", "color": "#FF9F0A" }
+        },
+        "subtitleTrailingMap": {
+          "running": { "text": "运动中", "color": "#30D158" },
+          "paused": { "text": "已暂停", "color": "#FFD60A" }
+        }
+      },
+      "tokens": {
+        "flow": true,
+        "width": 164,
+        "height": 24,
+        "titleWidth": 76,
+        "trailingWidth": 80,
+        "subtitleWidth": 90,
+        "subtitleTrailingWidth": 66,
+        "titleSize": 14,
+        "subtitleSize": 7,
+        "trailingSize": 12,
+        "subtitleTrailingSize": 7,
+        "titleLineHeight": 15,
+        "subtitleLineHeight": 9,
+        "titleColor": "#FFFFFF",
+        "subtitleColor": "#8E8E93",
+        "trailingColor": "#FFFFFF",
+        "subtitleTrailingColor": "#30D158",
+        "titleWeight": "bold",
+        "trailingWeight": "bold"
+      }
+    },
+    {
+      "id": "duration",
+      "type": "text",
+      "visibleWhen": "!confirming",
+      "copy": { "template": "{value}" },
+      "bind": { "value": "durationMs" },
+      "props": { "valueFormat": "duration-ms", "valueNullText": "00:00" },
+      "tokens": {
+        "flow": true,
+        "marginTop": 6,
+        "height": 64,
+        "fontSize": 31,
+        "lineHeight": 64,
+        "foreground": "#FFFFFF",
+        "textAlign": "center"
+      }
+    },
+    {
+      "id": "gps",
+      "type": "button",
+      "visibleWhen": "!confirming",
+      "copy": { "title": "正在定位", "subtitle": "" },
+      "bind": { "state": "gpsStatus" },
+      "props": {
+        "stateMap": {
+          "locating": { "text": "正在定位", "color": "#8E8E93", "background": "#10151A" },
+          "active": { "text": "GPS 已定位", "color": "#64D2FF", "background": "#10151A" },
+          "unavailable": { "text": "GPS 不可用 · 步幅估算", "color": "#FF9F0A", "background": "#10151A" },
+          "paused": { "text": "GPS 已暂停", "color": "#8E8E93", "background": "#19170F" }
+        }
+      },
+      "tokens": {
+        "flow": true,
+        "marginTop": 4,
+        "height": 24,
+        "radius": 12,
+        "paddingX": 10,
+        "background": "#10151A",
+        "titleSize": 7,
+        "titleColor": "#8E8E93",
+        "titleWeight": "normal",
+        "subtitleSize": 0,
+        "subtitleTop": 0,
+        "subtitleColor": "#8E8E93",
+        "chevronWidth": 0,
+        "chevronSize": 0,
+        "chevronColor": "#000000",
+        "chevronText": ""
+      }
+    },
+    {
+      "id": "metrics",
+      "type": "metric-grid",
+      "visibleWhen": "!confirming",
+      "props": {
+        "items": [
+          { "id": "steps", "bind": { "value": "steps" }, "props": { "valueFormat": "number" }, "copy": { "label": "步数" }, "tokens": { "accent": "#FFD60A" } },
+          { "id": "calories", "bind": { "value": "calories" }, "props": { "valueFormat": "number" }, "copy": { "label": "千卡" }, "tokens": { "accent": "#FF9F0A" } },
+          { "id": "distance", "bind": { "value": "distanceMeters" }, "props": { "valueFormat": "distance" }, "copy": { "label": "距离" }, "tokens": { "accent": "#30D158" } },
+          { "id": "heart", "bind": { "value": "currentHeartRate" }, "props": { "valueFormat": "number", "valueNullText": "--" }, "copy": { "label": "心率 bpm" }, "tokens": { "accent": "#FF375F" } }
+        ]
+      },
+      "tokens": {
+        "flow": true,
+        "marginTop": 6,
+        "height": 66,
+        "columns": 4,
+        "gap": 4,
+        "rowGap": 4,
+        "itemHeight": 60,
+        "itemRadius": 14,
+        "itemPaddingX": 5,
+        "itemPaddingY": 7,
+        "itemBackground": "#111317",
+        "labelSize": 6,
+        "labelColor": "#8E8E93",
+        "valueSize": 14,
+        "valueTop": 2,
+        "valueWeight": "bold",
+        "valueColor": "#FFFFFF",
+        "detailSize": 0,
+        "detailTop": 0,
+        "detailColor": "#8E8E93"
+      }
+    },
+    {
+      "id": "pause",
+      "type": "button",
+      "visibleWhen": "!confirming",
+      "copy": { "title": "暂停", "subtitle": "" },
+      "bind": { "state": "status" },
+      "props": {
+        "stateMap": {
+          "running": { "text": "暂停", "color": "#FFFFFF", "background": "#2C2C2E" },
+          "paused": { "text": "继续", "color": "#061008", "background": "#30D158" }
+        }
+      },
+      "actions": { "tap": "workout-toggle-pause" },
+      "tokens": {
+        "flow": true,
+        "marginTop": 8,
+        "height": 34,
+        "radius": 14,
+        "paddingX": 12,
+        "background": "#2C2C2E",
+        "titleSize": 11,
+        "titleColor": "#FFFFFF",
+        "titleWeight": "bold",
+        "subtitleSize": 0,
+        "subtitleTop": 0,
+        "subtitleColor": "#8E8E93",
+        "chevronWidth": 0,
+        "chevronSize": 0,
+        "chevronColor": "#000000",
+        "chevronText": ""
+      }
+    },
+    {
+      "id": "finish",
+      "type": "button",
+      "visibleWhen": "!confirming",
+      "copy": { "title": "结束", "subtitle": "保存本次训练" },
+      "actions": { "tap": "workout-request-finish" },
+      "tokens": {
+        "flow": true,
+        "marginTop": 6,
+        "height": 38,
+        "radius": 14,
+        "paddingX": 12,
+        "background": "#C83245",
+        "titleSize": 11,
+        "titleColor": "#FFFFFF",
+        "titleWeight": "bold",
+        "subtitleSize": 7,
+        "subtitleTop": 2,
+        "subtitleColor": "#F2C5CB",
+        "chevronWidth": 0,
+        "chevronSize": 0,
+        "chevronColor": "#000000",
+        "chevronText": ""
+      }
+    },
+    {
+      "id": "confirmCard",
+      "type": "button",
+      "visibleWhen": "confirming",
+      "copy": { "title": "结束本次运动？", "subtitle": "记录会保存并计入今日活动和 7 日趋势。" },
+      "tokens": {
+        "flow": true,
+        "marginTop": 34,
+        "height": 116,
+        "radius": 14,
+        "paddingX": 12,
+        "background": "#17191D",
+        "titleSize": 15,
+        "titleColor": "#FFFFFF",
+        "titleWeight": "bold",
+        "subtitleSize": 9,
+        "subtitleTop": 10,
+        "subtitleColor": "#8E8E93",
+        "chevronWidth": 0,
+        "chevronSize": 0,
+        "chevronColor": "#000000",
+        "chevronText": ""
+      }
+    },
+    {
+      "id": "confirmCancel",
+      "type": "button",
+      "visibleWhen": "confirming",
+      "copy": { "title": "继续运动", "subtitle": "" },
+      "actions": { "tap": "workout-cancel-finish" },
+      "tokens": {
+        "flow": true,
+        "marginTop": 10,
+        "height": 36,
+        "radius": 14,
+        "paddingX": 12,
+        "background": "#2C2C2E",
+        "titleSize": 10,
+        "titleColor": "#FFFFFF",
+        "titleWeight": "bold",
+        "subtitleSize": 0,
+        "subtitleTop": 0,
+        "subtitleColor": "#8E8E93",
+        "chevronWidth": 0,
+        "chevronSize": 0,
+        "chevronColor": "#000000",
+        "chevronText": ""
+      }
+    },
+    {
+      "id": "confirmSave",
+      "type": "button",
+      "visibleWhen": "confirming",
+      "copy": { "title": "保存并结束", "subtitle": "" },
+      "actions": { "tap": "workout-confirm-finish" },
+      "tokens": {
+        "flow": true,
+        "marginTop": 8,
+        "height": 36,
+        "radius": 14,
+        "paddingX": 12,
+        "background": "#C83245",
+        "titleSize": 10,
+        "titleColor": "#FFFFFF",
+        "titleWeight": "bold",
+        "subtitleSize": 0,
+        "subtitleTop": 0,
+        "subtitleColor": "#8E8E93",
+        "chevronWidth": 0,
+        "chevronSize": 0,
+        "chevronColor": "#000000",
+        "chevronText": ""
+      }
+    }
+  ],
+  "tokens": {
+    "background": "#000000",
+    "stream": { "top": 0, "width": 164, "heightMode": "scene-bottom" },
+    "streamPaddingBottom": 18
+  },
+  "variants": {
+    "base": {},
+    "circle": {
+      "tokens": { "stream": { "top": 14, "width": 148, "heightMode": "scene-bottom" }, "streamPaddingBottom": 20 },
+      "modules": {
+        "head": { "width": 128, "height": 20, "titleWidth": 54, "trailingWidth": 68, "subtitleWidth": 68, "subtitleTrailingWidth": 54, "titleSize": 10, "subtitleSize": 5, "trailingSize": 9, "subtitleTrailingSize": 5, "titleLineHeight": 12, "subtitleLineHeight": 8 },
+        "duration": { "marginTop": 3, "height": 48, "fontSize": 27, "lineHeight": 48 },
+        "gps": { "marginTop": 3, "height": 20, "radius": 10, "titleSize": 6 },
+        "metrics": { "marginTop": 4, "height": 54, "columns": 2, "gap": 4, "rowGap": 4, "itemHeight": 25, "itemRadius": 12, "itemPaddingX": 4, "itemPaddingY": 3, "labelSize": 5, "valueSize": 11 },
+        "pause": { "marginTop": 5, "height": 28, "radius": 12, "titleSize": 8 },
+        "finish": { "marginTop": 5, "height": 30, "radius": 12, "titleSize": 8, "subtitleSize": 5 },
+        "confirmCard": { "marginTop": 20, "height": 92, "radius": 14, "titleSize": 12, "subtitleSize": 7 },
+        "confirmCancel": { "marginTop": 8, "height": 30, "radius": 12, "titleSize": 8 },
+        "confirmSave": { "marginTop": 6, "height": 30, "radius": 12, "titleSize": 8 }
+      }
+    },
+    "pill": {
+      "tokens": { "stream": { "top": 0, "width": 168, "heightMode": "scene-bottom" }, "streamPaddingBottom": 52 },
+      "modules": {
+        "head": { "width": 168, "height": 32, "titleWidth": 76, "trailingWidth": 84, "subtitleWidth": 94, "subtitleTrailingWidth": 66, "titleSize": 18, "subtitleSize": 9, "trailingSize": 15, "subtitleTrailingSize": 9, "titleLineHeight": 20, "subtitleLineHeight": 12 },
+        "duration": { "marginTop": 10, "height": 78, "fontSize": 50, "lineHeight": 78 },
+        "gps": { "marginTop": 5, "height": 28, "radius": 11, "titleSize": 9 },
+        "metrics": { "marginTop": 10, "height": 166, "columns": 2, "gap": 8, "rowGap": 8, "itemHeight": 78, "itemRadius": 12, "itemPaddingX": 8, "itemPaddingY": 10, "labelSize": 8, "valueSize": 20 },
+        "pause": { "marginTop": 10, "height": 48, "radius": 12, "titleSize": 15 },
+        "finish": { "marginTop": 8, "height": 48, "radius": 12, "titleSize": 15, "subtitleSize": 8 },
+        "confirmCard": { "marginTop": 52, "height": 134, "radius": 14, "titleSize": 18, "subtitleSize": 10 },
+        "confirmCancel": { "marginTop": 16, "height": 44, "radius": 12, "titleSize": 12 },
+        "confirmSave": { "marginTop": 10, "height": 44, "radius": 12, "titleSize": 12 }
+      }
+    },
+    "rect": {}
+  }
+}
