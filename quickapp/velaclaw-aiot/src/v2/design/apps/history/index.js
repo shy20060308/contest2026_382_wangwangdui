@@ -7,13 +7,15 @@ function contentWidth(profile) { return adapter.contentWidth(profile, layout) }
 function resolve(profile, scene, safe) {
   var config = adapter.select(layout, profile)
   var plan = adapter.createPlan(profile, scene, safe, difference.L2, config.surface)
-  var streamHeight = safe.bottom - (safe.top + config.streamTop)
+  var streamTop = safe.top + config.streamTop
   plan.stream = adapter.placeBand(profile, scene, safe, {
-    top: config.streamTop,
+    bounds: 'scene',
+    absoluteTop: true,
+    top: streamTop,
     width: config.contentWidth,
-    height: streamHeight
+    height: scene.height - streamTop
   })
-  plan.streamPaddingBottom = config.streamPaddingBottom
+  plan.streamPaddingBottom = Math.max(config.streamPaddingBottom, safe.bottom)
 
   plan.headerWidth = config.headerWidth
   plan.headerHeight = config.headerHeight
