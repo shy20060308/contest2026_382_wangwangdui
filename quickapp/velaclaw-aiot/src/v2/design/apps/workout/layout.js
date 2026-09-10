@@ -91,7 +91,7 @@ module.exports = {
     metricValueSize: 20,
     metricLabelSize: 8,
     actionSize: 15,
-    radius: 20
+    radius: 12
   },
   rect: {
     contentWidth: 164,
