@@ -19,6 +19,14 @@ function compactLabel(text, isToday) {
   return weekdayLabel(text).slice(1)
 }
 
+function trendHeight(plan, rowMode, recordCount) {
+  if (!rowMode) return plan.trendHeight
+  var chrome = plan.chrome
+  var rows = Math.max(1, recordCount)
+  var required = plan.trendHeadHeight + chrome.rowTrendTop + rows * chrome.rowItemHeight
+  return Math.min(plan.trendHeight, required)
+}
+
 function project(model, plan) {
   var records = model.records
   var chartHeight = plan.chartHeight
@@ -60,6 +68,7 @@ function project(model, plan) {
     bestDayText: model.bestDate ? formatDay(model.bestDate) : '--',
     avgHeartText: model.avgHeartRate === null ? '--' : model.avgHeartRate + ' bpm',
     goalText: model.goalPercent + '%',
+    trendHeight: trendHeight(plan, rowMode, records.length),
     bars: bars
   }
 }
