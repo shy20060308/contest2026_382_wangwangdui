@@ -23,7 +23,7 @@ function trendHeight(plan, rowMode, recordCount) {
   if (!rowMode) return plan.trendHeight
   var chrome = plan.chrome
   var rows = Math.max(1, recordCount)
-  var required = plan.trendHeadHeight + chrome.rowTrendTop + rows * chrome.rowItemHeight
+  var required = plan.trendPaddingY * 2 + plan.trendHeadHeight + chrome.rowTrendTop + rows * chrome.rowItemHeight
   return Math.min(plan.trendHeight, required)
 }
 
