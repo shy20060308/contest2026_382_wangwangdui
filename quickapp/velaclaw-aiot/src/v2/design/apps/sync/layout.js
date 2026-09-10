@@ -20,7 +20,7 @@ module.exports = {
   },
   pill: {
     contentWidth: 168, headerTop: 0, headerWidth: 168, headerHeight: 32, headerGap: 8, streamWidth: 168,
-    titleSize: 14, cardRadius: 20, cardGap: 8
+    titleSize: 14, cardRadius: 12, cardGap: 8
   },
   rect: { contentWidth: 164 }
 }
