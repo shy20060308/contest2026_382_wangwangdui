@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "id": "settings",
+  "route": "pages/settings/settings",
+  "renderer": "surface-v1",
+  "controller": null,
+  "modules": [
+    {
+      "id": "title",
+      "type": "header",
+      "copy": { "title": "设置", "subtitle": "系统与设备能力" },
+      "tokens": { "flow": true, "height": 28, "titleWidth": 100, "trailingWidth": 0, "subtitleWidth": 150, "subtitleTrailingWidth": 0, "titleSize": 15, "subtitleSize": 7, "trailingSize": 0, "subtitleTrailingSize": 0, "titleLineHeight": 17, "subtitleLineHeight": 10, "titleColor": "#FFFFFF", "subtitleColor": "#8E8E93", "trailingColor": "#FFFFFF", "subtitleTrailingColor": "#8E8E93", "titleWeight": "bold", "trailingWeight": "normal" }
+    },
+    {
+      "id": "sync",
+      "type": "button",
+      "copy": { "title": "蓝牙同步", "subtitle": "连接手机并通过系统互联发送数据" },
+      "actions": { "tap": "/pages/settings/bluetooth" },
+      "tokens": { "flow": true, "marginTop": 6, "height": 50, "radius": 14, "paddingX": 10, "background": "#111820", "titleSize": 11, "titleColor": "#64D2FF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 3, "subtitleColor": "#8E8E93", "chevronWidth": 14, "chevronSize": 15, "chevronColor": "#636366", "chevronText": "›" }
+    },
+    {
+      "id": "vibration",
+      "type": "button",
+      "copy": { "title": "震动反馈", "subtitle": "提醒开关、强度与反馈模式" },
+      "actions": { "tap": "/pages/settings/vibration" },
+      "tokens": { "flow": true, "marginTop": 7, "height": 50, "radius": 14, "paddingX": 10, "background": "#17140F", "titleSize": 11, "titleColor": "#FF9F0A", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 3, "subtitleColor": "#8E8E93", "chevronWidth": 14, "chevronSize": 15, "chevronColor": "#636366", "chevronText": "›" }
+    },
+    {
+      "id": "brightness",
+      "type": "button",
+      "copy": { "title": "亮度与省电", "subtitle": "亮度、抬腕亮屏、低功耗" },
+      "actions": { "tap": "/pages/settings/brightness" },
+      "tokens": { "flow": true, "marginTop": 7, "height": 50, "radius": 14, "paddingX": 10, "background": "#18170E", "titleSize": 11, "titleColor": "#FFD60A", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 3, "subtitleColor": "#8E8E93", "chevronWidth": 14, "chevronSize": 15, "chevronColor": "#636366", "chevronText": "›" }
+    },
+    {
+      "id": "motion",
+      "type": "button",
+      "copy": { "title": "动作与加速度", "subtitle": "三轴诊断与动作强度测量" },
+      "actions": { "tap": "/pages/settings/motion" },
+      "tokens": { "flow": true, "marginTop": 7, "height": 50, "radius": 14, "paddingX": 10, "background": "#16121A", "titleSize": 11, "titleColor": "#BF5AF2", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 3, "subtitleColor": "#8E8E93", "chevronWidth": 14, "chevronSize": 15, "chevronColor": "#636366", "chevronText": "›" }
+    },
+    {
+      "id": "diagnostics",
+      "type": "button",
+      "copy": { "title": "设备自检", "subtitle": "屏幕档案与系统能力状态" },
+      "actions": { "tap": "/pages/settings/diagnostics" },
+      "tokens": { "flow": true, "marginTop": 7, "height": 50, "radius": 14, "paddingX": 10, "background": "#11151B", "titleSize": 11, "titleColor": "#64D2FF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 3, "subtitleColor": "#8E8E93", "chevronWidth": 14, "chevronSize": 15, "chevronColor": "#636366", "chevronText": "›" }
+    }
+  ],
+  "tokens": { "background": "#000000", "stream": { "top": 0, "width": 164, "heightMode": "scene-bottom" }, "streamPaddingBottom": 18 },
+  "variants": {
+    "base": {},
+    "circle": { "tokens": { "stream": { "top": 14, "width": 148, "heightMode": "scene-bottom" }, "streamPaddingBottom": 20 }, "modules": { "title": { "height": 24, "titleSize": 13 }, "sync": { "height": 46, "radius": 13, "titleSize": 10, "subtitleSize": 6 }, "vibration": { "height": 46, "radius": 13, "titleSize": 10, "subtitleSize": 6 }, "brightness": { "height": 46, "radius": 13, "titleSize": 10, "subtitleSize": 6 }, "motion": { "height": 46, "radius": 13, "titleSize": 10, "subtitleSize": 6 }, "diagnostics": { "height": 46, "radius": 13, "titleSize": 10, "subtitleSize": 6 } } },
+    "pill": { "tokens": { "stream": { "top": 0, "width": 168, "heightMode": "scene-bottom" }, "streamPaddingBottom": 52 }, "modules": { "title": { "height": 34, "titleSize": 18, "subtitleSize": 9, "titleLineHeight": 21, "subtitleLineHeight": 13 }, "sync": { "height": 70, "radius": 12, "titleSize": 14, "subtitleSize": 8 }, "vibration": { "height": 70, "radius": 12, "titleSize": 14, "subtitleSize": 8 }, "brightness": { "height": 70, "radius": 12, "titleSize": 14, "subtitleSize": 8 }, "motion": { "height": 70, "radius": 12, "titleSize": 14, "subtitleSize": 8 }, "diagnostics": { "height": 70, "radius": 12, "titleSize": 14, "subtitleSize": 8 } } },
+    "rect": {}
+  }
+}
