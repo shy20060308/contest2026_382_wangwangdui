@@ -114,7 +114,7 @@ strictWatchfaceComponents.forEach(function (file) {
   const source = read(file)
   const style = styleBlock(source)
   assert.ok(source.includes('faceLayout'), file + ' must render the resolved Clock Recipe')
-  assert.ok(!/:\s*-?(?:[1-9]\d*|0\.\d*[1-9]\d*)px\b/.test(style), file + ' CSS must not own non-zero geometry')
+  assert.ok(!/:\s*-?(?:[1-9]\d*|0\.\d*[1-9]\d*)px\b/.test(style), file + ' CSS must not own non-zero product geometry')
 })
 
 const strictRecipeResolvers = [
@@ -188,6 +188,11 @@ assert.ok(!launcherPage.includes('Number(vx)') && !launcherPage.includes('Number
 
 const profile = read('src/runtime/device_profile.js')
 assert.ok(profile.includes('safeInsets: declaredInsets(factor)'), 'Device Profile must own explicit safe insets')
+assert.ok(profile.includes('var ratio = width / height'), 'Device Profile must derive shape from canonical geometry when screenShape is unavailable')
+assert.ok(!profile.includes('Emulator-Vela') && !profile.includes('isBetaPillViewport'), 'Device Profile must not contain emulator-specific compatibility branches')
+
+const pageRuntime = read('src/runtime/page_runtime.js')
+assert.ok(pageRuntime.includes("page.viewportWidth = host.width + 'px'") && pageRuntime.includes("page.viewportHeight = host.height + 'px'"), 'Page Runtime must expose exactly the resolved Scene coordinate space')
 
 const pkg = JSON.parse(read('package.json'))
 assert.strictEqual(pkg.version, '3.0.0')
@@ -197,7 +202,7 @@ assert.strictEqual(Object.keys(pkg.scripts).some(name => name.startsWith('v2:') 
 const manifest = JSON.parse(read('src/manifest.json'))
 assert.strictEqual(manifest.versionName, '3.0.0')
 assert.strictEqual(manifest.versionCode, 30)
-assert.ok(manifest.minAPILevel >= 3, 'V3 multi-shape runtime requires API3 canonical screenShape support')
+assert.strictEqual(manifest.minAPILevel, 2, 'V3 must install on the contest API2 runtime; Device Profile owns shape normalization')
 assert.ok(manifest.router.pages[manifest.router.entry], 'manifest entry must point to a registered page')
 const strictRecipeSet = new Set(strictRecipePages)
 Object.keys(manifest.router.pages).forEach(function (route) {
@@ -213,4 +218,4 @@ const guard = read('src/pages/clock_guard/clock_guard.ux')
 assert.ok(!guard.includes('page_runtime'), 'Clock Guard must not wait for layout runtime before redirecting')
 assert.ok(guard.includes("navigation.push('/pages/clock')"), 'Clock Guard must restore the clock surface')
 
-console.log('V3 architecture verified: current dependencies, Recipe ownership and runtime boundaries are coherent')
+console.log('V3 architecture verified: one Scene coordinate space, geometry-normalized devices and current Recipe boundaries are coherent')
