@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "id": "steps",
+  "route": "pages/steps",
+  "renderer": "surface-v1",
+  "controller": "activity",
+  "modules": [
+    {
+      "id": "title",
+      "type": "header",
+      "copy": {
+        "text": "运动"
+      },
+      "tokens": {
+        "frame": { "top": 0, "width": 164, "height": 22 },
+        "fontSize": 15,
+        "foreground": "#FFD60A",
+        "fontWeight": "bold",
+        "textAlign": "center"
+      }
+    },
+    {
+      "id": "history",
+      "type": "button",
+      "copy": {
+        "title": "7日趋势",
+        "subtitle": "查看趋势 ›"
+      },
+      "actions": {
+        "tap": "/pages/history"
+      },
+      "tokens": {
+        "frame": { "top": 30, "width": 164, "height": 34 },
+        "radius": 17,
+        "paddingX": 12,
+        "titleSize": 9,
+        "subtitleSize": 7,
+        "background": "#15171B",
+        "titleColor": "#FFFFFF",
+        "subtitleColor": "#8E8E93",
+        "titleWeight": "bold"
+      }
+    },
+    {
+      "id": "metrics",
+      "type": "metric-list",
+      "copy": {
+        "percent": "{percent}%",
+        "percentCap": "999%+",
+        "goal": "目标 {goal} {unit}",
+        "remaining": "还差 {remaining}",
+        "over": "超额 {extra}",
+        "complete": "已达成"
+      },
+      "bind": {
+        "items": "metrics"
+      },
+      "props": {
+        "items": [
+          {
+            "id": "steps",
+            "copy": { "label": "步数", "unit": "步" },
+            "tokens": { "accent": "#FFD60A" }
+          },
+          {
+            "id": "calories",
+            "copy": { "label": "卡路里", "unit": "kcal" },
+            "tokens": { "accent": "#FF9F0A" }
+          },
+          {
+            "id": "stand",
+            "copy": { "label": "站立", "unit": "h" },
+            "tokens": { "accent": "#0A84FF" }
+          }
+        ]
+      },
+      "tokens": {
+        "frame": { "top": 72, "width": 164, "heightMode": "scene-bottom" },
+        "itemHeight": 91,
+        "itemGap": 7,
+        "itemRadius": 16,
+        "itemPadding": 9,
+        "itemBackground": "#101215",
+        "headHeight": 14,
+        "labelSize": 9,
+        "labelWeight": "bold",
+        "valueRowHeight": 28,
+        "valueSize": 24,
+        "valueWeight": "bold",
+        "unitSize": 7,
+        "unitGap": 4,
+        "unitBottom": 4,
+        "progressTextSize": 8,
+        "progressWeight": "bold",
+        "trackHeight": 7,
+        "trackRadius": 4,
+        "progressGap": 7,
+        "trackBackground": "#24262C",
+        "footerSize": 7,
+        "footHeight": 12,
+        "footTop": 5,
+        "secondaryColor": "#8E8E93",
+        "pendingColor": "#8E8E93"
+      }
+    }
+  ],
+  "tokens": {
+    "background": "#000000"
+  },
+  "variants": {
+    "base": {},
+    "circle": {
+      "modules": {
+        "title": {
+          "frame": { "top": 14, "width": 120, "height": 22 },
+          "fontSize": 13
+        },
+        "history": {
+          "frame": { "top": 39, "width": 136, "height": 30 },
+          "radius": 15,
+          "titleSize": 8,
+          "subtitleSize": 6
+        },
+        "metrics": {
+          "frame": { "top": 74, "width": 136, "heightMode": "scene-bottom" },
+          "itemHeight": 86,
+          "itemGap": 6,
+          "itemRadius": 15,
+          "itemPadding": 8,
+          "labelSize": 8,
+          "valueSize": 22,
+          "unitSize": 6,
+          "progressTextSize": 7,
+          "trackHeight": 6,
+          "trackRadius": 3,
+          "footerSize": 6,
+          "progressGap": 5
+        }
+      }
+    },
+    "pill": {
+      "modules": {
+        "title": {
+          "frame": { "top": 0, "width": 168, "height": 24 },
+          "fontSize": 17
+        },
+        "history": {
+          "frame": { "top": 32, "width": 168, "height": 42 },
+          "radius": 11,
+          "titleSize": 11,
+          "subtitleSize": 9
+        },
+        "metrics": {
+          "frame": { "top": 82, "width": 168, "heightMode": "scene-bottom" },
+          "itemHeight": 94,
+          "itemGap": 8,
+          "itemRadius": 12,
+          "itemPadding": 10,
+          "labelSize": 10,
+          "valueSize": 28,
+          "unitSize": 8,
+          "progressTextSize": 10,
+          "trackHeight": 8,
+          "trackRadius": 4,
+          "footerSize": 8,
+          "progressGap": 7
+        }
+      }
+    },
+    "rect": {}
+  }
+}
