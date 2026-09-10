@@ -58,7 +58,7 @@ module.exports = {
     summaryLabelSize: 9,
     recordTitleSize: 14,
     recordMetaSize: 9,
-    radius: 22,
+    radius: 12,
     padding: 12
   },
   rect: { contentWidth: 164 }
