@@ -12,6 +12,7 @@ function resolve(profile, scene, safe) {
   var config = adapter.select(layout, profile)
   var plan = adapter.createPlan(profile, scene, safe, difference.L1, config.surface)
   var streamTop = safe.top + config.streamTop
+  var bottomInset = scene.height - safe.bottom
   plan.stream = adapter.placeBand(profile, scene, safe, {
     bounds: 'scene',
     absoluteTop: true,
@@ -35,7 +36,7 @@ function resolve(profile, scene, safe) {
   plan.chartHeight = config.chartHeight
   plan.trendMinHeight = config.trendMinHeight
   plan.trendVisual = adapter.merge({}, config.trendVisual)
-  plan.scrollPaddingBottom = Math.max(config.scrollPaddingBottom, scene.height - safe.bottom)
+  plan.scrollPaddingBottom = config.scrollPaddingBottom > bottomInset ? config.scrollPaddingBottom : bottomInset
 
   var hero = adapter.contentBox(plan.stream.width, config.heroOuterHeight, config.cardPaddingX, config.cardPaddingY)
   plan.cardWidth = hero.width
