@@ -18,12 +18,10 @@ function resolve(profile, scene, safe) {
   plan.stream = fill(profile, scene, safe, config.stream)
 
   plan.summaryGap = config.summaryGap
-  var summaryOuterWidth = adapter.grid(plan.summary, 2, plan.summaryGap).itemWidth
-  plan.summaryCardWidth = summaryOuterWidth - config.chrome.summaryPaddingLeft
+  plan.summaryCardWidth = adapter.grid(plan.summary, 2, plan.summaryGap).itemWidth
 
-  var recordBox = adapter.contentBox(plan.stream.width, config.itemHeight, config.padding, config.padding)
-  plan.recordWidth = recordBox.width
-  plan.recordHeight = recordBox.height
+  plan.recordWidth = plan.stream.width
+  plan.recordHeight = config.itemHeight
   plan.recordGap = config.itemGap
 
   plan.titleSize = config.titleSize
