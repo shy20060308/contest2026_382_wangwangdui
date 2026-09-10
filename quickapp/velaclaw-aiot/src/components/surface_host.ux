@@ -45,6 +45,24 @@
 
           <text class="flow-text" for="{{ plan.flowTexts }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; line-height: {{ $item.tokens.lineHeight }}px; font-size: {{ $item.tokens.fontSize }}px; color: {{ $item.tokens.foreground }}; text-align: {{ $item.tokens.textAlign }};">{{ $item.text }}</text>
 
+          <div class="flow-button" for="{{ plan.flowButtons }}" tid="id" @click="activate($item.action)" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.radius }}px; padding-left: {{ $item.tokens.paddingX }}px; padding-right: {{ $item.tokens.paddingX }}px; background-color: {{ $item.tokens.background }};">
+            <div class="flow-button-copy"><text class="flow-button-title" style="font-size: {{ $item.tokens.titleSize }}px; color: {{ $item.tokens.titleColor }}; font-weight: {{ $item.tokens.titleWeight }};">{{ $item.copy.title }}</text><text class="flow-button-subtitle" style="font-size: {{ $item.tokens.subtitleSize }}px; margin-top: {{ $item.tokens.subtitleTop }}px; color: {{ $item.tokens.subtitleColor }};">{{ $item.copy.subtitle }}</text></div>
+            <text class="flow-chevron" style="width: {{ $item.tokens.chevronWidth }}px; font-size: {{ $item.tokens.chevronSize }}px; color: {{ $item.tokens.chevronColor }}; text-align: right;">{{ $item.tokens.chevronText }}</text>
+          </div>
+
+          <div class="flow-menu-item" for="{{ plan.flowMenuItems }}" tid="id" @click="activate($item.action)" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.itemRadius }}px; padding-left: {{ $item.tokens.itemPaddingX }}px; padding-right: {{ $item.tokens.itemPaddingX }}px; background-color: {{ $item.tokens.itemBackground }};">
+            <div class="flow-menu-accent" style="width: {{ $item.tokens.accentWidth }}px; height: {{ $item.tokens.accentHeight }}; border-radius: {{ $item.tokens.accentRadius }}px; background-color: {{ $item.accent }};"></div>
+            <div class="flow-menu-copy" style="margin-left: {{ $item.tokens.copyGap }}px;"><text class="flow-menu-title" style="font-size: {{ $item.tokens.titleSize }}px; color: {{ $item.tokens.titleColor }}; font-weight: {{ $item.tokens.titleWeight }};">{{ $item.title }}</text><text class="flow-menu-subtitle" style="font-size: {{ $item.tokens.subtitleSize }}px; margin-top: {{ $item.tokens.subtitleTop }}px; color: {{ $item.tokens.subtitleColor }};">{{ $item.subtitle }}</text></div>
+            <text class="flow-chevron" style="width: {{ $item.tokens.chevronWidth }}px; font-size: {{ $item.tokens.chevronSize }}px; color: {{ $item.tokens.chevronColor }}; text-align: right;">{{ $item.tokens.chevronText }}</text>
+          </div>
+
+          <div class="flow-record-item" for="{{ plan.flowRecordItems }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.itemRadius }}px; padding: {{ $item.tokens.itemPadding }}px; background-color: {{ $item.tokens.itemBackground }};">
+            <div class="flow-record-head"><text class="flow-record-title" style="font-size: {{ $item.tokens.titleSize }}px; color: {{ $item.titleColor }}; font-weight: {{ $item.tokens.titleWeight }};">{{ $item.title }}</text><text class="flow-record-trailing" style="font-size: {{ $item.tokens.metaSize }}px; color: {{ $item.trailingColor }};">{{ $item.trailing }}</text></div>
+            <text class="flow-record-subtitle" style="font-size: {{ $item.tokens.metaSize }}px; margin-top: {{ $item.tokens.subtitleTop }}px; color: {{ $item.subtitleColor }};">{{ $item.subtitle }}</text>
+            <div class="flow-record-metrics" style="margin-top: {{ $item.tokens.metricsTop }}px;"><text class="flow-record-metric" style="font-size: {{ $item.tokens.metaSize }}px; color: {{ $item.tokens.metricColor }};">{{ $item.metric1 }}</text><text class="flow-record-metric" style="font-size: {{ $item.tokens.metaSize }}px; color: {{ $item.tokens.metricColor }};">{{ $item.metric2 }}</text><text class="flow-record-metric" style="font-size: {{ $item.tokens.metaSize }}px; color: {{ $item.tokens.metricColor }};">{{ $item.metric3 }}</text></div>
+            <div class="flow-record-footer" style="margin-top: {{ $item.tokens.footerTop }}px;"><text class="flow-record-footer-text" style="font-size: {{ $item.tokens.metaSize }}px; color: {{ $item.footerColor }};">{{ $item.footer }}</text><text class="flow-record-footer-text" style="font-size: {{ $item.tokens.metaSize }}px; color: {{ $item.footerTrailingColor }};">{{ $item.footerTrailing }}</text></div>
+          </div>
+
           <div class="flow-metric-card" for="{{ plan.flowMetricItems }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.itemRadius }}px; padding: {{ $item.tokens.itemPaddingY }}px {{ $item.tokens.itemPaddingX }}px; background-color: {{ $item.tokens.itemBackground }};">
             <text class="flow-metric-label" style="font-size: {{ $item.tokens.labelSize }}px; color: {{ $item.tokens.labelColor }};">{{ $item.label }}</text>
             <text class="flow-metric-value" style="font-size: {{ $item.tokens.valueSize }}px; margin-top: {{ $item.tokens.valueTop }}px; color: {{ $item.accent }}; font-weight: {{ $item.tokens.valueWeight }};">{{ $item.value }}</text>
@@ -52,26 +70,15 @@
           </div>
 
           <div class="flow-chart-card" for="{{ plan.flowChartCards }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.radius }}px; padding: {{ $item.tokens.paddingY }}px {{ $item.tokens.paddingX }}px; background-color: {{ $item.tokens.background }};">
-            <div class="flow-chart-head" style="height: {{ $item.tokens.headHeight }}px;">
-              <text class="flow-chart-title" style="font-size: {{ $item.tokens.titleSize }}px; color: {{ $item.tokens.titleColor }}; font-weight: {{ $item.tokens.titleWeight }};">{{ $item.title }}</text>
-              <text class="flow-chart-caption" style="font-size: {{ $item.tokens.captionSize }}px; color: {{ $item.tokens.captionColor }};">{{ $item.caption }}</text>
-            </div>
-            <div class="flow-chart-value-row" if="{{ $item.value }}" style="height: {{ $item.tokens.valueBlockHeight }}px;">
-              <text class="flow-chart-value" style="width: {{ $item.tokens.valueWidth }}px; font-size: {{ $item.tokens.valueSize }}px; color: {{ $item.tokens.valueColor }}; font-weight: {{ $item.tokens.valueWeight }};">{{ $item.value }}</text>
-              <text class="flow-chart-unit" style="font-size: {{ $item.tokens.metaSize }}px; margin-left: {{ $item.tokens.unitGap }}px; color: {{ $item.tokens.metaColor }};">{{ $item.unit }}</text>
-              <text class="flow-chart-status" style="font-size: {{ $item.tokens.metaSize }}px; margin-left: {{ $item.tokens.statusGap }}px; color: {{ $item.statusColor }};">{{ $item.status }}</text>
-            </div>
+            <div class="flow-chart-head" style="height: {{ $item.tokens.headHeight }}px;"><text class="flow-chart-title" style="font-size: {{ $item.tokens.titleSize }}px; color: {{ $item.tokens.titleColor }}; font-weight: {{ $item.tokens.titleWeight }};">{{ $item.title }}</text><text class="flow-chart-caption" style="font-size: {{ $item.tokens.captionSize }}px; color: {{ $item.tokens.captionColor }};">{{ $item.caption }}</text></div>
+            <div class="flow-chart-value-row" if="{{ $item.value }}" style="height: {{ $item.tokens.valueBlockHeight }}px;"><text class="flow-chart-value" style="width: {{ $item.tokens.valueWidth }}px; font-size: {{ $item.tokens.valueSize }}px; color: {{ $item.tokens.valueColor }}; font-weight: {{ $item.tokens.valueWeight }};">{{ $item.value }}</text><text class="flow-chart-unit" style="font-size: {{ $item.tokens.metaSize }}px; margin-left: {{ $item.tokens.unitGap }}px; color: {{ $item.tokens.metaColor }};">{{ $item.unit }}</text><text class="flow-chart-status" style="font-size: {{ $item.tokens.metaSize }}px; margin-left: {{ $item.tokens.statusGap }}px; color: {{ $item.statusColor }};">{{ $item.status }}</text></div>
             <text class="flow-chart-footer" if="{{ $item.footer }}" style="position: absolute; left: {{ $item.tokens.paddingX }}px; bottom: {{ $item.tokens.footerBottom }}px; font-size: {{ $item.tokens.metaSize }}px; color: {{ $item.tokens.metaColor }};">{{ $item.footer }}</text>
           </div>
 
           <div class="flow-column-bar" for="{{ plan.flowColumnBars }}" tid="id" style="left: {{ $item.barLeft }}px; top: {{ $item.barTop }}px; width: {{ $item.barWidth }}px; height: {{ $item.barHeight }}px; border-radius: {{ $item.tokens.barRadius }}px; background-color: {{ $item.color }};"></div>
           <text class="flow-column-label" for="{{ plan.flowColumnBars }}" tid="id" style="left: {{ $item.labelLeft }}px; top: {{ $item.labelTop }}px; width: {{ $item.labelWidth }}px; height: {{ $item.tokens.labelLineHeight }}px; line-height: {{ $item.tokens.labelLineHeight }}px; font-size: {{ $item.tokens.labelSize }}px; color: {{ $item.isActive ? $item.tokens.activeColor : $item.tokens.labelColor }}; font-weight: {{ $item.isActive ? $item.tokens.activeWeight : $item.tokens.labelWeight }}; text-align: center;">{{ $item.label }}</text>
 
-          <div class="flow-row" for="{{ plan.flowRowBars }}" tid="id" style="left: 0px; top: {{ $item.top }}px; width: {{ plan.stream.width }}px; height: {{ $item.height }}px;">
-            <text class="flow-row-label" style="position: absolute; left: {{ $item.labelLeft }}px; width: {{ $item.labelWidth }}px; font-size: {{ $item.tokens.rowLabelSize }}px; color: {{ $item.isActive ? $item.tokens.activeColor : $item.tokens.labelColor }}; font-weight: {{ $item.isActive ? $item.tokens.activeWeight : $item.tokens.labelWeight }};">{{ $item.label }}</text>
-            <div class="flow-row-track" style="position: absolute; left: {{ $item.trackLeft }}px; width: {{ $item.trackWidth }}px; height: {{ $item.tokens.rowTrackHeight }}px; border-radius: {{ $item.tokens.rowTrackRadius }}px; background-color: {{ $item.tokens.trackBackground }}; overflow: hidden;"><div class="flow-row-fill" style="width: {{ $item.fillWidth }}px; height: {{ $item.tokens.rowTrackHeight }}px; border-radius: {{ $item.tokens.rowTrackRadius }}px; background-color: {{ $item.color }};"></div></div>
-            <text class="flow-row-value" style="position: absolute; left: {{ $item.valueLeft }}px; width: {{ $item.valueWidth }}px; font-size: {{ $item.tokens.rowValueSize }}px; color: {{ $item.isActive ? $item.tokens.activeColor : $item.tokens.valueColor }}; font-weight: {{ $item.tokens.valueWeight }}; text-align: right;">{{ $item.value }}</text>
-          </div>
+          <div class="flow-row" for="{{ plan.flowRowBars }}" tid="id" style="left: 0px; top: {{ $item.top }}px; width: {{ plan.stream.width }}px; height: {{ $item.height }}px;"><text class="flow-row-label" style="position: absolute; left: {{ $item.labelLeft }}px; width: {{ $item.labelWidth }}px; font-size: {{ $item.tokens.rowLabelSize }}px; color: {{ $item.isActive ? $item.tokens.activeColor : $item.tokens.labelColor }}; font-weight: {{ $item.isActive ? $item.tokens.activeWeight : $item.tokens.labelWeight }};">{{ $item.label }}</text><div class="flow-row-track" style="position: absolute; left: {{ $item.trackLeft }}px; width: {{ $item.trackWidth }}px; height: {{ $item.tokens.rowTrackHeight }}px; border-radius: {{ $item.tokens.rowTrackRadius }}px; background-color: {{ $item.tokens.trackBackground }}; overflow: hidden;"><div class="flow-row-fill" style="width: {{ $item.fillWidth }}px; height: {{ $item.tokens.rowTrackHeight }}px; border-radius: {{ $item.tokens.rowTrackRadius }}px; background-color: {{ $item.color }};"></div></div><text class="flow-row-value" style="position: absolute; left: {{ $item.valueLeft }}px; width: {{ $item.valueWidth }}px; font-size: {{ $item.tokens.rowValueSize }}px; color: {{ $item.isActive ? $item.tokens.activeColor : $item.tokens.valueColor }}; font-weight: {{ $item.tokens.valueWeight }}; text-align: right;">{{ $item.value }}</text></div>
         </stack>
       </scroll>
     </stack>
@@ -87,17 +94,18 @@ export default {
     if (!action) return
     if (action === '$back') { navigation.back(); return }
     if (String(action).charAt(0) === '/') { navigation.push(action); return }
-    throw new Error('Unsupported V3 surface action: ' + action)
+    this.$emit('surfaceaction', { action: action })
   }
 }
 </script>
 
 <style>
-.surface-host, .surface-scene, .surface-header, .surface-text, .surface-button, .surface-metric-list, .surface-flow, .surface-flow-content, .flow-header, .flow-text, .flow-metric-card, .flow-chart-card, .flow-column-bar, .flow-column-label, .flow-row { position: absolute; }
-.surface-button, .surface-metric-head, .surface-metric-value-row, .surface-metric-foot, .flow-header-row, .flow-chart-head, .flow-chart-value-row { flex-direction: row; align-items: center; }
-.surface-button, .surface-metric-head, .surface-metric-foot, .flow-header-row, .flow-chart-head { justify-content: space-between; }
-.surface-metric-list, .surface-metric-card, .flow-header, .flow-metric-card, .flow-chart-card { flex-direction: column; }
+.surface-host, .surface-scene, .surface-header, .surface-text, .surface-button, .surface-metric-list, .surface-flow, .surface-flow-content, .flow-header, .flow-text, .flow-button, .flow-menu-item, .flow-record-item, .flow-metric-card, .flow-chart-card, .flow-column-bar, .flow-column-label, .flow-row { position: absolute; }
+.surface-button, .surface-metric-head, .surface-metric-value-row, .surface-metric-foot, .flow-header-row, .flow-button, .flow-menu-item, .flow-record-head, .flow-record-metrics, .flow-record-footer, .flow-chart-head, .flow-chart-value-row { flex-direction: row; align-items: center; }
+.surface-button, .surface-metric-head, .surface-metric-foot, .flow-header-row, .flow-button, .flow-menu-item, .flow-record-head, .flow-record-metrics, .flow-record-footer, .flow-chart-head { justify-content: space-between; }
+.surface-metric-list, .surface-metric-card, .flow-header, .flow-button-copy, .flow-menu-copy, .flow-record-item, .flow-metric-card, .flow-chart-card { flex-direction: column; }
 .surface-metric-value-row { align-items: flex-end; }
 .surface-progress-track { overflow: hidden; flex-direction: row; align-items: center; }
 .surface-metric-status { text-align: right; }
+.flow-menu-copy { flex: 1; }
 </style>
