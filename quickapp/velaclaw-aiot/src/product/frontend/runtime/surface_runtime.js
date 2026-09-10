@@ -239,45 +239,88 @@ function resolveButton(module, tokens, frame, state) {
   }
 }
 
-function metricGridData(module, tokens, frame, state) {
-  var definitions = module.props && module.props.items ? module.props.items : []
-  var columns = tokens.columns || definitions.length || 1
-  var gap = tokens.gap || 0
-  var rowGap = tokens.rowGap === undefined ? gap : tokens.rowGap
-  var itemWidth = Math.floor((frame.width - gap * (columns - 1)) / columns)
-  var rows = Math.ceil(definitions.length / columns)
-  var itemHeight = tokens.itemHeight || Math.floor((frame.height - rowGap * (rows - 1)) / rows)
-  var result = []
-  for (var i = 0; i < definitions.length; i++) {
-    var definition = definitions[i]
-    var bind = definition.bind || {}
-    var props = definition.props || {}
-    var col = i % columns
-    var row = Math.floor(i / columns)
-    var detail = definition.copy && definition.copy.detail ? definition.copy.detail : ''
-    var detailColor = definition.tokens && definition.tokens.detailColor ? definition.tokens.detailColor : tokens.detailColor
-    if (bind.detail) detail = formatValue(valueAt(state, bind.detail), props.detailFormat, props.detailNullText)
-    if (bind.status && props.statusMap) {
-      var status = mappedStatus(props.statusMap, valueAt(state, bind.status), module.id + '.' + definition.id + '.status')
-      detail = status.text; detailColor = status.color
-    }
-    result.push({
-      id: module.id + '-' + definition.id,
-      frame: { left: frame.left + col * (itemWidth + gap), top: frame.top + row * (itemHeight + rowGap), width: itemWidth, height: itemHeight },
-      label: definition.copy && definition.copy.label ? definition.copy.label : definition.id,
-      value: formatValue(valueAt(state, bind.value), props.valueFormat, props.valueNullText),
-      detail: detail, detailColor: detailColor,
-      accent: definition.tokens && definition.tokens.accent ? definition.tokens.accent : tokens.valueColor,
-      tokens: adapter.merge(tokens, definition.tokens || {})
-    })
-  }
-  return result
-}
-
 function itemValue(item, field) {
   if (!field) return item
   if (item && typeof item === 'object') return valueAt(item, field)
   return item
+}
+
+function mapValue(spec, item, moduleId, fieldName) {
+  if (!spec) return { text: '', color: '', background: '' }
+  var raw = itemValue(item, spec.path || '')
+  if (spec.map) {
+    var mapped = mappedStatus(spec.map, raw, moduleId + '.' + fieldName)
+    return { text: mapped.text, color: mapped.color, background: mapped.background }
+  }
+  return { text: formatValue(raw, spec.format, spec.nullText), color: spec.color || '', background: spec.background || '' }
+}
+
+function dynamicGridTokens(baseTokens, item, rules) {
+  var result = adapter.merge({}, baseTokens)
+  var list = rules || []
+  for (var i = 0; i < list.length; i++) {
+    var rule = list[i]
+    if (!rule || !rule.path) continue
+    if (itemValue(item, rule.path) === rule.equals) result = adapter.merge(result, rule.tokens || {})
+  }
+  return result
+}
+
+function metricGridData(module, tokens, frame, state) {
+  var props = module.props || {}
+  var dynamic = !!(module.bind && module.bind.items)
+  var definitions = dynamic ? listRaw(module, state) : (props.items || [])
+  var columns = tokens.columns || definitions.length || 1
+  var gap = tokens.gap || 0
+  var rowGap = tokens.rowGap === undefined ? gap : tokens.rowGap
+  var itemWidth = Math.floor((frame.width - gap * (columns - 1)) / columns)
+  var rows = Math.max(1, Math.ceil(definitions.length / columns))
+  var itemHeight = tokens.itemHeight || Math.floor((frame.height - rowGap * (rows - 1)) / rows)
+  var result = []
+  for (var i = 0; i < definitions.length; i++) {
+    var definition = definitions[i]
+    var col = i % columns
+    var row = Math.floor(i / columns)
+    var itemTokens = dynamic ? dynamicGridTokens(tokens, definition, props.styleRules) : adapter.merge(tokens, definition.tokens || {})
+    var label = ''
+    var value = ''
+    var detail = ''
+    var detailColor = itemTokens.detailColor
+    var accent = itemTokens.accent || itemTokens.valueColor
+
+    if (dynamic) {
+      var fields = props.fields || {}
+      var labelValue = mapValue(fields.label, definition, module.id, 'label')
+      var displayValue = mapValue(fields.value, definition, module.id, 'value')
+      var detailValue = mapValue(fields.detail, definition, module.id, 'detail')
+      label = labelValue.text
+      value = displayValue.text
+      detail = detailValue.text
+      if (displayValue.color) accent = displayValue.color
+      if (detailValue.color) detailColor = detailValue.color
+    } else {
+      var bind = definition.bind || {}
+      var itemProps = definition.props || {}
+      label = definition.copy && definition.copy.label ? definition.copy.label : definition.id
+      value = formatValue(valueAt(state, bind.value), itemProps.valueFormat, itemProps.valueNullText)
+      detail = definition.copy && definition.copy.detail ? definition.copy.detail : ''
+      detailColor = definition.tokens && definition.tokens.detailColor ? definition.tokens.detailColor : tokens.detailColor
+      if (bind.detail) detail = formatValue(valueAt(state, bind.detail), itemProps.detailFormat, itemProps.detailNullText)
+      if (bind.status && itemProps.statusMap) {
+        var status = mappedStatus(itemProps.statusMap, valueAt(state, bind.status), module.id + '.' + definition.id + '.status')
+        detail = status.text; detailColor = status.color
+      }
+      accent = definition.tokens && definition.tokens.accent ? definition.tokens.accent : tokens.valueColor
+    }
+
+    result.push({
+      id: module.id + '-' + (dynamic ? (definition.key || definition.id || i) : definition.id),
+      frame: { left: frame.left + col * (itemWidth + gap), top: frame.top + row * (itemHeight + rowGap), width: itemWidth, height: itemHeight },
+      label: label, value: value, detail: detail, detailColor: detailColor,
+      accent: accent, tokens: itemTokens
+    })
+  }
+  return result
 }
 
 function numericValues(raw, field) {
@@ -386,16 +429,6 @@ function resolveText(module, tokens, frame, state) {
   var bind = module.bind || {}, props = module.props || {}
   var value = bind.value ? formatValue(valueAt(state, bind.value), props.valueFormat, props.valueNullText) : ''
   return { id: module.id, type: module.type, frame: frame, tokens: tokens, text: module.copy && module.copy.template ? fill(module.copy.template, { value: value }) : (module.copy && module.copy.text ? module.copy.text : value) }
-}
-
-function mapValue(spec, item, moduleId, fieldName) {
-  if (!spec) return ''
-  var raw = itemValue(item, spec.path || '')
-  if (spec.map) {
-    var mapped = mappedStatus(spec.map, raw, moduleId + '.' + fieldName)
-    return { text: mapped.text, color: mapped.color, background: mapped.background }
-  }
-  return { text: formatValue(raw, spec.format, spec.nullText), color: spec.color || '', background: spec.background || '' }
 }
 
 function listData(module, tokens, frame, state) {
