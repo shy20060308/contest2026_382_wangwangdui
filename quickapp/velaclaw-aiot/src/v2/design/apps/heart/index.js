@@ -11,10 +11,13 @@ function centeredBox(stream, top, width, height) {
 function resolve(profile, scene, safe) {
   var config = adapter.select(layout, profile)
   var plan = adapter.createPlan(profile, scene, safe, difference.L1, config.surface)
+  var streamTop = safe.top + config.streamTop
   plan.stream = adapter.placeBand(profile, scene, safe, {
-    top: config.streamTop,
+    bounds: 'scene',
+    absoluteTop: true,
+    top: streamTop,
     width: config.contentWidth,
-    height: safe.bottom - (safe.top + config.streamTop)
+    height: scene.height - streamTop
   })
 
   plan.headerWidth = config.headerWidth
@@ -32,7 +35,7 @@ function resolve(profile, scene, safe) {
   plan.chartHeight = config.chartHeight
   plan.trendMinHeight = config.trendMinHeight
   plan.trendVisual = adapter.merge({}, config.trendVisual)
-  plan.scrollPaddingBottom = config.scrollPaddingBottom
+  plan.scrollPaddingBottom = Math.max(config.scrollPaddingBottom, scene.height - safe.bottom)
 
   var hero = adapter.contentBox(plan.stream.width, config.heroOuterHeight, config.cardPaddingX, config.cardPaddingY)
   plan.cardWidth = hero.width
