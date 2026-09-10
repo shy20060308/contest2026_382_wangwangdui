@@ -1,0 +1,312 @@
+{
+  "schemaVersion": 1,
+  "id": "heartrate",
+  "route": "pages/heartrate",
+  "renderer": "surface-v1",
+  "controller": "health",
+  "modules": [
+    {
+      "id": "head",
+      "type": "header",
+      "copy": { "title": "健康", "subtitle": "心率 · 血氧 · 压力" },
+      "bind": { "trailing": "summaryState", "subtitleTrailing": "sourceState" },
+      "props": {
+        "trailingMap": {
+          "waiting-data": { "text": "等待系统数据", "color": "#8E8E93" },
+          "waiting-service": { "text": "等待健康服务", "color": "#8E8E93" },
+          "attention": { "text": "有指标需关注", "color": "#FF9F0A" },
+          "stable": { "text": "状态平稳", "color": "#30D158" }
+        },
+        "subtitleTrailingMap": {
+          "live": { "text": "系统健康数据", "color": "#8E8E93" },
+          "waiting-data": { "text": "等待系统数据", "color": "#8E8E93" },
+          "waiting-service": { "text": "等待健康服务", "color": "#8E8E93" }
+        }
+      },
+      "tokens": {
+        "flow": true,
+        "width": 156,
+        "height": 31,
+        "titleWidth": 83,
+        "trailingWidth": 69,
+        "subtitleWidth": 93,
+        "subtitleTrailingWidth": 59,
+        "titleSize": 13,
+        "subtitleSize": 7,
+        "trailingSize": 7,
+        "subtitleTrailingSize": 6,
+        "titleLineHeight": 18,
+        "subtitleLineHeight": 10,
+        "titleColor": "#FFFFFF",
+        "subtitleColor": "#8E8E93",
+        "trailingColor": "#8E8E93",
+        "subtitleTrailingColor": "#8E8E93",
+        "titleWeight": "bold",
+        "trailingWeight": "bold"
+      }
+    },
+    {
+      "id": "heart",
+      "type": "chart-card",
+      "copy": {
+        "title": "心率",
+        "unit": "bpm",
+        "trendEmpty": "等待",
+        "trendOne": "当前",
+        "trendMany": "近{count}次",
+        "rangeEmpty": "等待数据",
+        "rangeSingle": "当前 {max} bpm",
+        "rangeSpan": "本次 {min}–{max} bpm"
+      },
+      "bind": { "items": "heartValues", "value": "heartRate", "status": "heartZone" },
+      "props": {
+        "scale": "relative-range",
+        "valueFormat": "number",
+        "valueNullText": "--",
+        "statusMap": {
+          "waiting": { "text": "等待", "color": "#8E8E93" },
+          "rest": { "text": "偏低", "color": "#5AC8FA" },
+          "normal": { "text": "正常", "color": "#30D158" },
+          "elevated": { "text": "偏高", "color": "#FF9F0A" },
+          "peak": { "text": "峰值", "color": "#FF453A" }
+        }
+      },
+      "tokens": {
+        "flow": true,
+        "marginTop": 6,
+        "height": 92,
+        "mode": "columns",
+        "radius": 14,
+        "paddingX": 9,
+        "paddingY": 8,
+        "background": "#1D1014",
+        "headHeight": 11,
+        "titleSize": 8,
+        "titleColor": "#FF375F",
+        "titleWeight": "bold",
+        "captionSize": 6,
+        "captionColor": "#8E8E93",
+        "valueBlockHeight": 33,
+        "valueWidth": 58,
+        "valueSize": 25,
+        "valueColor": "#FFFFFF",
+        "valueWeight": "bold",
+        "metaSize": 6,
+        "metaColor": "#8E8E93",
+        "unitGap": 3,
+        "statusGap": 6,
+        "chartTop": 2,
+        "chartHeight": 22,
+        "columns": 10,
+        "barWidth": 5,
+        "barMinHeight": 6,
+        "barRadius": 3,
+        "minimumSpread": 20,
+        "activeColor": "#FF375F",
+        "inactiveColor": "#7A2436",
+        "labelSize": 0,
+        "labelLineHeight": 0,
+        "footerBottom": 4
+      }
+    },
+    {
+      "id": "mini",
+      "type": "metric-grid",
+      "props": {
+        "items": [
+          {
+            "id": "spo2",
+            "bind": { "value": "spo2", "status": "spo2Zone" },
+            "props": {
+              "valueFormat": "percent",
+              "valueNullText": "--",
+              "statusMap": {
+                "waiting": { "text": "等待", "color": "#8E8E93" },
+                "good": { "text": "良好", "color": "#30D158" },
+                "attention": { "text": "请关注", "color": "#FF9F0A" }
+              }
+            },
+            "copy": { "label": "血氧" },
+            "tokens": { "accent": "#64D2FF", "labelColor": "#64D2FF", "itemBackground": "#102029" }
+          },
+          {
+            "id": "stress",
+            "bind": { "value": "stress", "status": "stressZone" },
+            "props": {
+              "valueFormat": "number",
+              "valueNullText": "--",
+              "statusMap": {
+                "waiting": { "text": "等待", "color": "#8E8E93" },
+                "relaxed": { "text": "放松", "color": "#30D158" },
+                "normal": { "text": "正常", "color": "#64D2FF" },
+                "elevated": { "text": "偏高", "color": "#FFD60A" },
+                "high": { "text": "较高", "color": "#FF453A" }
+              }
+            },
+            "copy": { "label": "压力" },
+            "tokens": { "accent": "#BF5AF2", "labelColor": "#BF5AF2", "itemBackground": "#211226" }
+          }
+        ]
+      },
+      "tokens": {
+        "flow": true,
+        "marginTop": 6,
+        "height": 58,
+        "columns": 2,
+        "gap": 6,
+        "itemHeight": 58,
+        "itemRadius": 14,
+        "itemPaddingX": 9,
+        "itemPaddingY": 8,
+        "itemBackground": "#111317",
+        "labelSize": 8,
+        "labelColor": "#8E8E93",
+        "valueSize": 16,
+        "valueTop": 2,
+        "valueWeight": "bold",
+        "valueColor": "#FFFFFF",
+        "detailSize": 6,
+        "detailTop": 1,
+        "detailColor": "#8E8E93"
+      }
+    },
+    {
+      "id": "spo2Trend",
+      "type": "chart-card",
+      "copy": {
+        "title": "血氧变化",
+        "trendEmpty": "等待",
+        "trendOne": "当前",
+        "trendMany": "近{count}次",
+        "rangeEmpty": "等待数据 · 参考 95–100%",
+        "rangeSingle": "当前 {max}% · 参考 95–100%",
+        "rangeSpan": "本次 {min}–{max}% · 参考 95–100%"
+      },
+      "bind": { "items": "spo2Values" },
+      "props": { "scale": "relative-range" },
+      "tokens": {
+        "flow": true,
+        "marginTop": 6,
+        "height": 68,
+        "mode": "columns",
+        "radius": 14,
+        "paddingX": 9,
+        "paddingY": 8,
+        "background": "#111317",
+        "headHeight": 11,
+        "titleSize": 8,
+        "titleColor": "#64D2FF",
+        "titleWeight": "bold",
+        "captionSize": 6,
+        "captionColor": "#8E8E93",
+        "chartTop": 3,
+        "chartHeight": 22,
+        "columns": 10,
+        "barWidth": 5,
+        "barMinHeight": 6,
+        "barRadius": 3,
+        "minimumSpread": 4,
+        "activeColor": "#5AC8FA",
+        "inactiveColor": "#245566",
+        "labelSize": 0,
+        "labelLineHeight": 0,
+        "metaSize": 6,
+        "metaColor": "#8E8E93",
+        "footerBottom": 4
+      }
+    },
+    {
+      "id": "stressTrend",
+      "type": "chart-card",
+      "copy": {
+        "title": "压力变化",
+        "trendEmpty": "等待",
+        "trendOne": "当前",
+        "trendMany": "近{count}次",
+        "rangeEmpty": "等待数据",
+        "rangeSingle": "当前 {max}",
+        "rangeSpan": "本次 {min}–{max} · 均 {avg}"
+      },
+      "bind": { "items": "stressValues" },
+      "props": { "scale": "relative-range" },
+      "tokens": {
+        "flow": true,
+        "marginTop": 6,
+        "height": 68,
+        "mode": "columns",
+        "radius": 14,
+        "paddingX": 9,
+        "paddingY": 8,
+        "background": "#111317",
+        "headHeight": 11,
+        "titleSize": 8,
+        "titleColor": "#BF5AF2",
+        "titleWeight": "bold",
+        "captionSize": 6,
+        "captionColor": "#8E8E93",
+        "chartTop": 3,
+        "chartHeight": 22,
+        "columns": 10,
+        "barWidth": 5,
+        "barMinHeight": 6,
+        "barRadius": 3,
+        "minimumSpread": 20,
+        "activeColor": "#BF5AF2",
+        "inactiveColor": "#542966",
+        "labelSize": 0,
+        "labelLineHeight": 0,
+        "metaSize": 6,
+        "metaColor": "#8E8E93",
+        "footerBottom": 4
+      }
+    },
+    {
+      "id": "updated",
+      "type": "text",
+      "copy": { "template": "更新于 {value}" },
+      "bind": { "value": "updatedAt" },
+      "props": { "valueFormat": "time", "valueNullText": "--:--" },
+      "tokens": {
+        "flow": true,
+        "marginTop": 6,
+        "marginBottom": 10,
+        "height": 9,
+        "fontSize": 6,
+        "lineHeight": 9,
+        "foreground": "#8E8E93",
+        "textAlign": "center"
+      }
+    }
+  ],
+  "tokens": {
+    "background": "#000000",
+    "stream": { "top": 0, "width": 164, "heightMode": "scene-bottom" },
+    "streamPaddingBottom": 24
+  },
+  "variants": {
+    "base": {},
+    "circle": {
+      "tokens": { "stream": { "top": 12, "width": 136, "heightMode": "scene-bottom" }, "streamPaddingBottom": 28 },
+      "modules": {
+        "head": { "width": 124, "height": 26, "titleWidth": 65, "trailingWidth": 55, "subtitleWidth": 73, "subtitleTrailingWidth": 47, "titleSize": 12, "subtitleSize": 6, "trailingSize": 6, "subtitleTrailingSize": 5, "titleLineHeight": 16, "subtitleLineHeight": 9 },
+        "heart": { "marginTop": 5, "height": 82, "radius": 14, "paddingX": 7, "paddingY": 6, "headHeight": 10, "titleSize": 7, "captionSize": 5, "valueBlockHeight": 30, "valueWidth": 52, "valueSize": 23, "metaSize": 5, "chartHeight": 18, "barWidth": 5, "barRadius": 3, "footerBottom": 3 },
+        "mini": { "marginTop": 5, "height": 52, "gap": 5, "itemHeight": 52, "itemRadius": 14, "itemPaddingX": 7, "itemPaddingY": 6, "labelSize": 7, "valueSize": 14, "detailSize": 5 },
+        "spo2Trend": { "marginTop": 5, "height": 58, "radius": 14, "paddingX": 7, "paddingY": 6, "headHeight": 10, "titleSize": 7, "captionSize": 5, "chartHeight": 18, "barWidth": 5, "barRadius": 3, "metaSize": 5, "footerBottom": 3 },
+        "stressTrend": { "marginTop": 5, "height": 58, "radius": 14, "paddingX": 7, "paddingY": 6, "headHeight": 10, "titleSize": 7, "captionSize": 5, "chartHeight": 18, "barWidth": 5, "barRadius": 3, "metaSize": 5, "footerBottom": 3 },
+        "updated": { "marginTop": 6, "height": 8, "fontSize": 5, "lineHeight": 8 }
+      }
+    },
+    "pill": {
+      "tokens": { "stream": { "top": 0, "width": 168, "heightMode": "scene-bottom" }, "streamPaddingBottom": 52 },
+      "modules": {
+        "head": { "width": 168, "height": 36, "titleWidth": 90, "trailingWidth": 74, "subtitleWidth": 100, "subtitleTrailingWidth": 64, "titleSize": 17, "subtitleSize": 9, "trailingSize": 9, "subtitleTrailingSize": 7, "titleLineHeight": 23, "subtitleLineHeight": 13 },
+        "heart": { "marginTop": 9, "height": 116, "radius": 11, "paddingX": 10, "paddingY": 10, "headHeight": 14, "titleSize": 10, "captionSize": 7, "valueBlockHeight": 40, "valueWidth": 64, "valueSize": 31, "metaSize": 7, "chartTop": 2, "chartHeight": 32, "barWidth": 5, "barRadius": 3, "footerBottom": 5 },
+        "mini": { "marginTop": 9, "height": 76, "gap": 9, "itemHeight": 76, "itemRadius": 11, "itemPaddingX": 10, "itemPaddingY": 10, "labelSize": 10, "valueSize": 20, "valueTop": 2, "detailSize": 7, "detailTop": 1 },
+        "spo2Trend": { "marginTop": 9, "height": 88, "radius": 11, "paddingX": 10, "paddingY": 10, "headHeight": 14, "titleSize": 10, "captionSize": 7, "chartTop": 3, "chartHeight": 32, "barWidth": 5, "barRadius": 3, "metaSize": 7, "footerBottom": 5 },
+        "stressTrend": { "marginTop": 9, "height": 88, "radius": 11, "paddingX": 10, "paddingY": 10, "headHeight": 14, "titleSize": 10, "captionSize": 7, "chartTop": 3, "chartHeight": 32, "barWidth": 5, "barRadius": 3, "metaSize": 7, "footerBottom": 5 },
+        "updated": { "marginTop": 6, "marginBottom": 10, "height": 11, "fontSize": 7, "lineHeight": 11 }
+      }
+    },
+    "rect": {}
+  }
+}
