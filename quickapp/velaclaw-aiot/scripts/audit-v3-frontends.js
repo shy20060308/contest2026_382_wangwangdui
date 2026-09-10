@@ -4,7 +4,9 @@ const path = require('path')
 const root = path.resolve(__dirname, '..')
 const srcRoot = path.join(root, 'src')
 const pagesRoot = path.join(srcRoot, 'pages')
-const surfacesRoot = path.join(srcRoot, 'product', 'frontend', 'surfaces')
+const productRoot = path.join(srcRoot, 'product')
+const surfacesRoot = path.join(productRoot, 'frontend', 'surfaces')
+const frontendRuntimeRoot = path.join(productRoot, 'frontend', 'runtime')
 const strict = process.argv.includes('--strict')
 
 const allowedModuleTypes = new Set([
@@ -69,7 +71,13 @@ function visibleStaticText(source) {
   return text
 }
 
-function validateSurface(file, route, seenIds, seenRoutes) {
+function allowedPageDependency(dependency) {
+  const normalized = dependency.replace(/\\/g, '/')
+  return /(?:^|\/)components\/surface_host(?:\.ux)?$/.test(normalized) ||
+    /(?:^|\/)runtime\/surface_page$/.test(normalized)
+}
+
+function validateSurface(file, route, seenIds, seenRoutes, seenControllers) {
   const issues = []
   let surface
   try {
@@ -98,6 +106,7 @@ function validateSurface(file, route, seenIds, seenRoutes) {
     if (seenRoutes.has(surface.route)) issues.push('surface:duplicate-route')
     else seenRoutes.add(surface.route)
   }
+  if (surface.controller) seenControllers.add(surface.controller)
 
   const moduleIds = new Set()
   ;(Array.isArray(surface.modules) ? surface.modules : []).forEach(function (module, index) {
@@ -123,13 +132,14 @@ function auditUx(file) {
   if (/(?:^|[/'"])(?:v2)(?:[/'"]|$)/.test(source)) issues.push('ux:legacy-v2-dependency')
 
   dependencies(source).forEach(function (dependency) {
+    if (!allowedPageDependency(dependency)) issues.push('ux:unauthorized-dependency')
     if (/(?:^|\/)(?:product\/(?:design|features)|v2|domain|capabilities)(?:\/|$)/.test(dependency)) {
       issues.push('ux:direct-product-dependency')
     }
   })
 
   const template = (source.match(/<template>([\s\S]*?)<\/template>/) || [])[1] || ''
-  if (/<(?:div|stack|scroll|text|image|slider|canvas|list|input|switch|button)\b/.test(template)) {
+  if (/<(?:div|stack|scroll|text|image|slider|canvas|list|list-item|input|switch|button|progress|swiper)\b/.test(template)) {
     issues.push('ux:handwritten-product-markup')
   }
   if (/\b(?:width|height|left|top|right|bottom|padding(?:-[\w]+)?|margin(?:-[\w]+)?|border-radius|font-size|line-height)\s*:\s*-?\d+(?:\.\d+)?px\b/i.test(source)) {
@@ -154,6 +164,7 @@ const expectedUxFiles = new Set()
 const expectedSurfaceFiles = new Set()
 const seenIds = new Set()
 const seenSurfaceRoutes = new Set()
+const seenControllers = new Set()
 const rows = []
 
 routes.forEach(function (route) {
@@ -164,7 +175,7 @@ routes.forEach(function (route) {
 
   const issues = auditUx(ux)
   if (!exists(surface)) issues.push('surface:missing')
-  else issues.push.apply(issues, validateSurface(surface, route, seenIds, seenSurfaceRoutes).issues)
+  else issues.push.apply(issues, validateSurface(surface, route, seenIds, seenSurfaceRoutes, seenControllers).issues)
 
   rows.push({ route: route, ux: relative(ux), surface: relative(surface), issues: Array.from(new Set(issues)) })
 })
@@ -183,6 +194,12 @@ filesUnder(surfacesRoot, /\.json$/, []).forEach(function (file) {
   if (!expectedSurfaceFiles.has(path.resolve(file))) globalIssues.push('unbound surface JSON: ' + relative(file))
 })
 
+// Final V3 has no page-specific visual Recipe JS. Static product visual intent must
+// live in the route-owned JSON Surface, not a renamed design/apps directory.
+filesUnder(path.join(productRoot, 'design', 'apps'), /\.(?:js|json)$/, []).forEach(function (file) {
+  globalIssues.push('page-specific design authority outside Surface JSON: ' + relative(file))
+})
+
 const allowedNonPageUx = new Set([
   path.resolve(path.join(srcRoot, 'app.ux')),
   path.resolve(path.join(srcRoot, 'components', 'surface_host.ux'))
@@ -194,15 +211,32 @@ filesUnder(srcRoot, /\.ux$/, []).forEach(function (file) {
   globalIssues.push('secondary product UX authority: ' + relative(file))
 })
 
+// Feature code may emit semantic state, but may not own visual color constants.
+filesUnder(path.join(productRoot, 'features'), /\.js$/, []).forEach(function (file) {
+  if (/#[0-9a-f]{3,8}\b/i.test(read(file))) globalIssues.push('feature leaks visual color authority: ' + relative(file))
+})
+
 const genericRendererFiles = []
 const surfaceHost = path.join(srcRoot, 'components', 'surface_host.ux')
 if (exists(surfaceHost)) genericRendererFiles.push(surfaceHost)
-filesUnder(path.join(srcRoot, 'product', 'frontend', 'runtime'), /\.(?:js|ux)$/, genericRendererFiles)
+filesUnder(frontendRuntimeRoot, /\.(?:js|ux)$/, genericRendererFiles)
 genericRendererFiles.forEach(function (file) {
   const source = read(file)
   routes.forEach(function (route) {
     if (source.includes(route)) globalIssues.push('generic renderer contains route-specific branch: ' + relative(file) + ' -> ' + route)
   })
+  seenIds.forEach(function (id) {
+    const quoted = new RegExp("['\"]" + id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "['\"]")
+    if (quoted.test(source)) globalIssues.push('generic renderer contains surface-specific branch: ' + relative(file) + ' -> ' + id)
+  })
+  seenControllers.forEach(function (id) {
+    const quoted = new RegExp("['\"]" + id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "['\"]")
+    if (quoted.test(source)) globalIssues.push('generic renderer contains controller-specific branch: ' + relative(file) + ' -> ' + id)
+  })
+  if (/#[0-9a-f]{3,8}\b/i.test(source)) globalIssues.push('generic renderer owns literal visual color: ' + relative(file))
+  if (/\b(?:width|height|radius|fontSize|gap|padding|margin|left|top|right|bottom)\s*:\s*-?\d+(?:\.\d+)?\b/.test(source)) {
+    globalIssues.push('generic renderer owns literal visual geometry: ' + relative(file))
+  }
 })
 
 const passed = rows.filter(function (row) { return row.issues.length === 0 }).length
