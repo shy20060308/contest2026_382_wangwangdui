@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vela-band://schemas/surface-v1",
+  "title": "V3 Declarative Surface",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "route", "renderer", "controller", "modules", "tokens", "variants"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "route": { "type": "string", "pattern": "^pages/[a-z0-9_/-]+$" },
+    "renderer": { "const": "surface-v1" },
+    "controller": { "type": ["string", "null"], "pattern": "^[a-z][a-z0-9-]*$" },
+    "modules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/module" }
+    },
+    "tokens": { "$ref": "#/$defs/tokenMap" },
+    "variants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base", "circle", "pill", "rect"],
+      "properties": {
+        "base": { "$ref": "#/$defs/variant" },
+        "circle": { "$ref": "#/$defs/variant" },
+        "pill": { "$ref": "#/$defs/variant" },
+        "rect": { "$ref": "#/$defs/variant" }
+      }
+    }
+  },
+  "$defs": {
+    "module": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9-]*$" },
+        "type": {
+          "enum": [
+            "header",
+            "text",
+            "metric-card",
+            "metric-pair",
+            "metric-list",
+            "chart-card",
+            "progress-card",
+            "list",
+            "grid",
+            "calendar",
+            "button",
+            "slider",
+            "status",
+            "image",
+            "watchface-preview",
+            "honeycomb",
+            "spacer"
+          ]
+        },
+        "copy": { "type": "object", "additionalProperties": { "type": "string" } },
+        "bind": { "type": "object", "additionalProperties": { "type": "string" } },
+        "actions": { "type": "object", "additionalProperties": { "type": "string" } },
+        "props": { "type": "object" },
+        "tokens": { "$ref": "#/$defs/tokenMap" },
+        "visibleWhen": { "type": "string" }
+      }
+    },
+    "tokenMap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": ["number", "string", "boolean", "null", "object", "array"]
+      }
+    },
+    "variant": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tokens": { "$ref": "#/$defs/tokenMap" },
+        "modules": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/tokenMap" }
+        }
+      }
+    }
+  }
+}
