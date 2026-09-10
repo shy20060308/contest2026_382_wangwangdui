@@ -1,84 +1,21 @@
+<import name="surfacehost" src="../../components/surface_host.ux"></import>
+
 <template>
-  <stack class="history-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
-    <div class="history-scene" if="{{ ready }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
-      <div class="top-row" style="left: {{ headerLeft }}px; top: {{ headerTop }}px; width: {{ headerWidth }}px; height: {{ headerHeight }}px;"><text class="page-title" style="font-size: {{ titleSize }}px; height: {{ headerHeight }}px; line-height: {{ headerHeight }}px;">运动记录</text><text class="back-text" style="font-size: {{ backSize }}px; height: {{ headerHeight }}px; line-height: {{ headerHeight }}px;" @click="goBack">返回</text></div>
-      <div class="summary-row" style="left: {{ summaryLeft }}px; top: {{ summaryTop }}px; width: {{ summaryWidth }}px; height: {{ summaryHeight }}px;">
-        <div class="summary-card" style="width: {{ summaryCardWidth }}px; height: {{ summaryHeight }}px; padding-left: {{ summaryPaddingLeft }}px; border-radius: {{ radius }}px;"><text class="summary-value" style="font-size: {{ summaryValueSize }}px;">{{ totalCount }}</text><text class="summary-label" style="font-size: {{ summaryLabelSize }}px; margin-top: {{ summaryLabelTop }}px;">运动次数</text></div>
-        <div class="summary-card" style="width: {{ summaryCardWidth }}px; height: {{ summaryHeight }}px; padding-left: {{ summaryPaddingLeft }}px; border-radius: {{ radius }}px;"><text class="summary-value step-color" style="font-size: {{ summaryValueSize }}px;">{{ totalSteps }}</text><text class="summary-label" style="font-size: {{ summaryLabelSize }}px; margin-top: {{ summaryLabelTop }}px;">累计步数</text></div>
-      </div>
-      <div class="empty-state" if="{{ emptyVisible }}" style="left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ streamWidth }}px; height: {{ streamHeight }}px;"><text class="empty-title" style="font-size: {{ emptyTitleSize }}px;">暂无运动记录</text><text class="empty-copy" style="width: {{ emptyCopyWidth }}px; font-size: {{ emptyCopySize }}px; line-height: {{ emptyCopyLineHeight }}px; margin-top: {{ emptyCopyTop }}px;">完成一次步行或跑步后会显示在这里</text></div>
-      <list class="record-list" if="{{ !emptyVisible }}" style="left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ streamWidth }}px; height: {{ streamHeight }}px;">
-        <list-item type="record" class="record-card" for="{{ records }}" tid="id" style="width: {{ recordWidth }}px; height: {{ recordHeight }}px; margin-bottom: {{ recordGap }}px; border-radius: {{ radius }}px; padding: {{ padding }}px;">
-          <div class="record-head"><text class="record-title" style="font-size: {{ recordTitleSize }}px;">{{ $item.typeName }}</text><text class="sync-text" style="font-size: {{ recordMetaSize }}px;">{{ $item.syncText }}</text></div>
-          <text class="record-meta" style="font-size: {{ recordMetaSize }}px; margin-top: {{ recordMetaTop }}px;">{{ $item.startText }} · {{ $item.durationText }}</text>
-          <div class="record-metrics" style="margin-top: {{ recordMetricsTop }}px;"><text class="record-value" style="font-size: {{ recordMetaSize }}px;">{{ $item.stepsText }} 步</text><text class="record-value" style="font-size: {{ recordMetaSize }}px;">{{ $item.distanceText }}</text><text class="record-value" style="font-size: {{ recordMetaSize }}px;">{{ $item.caloriesText }} kcal</text></div>
-          <text class="record-source" style="font-size: {{ recordMetaSize }}px; margin-top: {{ recordSourceTop }}px;">{{ $item.distanceSourceText }} · {{ $item.heartText }}</text>
-        </list-item>
-      </list>
-    </div>
-  </stack>
+  <surfacehost if="{{ surfaceReady }}" plan="{{ surfacePlan }}"></surfacehost>
 </template>
 
 <script>
-import pageRuntime from '../../runtime/page_runtime'
-import navigation from '../../runtime/navigation'
-import { createWorkoutHistoryController } from '../../v2/features/workout/history_controller'
-import workoutHistoryDesign from '../../v2/design/apps/workout/history'
-import workoutHistoryView from '../../v2/design/apps/workout/history_view'
-
-function applyRegion(page, prefix, value) {
-  page[prefix + 'Left'] = value.left; page[prefix + 'Top'] = value.top; page[prefix + 'Width'] = value.width; page[prefix + 'Height'] = value.height
-}
+import surfacePage from '../../runtime/surface_page'
 
 export default {
   private: {
-    ready: false, totalCount: '0', totalSteps: '0', emptyVisible: true, records: [],
-    headerLeft: 0, headerTop: 0, headerWidth: 0, headerHeight: 0, summaryLeft: 0, summaryTop: 0, summaryWidth: 0, summaryHeight: 0, streamLeft: 0, streamTop: 0, streamWidth: 0, streamHeight: 0,
-    summaryCardWidth: 0, recordWidth: 0, recordHeight: 0, recordGap: 0, titleSize: 0, backSize: 0, summaryValueSize: 0, summaryLabelSize: 0, recordTitleSize: 0, recordMetaSize: 0, radius: 0, padding: 0,
-    summaryPaddingLeft: 0, summaryLabelTop: 0, recordMetaTop: 0, recordMetricsTop: 0, recordSourceTop: 0, emptyTitleSize: 0, emptyCopyWidth: 0, emptyCopySize: 0, emptyCopyLineHeight: 0, emptyCopyTop: 0,
-    sceneWidth: 0, sceneHeight: 0, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
+    surfaceReady: false,
+    surfacePlan: null
   },
-  onInit() {
-    var self = this
-    this.controller = createWorkoutHistoryController(function (model) { self.applyView(workoutHistoryView.project(model)) })
-    pageRuntime.bind(this, function (profile, scene, safe) {
-      self.applyPlan(workoutHistoryDesign.resolve(profile, scene, safe))
-      self.ready = true
-    })
-  },
-  onShow() { this.controller.refresh() },
-  onHide() { this.records = [] },
-  onDestroy() { this.records = [] },
-  onBackPress() { navigation.back(); return true },
-  applyPlan(plan) {
-    var chrome = plan.chrome
-    applyRegion(this, 'header', plan.header); applyRegion(this, 'summary', plan.summary)
-    this.streamLeft = plan.stream.left; this.streamTop = plan.stream.top; this.streamWidth = plan.stream.width; this.streamHeight = plan.stream.height
-    this.summaryCardWidth = plan.summaryCardWidth; this.recordWidth = plan.recordWidth; this.recordHeight = plan.recordHeight; this.recordGap = plan.recordGap
-    this.titleSize = plan.titleSize; this.backSize = plan.backSize; this.summaryValueSize = plan.summaryValueSize; this.summaryLabelSize = plan.summaryLabelSize; this.recordTitleSize = plan.recordTitleSize; this.recordMetaSize = plan.recordMetaSize; this.radius = plan.radius; this.padding = plan.padding
-    this.summaryPaddingLeft = chrome.summaryPaddingLeft; this.summaryLabelTop = chrome.summaryLabelTop; this.recordMetaTop = chrome.recordMetaTop; this.recordMetricsTop = chrome.recordMetricsTop; this.recordSourceTop = chrome.recordSourceTop; this.emptyTitleSize = chrome.emptyTitleSize; this.emptyCopyWidth = chrome.emptyCopyWidth; this.emptyCopySize = chrome.emptyCopySize; this.emptyCopyLineHeight = chrome.emptyCopyLineHeight; this.emptyCopyTop = chrome.emptyCopyTop
-  },
-  applyView(view) { this.totalCount = view.totalCount; this.totalSteps = view.totalSteps; this.emptyVisible = view.empty; this.records = view.records },
-  goBack() { navigation.back() }
+  onInit() { surfacePage.bind(this, 'workout-history') },
+  onShow() { surfacePage.show(this) },
+  onHide() { surfacePage.hide(this) },
+  onDestroy() { surfacePage.destroy(this) },
+  onBackPress() { return surfacePage.back(this) }
 }
 </script>
-
-<style>
-.history-root, .history-scene { background-color: #000000; }
-.history-scene { position: absolute; left: 0px; top: 0px; }
-.top-row, .summary-row, .empty-state, .record-list { position: absolute; }
-.top-row { flex-direction: row; justify-content: space-between; align-items: center; }
-.page-title { color: #FFFFFF; font-weight: bold; } .back-text { color: #8E8E93; text-align: right; }
-.summary-row { flex-direction: row; justify-content: space-between; }
-.summary-card { background-color: #14181F; flex-direction: column; justify-content: center; }
-.summary-value { color: #FFFFFF; font-weight: bold; } .step-color { color: #FFD60A; } .summary-label { color: #8E8E93; }
-.record-list { flex-direction: column; }
-.record-card { background-color: #111317; flex-direction: column; }
-.record-head, .record-metrics { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
-.record-title { color: #FFFFFF; font-weight: bold; } .sync-text { color: #0A84FF; }
-.record-meta { color: #8E8E93; } .record-value { color: #D1D1D6; }
-.record-source { color: #30D158; }
-.empty-state { justify-content: center; align-items: center; flex-direction: column; }
-.empty-title { color: #FFFFFF; font-weight: bold; }
-.empty-copy { color: #8E8E93; text-align: center; }
-</style>
