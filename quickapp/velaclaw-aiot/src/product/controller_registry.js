@@ -6,6 +6,12 @@ import workoutSelectionFeature from './features/workout/selection'
 import { createWorkoutController } from './features/workout/controller'
 import { createWorkoutHistoryController } from './features/workout/history_controller'
 import { createTodayController } from './features/today/controller'
+import { createBrightnessController } from './features/settings/brightness_controller'
+import { createVibrationController } from './features/settings/vibration_controller'
+import { createMotionController } from './features/settings/motion_controller'
+import { createDiagnosticsController } from './features/settings/diagnostics_controller'
+import { createSyncController } from './features/sync/controller'
+import { createNotificationController } from './features/notification/controller'
 
 function noop() {}
 
@@ -169,6 +175,118 @@ function today(onChange) {
   }
 }
 
+function brightness(onChange) {
+  var latest = null
+  var controller = createBrightnessController(function (model) {
+    latest = model || null
+    if (typeof onChange === 'function') onChange(model || {})
+  })
+  function adjust(delta) {
+    var value = latest ? Number(latest.brightnessValue) || 0 : 0
+    controller.setBrightness(Math.max(0, Math.min(255, value + delta)))
+  }
+  return {
+    start: function () { controller.load() }, stop: noop, destroy: noop,
+    action: function (name) {
+      if (name === 'brightness-down') { adjust(-16); return }
+      if (name === 'brightness-up') { adjust(16); return }
+      if (name === 'brightness-toggle-auto') { controller.toggleAuto(); return }
+      if (name === 'brightness-toggle-raise') { controller.toggleRaiseWake(); return }
+      if (name === 'brightness-toggle-low-power') { controller.toggleLowPower(); return }
+      throw new Error('Unknown brightness action: ' + name)
+    }
+  }
+}
+
+function vibrationSettings(onChange) {
+  var controller = createVibrationController(function (model) {
+    if (typeof onChange === 'function') onChange(model || {})
+  })
+  return {
+    start: function () { controller.load() },
+    stop: function () { controller.stop() },
+    destroy: function () { controller.stop() },
+    action: function (name) {
+      if (name === 'vibration-toggle') { controller.toggle(); return }
+      if (name === 'vibration-test') { controller.playCurrent(); return }
+      if (String(name).indexOf('vibration-level:') === 0) { controller.setLevel(String(name).slice(16)); return }
+      if (String(name).indexOf('vibration-pattern:') === 0) { controller.selectPattern(String(name).slice(18)); return }
+      throw new Error('Unknown vibration action: ' + name)
+    }
+  }
+}
+
+function motionSettings(onChange) {
+  var controller = createMotionController(function (model) {
+    if (typeof onChange === 'function') onChange(model || {})
+  })
+  return {
+    start: function () { controller.refresh() },
+    stop: function () { controller.stop() },
+    destroy: function () { controller.stop() },
+    action: function (name) {
+      if (name === 'motion-toggle') { controller.toggleSensor(); return }
+      if (name === 'motion-reset') { controller.reset(); return }
+      if (name === 'motion-measure') { controller.startMeasure(); return }
+      throw new Error('Unknown motion action: ' + name)
+    }
+  }
+}
+
+function diagnostics(onChange) {
+  var configured = false
+  var controller = createDiagnosticsController(function (model) {
+    if (typeof onChange === 'function') onChange(model || {})
+  })
+  return {
+    configure: function (profile, scene) { configured = true; controller.configureScene(profile, scene) },
+    start: function () { if (configured) controller.refresh() },
+    stop: noop, destroy: noop, action: noop
+  }
+}
+
+function sync(onChange) {
+  var controller = createSyncController(function (model) {
+    if (typeof onChange === 'function') onChange(model || {})
+  })
+  return {
+    start: function () { controller.load() },
+    stop: function () { controller.stop() },
+    destroy: function () { controller.stop() },
+    action: function (name) {
+      if (name === 'sync-refresh') { controller.refreshConnection(); return }
+      if (name === 'sync-start') { controller.sync(); return }
+      throw new Error('Unknown sync action: ' + name)
+    }
+  }
+}
+
+function notification(onChange) {
+  var controller = createNotificationController(function (model) {
+    var state = model || {}
+    var visible = !!state.visible
+    var type = state.type || ''
+    var projected = {}
+    for (var key in state) projected[key] = state[key]
+    projected.homeVisible = !visible
+    projected.appVisible = visible && type !== 'call'
+    projected.callVisible = visible && type === 'call'
+    projected.hangupVisible = visible && type === 'call'
+    if (typeof onChange === 'function') onChange(projected)
+  })
+  return {
+    start: function () { controller.start() },
+    stop: function () { controller.stop() },
+    destroy: function () { controller.stop() },
+    action: function (name) {
+      if (String(name).indexOf('notification-demo:') === 0) { controller.showDemo(String(name).slice(18)); return }
+      if (name === 'notification-dismiss') { controller.dismiss(); return }
+      if (name === 'notification-hangup') { controller.hangUp(); return }
+      throw new Error('Unknown notification action: ' + name)
+    }
+  }
+}
+
 function create(id, onChange) {
   if (id === 'activity') return activity(onChange)
   if (id === 'history') return history(onChange)
@@ -177,6 +295,12 @@ function create(id, onChange) {
   if (id === 'workout') return workout(onChange)
   if (id === 'workout-history') return workoutHistory(onChange)
   if (id === 'today') return today(onChange)
+  if (id === 'brightness') return brightness(onChange)
+  if (id === 'vibration') return vibrationSettings(onChange)
+  if (id === 'motion') return motionSettings(onChange)
+  if (id === 'diagnostics') return diagnostics(onChange)
+  if (id === 'sync') return sync(onChange)
+  if (id === 'notification') return notification(onChange)
   if (id === null || id === undefined || id === '') return { start: noop, stop: noop, destroy: noop, action: noop }
   throw new Error('Unknown V3 surface controller: ' + id)
 }
