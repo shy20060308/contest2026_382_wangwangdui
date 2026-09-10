@@ -1,71 +1,22 @@
+<import name="surfacehost" src="../../components/surface_host.ux"></import>
+
 <template>
-  <stack class="selector-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
-    <div class="selector-scene" if="{{ ready }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
-      <text class="selector-title" style="left: {{ titleLeft }}px; top: {{ titleTop }}px; width: {{ titleWidth }}px; height: {{ titleHeight }}px; font-size: {{ titleSize }}px;">开始运动</text>
-      <scroll class="selector-stream" scroll-y="true" style="left: {{ streamLeft }}px; top: {{ streamTop }}px; width: {{ streamWidth }}px; height: {{ streamHeight }}px;">
-        <div class="continue-card" if="{{ hasActive }}" @click="continueWorkout" style="width: {{ streamWidth }}px; height: {{ actionHeight }}px; margin-bottom: {{ cardGap }}px; padding: {{ cardPaddingY }}px {{ cardPaddingX }}px; border-radius: {{ actionRadius }}px;"><div><text class="continue-title" style="font-size: {{ actionTitleSize }}px;">继续运动</text><text class="continue-sub" style="font-size: {{ actionSubSize }}px; margin-top: {{ actionSubTop }}px;">恢复未完成记录</text></div><text class="chevron" style="width: {{ chevronWidth }}px; font-size: {{ chevronSize }}px;">›</text></div>
-        <div class="mode-card" for="{{ modes }}" tid="type" @click="selectMode($item.type)" style="width: {{ streamWidth }}px; height: {{ cardHeight }}px; margin-bottom: {{ cardGap }}px; padding: {{ cardPaddingY }}px {{ cardPaddingX }}px; border-radius: {{ cardRadius }}px;">
-          <div class="mode-accent" style="width: {{ accentWidth }}px; height: {{ accentHeight }}; border-radius: {{ accentRadius }}px; background-color: {{ $item.color }};"></div><div class="mode-copy" style="margin-left: {{ copyGap }}px;"><text class="mode-name" style="font-size: {{ modeNameSize }}px;">{{ $item.name }}</text><text class="mode-desc" style="font-size: {{ modeDescSize }}px; margin-top: {{ descTop }}px;">{{ $item.desc }}</text></div><text class="chevron" style="width: {{ chevronWidth }}px; font-size: {{ chevronSize }}px;">›</text>
-        </div>
-        <div class="history-card" @click="openHistory" style="width: {{ streamWidth }}px; height: {{ actionHeight }}px; margin-bottom: {{ cardGap }}px; padding: {{ cardPaddingY }}px {{ cardPaddingX }}px; border-radius: {{ actionRadius }}px;"><div><text class="history-title" style="font-size: {{ actionTitleSize }}px;">运动记录</text><text class="history-sub" style="font-size: {{ actionSubSize }}px; margin-top: {{ actionSubTop }}px;">查看已完成训练</text></div><text class="chevron" style="width: {{ chevronWidth }}px; font-size: {{ chevronSize }}px;">›</text></div>
-      </scroll>
-    </div>
-  </stack>
+  <surfacehost if="{{ surfaceReady }}" plan="{{ surfacePlan }}" @surfaceaction="onSurfaceAction"></surfacehost>
 </template>
 
 <script>
-import pageRuntime from '../../runtime/page_runtime'
-import navigation from '../../runtime/navigation'
-import workoutSelection from '../../v2/features/workout/selection'
-import selectionDesign from '../../v2/design/apps/workout/selection'
-import selectionView from '../../v2/design/apps/workout/selection_view'
+import surfacePage from '../../runtime/surface_page'
 
 export default {
   private: {
-    ready: false, modes: [], hasActive: false,
-    titleLeft: 0, titleTop: 0, titleWidth: 0, titleHeight: 0, titleSize: 0,
-    streamLeft: 0, streamTop: 0, streamWidth: 0, streamHeight: 0,
-    cardHeight: 0, cardRadius: 0, actionHeight: 0, actionRadius: 0, modeNameSize: 0, modeDescSize: 0,
-    cardGap: 0, cardPaddingY: 0, cardPaddingX: 0, accentWidth: 0, accentHeight: '0%', accentRadius: 0, copyGap: 0, descTop: 0, actionTitleSize: 0, actionSubSize: 0, actionSubTop: 0, chevronWidth: 0, chevronSize: 0,
-    sceneWidth: 0, sceneHeight: 0,
-    viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
+    surfaceReady: false,
+    surfacePlan: null
   },
-  onInit() {
-    var self = this
-    this.modeTypes = workoutSelection.getModeTypes()
-    this.applySemanticView(false)
-    pageRuntime.bind(this, function (profile, scene, safe) {
-      self.applyPlan(selectionDesign.resolve(profile, scene, safe))
-      self.ready = true
-    })
-  },
-  onShow() { var self = this; workoutSelection.hasActive(function (active) { self.applySemanticView(active) }) },
-  onBackPress() { navigation.back(); return true },
-  applySemanticView(active) { var view = selectionView.project({ modeTypes: this.modeTypes || [], hasActive: active }); this.modes = view.modes; this.hasActive = view.hasActive },
-  applyPlan(plan) {
-    var chrome = plan.chrome
-    this.titleLeft = plan.header.left; this.titleTop = plan.header.top; this.titleWidth = plan.header.width; this.titleHeight = plan.header.height; this.titleSize = plan.titleSize
-    this.streamLeft = plan.stream.left; this.streamTop = plan.stream.top; this.streamWidth = plan.stream.width; this.streamHeight = plan.stream.height
-    this.cardHeight = plan.cardHeight; this.cardRadius = plan.cardRadius; this.actionHeight = plan.actionHeight; this.actionRadius = plan.actionRadius; this.modeNameSize = plan.modeNameSize; this.modeDescSize = plan.modeDescSize
-    this.cardGap = chrome.cardGap; this.cardPaddingY = chrome.cardPaddingY; this.cardPaddingX = chrome.cardPaddingX; this.accentWidth = chrome.accentWidth; this.accentHeight = chrome.accentHeight; this.accentRadius = chrome.accentRadius; this.copyGap = chrome.copyGap; this.descTop = chrome.descTop; this.actionTitleSize = chrome.actionTitleSize; this.actionSubSize = chrome.actionSubSize; this.actionSubTop = chrome.actionSubTop; this.chevronWidth = chrome.chevronWidth; this.chevronSize = chrome.chevronSize
-  },
-  selectMode(type) { workoutSelection.create(type, function () { navigation.push('/pages/workout') }) },
-  continueWorkout() { navigation.push('/pages/workout') },
-  openHistory() { navigation.push('/pages/workout_history') }
+  onInit() { surfacePage.bind(this, 'workout-select') },
+  onShow() { surfacePage.show(this) },
+  onHide() { surfacePage.hide(this) },
+  onDestroy() { surfacePage.destroy(this) },
+  onBackPress() { return surfacePage.back(this) },
+  onSurfaceAction(event) { surfacePage.action(this, event) }
 }
 </script>
-
-<style>
-.selector-root, .selector-scene { background-color: #000000; }
-.selector-scene { position: absolute; left: 0px; top: 0px; }
-.selector-title { position: absolute; color: #FFFFFF; font-weight: bold; text-align: center; }
-.selector-stream { position: absolute; flex-direction: column; }
-.mode-card, .continue-card, .history-card { background-color: #15171B; flex-direction: row; align-items: center; }
-.mode-copy { flex-direction: column; flex: 1; }
-.mode-name { color: #FFFFFF; font-weight: bold; }
-.mode-desc { color: #8E8E93; }
-.continue-title { color: #30D158; font-weight: bold; }
-.continue-sub, .history-sub { color: #8E8E93; }
-.history-title { color: #FFFFFF; font-weight: bold; }
-.chevron { color: #636366; text-align: right; }
-</style>
