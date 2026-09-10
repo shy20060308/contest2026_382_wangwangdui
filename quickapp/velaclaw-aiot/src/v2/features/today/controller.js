@@ -70,6 +70,10 @@ export function createTodayController(onChange) {
     emit()
   }
 
+  function onActivity(snapshot) {
+    if (started) applyActivity(snapshot)
+  }
+
   function onHealth(snapshot) {
     if (!started) return
     state.heartRate = snapshot && snapshot.heartRateLive && snapshot.heartRateSource === 'live' ? snapshot.heartRate : null
@@ -80,11 +84,16 @@ export function createTodayController(onChange) {
 
   return {
     start: function () {
-      if (started) { emit(); return }
+      if (started) {
+        refreshDate()
+        applyActivity(activityStore.getSnapshot())
+        return
+      }
       started = true
       lifecycleEpoch++
       var epoch = lifecycleEpoch
       refreshDate()
+      activityStore.subscribe(onActivity)
       emit()
       activityStore.hydrate(function (snapshot) {
         if (!started || epoch !== lifecycleEpoch) return
@@ -96,6 +105,7 @@ export function createTodayController(onChange) {
       if (!started) return
       started = false
       lifecycleEpoch++
+      activityStore.unsubscribe(onActivity)
       healthStore.unsubscribe(onHealth)
     },
     shiftMonth: function (delta) {
