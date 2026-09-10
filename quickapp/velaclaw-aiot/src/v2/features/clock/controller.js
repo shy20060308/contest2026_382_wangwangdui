@@ -74,6 +74,12 @@ export function createClockController(onChange, onNotification) {
     state.stepsPercent = activity.stepsPercent
   }
 
+  function onActivity(activity) {
+    if (!started) return
+    applyActivity(activity)
+    emit()
+  }
+
   function updateTime() {
     state.timestamp = Date.now()
     emit()
@@ -124,9 +130,15 @@ export function createClockController(onChange, onNotification) {
       emit()
     },
     start: function () {
-      if (started) return
+      if (started) {
+        applyActivity(activityStore.getSnapshot())
+        emit()
+        return
+      }
       if (!faceIds.length) throw new Error('Clock must configure Recipe faceIds before start')
       started = true
+      activityStore.subscribe(onActivity)
+      applyActivity(activityStore.getSnapshot())
       var generation = ++lifecycleGeneration
       var activityReady = false
       var settingsReady = false
@@ -166,6 +178,7 @@ export function createClockController(onChange, onNotification) {
       if (!started) return
       started = false
       lifecycleGeneration++
+      activityStore.unsubscribe(onActivity)
       if (powerRuntime) powerRuntime.stop()
       notification.stop()
     },
