@@ -1,0 +1,64 @@
+<template>
+  <stack class="surface-host" style="width: {{ plan.sceneWidth }}px; height: {{ plan.sceneHeight }}px; background-color: {{ plan.background }};">
+    <stack class="surface-scene" style="width: {{ plan.sceneWidth }}px; height: {{ plan.sceneHeight }}px; background-color: {{ plan.background }};">
+      <text class="surface-header" for="{{ plan.headers }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; line-height: {{ $item.frame.height }}px; font-size: {{ $item.tokens.fontSize }}px; color: {{ $item.tokens.foreground }}; font-weight: {{ $item.tokens.fontWeight }}; text-align: {{ $item.tokens.textAlign }};">{{ $item.copy.text }}</text>
+
+      <text class="surface-text" for="{{ plan.texts }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; line-height: {{ $item.tokens.lineHeight }}px; font-size: {{ $item.tokens.fontSize }}px; color: {{ $item.tokens.foreground }}; font-weight: {{ $item.tokens.fontWeight }}; text-align: {{ $item.tokens.textAlign }};">{{ $item.copy.text }}</text>
+
+      <div class="surface-button" for="{{ plan.buttons }}" tid="id" @click="activate($item.action)" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.radius }}px; padding-left: {{ $item.tokens.paddingX }}px; padding-right: {{ $item.tokens.paddingX }}px; background-color: {{ $item.tokens.background }};">
+        <text class="surface-button-title" style="font-size: {{ $item.tokens.titleSize }}px; color: {{ $item.tokens.titleColor }}; font-weight: {{ $item.tokens.titleWeight }};">{{ $item.copy.title }}</text>
+        <text class="surface-button-subtitle" style="font-size: {{ $item.tokens.subtitleSize }}px; color: {{ $item.tokens.subtitleColor }};">{{ $item.copy.subtitle }}</text>
+      </div>
+
+      <scroll class="surface-metric-list" if="{{ plan.metricList }}" scroll-y="true" style="left: {{ plan.metricList.frame.left }}px; top: {{ plan.metricList.frame.top }}px; width: {{ plan.metricList.frame.width }}px; height: {{ plan.metricList.frame.height }}px;">
+        <div class="surface-metric-card" for="{{ plan.metricList.items }}" tid="id" style="width: {{ plan.metricList.frame.width }}px; min-height: {{ plan.metricList.tokens.itemHeight }}px; margin-bottom: {{ plan.metricList.tokens.itemGap }}px; border-radius: {{ plan.metricList.tokens.itemRadius }}px; padding: {{ plan.metricList.tokens.itemPadding }}px; background-color: {{ plan.metricList.tokens.itemBackground }};">
+          <div class="surface-metric-head" style="height: {{ plan.metricList.tokens.headHeight }}px;">
+            <text class="surface-metric-name" style="font-size: {{ plan.metricList.tokens.labelSize }}px; color: {{ $item.accent }}; font-weight: {{ plan.metricList.tokens.labelWeight }};">{{ $item.name }}</text>
+            <text class="surface-metric-progress" style="font-size: {{ plan.metricList.tokens.progressTextSize }}px; color: {{ $item.accent }}; font-weight: {{ plan.metricList.tokens.progressWeight }};">{{ $item.progressText }}</text>
+          </div>
+          <div class="surface-metric-value-row" style="height: {{ plan.metricList.tokens.valueRowHeight }}px;">
+            <text class="surface-metric-value" style="font-size: {{ plan.metricList.tokens.valueSize }}px; color: {{ $item.accent }}; font-weight: {{ plan.metricList.tokens.valueWeight }};">{{ $item.current }}</text>
+            <text class="surface-metric-unit" style="font-size: {{ plan.metricList.tokens.unitSize }}px; margin-left: {{ plan.metricList.tokens.unitGap }}px; margin-bottom: {{ plan.metricList.tokens.unitBottom }}px; color: {{ plan.metricList.tokens.secondaryColor }};">{{ $item.unit }}</text>
+          </div>
+          <div class="surface-progress-track" style="width: {{ $item.trackWidth }}px; height: {{ plan.metricList.tokens.trackHeight }}px; border-radius: {{ plan.metricList.tokens.trackRadius }}px; margin-top: {{ plan.metricList.tokens.progressGap }}px; background-color: {{ plan.metricList.tokens.trackBackground }};">
+            <div class="surface-progress-fill" style="width: {{ $item.progressWidth }}px; height: {{ plan.metricList.tokens.trackHeight }}px; border-radius: {{ plan.metricList.tokens.trackRadius }}px; background-color: {{ $item.accent }};"></div>
+          </div>
+          <div class="surface-metric-foot" style="width: {{ $item.trackWidth }}px; height: {{ plan.metricList.tokens.footHeight }}px; margin-top: {{ plan.metricList.tokens.footTop }}px;">
+            <text class="surface-metric-goal" style="font-size: {{ plan.metricList.tokens.footerSize }}px; color: {{ plan.metricList.tokens.secondaryColor }};">{{ $item.goalText }}</text>
+            <text class="surface-metric-status" style="font-size: {{ plan.metricList.tokens.footerSize }}px; color: {{ $item.statusColor }};">{{ $item.statusText }}</text>
+          </div>
+        </div>
+      </scroll>
+    </stack>
+  </stack>
+</template>
+
+<script>
+import navigation from '../runtime/navigation'
+
+export default {
+  props: ['plan'],
+  activate(action) {
+    if (!action) return
+    if (action === '$back') {
+      navigation.back()
+      return
+    }
+    if (String(action).charAt(0) === '/') {
+      navigation.push(action)
+      return
+    }
+    throw new Error('Unsupported V3 surface action: ' + action)
+  }
+}
+</script>
+
+<style>
+.surface-host, .surface-scene, .surface-header, .surface-text, .surface-button, .surface-metric-list { position: absolute; }
+.surface-button, .surface-metric-head, .surface-metric-value-row, .surface-metric-foot { flex-direction: row; align-items: center; }
+.surface-button, .surface-metric-head, .surface-metric-foot { justify-content: space-between; }
+.surface-metric-list, .surface-metric-card { flex-direction: column; }
+.surface-metric-value-row { align-items: flex-end; }
+.surface-progress-track { overflow: hidden; flex-direction: row; align-items: center; }
+.surface-metric-status { text-align: right; }
+</style>
