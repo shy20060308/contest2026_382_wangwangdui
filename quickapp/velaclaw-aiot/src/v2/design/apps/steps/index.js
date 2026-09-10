@@ -9,10 +9,13 @@ function resolve(profile, scene, safe) {
   var plan = adapter.createPlan(profile, scene, safe, difference.L1, config.surface)
   plan.title = adapter.placeBand(profile, scene, safe, config.title)
   plan.history = adapter.placeBand(profile, scene, safe, config.history)
+  var streamTop = safe.top + config.stream.top
   plan.stream = adapter.placeBand(profile, scene, safe, {
-    top: config.stream.top,
+    bounds: 'scene',
+    absoluteTop: true,
+    top: streamTop,
     width: config.stream.width,
-    height: safe.bottom - (safe.top + config.stream.top)
+    height: scene.height - streamTop
   })
   plan.titleSize = config.titleSize
   plan.historyRadius = config.historyRadius
