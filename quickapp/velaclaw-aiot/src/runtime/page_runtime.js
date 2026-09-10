@@ -1,5 +1,5 @@
 import deviceProfile from './device_profile'
-var scene = require('../v2/design/scene')
+var scene = require('../product/design/scene')
 
 function bind(page, callback) {
   if (!page) throw new Error('V3 Page Runtime requires a page instance')
