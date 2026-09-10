@@ -11,6 +11,7 @@ const healthSurface = require('../src/product/frontend/surfaces/heartrate.json')
 const workoutSelectSurface = require('../src/product/frontend/surfaces/workout_select.json')
 const workoutSurface = require('../src/product/frontend/surfaces/workout.json')
 const workoutHistorySurface = require('../src/product/frontend/surfaces/workout_history.json')
+const todaySurface = require('../src/product/frontend/surfaces/today.json')
 
 const pendingDesigns = [
   require('../src/product/design/apps/launcher'),
@@ -18,7 +19,6 @@ const pendingDesigns = [
   require('../src/product/design/apps/faces'),
   require('../src/product/design/apps/settings'),
   require('../src/product/design/apps/notification'),
-  require('../src/product/design/apps/today'),
   require('../src/product/design/apps/brightness'),
   require('../src/product/design/apps/vibration'),
   require('../src/product/design/apps/motion'),
@@ -177,6 +177,27 @@ profiles.forEach(function (profile) {
   assert.strictEqual(workoutHistoryPlan.flowRecordItems[0].title, '跑步')
   assert.strictEqual(workoutHistoryPlan.flowRecordItems[0].trailing, '待同步')
   assert.strictEqual(workoutHistoryPlan.flowRecordItems[0].metric1, '420 步')
+
+  const todaySummary = surfaceRuntime.resolve(todaySurface, profile, host, safe, {
+    summaryOpen: true, calendarOpen: false,
+    currentDay: 10, currentWeekday: 4, currentMonth: 8,
+    lunarText: '农历七月廿九', steps: 5200, calories: 230, heartRate: 76, standHours: 6, goalPercent: 52
+  })
+  assert.strictEqual(todaySummary.id, 'today')
+  assert.deepStrictEqual(todaySummary.modules.map(function (module) { return module.id }), ['summaryHead', 'day', 'lunar', 'goal', 'summaryMetrics', 'openCalendar'])
+  assert.strictEqual(todaySummary.flowHeaders[0].trailing, '周四')
+  assert.strictEqual(todaySummary.flowMetricItems[0].value, '5,200')
+
+  const calendarCells = []
+  for (let index = 0; index < 42; index++) calendarCells.push({ key: 'd' + index, day: index + 1, inMonth: index > 1 && index < 33, isToday: index === 9 })
+  const todayCalendar = surfaceRuntime.resolve(todaySurface, profile, host, safe, {
+    summaryOpen: false, calendarOpen: true, calendarYear: 2026, calendarMonth: 8, calendarCells: calendarCells
+  })
+  assert.deepStrictEqual(todayCalendar.modules.map(function (module) { return module.id }), ['calendarHead', 'calendarGrid', 'previousMonth', 'nextMonth', 'closeCalendar'])
+  const calendarGrid = todayCalendar.flowMetricItems.filter(function (item) { return item.id.indexOf('calendarGrid-') === 0 })
+  assert.strictEqual(calendarGrid.length, 42, 'Today calendar must render the controller month through the generic data grid')
+  assert.strictEqual(calendarGrid[0].accent, '#5A5A60', 'outside-month visual role must be JSON-owned')
+  assert.strictEqual(calendarGrid[9].tokens.itemBackground, '#0A84FF', 'today highlight must be JSON-owned')
 })
 
 console.log('V3 design runtime verified across pending Recipes and migrated JSON surfaces')
