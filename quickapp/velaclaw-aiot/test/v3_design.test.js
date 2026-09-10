@@ -1,32 +1,31 @@
 const assert = require('assert')
-const adapter = require('../src/v2/design/adapter')
-const difference = require('../src/v2/design/difference')
-const scene = require('../src/v2/design/scene')
-const watchfaceChart = require('../src/v2/design/watchface_chart')
-const launcherView = require('../src/v2/design/apps/launcher/view')
+const adapter = require('../src/product/design/adapter')
+const difference = require('../src/product/design/difference')
+const scene = require('../src/product/design/scene')
+const watchfaceChart = require('../src/product/design/watchface_chart')
+const launcherView = require('../src/product/design/apps/launcher/view')
+const surfaceRuntime = require('../src/product/frontend/runtime/surface_runtime')
+const stepsSurface = require('../src/product/frontend/surfaces/steps.json')
 
-const designs = [
-  require('../src/v2/design/apps/steps'),
-  require('../src/v2/design/apps/heart'),
-  require('../src/v2/design/apps/history'),
-  require('../src/v2/design/apps/workout'),
-  require('../src/v2/design/apps/workout/selection'),
-  require('../src/v2/design/apps/workout/history'),
-  require('../src/v2/design/apps/launcher'),
-  require('../src/v2/design/apps/clock'),
-  require('../src/v2/design/apps/faces'),
-  require('../src/v2/design/apps/settings'),
-  require('../src/v2/design/apps/notification'),
-  require('../src/v2/design/apps/today'),
-  require('../src/v2/design/apps/brightness'),
-  require('../src/v2/design/apps/vibration'),
-  require('../src/v2/design/apps/motion'),
-  require('../src/v2/design/apps/diagnostics'),
-  require('../src/v2/design/apps/sync')
+const pendingDesigns = [
+  require('../src/product/design/apps/heart'),
+  require('../src/product/design/apps/history'),
+  require('../src/product/design/apps/workout'),
+  require('../src/product/design/apps/workout/selection'),
+  require('../src/product/design/apps/workout/history'),
+  require('../src/product/design/apps/launcher'),
+  require('../src/product/design/apps/clock'),
+  require('../src/product/design/apps/faces'),
+  require('../src/product/design/apps/settings'),
+  require('../src/product/design/apps/notification'),
+  require('../src/product/design/apps/today'),
+  require('../src/product/design/apps/brightness'),
+  require('../src/product/design/apps/vibration'),
+  require('../src/product/design/apps/motion'),
+  require('../src/product/design/apps/diagnostics'),
+  require('../src/product/design/apps/sync')
 ]
 
-// These are already-resolved Device Profiles. Device Profile owns physical
-// validation; Scene and Adapter must not re-validate the same device facts.
 const profiles = [
   { formFactor: 'circle', screenWidth: 466, screenHeight: 466, safeInsets: { left: 0, top: 10, right: 0, bottom: 10, gestureBar: 0 } },
   { formFactor: 'pill', screenWidth: 212, screenHeight: 520, safeInsets: { left: 0, top: 52, right: 0, bottom: 52, gestureBar: 36 } },
@@ -72,16 +71,29 @@ profiles.forEach(function (profile) {
   const host = scene.resolve(profile)
   const safe = scene.safe(profile, host)
   assert.ok(safe.width > 0 && safe.height > 0, profile.formFactor + ' profile must declare usable content space')
-  designs.forEach(function (design) {
-    assert.ok([difference.L1, difference.L2, difference.L3].includes(design.differenceLevel), 'every app design must declare an L1/L2/L3 difference level')
+
+  pendingDesigns.forEach(function (design) {
+    assert.ok([difference.L1, difference.L2, difference.L3].includes(design.differenceLevel), 'pending Recipe must declare an L1/L2/L3 difference level')
     const plan = design.resolve(profile, host, safe)
-    assert.ok(plan && plan.designSystemVersion === '3.0', 'app design must resolve through V3 for ' + profile.formFactor)
-    assert.strictEqual(plan.differenceLevel, design.differenceLevel, 'resolved plan must preserve the app design difference level')
-    assert.deepStrictEqual(plan.difference, difference.describe(design.differenceLevel), 'resolved plan must expose canonical difference metadata')
-    assert.strictEqual(plan.shape, profile.formFactor, 'Adapter must consume the resolved profile shape without reclassifying it')
-    assert.strictEqual(Object.prototype.hasOwnProperty.call(plan, 'freedom'), false, 'V3 plans must not expose retired freedom metadata')
-    assert.strictEqual(Object.prototype.hasOwnProperty.call(plan, 'freedomLevel'), false, 'V3 plans must not expose retired freedom level metadata')
+    assert.ok(plan && plan.designSystemVersion === '3.0', 'pending Recipe must resolve through V3 for ' + profile.formFactor)
+    assert.strictEqual(plan.differenceLevel, design.differenceLevel)
+    assert.deepStrictEqual(plan.difference, difference.describe(design.differenceLevel))
+    assert.strictEqual(plan.shape, profile.formFactor)
+    assert.strictEqual(Object.prototype.hasOwnProperty.call(plan, 'freedom'), false)
+    assert.strictEqual(Object.prototype.hasOwnProperty.call(plan, 'freedomLevel'), false)
   })
+
+  const stepsPlan = surfaceRuntime.resolve(stepsSurface, profile, host, safe, {
+    metrics: [
+      { id: 'stand', current: 6, goal: 12 },
+      { id: 'steps', current: 5000, goal: 10000 },
+      { id: 'calories', current: 300, goal: 600 }
+    ]
+  })
+  assert.strictEqual(stepsPlan.id, 'steps')
+  assert.strictEqual(stepsPlan.shape, profile.formFactor)
+  assert.deepStrictEqual(stepsPlan.metricList.items.map(function (item) { return item.id }), ['steps', 'calories', 'stand'], 'JSON item declaration must own metric order')
+  assert.strictEqual(stepsPlan.metricList.items[0].progressText, '50%', 'JSON copy template must own progress presentation')
 })
 
-console.log('V3 design runtime verified: one validation owner per layer and direct recipe translation')
+console.log('V3 design runtime verified across pending Recipes and migrated JSON surfaces')
