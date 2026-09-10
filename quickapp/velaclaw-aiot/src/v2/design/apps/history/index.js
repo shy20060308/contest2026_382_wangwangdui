@@ -8,6 +8,7 @@ function resolve(profile, scene, safe) {
   var config = adapter.select(layout, profile)
   var plan = adapter.createPlan(profile, scene, safe, difference.L2, config.surface)
   var streamTop = safe.top + config.streamTop
+  var bottomInset = scene.height - safe.bottom
   plan.stream = adapter.placeBand(profile, scene, safe, {
     bounds: 'scene',
     absoluteTop: true,
@@ -15,7 +16,7 @@ function resolve(profile, scene, safe) {
     width: config.contentWidth,
     height: scene.height - streamTop
   })
-  plan.streamPaddingBottom = Math.max(config.streamPaddingBottom, scene.height - safe.bottom)
+  plan.streamPaddingBottom = config.streamPaddingBottom > bottomInset ? config.streamPaddingBottom : bottomInset
 
   plan.headerWidth = config.headerWidth
   plan.headerHeight = config.headerHeight
