@@ -1,5 +1,6 @@
 <import name="surfacecollection" src="./surface_collection.ux"></import>
 <import name="surfaceslider" src="./surface_slider.ux"></import>
+<import name="surfacestage" src="./surface_stage.ux"></import>
 
 <template>
   <stack class="surface-host" style="width: {{ plan.sceneWidth }}px; height: {{ plan.sceneHeight }}px; background-color: {{ plan.background }};" @swipe="onSwipe" @longpress="onLongPress">
@@ -87,6 +88,7 @@
 
       <surfacecollection if="{{ plan.collection }}" model="{{ plan.collection }}" @surfaceaction="forwardAction"></surfacecollection>
       <surfaceslider for="{{ plan.sliders }}" tid="id" model="{{ $item }}" @surfaceaction="forwardAction"></surfaceslider>
+      <surfacestage if="{{ plan.stage }}" model="{{ plan.stage }}" @surfaceaction="forwardAction"></surfacestage>
     </stack>
   </stack>
 </template>
