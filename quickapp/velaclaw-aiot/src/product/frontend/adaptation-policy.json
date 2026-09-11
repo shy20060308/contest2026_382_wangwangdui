@@ -20,7 +20,6 @@
   },
   "routes": {
     "pages/clock": { "routeLevel": "L3", "baseline": "clock", "reason": "Watchface is a gesture-led independent surface and its composition differs materially by form factor." },
-    "pages/clock_guard": { "routeLevel": "L1", "baseline": "guard", "reason": "Navigation guard has no form-factor-specific product expression." },
     "pages/heartrate": { "routeLevel": "L1", "baseline": "heart", "reason": "Same health hierarchy and interaction; geometry/density adapt." },
     "pages/steps": { "routeLevel": "L1", "baseline": "steps", "reason": "Same activity cards and progress semantics; geometry/density adapt." },
     "pages/applist": { "routeLevel": "L3", "baseline": "launcher", "reason": "Circle honeycomb, Pill paged list and Rect designed grid are genuinely different interaction surfaces." },
