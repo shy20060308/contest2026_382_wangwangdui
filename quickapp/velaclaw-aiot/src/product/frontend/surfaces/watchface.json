@@ -31,7 +31,7 @@
         "tokens": {
           "title": "表盘库", "titleColor": "#FFFFFF", "titleWeight": "bold", "titleSize": 10,
           "backText": "返回", "backColor": "#8E8E93", "backSize": 8,
-          "headerLeft": 34, "headerTop": 8, "headerWidth": 124, "headerHeight": 18,
+          "headerLeft": 34, "headerTop": 10, "headerWidth": 124, "headerHeight": 18,
           "previewLeft": 28, "previewTop": 32, "previewWidth": 136, "previewHeight": 112,
           "previewSize": 112, "previewRadius": 56, "previewBorderWidth": 1,
           "previewTimeText": "08:32", "previewTimeSize": 24, "previewTimeWeight": "bold",
