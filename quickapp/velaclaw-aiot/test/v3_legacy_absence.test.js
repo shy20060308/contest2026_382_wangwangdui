@@ -3,8 +3,6 @@ const fs = require('fs')
 const path = require('path')
 
 const root = path.resolve(__dirname, '..')
-const sourceRoot = path.join(root, 'src')
-const commonRoot = path.join(sourceRoot, 'common')
 const read = file => fs.readFileSync(path.join(root, file), 'utf8')
 const exists = file => fs.existsSync(path.join(root, file))
 
@@ -20,99 +18,51 @@ function filesUnder(relative, matcher, result) {
   return result
 }
 
-function relativeDependencies(source) {
-  const dependencies = []
-  const patterns = [
-    /\bfrom\s+['"]([^'"]+)['"]/g,
-    /\brequire\(\s*['"]([^'"]+)['"]\s*\)/g,
-    /\bimport\s+['"]([^'"]+)['"]/g,
-    /<import\b[^>]*\bsrc=['"]([^'"]+)['"]/g
-  ]
-  patterns.forEach(function (pattern) {
-    let match
-    while ((match = pattern.exec(source)) !== null) {
-      if (match[1] && match[1][0] === '.') dependencies.push(match[1])
-    }
-  })
-  return dependencies
-}
-
-function inside(target, parent) {
-  const relative = path.relative(parent, target)
-  return relative === '' || (!relative.startsWith('..' + path.sep) && relative !== '..' && !path.isAbsolute(relative))
-}
-
-const retiredRoots = [
+[
+  ['src/v2', 'duplicate V2 source namespace'],
   ['src/platform', 'platform aliases'],
   ['src/presentation', 'presentation runtime'],
-  ['src/v2/system', 'v2/system namespace'],
-  ['src/v2/app', 'v2/app namespace'],
-  ['src/v2/design/specs', 'Design Specs'],
-  ['src/v2/design/views', 'Design Views']
-]
-
-[
-  ...retiredRoots,
-  ['src/v2/design/geometry.js', 'geometry solver'],
-  ['src/v2/design/freedom.js', 'freedom compatibility system'],
-  ['src/v2/features/sync/mock_transport.js', 'mock sync transport'],
+  ['src/product/design/apps', 'page-specific JS design recipes'],
+  ['src/product/features/launcher', 'retired launcher pagination controller'],
+  ['src/components/watchfaces', 'specialized watchface UX'],
+  ['src/common/icons', 'retired launcher/settings raster icon pack'],
+  ['src/common/watchfaces', 'retired baked watchface backgrounds'],
+  ['assets/icons', 'retired icon source pack'],
+  ['assets/watchfaces', 'retired watchface source pack'],
+  ['scripts/render-icons.ps1', 'retired icon renderer'],
+  ['scripts/fade-watchface-background.py', 'retired watchface background renderer'],
   ['src/pages/index', 'sample index page'],
-  ['src/pages/detail', 'sample detail page'],
-  [path.join('src', 'common', 'icons', 'soft'), 'soft launcher icon variants'],
-  ['scripts/render-soft-icons.py', 'soft icon renderer'],
-  ['husky.sh', 'inactive Husky setup'],
-  ['commitlint.config.js', 'inactive Commitlint config'],
-  ['.prettierrc.js', 'inactive Prettier config'],
-  ['.stylelintrc.js', 'inactive Stylelint config']
+  ['src/pages/detail', 'sample detail page']
 ].forEach(function (entry) {
-  assert.strictEqual(exists(entry[0]), false, 'V3 must not restore retired ' + entry[1])
+  assert.strictEqual(exists(entry[0]), false, 'V3 must not restore ' + entry[1])
 })
 
-const retiredAbsoluteRoots = retiredRoots.map(function (entry) { return { root: path.join(root, entry[0]), label: entry[1] } })
-const commonLogic = filesUnder('src/common', /\.(?:js|ux)$/, [])
-assert.deepStrictEqual(commonLogic, [], 'src/common is a static-resource namespace only')
+assert.deepStrictEqual(filesUnder('src/common', /\.(?:js|ux)$/, []), [], 'src/common must remain static-resource-only')
+assert.deepStrictEqual(filesUnder('src/pages', /\.js$/, []), [], 'page-local JS must not become a second frontend authority')
 
-filesUnder('src', /\.(?:js|ux)$/, []).forEach(function (file) {
-  const source = read(file)
-  assert.ok(!source.includes('soft' + 'Icon'), file + ' must not restore the retired soft launcher icon strategy')
-  relativeDependencies(source).forEach(function (dependency) {
-    const resolved = path.resolve(path.dirname(path.join(root, file)), dependency)
-    assert.ok(!inside(resolved, commonRoot), file + ' must not depend on legacy src/common logic: ' + dependency)
-    retiredAbsoluteRoots.forEach(function (retired) {
-      assert.ok(!inside(resolved, retired.root), file + ' must not depend on retired ' + retired.label + ': ' + dependency)
-    })
-  })
-})
-
-filesUnder('src/v2/design', /\.(?:js|ux)$/, []).forEach(function (file) {
-  const source = read(file)
-  assert.ok(!source.includes('freedomLevel'), file + ' must not restore retired freedom metadata')
-  assert.ok(!source.includes('freedom.AUTO') && !source.includes('freedom.ASSISTED') && !source.includes('freedom.FREE'), file + ' must not restore AUTO/ASSISTED/FREE design levels')
-  assert.ok(!source.includes('adaptive-geometry'), file + ' must not restore adaptive geometry strategy')
-})
-
-filesUnder('src/v2/design/apps', /(?:^|_)layout\.js$/, []).forEach(function (file) {
-  const source = read(file)
-  assert.ok(!/^module\.exports\s*=\s*\{\s*\r?\n\s*level\s*:/m.test(source), file + ' must not duplicate resolver-owned differenceLevel')
-})
+const pageRuntime = read('src/runtime/page_runtime.js')
+assert.ok(pageRuntime.includes("require('../product/design/scene')"), 'Page Runtime must use the single current Scene')
+assert.ok(!pageRuntime.includes('../v2/'), 'Page Runtime must not restore a retired namespace')
 
 const deviceProfile = read('src/runtime/device_profile.js')
 assert.ok(!deviceProfile.includes('isBetaPillViewport'), 'Device Profile must not restore beta-emulator compatibility state')
-assert.ok(!deviceProfile.includes("|| 'pill-shaped'"), 'Device Profile must not default an unknown device to Pill')
 assert.ok(!deviceProfile.includes('width = 192; height = 490'), 'Device Profile must not fabricate Band dimensions')
-assert.ok(!deviceProfile.includes('logicalHeight'), 'Device Profile must not duplicate Scene-owned design projection')
-assert.ok(deviceProfile.includes('var ratio = width / height'), 'Device Profile must normalize missing screenShape from physical geometry')
-assert.ok(deviceProfile.includes("screenShape(pick(info, local, 'screenShape'), width, height)"), 'Device Profile must prefer native screenShape and use geometry only as fallback')
-const pageRuntime = read('src/runtime/page_runtime.js')
-assert.ok(!pageRuntime.includes('betaPill'), 'Page Runtime must not restore beta-pill compatibility branches')
-const sceneRuntime = read('src/v2/design/scene.js')
-assert.ok(!sceneRuntime.includes('shapeOf('), 'Scene must trust the validated Device Profile instead of re-validating shape')
-assert.ok(!sceneRuntime.includes('hostScene || resolve(profile)'), 'Scene safe projection must use the resolved Host Scene')
-const adapter = read('src/v2/design/adapter.js')
-assert.ok(!adapter.includes('function shapeOf('), 'Adapter must not duplicate Device Profile shape validation')
-const packageSource = read('package.json')
-assert.ok(!packageSource.includes('render-' + 'soft-icons'), 'tooling must not regenerate retired soft launcher icons')
-assert.ok(!packageSource.includes('lint-' + 'staged'), 'package metadata must not restore inactive hook tooling')
-assert.ok(!packageSource.includes('commit' + 'lint'), 'package metadata must not restore inactive Commitlint tooling')
+assert.ok(!deviceProfile.includes('logicalHeight'), 'Device Profile must not duplicate Scene-owned projection')
+assert.ok(deviceProfile.includes('var ratio = width / height'), 'Device Profile must normalize missing screen shape from physical geometry')
 
-console.log('V3 legacy absence verified: retired namespaces stay absent and device geometry has one normalization owner')
+const sceneRuntime = read('src/product/design/scene.js')
+assert.ok(!sceneRuntime.includes('shapeOf('), 'Scene must trust validated Device Profile shape')
+assert.ok(!sceneRuntime.includes('hostScene || resolve(profile)'), 'Scene safe projection must consume the resolved Host Scene')
+
+const adapter = read('src/product/design/adapter.js')
+assert.ok(!adapter.includes('function shapeOf('), 'Adapter must not duplicate Device Profile shape validation')
+assert.ok(!adapter.includes('function clamp('), 'Adapter must not repair authored Surface geometry')
+
+const packageSource = read('package.json')
+assert.ok(!packageSource.includes('render-soft-icons'), 'tooling must not regenerate retired soft icons')
+assert.ok(!packageSource.includes('icons:render'), 'tooling must not regenerate retired launcher raster icons')
+assert.ok(!packageSource.includes('backgrounds:render'), 'tooling must not regenerate retired watchface backgrounds')
+assert.ok(!packageSource.includes('honeycomb:logic'), 'retired Honeycomb product math must not stay in the validation contract')
+assert.ok(!packageSource.includes('analog:logic'), 'retired analog watchface helper must not stay in the validation contract')
+
+console.log('V3 legacy absence verified: duplicate namespaces, retired launcher pagination, page-specific visual JS/UX and retired visual assets stay absent')

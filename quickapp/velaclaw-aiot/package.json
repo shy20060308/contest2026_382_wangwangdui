@@ -2,14 +2,14 @@
   "name": "vela_band",
   "version": "3.0.0",
   "private": true,
-  "description": "VelaClaw wearable app with a recipe-first V3 design runtime and capability-backed features.",
+  "description": "VelaClaw wearable app with a declarative V3 Surface runtime and capability-backed features.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/shy20060308/contest2026_382_wangwangdui.git"
   },
   "homepage": "https://github.com/shy20060308/contest2026_382_wangwangdui",
-  "keywords": ["openvela", "vela", "quick-app", "smart-band", "smart-watch", "recipe-design"],
+  "keywords": ["openvela", "vela", "quick-app", "smart-band", "smart-watch", "declarative-ui"],
   "engines": { "node": ">=18" },
   "scripts": {
     "surfaces:compile": "node scripts/compile-v3-surfaces.js",
@@ -23,7 +23,6 @@
     "v3:design": "node test/v3_design.test.js",
     "v3:surfaces": "node test/v3_surface_geometry.test.js",
     "v3:frontend-audit": "node scripts/audit-v3-frontends.js",
-    "v3:frontend-staged": "node scripts/audit-v3-frontends.js --staged",
     "v3:frontend-contract": "node scripts/audit-v3-frontends.js --strict",
     "v3:frontend-runtime": "node test/v3_frontend_runtime.test.js",
     "v3:truth": "node test/v3_truth_contracts.test.js",
@@ -41,11 +40,7 @@
     "haptics:logic": "node test/haptic_patterns.test.js",
     "haptics:runtime": "node test/haptics_runtime.test.js",
     "calendar:logic": "node test/calendar_utils.test.js",
-    "analog:logic": "node test/analog_face.test.js",
-    "honeycomb:logic": "node test/honeycomb_layout.test.js",
-    "icons:render": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/render-icons.ps1",
-    "backgrounds:render": "python scripts/fade-watchface-background.py --input assets/watchfaces/alpine_night_source.jpg --output src/common/watchfaces/alpine_night.jpg",
-    "check": "npm run surfaces:compile && npm run lint && npm run docs:check && npm run v3:architecture && npm run v3:design && npm run v3:surfaces && npm run v3:frontend-staged && npm run v3:frontend-runtime && npm run v3:truth && npm run v3:package-hygiene && npm run capabilities:check && npm run power:logic && npm run power:runtime && npm run health:logic && npm run health:official && npm run history:truth && npm run workout:experience && npm run activity:persistence && npm run settings:store && npm run motion:logic && npm run haptics:logic && npm run haptics:runtime && npm run calendar:logic && npm run analog:logic && npm run honeycomb:logic"
+    "check": "npm run lint && npm run docs:check && npm run v3:architecture && npm run v3:design && npm run v3:surfaces && npm run v3:frontend-contract && npm run v3:frontend-runtime && npm run v3:truth && npm run v3:package-hygiene && npm run capabilities:check && npm run power:logic && npm run power:runtime && npm run health:logic && npm run health:official && npm run history:truth && npm run workout:experience && npm run activity:persistence && npm run settings:store && npm run motion:logic && npm run haptics:logic && npm run haptics:runtime && npm run calendar:logic"
   },
   "devDependencies": {
     "@aiot-toolkit/jsc": "^1.0.3",

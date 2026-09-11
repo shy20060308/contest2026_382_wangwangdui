@@ -1,44 +1,57 @@
 # V3 Design Runtime
 
-V3 is a breaking design-runtime reset. Git history is the compatibility layer; runtime code does not keep V2 bridges.
+V3 是破坏性重构。兼容历史保留在 Git 历史中，当前运行时代码不保留 V2 bridge、第二套页面视觉实现或按设备临时修补的布局路径。
 
-## One path
+## 唯一前端链路
 
-`Device Profile → Host Scene + declared safe insets → App Recipe → Adapter translation → App resolver → Resolved Plan → UX`
+```text
+Device Profile
+  → Host Scene + declared safe insets
+  → Surface JSON
+  → generic Surface Runtime
+  → generic Surface Host
+  → Quick App page shell
 
-- Device Profile owns physical shape, dimensions and explicit safe insets.
-- Scene performs only the 192-design-width projection and applies those insets.
-- Recipe owns visual intent: sizes, positions, typography, spacing and shape overrides.
-- Adapter merges recipes and translates coordinates/box model. It does not scan, scale, clamp or invent geometry.
-- App resolver performs only composition that cannot be represented as static recipe data.
-- Product-specific math engines, when needed, consume the resolved Plan. They may own pure geometry algorithms and interaction physics, but not product focus points, icon sizing, label geometry or fallback design values.
-- UX renders the resolved plan and feature state.
+Controller Registry
+  → Feature Controller
+  → Domain / Capability
+  → semantic state
+  → Surface bindings/actions
+```
 
-## Difference levels
+`src/manifest.json` 是路由事实源。每个 manifest route 必须且只能对应一个 `src/product/frontend/surfaces/*.json`。页面 UX 只声明 Surface id、生命周期和 action bridge，不拥有产品 DOM、文案、颜色、尺寸或 shape 分支。
 
-- L1: same product and expression; geometry changes.
-- L2: local expression changes while product/data remain shared.
-- L3: product/interaction surface is genuinely different.
+## Ownership
 
-The level belongs to the difference, not to the whole page.
+- `src/runtime/device_profile.js`：验证物理尺寸、形态和声明式 safe inset。
+- `src/product/design/scene.js`：把物理设备投影到 192 design-width Host Scene。
+- `src/product/design/adapter.js`：通用 box/region 翻译；不做视觉修复。
+- `src/product/frontend/surfaces/*.json`：模块顺序、静态 copy、颜色、字号、间距、圆角、Circle/Pill/Rect variant 的唯一视觉权威。
+- `src/product/frontend/runtime/surface_runtime.js`：只解释 schema 中的通用 primitive，不识别具体 route/surface/controller。
+- `src/components/surface_host.ux`：唯一产品 renderer。
+- `src/product/controller_registry.js`：把 Surface action/state 连接到语义 Feature；不得拥有视觉 token。
+- Feature / Domain / Capability：业务与设备能力，不拥有页面视觉。
 
-## Rules
+## 强制规则
 
-1. No `src/presentation` design stack.
-2. No `src/v2/design/specs` or `src/v2/design/views` compatibility bridges.
-3. No component-width-driven safe-area calculation.
-4. No circle chord fitting, Y scanning, aesthetic scaling or runtime geometry repair.
-5. No duplicate size validation across width/height/scale for the same concern. Validate the recipe/plan contract once.
-6. Full-bleed backgrounds are scene-level; safe insets constrain content only.
-7. Feature orchestrates Domain/Capabilities. Design does not depend upward on Feature/Capability.
-8. Health and workout only surface official live health samples; presentation must not fabricate distributions.
-9. A product math engine must be configured by the resolved Recipe/Plan; it must not become a second visual-design owner.
+1. 不存在 `src/v2`、`src/presentation`、`src/platform`。
+2. 不存在 `src/product/design/apps` 页面专属 JS Recipe/View。
+3. 不存在 `src/components/watchfaces` 等产品专属第二 UX 树。
+4. 页面 UX 不直接 import Feature、Domain、Capability、Design App。
+5. Surface shape 差异只写在 `variants.base/circle/pill/rect`。
+6. Adapter/Scene 不做 chord fitting、Y 扫描、自动缩放、aesthetic clamp 或组件宽度驱动的 safe-area 重算。
+7. 健康、运动、传感器和同步状态必须来自真实业务层；视觉层不得生成伪样本。
+8. 新增路由时必须同时新增 Surface JSON；严格审计从 manifest 自动发现页面，不维护第二份白名单。
 
-## Tests
+## 验证
 
-`npm run check` keeps two design checks only:
+```bash
+npm run v3:architecture
+npm run v3:design
+npm run v3:surfaces
+npm run v3:frontend-contract
+npm run v3:frontend-runtime
+npm run v3:truth
+```
 
-- `v3:architecture`: one runtime path, no retired bridges/solver layers.
-- `v3:design`: explicit insets, direct translation and all current app designs resolve on Circle/Pill/Rect.
-
-Business behavior remains covered by capability, power, health, workout, activity, settings, motion, haptics, calendar, analog and honeycomb tests. Geometry is not re-proved in each feature test.
+`npm run check` 已包含 strict frontend contract。只有所有 18 个当前 manifest route 都走上述唯一链路时检查才能通过。
