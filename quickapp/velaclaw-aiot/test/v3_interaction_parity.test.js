@@ -154,7 +154,8 @@ assert.deepStrictEqual(clock.experience.rect.controllerConfig.faceIds, ['sport',
 assert.ok(surfacePage.includes('page.surfacePlan.controllerConfig'), 'Resolved JSON controller configuration must cross the generic Surface Page boundary')
 assert.ok(controllerRegistry.includes('controllerConfig.faceIds'), 'Controller registry must require JSON-authored face availability')
 assert.ok(!/var\s+FACE_IDS\s*=/.test(controllerRegistry), 'Controller registry must not own a duplicate watchface availability list')
-assert.ok(controllerRegistry.includes('navigation.back()'), 'Selecting a watchface must preserve the accepted return-to-clock interaction')
+assert.ok(controllerRegistry.includes('navigation.back(ownerKey(owner))'), 'Selecting a watchface must preserve the accepted return-to-clock interaction')
+assert.ok(controllerRegistry.includes('ownerCurrent(owner, token)'), 'Async return-to-clock must not navigate after the selector page loses ownership')
 
 assert.ok(designSkill.includes('A migration is incomplete if functionality or interaction quality is reduced'), 'Wearable design contract must explicitly ban interaction regression')
 console.log('V3 interaction parity verified: L1 direct manipulation/paging, L2 local expressions and L3 independent surfaces preserve accepted behavior')
