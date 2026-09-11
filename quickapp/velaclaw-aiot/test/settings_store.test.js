@@ -32,7 +32,8 @@ function fakeStorage() {
   }
 }
 
-assert.strictEqual(core.KEY, 'device_settings_v3', 'Settings must use a clean V3 persistence namespace')
+assert.strictEqual(core.KEY, 'device_settings_v4', 'Settings schema migration must invalidate the unsafe default-low-power snapshot')
+assert.strictEqual(core.DEFAULTS.lowPowerEnabled, false, 'Fresh V3 installs must not enter low power automatically')
 
 test('并发 load 合并为一次初始读取，后续 load 只读内存真源', function () {
   const storage = fakeStorage()
@@ -118,7 +119,7 @@ test('未知 setting key、非法 canonical value 和半合法 patch 必须原�
   assert.deepStrictEqual(store.getSnapshot(), before, 'failed updateMany must not partially mutate canonical settings')
 })
 
-test('已存在的 V3 settings 必须是完整 schema，不能用 DEFAULTS 修补损坏状态', function () {
+test('已存在的 V4 settings 必须是完整 schema，不能用 DEFAULTS 修补损坏状态', function () {
   const storage = fakeStorage()
   const store = core.createStore(storage)
   store.load(function () {})
