@@ -1,4 +1,5 @@
 import storage from '../../capabilities/storage'
+var stateMachineCore = require('./state_machine_core')
 
 var ACTIVE_KEY = 'active_workout_v4'
 var RECORDS_KEY = 'workout_records_v4'
@@ -194,6 +195,12 @@ export default {
       if (!result || !result.ok) {
         markActive(result && result.status ? result.status : 'io-error', result && result.error ? result.error : new Error('Active workout read failed'))
         if (callback) callback(null, state(activeStatus, activeError))
+        return
+      }
+      if (session !== null && session !== undefined && !stateMachineCore.validActiveSession(session)) {
+        var error = new Error('Invalid active workout persistence')
+        markActive('corrupt', error)
+        if (callback) callback(null, state(activeStatus, error))
         return
       }
       markActive(result.status || 'ok', null)
