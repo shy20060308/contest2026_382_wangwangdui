@@ -142,7 +142,6 @@ function today(onChange) {
     var state = copyState(latest)
     state.calendarOpen = calendarOpen
     state.summaryOpen = !calendarOpen
-    state.calendarMonthNumber = latest.calendarMonth === undefined ? null : latest.calendarMonth + 1
     state.calendarCells = Array.isArray(latest.calendarCells) ? latest.calendarCells.slice() : []
     if (typeof onChange === 'function') onChange(state)
   }
