@@ -6,6 +6,7 @@ const childProcess = require('child_process')
 const root = path.resolve(__dirname, '..')
 const generatedFile = path.join(root, 'src', 'product', 'frontend', 'generated', 'watchface_previews.js')
 const compileFile = path.join(root, 'scripts', 'compile-v3-surfaces.js')
+const watchfaceFile = path.join(root, 'src', 'product', 'frontend', 'surfaces', 'watchface.json')
 
 childProcess.execFileSync(process.execPath, [compileFile], { cwd: root, stdio: 'pipe' })
 delete require.cache[require.resolve(generatedFile)]
@@ -55,8 +56,27 @@ assert.ok(collectionSource.includes('<surfacepreview'), 'watchface collection mo
 assert.ok(!collectionSource.includes('previewTimeText'), 'Circle/Rect selector must not render the old fixed 08:32 token')
 assert.ok(!collectionSource.includes('previewHourText') && !collectionSource.includes('previewMinuteText'), 'Pill selector must not render the old fixed hour/minute template')
 
+const watchfaceSource = fs.readFileSync(watchfaceFile, 'utf8')
+;['previewTimeText', 'previewTimeSize', 'previewTimeWeight', 'previewHourText', 'previewHourSize', 'previewHourWeight', 'previewMinuteText', 'previewMinuteSize', 'previewMinuteColor', 'previewMinuteWeight'].forEach(function (token) {
+  assert.ok(!watchfaceSource.includes('"' + token + '"'), 'Watchface Surface must not retain dead fixed-time preview token ' + token)
+})
+
+const runtimeSurface = generated.attach(JSON.parse(JSON.stringify(watchfaceSurface)))
+function circleCollection(selectedId) {
+  return experienceRuntime.decorate({}, runtimeSurface, { formFactor: 'circle' }, { width: 192, height: 192 }, { left: 0, top: 0, width: 192, height: 192 }, { selectedId: selectedId }).collection
+}
+function hasSelectionIndicator(item) {
+  return !!(item && item.preview && item.preview.boxes && item.preview.boxes.some(function (box) { return box.id === 'selection-indicator' }))
+}
+const sportSelected = circleCollection('sport')
+assert.ok(hasSelectionIndicator(sportSelected.items.find(item => item.id === 'sport')), 'selected Circle face must expose an authored preview selection indicator')
+assert.ok(!hasSelectionIndicator(sportSelected.items.find(item => item.id === 'simple')), 'unselected Circle face must not expose the selection indicator')
+const simpleSelected = circleCollection('simple')
+assert.ok(!hasSelectionIndicator(simpleSelected.items.find(item => item.id === 'sport')), 'selection indicator must leave the previously selected face')
+assert.ok(hasSelectionIndicator(simpleSelected.items.find(item => item.id === 'simple')), 'selection indicator must follow selectedId changes')
+
 const pageSource = fs.readFileSync(path.join(root, 'src', 'pages', 'watchface', 'index.ux'), 'utf8')
 assert.ok(pageSource.includes("require('../../product/frontend/surfaces/watchface.json')"), 'Watchface page must keep its one authored Surface dependency')
 assert.ok(pageSource.includes("require('../../product/frontend/generated/watchface_previews')"), 'Watchface page must load only its page-local generated preview data')
 
-console.log('Watchface preview truth verified: selector previews are build-generated from Clock stage IR instead of generic fixed-time mockups')
+console.log('Watchface preview truth verified: Clock-derived previews preserve face identity, selected state and no fixed-time mock tokens')
