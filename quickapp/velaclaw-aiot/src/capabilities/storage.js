@@ -1,7 +1,7 @@
 import storage from '@system.storage'
 
+var queue = require('./internal/operation_queue').createQueue()
 var memoryCache = {}
-var operationQueues = {}
 
 function parseJson(key, value) {
   try {
@@ -15,31 +15,6 @@ function storageFailure(action, key, data, code) {
   var error = data instanceof Error ? data : new Error('storage.' + action + ' failed for ' + key)
   if (code !== undefined) error.code = code
   return error
-}
-
-function finishOperation(key) {
-  var queue = operationQueues[key]
-  if (!queue) return
-  queue.shift()
-  if (queue.length === 0) {
-    delete operationQueues[key]
-    return
-  }
-  queue[0]()
-}
-
-function completeOperation(key, callback, args) {
-  try {
-    if (callback) callback.apply(null, args || [])
-  } finally {
-    finishOperation(key)
-  }
-}
-
-function enqueueOperation(key, operation) {
-  if (!operationQueues[key]) operationQueues[key] = []
-  operationQueues[key].push(operation)
-  if (operationQueues[key].length === 1) operation()
 }
 
 function makeResult(persisted, memoryOnly, error) {
@@ -110,16 +85,16 @@ var adapter = {
   },
 
   set: function (key, value, callback) {
-    enqueueOperation(key, function () {
+    queue.enqueue(key, function () {
       var stringValue
       try {
         stringValue = typeof value === 'string' ? value : JSON.stringify(value)
       } catch (error) {
-        completeOperation(key, callback, [makeResult(false, false, error)])
+        queue.complete(key, callback, [makeResult(false, false, error)])
         return
       }
       persistString(key, stringValue, function (result) {
-        completeOperation(key, callback, [result])
+        queue.complete(key, callback, [result])
       })
     })
   },
@@ -134,31 +109,31 @@ var adapter = {
   },
 
   delete: function (key, callback) {
-    enqueueOperation(key, function () {
+    queue.enqueue(key, function () {
       delete memoryCache[key]
       try {
         if (storage && storage.delete) {
           storage.delete({
             key: key,
             success: function () {
-              completeOperation(key, callback, [makeResult(true, false)])
+              queue.complete(key, callback, [makeResult(true, false)])
             },
             fail: function (data, code) {
-              completeOperation(key, callback, [makeResult(false, true, storageFailure('delete', key, data, code))])
+              queue.complete(key, callback, [makeResult(false, true, storageFailure('delete', key, data, code))])
             }
           })
           return
         }
       } catch (error) {
-        completeOperation(key, callback, [makeResult(false, true, error)])
+        queue.complete(key, callback, [makeResult(false, true, error)])
         return
       }
-      completeOperation(key, callback, [makeResult(false, true, new Error('storage.delete unavailable'))])
+      queue.complete(key, callback, [makeResult(false, true, new Error('storage.delete unavailable'))])
     })
   },
 
   updateJSON: function (key, fallback, updater, callback) {
-    enqueueOperation(key, function () {
+    queue.enqueue(key, function () {
       readJSON(key, fallback, function (current) {
         var nextValue
         var stringValue
@@ -166,14 +141,14 @@ var adapter = {
           nextValue = updater(current)
           stringValue = JSON.stringify(nextValue)
         } catch (error) {
-          completeOperation(key, callback, [current, makeResult(false, false, error)])
+          queue.complete(key, callback, [current, makeResult(false, false, error)])
           return
         }
         persistString(key, stringValue, function (result) {
-          completeOperation(key, callback, [nextValue, result])
+          queue.complete(key, callback, [nextValue, result])
         })
       }, function (error) {
-        completeOperation(key, callback, [null, makeResult(false, false, error)])
+        queue.complete(key, callback, [null, makeResult(false, false, error)])
       })
     })
   }
