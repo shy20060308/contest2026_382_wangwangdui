@@ -30,11 +30,15 @@ function requireSurface(surface) {
 }
 
 function renderSignature(page) {
+  var startedAt = Date.now()
   var profile = page._surfaceProfile || {}
   var scene = page._surfaceScene || {}
   var stateText = ''
   try { stateText = JSON.stringify(page._surfaceState || {}) } catch (error) { stateText = '' }
-  return [page._surface && page._surface.id, profile.formFactor, scene.width, scene.height, stateText].join('|')
+  return {
+    value: [page._surface && page._surface.id, profile.formFactor, scene.width, scene.height, stateText].join('|'),
+    durationMs: Date.now() - startedAt
+  }
 }
 
 function syncPlanContext(page) {
@@ -67,18 +71,34 @@ function syncPlanContext(page) {
 
 function rebuild(page) {
   if (!page || page._surfaceDestroyed || !page._surface || !page._surfaceProfile || !page._surfaceScene || !page._surfaceSafe) return false
-  var signature = renderSignature(page)
-  if (page._surfaceRenderSignature === signature) {
+  var signatureResult = renderSignature(page)
+  performanceMetrics.recordSurfaceSerialize(signatureResult.durationMs)
+  if (page._surfaceRenderSignature === signatureResult.value) {
     syncPlanContext(page)
     performanceMetrics.recordSurfaceSkippedEqual()
     return false
   }
+
   var startedAt = Date.now()
+  var resolveStartedAt = Date.now()
   var plan = surfaceRuntime.resolve(page._surface, page._surfaceProfile, page._surfaceScene, page._surfaceSafe, page._surfaceState || {})
+  var resolveMs = Date.now() - resolveStartedAt
+
+  var decorateStartedAt = Date.now()
   page.surfacePlan = experienceRuntime.decorate(plan, page._surface, page._surfaceProfile, page._surfaceScene, page._surfaceSafe, page._surfaceState || {})
+  var decorateMs = Date.now() - decorateStartedAt
+
+  var contextStartedAt = Date.now()
   syncPlanContext(page)
-  page._surfaceRenderSignature = signature
-  performanceMetrics.recordSurfaceRebuild(Date.now() - startedAt)
+  var contextMs = Date.now() - contextStartedAt
+
+  page._surfaceRenderSignature = signatureResult.value
+  performanceMetrics.recordSurfaceRebuild(Date.now() - startedAt, {
+    serializeMs: signatureResult.durationMs,
+    resolveMs: resolveMs,
+    decorateMs: decorateMs,
+    contextMs: contextMs
+  })
   return true
 }
 
