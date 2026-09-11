@@ -7,9 +7,11 @@ const root = path.resolve(__dirname, '..')
 const manifestFile = path.join(root, 'src', 'manifest.json')
 const surfaceRoot = path.join(root, 'src', 'product', 'frontend', 'surfaces')
 const generatedRoot = path.join(root, 'src', 'product', 'frontend', 'generated')
+const schemaFile = path.join(root, 'src', 'product', 'frontend', 'surface.schema.json')
 const outputFile = path.join(generatedRoot, 'surfaces.js')
 const watchfacePreviewFile = path.join(generatedRoot, 'watchface_previews.js')
 const previewCompiler = require('./lib/watchface-preview-compiler')
+const surfaceContract = require('./lib/surface-contract-validator')
 const sceneRuntime = require('../src/product/design/scene')
 const surfaceRuntime = require('../src/product/frontend/runtime/surface_runtime')
 const experienceRuntime = require('../src/product/frontend/runtime/experience_runtime')
@@ -18,6 +20,7 @@ function readJson(file) { return JSON.parse(fs.readFileSync(file, 'utf8')) }
 function surfaceFilename(route) { return route.replace(/^pages\//, '').replace(/\//g, '__') + '.json' }
 
 const manifest = readJson(manifestFile)
+const surfaceSchema = readJson(schemaFile)
 const routes = Object.keys(manifest.router && manifest.router.pages ? manifest.router.pages : {}).sort()
 const byId = {}
 const filesByRoute = {}
@@ -27,8 +30,8 @@ routes.forEach(function (route) {
   const file = path.join(surfaceRoot, filename)
   if (!fs.existsSync(file)) throw new Error('Missing V3 surface for route: ' + route)
   const surface = readJson(file)
-  if (!surface.id || surface.route !== route) throw new Error('Invalid V3 surface identity: ' + file)
-  if (surface.renderer !== 'surface-v1') throw new Error('Invalid V3 renderer for route: ' + route)
+  surfaceContract.assertValid(surface, surfaceSchema, filename)
+  if (surface.route !== route) throw new Error('Invalid V3 surface route identity: ' + file)
   if (byId[surface.id]) throw new Error('Duplicate V3 surface id: ' + surface.id)
   byId[surface.id] = true
   filesByRoute[route] = filename
@@ -74,4 +77,4 @@ const previewOutput = previewBanner +
   'module.exports = { attach: attach, previewsById: previewsById }\n'
 fs.writeFileSync(watchfacePreviewFile, previewOutput, 'utf8')
 
-console.log('Validated ' + routes.length + '/' + routes.length + ' V3 JSON surfaces; page-local metadata -> ' + path.relative(root, outputFile) + '; Clock-derived watchface previews -> ' + path.relative(root, watchfacePreviewFile))
+console.log('Validated ' + routes.length + '/' + routes.length + ' V3 JSON surfaces against surface.schema.json + runtime semantics; page-local metadata -> ' + path.relative(root, outputFile) + '; Clock-derived watchface previews -> ' + path.relative(root, watchfacePreviewFile))
