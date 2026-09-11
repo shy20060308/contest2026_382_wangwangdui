@@ -17,15 +17,17 @@ const cacheAssignments = Array.from(storage.matchAll(/memoryCache\[key\]\s*=\s*(
 assert.deepStrictEqual(cacheAssignments.sort(), ['stringValue', 'value'], 'Storage cache assignments must stay limited to serialized writes and native string reads')
 assert.ok(!storage.includes('memoryCache[key] = current') && !storage.includes('memoryCache[key] = nextValue'), 'Parsed mutable objects must never enter the storage cache')
 
-assert.ok(history.includes('callback(requireHistory(stored, today))'), 'History reads must return the validated/calendar-window result directly')
+assert.ok(history.includes('storage.getJSONResult(HISTORY_KEY'), 'History reads must use the recoverable structured JSON boundary')
+assert.ok(history.includes('var history = requireHistory(stored, today)') && history.includes('callback(history, persistenceSnapshot())'), 'History reads must return the validated/calendar-window result directly')
 assert.ok(!history.includes('callback(clone(requireHistory('), 'History reads must not JSON-clone an already rebuilt read result')
 assert.ok(history.includes('callback(clone(history), result)'), 'History write callback isolation must stay explicit')
 
-assert.ok(workout.includes('if (callback) callback(session)'), 'Active workout reads must use the fresh getJSON parse directly')
-assert.ok(workout.includes('if (callback) callback(requireRecords(records))'), 'Workout record reads must validate the fresh parsed array without a second JSON clone')
+assert.ok(workout.includes('storage.getJSONResult(ACTIVE_KEY'), 'Active workout reads must use the recoverable structured JSON boundary')
+assert.ok(workout.includes('if (callback) callback(session, state(activeStatus, null))'), 'Active workout reads must return the fresh parsed session directly after validation')
+assert.ok(workout.includes('var valid = requireRecords(records)') && workout.includes('callback(valid, state(recordsStatus, null))'), 'Workout record reads must validate the fresh parsed array without a second JSON clone')
 assert.ok(!workout.includes('callback(clone(session))'), 'Active workout reads must not duplicate a fresh parsed session')
 assert.ok(!workout.includes('callback(clone(requireRecords(records)))'), 'Workout record reads must not duplicate a fresh parsed record array')
 assert.ok(workout.includes('callback(clone(savedRecord), result)'), 'Workout save callback isolation must remain explicit')
-assert.ok(workout.includes('callback(clone(records), result)'), 'Workout mark-synced callback isolation must remain explicit when a consumer requests it')
+assert.ok(workout.includes('callback(clone(records || []), result)'), 'Workout mark-synced callback isolation must remain explicit when a consumer requests it')
 
-console.log('Storage read efficiency verified: serialized cache text is freshly parsed by the structured read boundary while write callbacks retain explicit isolation')
+console.log('Storage read efficiency verified: recoverable History/Workout reads still rely on fresh parse ownership while write callbacks retain explicit isolation')
