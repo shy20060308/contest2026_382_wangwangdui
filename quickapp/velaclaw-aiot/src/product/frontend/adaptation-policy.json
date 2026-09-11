@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "principle": "The level belongs to the cross-form-factor difference. routeLevel is the highest level required by that route, not a license to make every module independent.",
+  "levels": {
+    "L1": {
+      "kind": "shared-expression",
+      "meaning": "Same product and expression; only geometry, density and typography adapt.",
+      "jsonization": "Surface modules and interaction semantics stay shared in JSON. Circle/Pill/Rect use token and geometry overrides only. Generic base interactions such as a slider may remain shared."
+    },
+    "L2": {
+      "kind": "local-expression",
+      "meaning": "Product, data and actions remain shared while selected local expressions differ by form factor.",
+      "jsonization": "Keep one shared JSON product model, then use module-level variant tokens/visibility/composition metadata for local expression changes. Do not fork the whole page."
+    },
+    "L3": {
+      "kind": "independent-surface",
+      "meaning": "A genuinely different product or interaction surface is required for at least one form factor.",
+      "jsonization": "JSON still owns content, actions, tokens and engine selection, but a form factor may select a distinct generic experience engine or composition such as honeycomb, paged list or watchface. Engines must remain product-agnostic."
+    }
+  },
+  "routes": {
+    "pages/clock": { "routeLevel": "L3", "baseline": "clock", "reason": "Watchface is a gesture-led independent surface and its composition differs materially by form factor." },
+    "pages/clock_guard": { "routeLevel": "L1", "baseline": "guard", "reason": "Navigation guard has no form-factor-specific product expression." },
+    "pages/heartrate": { "routeLevel": "L1", "baseline": "heart", "reason": "Same health hierarchy and interaction; geometry/density adapt." },
+    "pages/steps": { "routeLevel": "L1", "baseline": "steps", "reason": "Same activity cards and progress semantics; geometry/density adapt." },
+    "pages/applist": { "routeLevel": "L3", "baseline": "launcher", "reason": "Circle honeycomb, Pill paged list and Rect designed grid are genuinely different interaction surfaces." },
+    "pages/notification_demo": { "routeLevel": "L1", "baseline": "notification", "reason": "Notification product flow is shared; form factors change only presentation geometry." },
+    "pages/history": { "routeLevel": "L2", "baseline": "history", "reason": "Shared history data and hierarchy with local chart/card expression differences." },
+    "pages/workout_select": { "routeLevel": "L1", "baseline": "workout-selection", "reason": "Shared workout catalogue and actions; layout dimensions adapt." },
+    "pages/workout": { "routeLevel": "L2", "baseline": "workout", "reason": "Shared live-session semantics with local metric/action composition differences." },
+    "pages/workout_history": { "routeLevel": "L1", "baseline": "workout-history", "reason": "Shared record list expression with geometric adaptation only." },
+    "pages/watchface": { "routeLevel": "L3", "baseline": "faces", "reason": "Visual selector and preview composition require independent shape-aware surface treatment." },
+    "pages/settings/settings": { "routeLevel": "L1", "baseline": "settings", "reason": "Shared settings information architecture; geometry adapts." },
+    "pages/settings/bluetooth": { "routeLevel": "L1", "baseline": "sync", "reason": "Shared sync status/actions; geometry adapts." },
+    "pages/settings/vibration": { "routeLevel": "L1", "baseline": "vibration", "reason": "Shared setting controls and semantics; geometry adapts." },
+    "pages/settings/brightness": { "routeLevel": "L1", "baseline": "brightness", "reason": "The direct brightness slider is the same expression on all shapes; only its geometry adapts." },
+    "pages/settings/diagnostics": { "routeLevel": "L1", "baseline": "diagnostics", "reason": "Shared diagnostics content and status semantics; geometry adapts." },
+    "pages/settings/motion": { "routeLevel": "L1", "baseline": "motion", "reason": "Shared sensor controls and measurements; geometry adapts." },
+    "pages/today": { "routeLevel": "L2", "baseline": "today", "reason": "Shared daily data with local summary/calendar expression changes." }
+  }
+}
