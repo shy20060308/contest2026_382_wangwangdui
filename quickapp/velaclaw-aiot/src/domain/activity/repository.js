@@ -47,16 +47,41 @@ function payload(snapshot, date) {
   }
 }
 
+function corruptResult(error) {
+  return { ok: false, status: 'corrupt', error: error }
+}
+
+function loadResult(callback, expectedDate) {
+  storage.getJSONResult(ACTIVITY_KEY, function (record, result) {
+    if (!result || !result.ok) {
+      if (callback) callback(null, result || corruptResult(new Error('Activity persistence read failed')))
+      return
+    }
+    try {
+      if (callback) callback(normalize(record, expectedDate), result)
+    } catch (error) {
+      if (callback) callback(null, corruptResult(error))
+    }
+  }, null)
+}
+
 export default {
+  loadResult: loadResult,
+
   load: function (callback, expectedDate) {
-    storage.getJSON(ACTIVITY_KEY, function (record) {
-      if (callback) callback(normalize(record, expectedDate))
-    }, null)
+    loadResult(function (record, result) {
+      if (!result || !result.ok) throw result && result.error ? result.error : new Error('Activity persistence read failed')
+      if (callback) callback(record)
+    }, expectedDate)
   },
 
   save: function (snapshot, callback, date) {
     storage.set(ACTIVITY_KEY, payload(snapshot, date), function (result) {
       if (callback) callback(clone(snapshot), result)
     })
+  },
+
+  quarantine: function (callback) {
+    storage.quarantine(ACTIVITY_KEY, callback)
   }
 }
