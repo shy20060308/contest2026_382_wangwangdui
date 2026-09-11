@@ -32,7 +32,9 @@ assert.ok(repository.includes('avgHeartRate: null'), 'History Repository must pr
 assert.ok(controller.includes('heartCount ? Math.round(totalHeart / heartCount) : null'), 'History Feature must preserve unavailable aggregate heart rate as null')
 assert.ok(!controller.includes('Number(item.steps)') && !controller.includes('Number(item.avgHeartRate)'), 'History Feature must trust Repository records')
 assert.ok(!controller.includes('summarize: summarize'), 'History Feature must not expose its internal reducer as product API')
-assert.ok(page.includes("surfacePage.bind(this, 'history')"), 'History page must bind exactly one declarative surface')
+assert.ok(page.includes("var surface = require('../../product/frontend/surfaces/history.json')"), 'History page must load its page-local declarative surface')
+assert.ok(page.includes('surfacePage.bind(this, surface)'), 'History page must bind the page-local Surface object through the generic runtime')
+assert.strictEqual((page.match(/surfacePage\.bind\(/g) || []).length, 1, 'History page must bind exactly one declarative surface')
 assert.ok(!page.includes('historyView') && !page.includes('historyDesign'), 'History page must not retain a parallel presentation path')
 assert.strictEqual(exists('src/product/design/apps/history/view.js'), false, 'History must not retain a second editable presentation view')
 assert.strictEqual(exists('src/product/design/apps/history/layout.js'), false, 'History must not retain a second editable layout recipe')
@@ -54,4 +56,4 @@ assert.strictEqual(heartInsight.value, '--', 'null heart-rate state must become 
 assert.strictEqual(plan.flowMetricItems[0].value, '5,200')
 assert.strictEqual(plan.flowHeaders[0].trailing, '86%')
 
-console.log('History truth contracts verified: strict persistence, one semantic owner and one JSON presentation authority')
+console.log('History truth contracts verified: strict persistence, one semantic owner and one page-local JSON presentation authority')
