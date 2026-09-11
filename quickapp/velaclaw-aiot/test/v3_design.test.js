@@ -101,10 +101,34 @@ Object.keys(profiles).forEach(function (shape) {
     faceId: 'sport', powerMode: 'ACTIVE', timestamp: new Date(2026, 8, 11, 8, 30).getTime(),
     steps: 5200, currentHeartRate: 76, goalPercent: 52, batteryPercent: 88
   })
-  assert.strictEqual(clock.flowHeaders[0].trailing, '活力数字')
-  assert.strictEqual(clock.flowTexts.filter(item => item.id === 'sportTime')[0].text, '08:30')
-  assert.deepStrictEqual(clock.flowMetricItems.filter(item => item.id.indexOf('sportMetrics-') === 0).map(item => item.value), ['5,200', '76', '52%', '88%'])
+  assert.ok(clock.stage, 'Clock L3 must resolve an independent stage instead of a shared flow facade')
+  assert.strictEqual(clock.stage.variantId, 'sport')
+  assert.strictEqual(clock.stage.background, '#050505')
+  assert.strictEqual(clock.stage.texts.filter(item => item.id === 'time')[0].text, '08:30')
+  assert.ok(clock.stage.metrics.some(item => item.id === 'steps' && item.value === '5,200'))
+  assert.ok(clock.stage.metrics.some(item => item.id === 'heart' && item.value === '76'))
   assert.strictEqual(clock.gestures.up, '/pages/applist', 'Clock must expose JSON-authored gesture navigation')
+  const expectedFaceIds = shape === 'circle'
+    ? ['sport', 'simple', 'dashboard', 'mechanical']
+    : (shape === 'pill' ? ['sport', 'simple', 'dashboard', 'alpine'] : ['sport', 'simple', 'dashboard'])
+  assert.deepStrictEqual(clock.controllerConfig.faceIds, expectedFaceIds, 'Clock controller availability must follow the resolved L3 JSON branch')
 })
 
-console.log('V3 design verified: all manifest routes are authored as Surface JSON and representative surfaces resolve on Circle/Pill/Rect')
+const mechanical = resolve(surface('pages/clock'), profiles.circle, {
+  clockVisible: true, sleepVisible: false, notificationAppVisible: false, notificationCallVisible: false,
+  faceId: 'mechanical', powerMode: 'ACTIVE', timestamp: new Date(2026, 8, 11, 8, 30, 15).getTime(),
+  steps: 5200, currentHeartRate: 76, goalPercent: 52, batteryPercent: 88
+})
+assert.ok(mechanical.stage.analogDials.length >= 1, 'Circle mechanical face must remain a true analog composition')
+assert.strictEqual(mechanical.stage.analogTicks.length, 60, 'Mechanical dial must preserve 60 declarative ticks')
+assert.strictEqual(mechanical.stage.analogHands.length, 3, 'Mechanical dial must preserve hour/minute/second hands')
+
+const alpine = resolve(surface('pages/clock'), profiles.pill, {
+  clockVisible: true, sleepVisible: false, notificationAppVisible: false, notificationCallVisible: false,
+  faceId: 'alpine', powerMode: 'ACTIVE', timestamp: new Date(2026, 8, 11, 8, 30).getTime(),
+  steps: 5200, currentHeartRate: 76, goalPercent: 52, batteryPercent: 88
+})
+assert.strictEqual(alpine.stage.variantId, 'alpine')
+assert.ok(alpine.stage.panels.length >= 2, 'Pill alpine face must retain its independent glass composition')
+
+console.log('V3 design verified: all manifest routes use declarative JSON and L3 Clock/Watchface resolve independent Circle/Pill/Rect compositions')
