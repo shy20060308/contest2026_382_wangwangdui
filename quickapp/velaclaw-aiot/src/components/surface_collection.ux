@@ -1,6 +1,6 @@
 <template>
   <stack class="collection-root" style="left: {{ model.frame.left }}px; top: {{ model.frame.top }}px; width: {{ model.frame.width }}px; height: {{ model.frame.height }}px;" @swipe="onSwipe">
-    <stack class="honeycomb" if="{{ model.mode === 'honeycomb' }}" style="width: {{ model.frame.width }}px; height: {{ model.frame.height }}px;" @touchstart="onHoneyStart" @touchmove="onHoneyMove" @touchend="onHoneyEnd">
+    <stack class="honeycomb" if="{{ model.mode === 'honeycomb' }}" style="width: {{ model.frame.width }}px; height: {{ model.frame.height }}px; background-color: {{ model.tokens.background }};" @touchstart="onHoneyStart" @touchmove="onHoneyMove" @touchend="onHoneyEnd">
       <div class="honey-item" for="{{ honeyVisible }}" tid="slotKey" @click="tapHoney($item)" style="left: {{ $item.left }}px; top: {{ $item.top }}px; width: {{ $item.size }}px; height: {{ $item.size }}px; opacity: {{ $item.opacity }};">
         <image class="honey-icon" src="{{ $item.icon }}" style="width: {{ $item.size }}px; height: {{ $item.size }}px; border-radius: {{ $item.radius }}px;"></image>
       </div>
@@ -9,39 +9,39 @@
 
     <div class="paged-list" if="{{ model.mode === 'paged-list' }}" style="width: {{ model.frame.width }}px; height: {{ model.frame.height }}px;">
       <div class="collection-head" style="left: {{ model.tokens.headerLeft }}px; top: {{ model.tokens.headerTop }}px; width: {{ model.tokens.headerWidth }}px; height: {{ model.tokens.headerHeight }}px;">
-        <text class="collection-title" style="font-size: {{ model.tokens.titleSize }}px; color: {{ model.tokens.titleColor }}; font-weight: bold;">{{ model.tokens.title }}</text>
+        <text class="collection-title" style="font-size: {{ model.tokens.titleSize }}px; color: {{ model.tokens.titleColor }}; font-weight: {{ model.tokens.titleWeight }};">{{ model.tokens.title }}</text>
         <text class="collection-page" style="font-size: {{ model.tokens.pageSize }}px; color: {{ model.tokens.pageColor }};">{{ pageText }}</text>
       </div>
       <div class="list-content" style="left: {{ model.tokens.contentLeft }}px; top: {{ model.tokens.contentTop }}px; width: {{ model.tokens.contentWidth }}px; height: {{ model.tokens.contentHeight }}px;">
         <div class="list-item" for="{{ pageItems }}" tid="id" @click="activateItem($item)" style="width: {{ model.tokens.contentWidth }}px; height: {{ model.tokens.itemHeight }}px; margin-bottom: {{ model.tokens.itemGap }}px; border-radius: {{ model.tokens.itemRadius }}px; padding-left: {{ model.tokens.itemPaddingX }}px; padding-right: {{ model.tokens.itemPaddingX }}px; background-color: {{ model.tokens.itemBackground }};">
           <image class="list-icon" src="{{ $item.icon }}" style="width: {{ model.tokens.iconSize }}px; height: {{ model.tokens.iconSize }}px; border-radius: {{ model.tokens.iconRadius }}px;"></image>
-          <div class="list-copy" style="margin-left: {{ model.tokens.copyGap }}px;"><text class="list-name" style="font-size: {{ model.tokens.nameSize }}px; color: {{ model.tokens.nameColor }}; font-weight: bold;">{{ $item.label }}</text><text class="list-subtitle" style="font-size: {{ model.tokens.subtitleSize }}px; color: {{ model.tokens.subtitleColor }};">{{ $item.subtitle }}</text></div>
-          <text class="list-arrow" style="width: {{ model.tokens.arrowWidth }}px; font-size: {{ model.tokens.arrowSize }}px; color: {{ $item.accent }}; text-align: right;">›</text>
+          <div class="list-copy" style="margin-left: {{ model.tokens.copyGap }}px;"><text class="list-name" style="font-size: {{ model.tokens.nameSize }}px; color: {{ model.tokens.nameColor }}; font-weight: {{ model.tokens.nameWeight }};">{{ $item.label }}</text><text class="list-subtitle" style="font-size: {{ model.tokens.subtitleSize }}px; color: {{ model.tokens.subtitleColor }};">{{ $item.subtitle }}</text></div>
+          <text class="list-arrow" style="width: {{ model.tokens.arrowWidth }}px; font-size: {{ model.tokens.arrowSize }}px; color: {{ $item.accent }}; text-align: right;">{{ model.tokens.arrowText }}</text>
         </div>
       </div>
       <div class="pager" style="left: {{ model.tokens.pagerLeft }}px; top: {{ model.tokens.pagerTop }}px; width: {{ model.tokens.pagerWidth }}px; height: {{ model.tokens.pagerHeight }}px;">
-        <text class="pager-button" style="width: {{ model.tokens.pagerButtonWidth }}px; font-size: {{ model.tokens.pagerButtonSize }}px; color: {{ previousColor }};" @click="previousPage">‹</text>
+        <text class="pager-button" style="width: {{ model.tokens.pagerButtonWidth }}px; font-size: {{ model.tokens.pagerButtonSize }}px; color: {{ previousColor }};" @click="previousPage">{{ model.tokens.pagerPreviousText }}</text>
         <div class="pager-track" style="width: {{ model.tokens.pagerTrackWidth }}px; height: {{ model.tokens.pagerTrackHeight }}px; border-radius: {{ model.tokens.pagerTrackRadius }}px; background-color: {{ model.tokens.pagerTrackBackground }};"><div class="pager-fill" style="width: {{ pageProgressWidth }}px; height: {{ model.tokens.pagerTrackHeight }}px; border-radius: {{ model.tokens.pagerTrackRadius }}px; background-color: {{ model.tokens.pagerAccent }};"></div></div>
-        <text class="pager-button" style="width: {{ model.tokens.pagerButtonWidth }}px; font-size: {{ model.tokens.pagerButtonSize }}px; color: {{ nextColor }}; text-align: right;" @click="nextPage">›</text>
+        <text class="pager-button" style="width: {{ model.tokens.pagerButtonWidth }}px; font-size: {{ model.tokens.pagerButtonSize }}px; color: {{ nextColor }}; text-align: right;" @click="nextPage">{{ model.tokens.pagerNextText }}</text>
       </div>
     </div>
 
     <div class="designed-grid" if="{{ model.mode === 'designed-grid' }}" style="width: {{ model.frame.width }}px; height: {{ model.frame.height }}px;">
       <div class="collection-head" style="left: {{ model.tokens.headerLeft }}px; top: {{ model.tokens.headerTop }}px; width: {{ model.tokens.headerWidth }}px; height: {{ model.tokens.headerHeight }}px;">
-        <text class="collection-title" style="font-size: {{ model.tokens.titleSize }}px; color: {{ model.tokens.titleColor }}; font-weight: bold;">{{ model.tokens.title }}</text>
+        <text class="collection-title" style="font-size: {{ model.tokens.titleSize }}px; color: {{ model.tokens.titleColor }}; font-weight: {{ model.tokens.titleWeight }};">{{ model.tokens.title }}</text>
         <text class="collection-page" style="font-size: {{ model.tokens.pageSize }}px; color: {{ model.tokens.pageColor }};">{{ pageText }}</text>
       </div>
       <div class="grid-content" style="left: {{ model.tokens.contentLeft }}px; top: {{ model.tokens.contentTop }}px; width: {{ model.tokens.contentWidth }}px; height: {{ model.tokens.contentHeight }}px;">
-        <div class="grid-item" for="{{ gridItems }}" tid="id" @click="activateItem($item)" style="left: {{ $item.left }}px; top: {{ $item.top }}px; width: {{ model.tokens.gridItemWidth }}px; height: {{ model.tokens.itemHeight }}px; border-radius: {{ model.tokens.itemRadius }}px; border-color: {{ $item.accent }}; background-color: {{ model.tokens.itemBackground }};">
+        <div class="grid-item" for="{{ gridItems }}" tid="id" @click="activateItem($item)" style="left: {{ $item.left }}px; top: {{ $item.top }}px; width: {{ model.tokens.gridItemWidth }}px; height: {{ model.tokens.itemHeight }}px; border-radius: {{ model.tokens.itemRadius }}px; border-width: {{ model.tokens.itemBorderWidth }}px; border-color: {{ $item.accent }}; background-color: {{ model.tokens.itemBackground }};">
           <image class="grid-icon" src="{{ $item.icon }}" style="width: {{ model.tokens.iconSize }}px; height: {{ model.tokens.iconSize }}px; border-radius: {{ model.tokens.iconRadius }}px;"></image>
-          <text class="grid-name" style="font-size: {{ model.tokens.nameSize }}px; color: {{ model.tokens.nameColor }}; font-weight: bold; text-align: center;">{{ $item.label }}</text>
-          <div class="grid-accent" style="width: {{ model.tokens.accentWidth }}px; height: {{ model.tokens.accentHeight }}px; border-radius: {{ model.tokens.accentRadius }}px; background-color: {{ $item.accent }};"></div>
+          <text class="grid-name" style="font-size: {{ model.tokens.nameSize }}px; color: {{ model.tokens.nameColor }}; font-weight: {{ model.tokens.nameWeight }}; text-align: center;">{{ $item.label }}</text>
+          <div class="grid-accent" style="width: {{ model.tokens.accentWidth }}px; height: {{ model.tokens.accentHeight }}px; bottom: {{ model.tokens.accentBottom }}px; border-radius: {{ model.tokens.accentRadius }}px; background-color: {{ $item.accent }};"></div>
         </div>
       </div>
       <div class="pager" style="left: {{ model.tokens.pagerLeft }}px; top: {{ model.tokens.pagerTop }}px; width: {{ model.tokens.pagerWidth }}px; height: {{ model.tokens.pagerHeight }}px;">
-        <text class="pager-button" style="width: {{ model.tokens.pagerButtonWidth }}px; font-size: {{ model.tokens.pagerButtonSize }}px; color: {{ previousColor }};" @click="previousPage">‹</text>
+        <text class="pager-button" style="width: {{ model.tokens.pagerButtonWidth }}px; font-size: {{ model.tokens.pagerButtonSize }}px; color: {{ previousColor }};" @click="previousPage">{{ model.tokens.pagerPreviousText }}</text>
         <div class="pager-track" style="width: {{ model.tokens.pagerTrackWidth }}px; height: {{ model.tokens.pagerTrackHeight }}px; border-radius: {{ model.tokens.pagerTrackRadius }}px; background-color: {{ model.tokens.pagerTrackBackground }};"><div class="pager-fill" style="width: {{ pageProgressWidth }}px; height: {{ model.tokens.pagerTrackHeight }}px; border-radius: {{ model.tokens.pagerTrackRadius }}px; background-color: {{ model.tokens.pagerAccent }};"></div></div>
-        <text class="pager-button" style="width: {{ model.tokens.pagerButtonWidth }}px; font-size: {{ model.tokens.pagerButtonSize }}px; color: {{ nextColor }}; text-align: right;" @click="nextPage">›</text>
+        <text class="pager-button" style="width: {{ model.tokens.pagerButtonWidth }}px; font-size: {{ model.tokens.pagerButtonSize }}px; color: {{ nextColor }}; text-align: right;" @click="nextPage">{{ model.tokens.pagerNextText }}</text>
       </div>
     </div>
   </stack>
@@ -53,34 +53,44 @@ import honeycomb from '../product/frontend/engines/honeycomb'
 export default {
   props: ['model'],
   private: {
-    pageIndex: 0, pageItems: [], gridItems: [], pageText: '1 / 1', pageProgressWidth: 0,
-    previousColor: '#3A3A3C', nextColor: '#3A3A3C', honeySlots: [], honeyVisible: [], focusedLabel: '',
+    pageIndex: 0, pageItems: [], gridItems: [], pageText: '', pageProgressWidth: 0,
+    previousColor: '', nextColor: '', honeySlots: [], honeyVisible: [], focusedLabel: '',
     honeyPanX: 0, honeyPanY: 0, honeyVelocityX: 0, honeyVelocityY: 0, honeyTouchActive: false,
     honeyLabelOpacity: 1, dragMoved: false, suppressTapUntil: 0, layoutTimer: null, motionTimer: null
   },
   onInit() { this.refreshModel() },
   onDestroy() { this.stopHoneyMotion(); this.honeySlots = []; this.honeyVisible = [] },
+  tokenNumber(name) {
+    var value = Number(this.model && this.model.tokens ? this.model.tokens[name] : undefined)
+    if (!isFinite(value)) throw new Error('Collection requires numeric token ' + name)
+    return value
+  },
   refreshModel() {
     if (!this.model) return
     if (this.model.mode === 'honeycomb') this.initHoneycomb()
     else this.refreshPage()
   },
-  pageCount() { var size = Math.max(1, Number(this.model.tokens.pageItemCount) || 1); return Math.max(1, Math.ceil(this.model.items.length / size)) },
+  pageCount() {
+    var size = Math.max(1, Math.round(this.tokenNumber('pageItemCount')))
+    return Math.max(1, Math.ceil(this.model.items.length / size))
+  },
   refreshPage() {
-    var size = Math.max(1, Number(this.model.tokens.pageItemCount) || 1)
+    var size = Math.max(1, Math.round(this.tokenNumber('pageItemCount')))
     var count = this.pageCount()
     if (this.pageIndex >= count) this.pageIndex = count - 1
     if (this.pageIndex < 0) this.pageIndex = 0
     this.pageItems = this.model.items.slice(this.pageIndex * size, this.pageIndex * size + size)
     this.pageText = (this.pageIndex + 1) + ' / ' + count
-    var trackWidth = Number(this.model.tokens.pagerTrackWidth) || 0
-    this.pageProgressWidth = Math.max(1, Math.round(trackWidth * (this.pageIndex + 1) / count))
+    var trackWidth = this.tokenNumber('pagerTrackWidth')
+    var minimum = this.tokenNumber('pagerMinProgressWidth')
+    this.pageProgressWidth = Math.max(minimum, Math.round(trackWidth * (this.pageIndex + 1) / count))
     this.previousColor = this.pageIndex > 0 ? this.model.tokens.pagerAccent : this.model.tokens.pagerDisabledColor
     this.nextColor = this.pageIndex < count - 1 ? this.model.tokens.pagerAccent : this.model.tokens.pagerDisabledColor
-    var columns = Math.max(1, Number(this.model.tokens.columns) || 2)
-    var gap = Number(this.model.tokens.gridGap) || 0
-    var width = Number(this.model.tokens.gridItemWidth) || 0
-    var rowHeight = (Number(this.model.tokens.itemHeight) || 0) + (Number(this.model.tokens.gridRowGap) || gap)
+    if (this.model.mode !== 'designed-grid') { this.gridItems = []; return }
+    var columns = Math.max(1, Math.round(this.tokenNumber('columns')))
+    var gap = this.tokenNumber('gridGap')
+    var width = this.tokenNumber('gridItemWidth')
+    var rowHeight = this.tokenNumber('itemHeight') + this.tokenNumber('gridRowGap')
     var grid = []
     for (var i = 0; i < this.pageItems.length; i++) {
       var item = this.pageItems[i]
@@ -140,12 +150,15 @@ export default {
     var p = event.touches[0], now = Date.now(), cfg = this.honeyConfig()
     var dx = p.pageX - this.touchLastX, dy = p.pageY - this.touchLastY, dt = Math.max(8, now - (this.touchLastAt || now))
     this.touchLastX = p.pageX; this.touchLastY = p.pageY; this.touchLastAt = now
-    if (Math.abs(p.pageX - this.touchStartX) > 6 || Math.abs(p.pageY - this.touchStartY) > 6) this.dragMoved = true
+    var dragThreshold = this.tokenNumber('dragThreshold')
+    if (Math.abs(p.pageX - this.touchStartX) > dragThreshold || Math.abs(p.pageY - this.touchStartY) > dragThreshold) this.dragMoved = true
     if (this.dragMoved) { if (event.preventDefault) event.preventDefault(); if (event.stopPropagation) event.stopPropagation() }
     var pan = honeycomb.nextPan(this.honeySlots, this.honeyPanX, this.honeyPanY, dx, dy, cfg)
     this.honeyPanX = pan.x; this.honeyPanY = pan.y
-    this.honeyVelocityX = this.honeyVelocityX * 0.45 + (dx / dt) * 0.55
-    this.honeyVelocityY = this.honeyVelocityY * 0.45 + (dy / dt) * 0.55
+    var previousWeight = this.tokenNumber('velocityPreviousWeight')
+    var sampleWeight = this.tokenNumber('velocitySampleWeight')
+    this.honeyVelocityX = this.honeyVelocityX * previousWeight + (dx / dt) * sampleWeight
+    this.honeyVelocityY = this.honeyVelocityY * previousWeight + (dy / dt) * sampleWeight
     this.scheduleHoneyLayout()
   },
   onHoneyEnd(event) {
@@ -153,19 +166,21 @@ export default {
     this.honeyTouchActive = false
     var p = event.changedTouches && event.changedTouches[0]
     var totalX = p ? p.pageX - this.touchStartX : 0, totalY = p ? p.pageY - this.touchStartY : 0
-    var edgeDistance = Number(this.model.tokens.edgeBackDistance) || 58, edgeStart = Number(this.model.tokens.edgeBackStart) || 26
-    if (totalX > edgeDistance && Math.abs(totalY) < 30 && this.touchStartX < edgeStart && this.model.actions && this.model.actions.edgeBack) {
+    var edgeDistance = this.tokenNumber('edgeBackDistance')
+    var edgeStart = this.tokenNumber('edgeBackStart')
+    var verticalLimit = this.tokenNumber('edgeBackVerticalLimit')
+    if (totalX > edgeDistance && Math.abs(totalY) < verticalLimit && this.touchStartX < edgeStart && this.model.actions && this.model.actions.edgeBack) {
       if (event.preventDefault) event.preventDefault(); if (event.stopPropagation) event.stopPropagation()
       this.stopHoneyMotion(); this.emitAction(this.model.actions.edgeBack); return
     }
     if (!this.dragMoved) { this.honeyLabelOpacity = 1; this.scheduleHoneyLayout(); return }
     if (event.preventDefault) event.preventDefault(); if (event.stopPropagation) event.stopPropagation()
-    this.suppressTapUntil = Date.now() + 220
+    this.suppressTapUntil = Date.now() + this.tokenNumber('tapSuppressDuration')
     this.startHoneyInertia(this.honeyVelocityX, this.honeyVelocityY)
   },
   startHoneyInertia(vx, vy) {
     clearTimeout(this.motionTimer)
-    this.honeyVelocityX = Number(vx) || 0; this.honeyVelocityY = Number(vy) || 0; this.honeyLabelOpacity = 0.45
+    this.honeyVelocityX = Number(vx) || 0; this.honeyVelocityY = Number(vy) || 0; this.honeyLabelOpacity = this.tokenNumber('movingLabelOpacity')
     var self = this, cfg = this.honeyConfig()
     function tick() {
       var speed = Math.sqrt(self.honeyVelocityX * self.honeyVelocityX + self.honeyVelocityY * self.honeyVelocityY)
@@ -188,7 +203,7 @@ export default {
   },
   animateHoneyPan(target) {
     clearTimeout(this.motionTimer)
-    var startX = this.honeyPanX, startY = this.honeyPanY, startedAt = Date.now(), duration = Number(this.model.tokens.snapDuration) || 144
+    var startX = this.honeyPanX, startY = this.honeyPanY, startedAt = Date.now(), duration = this.tokenNumber('snapDuration')
     var self = this, cfg = this.honeyConfig()
     function tick() {
       var progress = Math.min(1, (Date.now() - startedAt) / duration), eased = 1 - Math.pow(1 - progress, 3)
@@ -204,13 +219,12 @@ export default {
 
 <style>
 .collection-root, .honeycomb, .honey-item, .honey-label, .paged-list, .designed-grid, .collection-head, .list-content, .grid-content, .grid-item, .pager { position: absolute; }
-.honeycomb { background-color: #000000; }
 .list-content { flex-direction: column; }
 .list-item { flex-direction: row; align-items: center; }
 .list-copy { flex: 1; flex-direction: column; }
 .collection-head, .pager { flex-direction: row; align-items: center; justify-content: space-between; }
 .collection-title { flex: 1; }
-.grid-item { align-items: center; justify-content: center; flex-direction: column; border-width: 1px; }
-.grid-accent { position: absolute; bottom: 5px; }
+.grid-item { align-items: center; justify-content: center; flex-direction: column; }
+.grid-accent { position: absolute; }
 .pager-track { overflow: hidden; flex-direction: row; align-items: center; }
 </style>
