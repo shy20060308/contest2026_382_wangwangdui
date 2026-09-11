@@ -1,6 +1,6 @@
 import storage from '../../capabilities/storage'
 
-var ACTIVITY_KEY = 'activity_today_v3'
+var ACTIVITY_KEY = 'activity_today_v4'
 
 function pad2(value) {
   return value < 10 ? '0' + value : '' + value
