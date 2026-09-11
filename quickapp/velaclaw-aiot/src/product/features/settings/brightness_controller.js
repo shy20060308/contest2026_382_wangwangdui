@@ -88,6 +88,16 @@ export function createBrightnessController(onChange) {
     })
   }
 
+  function applyManualBrightness(value) {
+    state = settingsStore.update('brightnessValue', value)
+    markApplying()
+    displayPower.setBrightness(state.brightnessValue, function (result) {
+      if (!result || !result.ok) { markError(result); return }
+      appliedBrightnessValue = state.brightnessValue
+      markApplied()
+    })
+  }
+
   return {
     load: function () {
       settingsStore.load(function (value) {
@@ -96,13 +106,21 @@ export function createBrightnessController(onChange) {
       })
     },
     setBrightness: function (value) {
-      if (state.autoBrightness) return emit()
+      if (!state.autoBrightness) {
+        applyManualBrightness(value)
+        return snapshot()
+      }
+      state = settingsStore.update('autoBrightness', false)
       state = settingsStore.update('brightnessValue', value)
       markApplying()
-      displayPower.setBrightness(state.brightnessValue, function (result) {
-        if (!result || !result.ok) { markError(result); return }
-        appliedBrightnessValue = state.brightnessValue
-        markApplied()
+      displayPower.setMode(false, function (modeResult) {
+        if (!modeResult || !modeResult.ok) { markError(modeResult); return }
+        appliedAutoBrightness = false
+        displayPower.setBrightness(state.brightnessValue, function (brightnessResult) {
+          if (!brightnessResult || !brightnessResult.ok) { markError(brightnessResult); return }
+          appliedBrightnessValue = state.brightnessValue
+          markApplied()
+        })
       })
       return snapshot()
     },
