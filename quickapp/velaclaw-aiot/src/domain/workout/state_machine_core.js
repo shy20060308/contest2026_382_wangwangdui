@@ -214,5 +214,6 @@ function createStateMachine() {
 
 module.exports = {
   createStateMachine: createStateMachine,
-  supportedTypes: supportedTypes
+  supportedTypes: supportedTypes,
+  validActiveSession: validActiveSession
 }
