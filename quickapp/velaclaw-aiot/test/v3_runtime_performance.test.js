@@ -10,6 +10,7 @@ assert.ok(surfacePage.indexOf('_surfaceRenderSignature') >= 0, 'Surface runtime 
 assert.ok(surfacePage.indexOf('recordSurfaceSkippedEqual') >= 0, 'Surface runtime must measure equal-state rebuild skips')
 assert.ok(surfacePage.indexOf('recordSurfaceSerialize') >= 0, 'Surface runtime must measure serialization/signature cost on every rebuild attempt')
 assert.ok(surfacePage.indexOf('resolveStartedAt') >= 0 && surfacePage.indexOf('decorateStartedAt') >= 0 && surfacePage.indexOf('contextStartedAt') >= 0, 'Surface runtime must split resolve, decorate and context-sync timing')
+assert.ok(surfacePage.indexOf('routeTiming.complete') >= 0, 'Target Surface ready+visible must settle route timing')
 assert.ok(surfacePage.indexOf('page.surfaceReady && !page._surfaceVisible') >= 0, 'Hidden ready pages must defer presentation rebuilds')
 assert.ok(surfacePage.indexOf('recordSurfaceDeferredHidden') >= 0, 'Hidden rebuild deferrals must be measurable')
 
@@ -18,6 +19,33 @@ const navigationCore = require('../src/runtime/navigation_core')
 assert.ok(navigationCore.DEFAULT_WINDOW_MS >= 200 && navigationCore.DEFAULT_WINDOW_MS <= 500, 'Duplicate navigation suppression should stay within a wearable tap-burst window')
 assert.ok(navigation.indexOf('recordNavigationSuppressed') >= 0, 'Suppressed navigation must be measurable')
 assert.ok(navigation.indexOf('navigationCore.create') >= 0, 'Navigation wrapper must delegate dedupe semantics to the testable core')
+assert.ok(navigation.indexOf("routeTiming.begin(path, 'push')") >= 0 && navigation.indexOf("routeTiming.begin(path, 'replace')") >= 0, 'push/replace must start route-to-Surface-ready timing')
+assert.ok(navigation.indexOf('routeTiming.confirm') >= 0, 'route timing must be confirmed only after router invocation returns')
+
+const routeTimingCore = require('../src/runtime/route_timing_core')
+let routeNow = 100
+const routeObservations = []
+const routeCore = routeTimingCore.create({
+  now: function () { return routeNow },
+  onReady: function (duration, kind, route) { routeObservations.push({ duration: duration, kind: kind, route: route }) }
+})
+const earlyReady = routeCore.begin('/pages/steps', 'push')
+routeNow = 112
+assert.strictEqual(routeCore.complete('pages/steps'), false, 'target may become ready before router returns without producing an unconfirmed sample')
+assert.strictEqual(routeObservations.length, 0)
+assert.strictEqual(routeCore.confirm(earlyReady), true, 'confirm must settle an already-ready target')
+assert.deepStrictEqual(routeObservations[0], { duration: 12, kind: 'push', route: 'pages/steps' })
+const failedAttempt = routeCore.begin('/pages/history', 'push')
+routeNow = 140
+routeCore.complete('/pages/history')
+assert.strictEqual(routeObservations.length, 1, 'unconfirmed router attempts must never become performance samples')
+routeNow = 150
+const replacement = routeCore.begin('/pages/history', 'replace')
+routeCore.confirm(replacement)
+routeNow = 171
+assert.strictEqual(routeCore.complete('pages/history'), true)
+assert.deepStrictEqual(routeObservations[1], { duration: 21, kind: 'replace', route: 'pages/history' })
+assert.strictEqual(routeCore.confirm(failedAttempt), false, 'a newer transition to the same route must invalidate stale tentative timing')
 
 const motion = read('src/product/features/settings/motion_controller.js')
 const uiSampleInterval = Number((motion.match(/UI_SAMPLE_INTERVAL_MS\s*=\s*(\d+)/) || [])[1])
@@ -59,6 +87,7 @@ performanceMetrics.recordSurfaceRebuild(4, { serializeMs: 2, resolveMs: 1, decor
 performanceMetrics.recordSurfaceSerialize(1)
 performanceMetrics.recordSurfaceRebuild(6, { serializeMs: 1, resolveMs: 2, decorateMs: 3, contextMs: 1 })
 performanceMetrics.recordSurfaceSerialize(3)
+;[10, 20, 30, 40, 50].forEach(function (duration) { performanceMetrics.recordRouteSurfaceReady(duration, 'push', 'pages/test') })
 performanceMetrics.recordSurfaceSkippedEqual()
 performanceMetrics.recordSurfaceDeferredHidden()
 performanceMetrics.recordNavigationSuppressed()
@@ -79,6 +108,13 @@ assert.strictEqual(snapshot.surfaceContextAvgMs, 1)
 assert.strictEqual(snapshot.surfaceContextMaxMs, 1)
 assert.strictEqual(snapshot.surfaceJsAvgMs, 6.5)
 assert.strictEqual(snapshot.surfaceJsMaxMs, 7)
+assert.strictEqual(snapshot.routeSurfaceReadySamples, 5)
+assert.strictEqual(snapshot.routeSurfaceReadyAvgMs, 30)
+assert.strictEqual(snapshot.routeSurfaceReadyP50Ms, 30)
+assert.strictEqual(snapshot.routeSurfaceReadyP95Ms, 50)
+assert.strictEqual(snapshot.routeSurfaceReadyMaxMs, 50)
+assert.strictEqual(snapshot.routeSurfaceReadyLastRoute, 'pages/test')
+assert.strictEqual(snapshot.routeSurfaceReadyLastKind, 'push')
 assert.strictEqual(snapshot.surfaceSkippedEqual, 1)
 assert.strictEqual(snapshot.surfaceDeferredHidden, 1)
 assert.strictEqual(snapshot.navigationSuppressed, 1)
@@ -86,5 +122,6 @@ assert.strictEqual(snapshot.motionSamples, 20)
 assert.strictEqual(snapshot.motionUiEmits, 4)
 assert.strictEqual(snapshot.motionUiPercent, 20)
 performanceMetrics.reset()
+assert.strictEqual(performanceMetrics.snapshot().routeSurfaceReadySamples, 0, 'performance reset must clear bounded route samples')
 
-console.log('V3 runtime performance, staged Surface JS timing, route and diagnostics geometry contracts verified')
+console.log('V3 runtime performance verified: staged Surface JS timing, retry-safe route-to-Surface-ready samples, route and diagnostics geometry contracts')
