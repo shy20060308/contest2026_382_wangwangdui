@@ -1,74 +1,19 @@
-<template>
-  <stack class="demo-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
-    <div class="demo-scene" if="{{ ready }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
-      <text class="demo-title" style="left: {{ layout.title.left }}px; top: {{ layout.title.top }}px; width: {{ layout.title.width }}px; height: {{ layout.title.height }}px; font-size: {{ layout.titleSize }}px;">通知演示</text>
-      <div class="button-stack" style="left: {{ layout.buttons.left }}px; top: {{ layout.buttons.top }}px; width: {{ layout.buttons.width }}px; height: {{ layout.buttons.height }}px;">
-        <text class="demo-button" @click="demoSms" style="width: {{ layout.buttons.width }}px; height: {{ layout.buttonHeight }}px; margin-bottom: {{ layout.gap }}px; border-radius: {{ layout.radius }}px; font-size: {{ layout.buttonSize }}px;">短信演示</text>
-        <text class="demo-button" @click="demoCall" style="width: {{ layout.buttons.width }}px; height: {{ layout.buttonHeight }}px; margin-bottom: {{ layout.gap }}px; border-radius: {{ layout.radius }}px; font-size: {{ layout.buttonSize }}px;">电话演示</text>
-        <text class="demo-button" @click="demoApp" style="width: {{ layout.buttons.width }}px; height: {{ layout.buttonHeight }}px; margin-bottom: {{ layout.gap }}px; border-radius: {{ layout.radius }}px; font-size: {{ layout.buttonSize }}px;">应用演示</text>
-        <text class="demo-button back-button" @click="goBack" style="width: {{ layout.buttons.width }}px; height: {{ layout.buttonHeight }}px; border-radius: {{ layout.radius }}px; font-size: {{ layout.buttonSize }}px;">返回</text>
-      </div>
+<import name="surfacehost" src="../../components/surface_host.ux"></import>
 
-      <div class="notification-cover" if="{{ notifyVisible }}">
-        <div class="notification-body" if="{{ notifyType !== 'call' }}" style="width: {{ layout.overlay.bodyWidth }}px;"><div class="notification-app"><image class="notification-icon" style="width: {{ layout.overlay.iconWidth }}px; height: {{ layout.overlay.iconHeight }}px; margin-right: {{ layout.overlay.iconMarginRight }}px;" src="{{ notifyAppIcon }}"></image><text class="notification-name" style="font-size: {{ layout.overlay.nameSize }}px;">{{ notifyAppName }}</text></div><text class="notification-content" style="width: {{ layout.overlay.contentWidth }}px; font-size: {{ layout.overlay.contentSize }}px; line-height: {{ layout.overlay.contentLineHeight }}px; margin-top: {{ layout.overlay.contentMarginTop }}px; lines: {{ layout.overlay.contentLines }};">{{ notifyContent }}</text></div>
-        <div class="notification-body" if="{{ notifyType === 'call' }}" style="width: {{ layout.overlay.bodyWidth }}px;"><text class="call-contact" style="font-size: {{ layout.overlay.callContactSize }}px;">{{ notifyContact }}</text><text class="call-phone" style="font-size: {{ layout.overlay.callPhoneSize }}px; margin-top: {{ layout.overlay.callPhoneMarginTop }}px;">{{ notifyPhone }}</text></div>
-        <div class="notification-actions" style="width: {{ layout.overlay.actionsWidth }}px; height: {{ layout.overlay.actionsHeight }}px; margin-bottom: {{ layout.overlay.actionsMarginBottom }}px;"><text class="notification-button" style="width: {{ layout.overlay.buttonWidth }}px; height: {{ layout.overlay.buttonHeight }}px; margin-left: {{ layout.overlay.buttonMarginX }}px; margin-right: {{ layout.overlay.buttonMarginX }}px; border-radius: {{ layout.overlay.buttonRadius }}px; font-size: {{ layout.overlay.buttonSize }}px;" @click="handleIgnore">忽略</text><text class="notification-button hangup" if="{{ notifyType === 'call' }}" @click="handleHangup" style="width: {{ layout.overlay.buttonWidth }}px; height: {{ layout.overlay.buttonHeight }}px; margin-left: {{ layout.overlay.buttonMarginX }}px; margin-right: {{ layout.overlay.buttonMarginX }}px; border-radius: {{ layout.overlay.buttonRadius }}px; font-size: {{ layout.overlay.buttonSize }}px; color: {{ notifyHangUpColor }};">挂断</text></div>
-      </div>
-    </div>
-  </stack>
+<template>
+  <surfacehost if="{{ surfaceReady }}" plan="{{ surfacePlan }}" @surfaceaction="onSurfaceAction"></surfacehost>
 </template>
 
 <script>
-import pageRuntime from '../../runtime/page_runtime'
-import navigation from '../../runtime/navigation'
-import { createNotificationController } from '../../v2/features/notification/controller'
-import notificationDesign from '../../v2/design/apps/notification'
-import notificationView from '../../v2/design/apps/notification/view'
+import surfacePage from '../../runtime/surface_page'
 
 export default {
-  private: {
-    ready: false, layout: {},
-    notifyVisible: false, notifyType: '', notifyAppName: '', notifyAppIcon: '/common/logo.png', notifyContent: '', notifyContact: '', notifyPhone: '', notifyHangUp: false, notifyHangUpColor: '#FFFFFF',
-    sceneWidth: 0, sceneHeight: 0, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
-  },
-  onInit() {
-    var self = this
-    this.controller = createNotificationController(function (state) { self.applyNotification(state) })
-    pageRuntime.bind(this, function (profile, scene, safe) {
-      self.layout = notificationDesign.resolve(profile, scene, safe)
-      self.ready = true
-    })
-  },
-  onShow() { if (this.controller) this.controller.start() },
-  onHide() { if (this.controller) this.controller.stop() },
-  onDestroy() { if (this.controller) this.controller.stop() },
-  onBackPress() { navigation.back(); return true },
-  applyNotification(state) {
-    var view = notificationView.project(state)
-    this.notifyVisible = view.visible; this.notifyType = view.type; this.notifyAppName = view.appName; this.notifyAppIcon = view.appIcon; this.notifyContent = view.content; this.notifyContact = view.contact; this.notifyPhone = view.phone; this.notifyHangUp = view.hangUp; this.notifyHangUpColor = view.hangUpColor
-  },
-  demoSms() { this.controller.showDemo('sms') },
-  demoCall() { this.controller.showDemo('call') },
-  demoApp() { this.controller.showDemo('app') },
-  handleIgnore() { this.controller.dismiss() },
-  handleHangup() { this.controller.hangUp() },
-  goBack() { navigation.back() }
+  private: { surfaceReady: false, surfacePlan: null },
+  onInit() { surfacePage.bind(this, 'notification-demo') },
+  onShow() { surfacePage.show(this) },
+  onHide() { surfacePage.hide(this) },
+  onDestroy() { surfacePage.destroy(this) },
+  onBackPress() { return surfacePage.back(this) },
+  onSurfaceAction(event) { surfacePage.action(this, event) }
 }
 </script>
-
-<style>
-.demo-root, .demo-scene { background-color: #000000; }
-.demo-scene { position: absolute; left: 0px; top: 0px; overflow: hidden; }
-.demo-title, .button-stack { position: absolute; }
-.demo-title { color: #FFFFFF; font-weight: bold; text-align: center; }
-.button-stack { flex-direction: column; }
-.demo-button { background-color: #17191D; color: #FFFFFF; text-align: center; font-weight: bold; }
-.back-button { background-color: #2C2C2E; color: #8E8E93; }
-.notification-cover { position: absolute; left: 0px; top: 0px; width: 100%; height: 100%; background-color: #000000; flex-direction: column; justify-content: center; align-items: center; }
-.notification-body { flex: 1; flex-direction: column; justify-content: center; align-items: center; }
-.notification-app { flex-direction: row; align-items: center; } .notification-name { color: #FFFFFF; font-weight: bold; }
-.notification-content { color: #D1D1D6; text-align: center; }
-.call-contact { color: #FFFFFF; font-weight: bold; } .call-phone { color: #8E8E93; }
-.notification-actions { flex-direction: row; justify-content: center; align-items: center; }
-.notification-button { background-color: #1C1C1E; color: #FFFFFF; text-align: center; } .hangup { background-color: #C83245; }
-</style>

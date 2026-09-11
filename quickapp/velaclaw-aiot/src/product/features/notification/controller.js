@@ -89,9 +89,10 @@ export function createNotificationController(onChange) {
 
   return {
     start: function () {
-      if (started) return
+      if (started) { emit(); return }
       started = true
       settingsReady = false
+      emit()
       var generation = ++lifecycleGeneration
       settingsStore.load(function () {
         if (!started || generation !== lifecycleGeneration) return
