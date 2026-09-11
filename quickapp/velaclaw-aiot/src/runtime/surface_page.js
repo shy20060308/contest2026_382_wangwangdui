@@ -4,6 +4,7 @@ import controllerRegistry from '../product/controller_registry'
 
 var surfaceRuntime = require('../product/frontend/runtime/surface_runtime')
 var experienceRuntime = require('../product/frontend/runtime/experience_runtime')
+var performanceMetrics = require('./performance_metrics')
 
 function initialState(surface) {
   var source = surface && surface.initialState ? surface.initialState : {}
@@ -18,10 +19,27 @@ function requireSurface(surface) {
   return surface
 }
 
+function renderSignature(page) {
+  var profile = page._surfaceProfile || {}
+  var scene = page._surfaceScene || {}
+  var stateText = ''
+  try { stateText = JSON.stringify(page._surfaceState || {}) } catch (error) { stateText = '' }
+  return [page._surface && page._surface.id, profile.formFactor, scene.width, scene.height, stateText].join('|')
+}
+
 function rebuild(page) {
-  if (!page || !page._surface || !page._surfaceProfile || !page._surfaceScene || !page._surfaceSafe) return
+  if (!page || !page._surface || !page._surfaceProfile || !page._surfaceScene || !page._surfaceSafe) return false
+  var signature = renderSignature(page)
+  if (page._surfaceRenderSignature === signature) {
+    performanceMetrics.recordSurfaceSkippedEqual()
+    return false
+  }
+  var startedAt = Date.now()
   var plan = surfaceRuntime.resolve(page._surface, page._surfaceProfile, page._surfaceScene, page._surfaceSafe, page._surfaceState || {})
   page.surfacePlan = experienceRuntime.decorate(plan, page._surface, page._surfaceProfile, page._surfaceScene, page._surfaceSafe, page._surfaceState || {})
+  page._surfaceRenderSignature = signature
+  performanceMetrics.recordSurfaceRebuild(Date.now() - startedAt)
+  return true
 }
 
 function bind(page, surface) {
@@ -33,8 +51,13 @@ function bind(page, surface) {
   page._surface = surface
   page._surfaceState = initialState(surface)
   page._surfaceVisible = false
+  page._surfaceRenderSignature = null
   page._surfaceController = controllerRegistry.create(surface.controller, function (state) {
     page._surfaceState = state || {}
+    if (page.surfaceReady && !page._surfaceVisible) {
+      performanceMetrics.recordSurfaceDeferredHidden()
+      return
+    }
     rebuild(page)
   })
 
@@ -56,6 +79,7 @@ function bind(page, surface) {
 function show(page) {
   if (!page) return
   page._surfaceVisible = true
+  if (page.surfaceReady) rebuild(page)
   if (page.surfaceReady && page._surfaceController) page._surfaceController.start()
 }
 
@@ -75,6 +99,7 @@ function destroy(page) {
   page._surfaceProfile = null
   page._surfaceScene = null
   page._surfaceSafe = null
+  page._surfaceRenderSignature = null
   page.surfacePlan = null
   page.surfaceReady = false
 }
