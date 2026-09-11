@@ -26,6 +26,17 @@ assert.ok(motion.indexOf('scheduleSampleUi()') >= 0, 'Motion samples must flow t
 
 const diagnostics = read('src/product/features/settings/diagnostics_controller.js')
 assert.ok(diagnostics.indexOf('performanceMetrics.snapshot()') >= 0, 'Diagnostics must expose runtime performance counters')
+const diagnosticsSurface = JSON.parse(read('src/product/frontend/surfaces/settings__diagnostics.json'))
+const deviceModule = diagnosticsSurface.modules.filter(function (module) { return module.id === 'device' })[0]
+assert.ok(deviceModule, 'Diagnostics must retain its device metric grid')
+assert.ok(deviceModule.props.items.some(function (item) { return item.bind && item.bind.value === 'performance.surfaceRebuildAvgMs' }), 'Diagnostics must render the measured Surface average rebuild cost')
+;['base', 'circle', 'pill'].forEach(function (shape) {
+  const override = shape === 'base' ? {} : (((diagnosticsSurface.variants[shape] || {}).modules || {}).device || {})
+  const tokens = Object.assign({}, deviceModule.tokens, override)
+  const rows = Math.ceil(deviceModule.props.items.length / tokens.columns)
+  const requiredHeight = rows * tokens.itemHeight + Math.max(0, rows - 1) * tokens.rowGap
+  assert.ok(requiredHeight <= tokens.height, 'Diagnostics performance metric must fit the declared ' + shape + ' grid height')
+})
 
 const manifest = JSON.parse(read('src/manifest.json'))
 assert.strictEqual(manifest.router.entry, 'pages/clock', 'The contest runtime must enter the V3 clock page directly')
@@ -58,4 +69,4 @@ assert.strictEqual(snapshot.motionUiEmits, 4)
 assert.strictEqual(snapshot.motionUiPercent, 20)
 performanceMetrics.reset()
 
-console.log('V3 runtime performance and route contracts verified')
+console.log('V3 runtime performance, route and diagnostics geometry contracts verified')
