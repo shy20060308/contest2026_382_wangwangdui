@@ -6,6 +6,7 @@ var surfaceRuntime = require('../product/frontend/runtime/surface_runtime')
 var experienceRuntime = require('../product/frontend/runtime/experience_runtime')
 var performanceMetrics = require('./performance_metrics')
 var pageGeneration = require('./page_generation')
+var interactionOwner = require('./interaction_owner')
 
 function initialState(surface) {
   var source = surface && surface.initialState ? surface.initialState : {}
@@ -28,16 +29,24 @@ function renderSignature(page) {
   return [page._surface && page._surface.id, profile.formFactor, scene.width, scene.height, stateText].join('|')
 }
 
+function syncPlanContext(page) {
+  if (!page || !page.surfacePlan) return
+  page.surfacePlan.pageVisible = !!page._surfaceVisible
+  page.surfacePlan.interactionOwner = page._surfaceInteractionOwner ? page._surfaceInteractionOwner.key() : ''
+}
+
 function rebuild(page) {
   if (!page || page._surfaceDestroyed || !page._surface || !page._surfaceProfile || !page._surfaceScene || !page._surfaceSafe) return false
   var signature = renderSignature(page)
   if (page._surfaceRenderSignature === signature) {
+    syncPlanContext(page)
     performanceMetrics.recordSurfaceSkippedEqual()
     return false
   }
   var startedAt = Date.now()
   var plan = surfaceRuntime.resolve(page._surface, page._surfaceProfile, page._surfaceScene, page._surfaceSafe, page._surfaceState || {})
   page.surfacePlan = experienceRuntime.decorate(plan, page._surface, page._surfaceProfile, page._surfaceScene, page._surfaceSafe, page._surfaceState || {})
+  syncPlanContext(page)
   page._surfaceRenderSignature = signature
   performanceMetrics.recordSurfaceRebuild(Date.now() - startedAt)
   return true
@@ -55,6 +64,7 @@ function bind(page, surface) {
   page._surfaceState = initialState(surface)
   page._surfaceVisible = false
   page._surfaceRenderSignature = null
+  page._surfaceInteractionOwner = interactionOwner.create(surface.id)
   page._surfaceController = controllerRegistry.create(surface.controller, function (state) {
     if (!current()) return
     page._surfaceState = state || {}
@@ -63,7 +73,7 @@ function bind(page, surface) {
       return
     }
     rebuild(page)
-  })
+  }, { interactionOwner: page._surfaceInteractionOwner })
 
   pageRuntime.bind(page, function (profile, scene, safe) {
     if (!current()) return
@@ -85,13 +95,17 @@ function bind(page, surface) {
 function show(page) {
   if (!page || page._surfaceDestroyed) return
   page._surfaceVisible = true
+  if (page._surfaceInteractionOwner) page._surfaceInteractionOwner.activate()
   if (page.surfaceReady) rebuild(page)
+  else syncPlanContext(page)
   if (page.surfaceReady && page._surfaceController) page._surfaceController.start()
 }
 
 function hide(page) {
   if (!page || page._surfaceDestroyed) return
   page._surfaceVisible = false
+  if (page._surfaceInteractionOwner) page._surfaceInteractionOwner.deactivate()
+  syncPlanContext(page)
   if (page._surfaceController) page._surfaceController.stop()
 }
 
@@ -99,8 +113,10 @@ function destroy(page) {
   if (!page) return
   pageGeneration.destroy(page)
   page._surfaceVisible = false
+  if (page._surfaceInteractionOwner) page._surfaceInteractionOwner.deactivate()
   if (page._surfaceController) page._surfaceController.destroy()
   page._surfaceController = null
+  page._surfaceInteractionOwner = null
   page._surface = null
   page._surfaceState = null
   page._surfaceProfile = null
@@ -129,12 +145,13 @@ function actionPayload(event) {
 function action(page, event) {
   var name = actionName(event)
   if (!name) return
-  if (!page || page._surfaceDestroyed || !page._surfaceController || typeof page._surfaceController.action !== 'function') throw new Error('V3 Surface Page has no action controller for ' + name)
+  if (!page || page._surfaceDestroyed || !page._surfaceVisible || !page._surfaceController || typeof page._surfaceController.action !== 'function') throw new Error('V3 Surface Page has no active action controller for ' + name)
   page._surfaceController.action(name, actionPayload(event))
 }
 
-function back() {
-  navigation.back()
+function back(page) {
+  var owner = page && page._surfaceInteractionOwner ? page._surfaceInteractionOwner.key() : ''
+  navigation.back(owner)
   return true
 }
 
