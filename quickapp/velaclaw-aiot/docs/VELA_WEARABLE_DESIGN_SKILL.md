@@ -6,10 +6,12 @@ This project uses a wearable-specific design discipline adapted from open fronte
 
 1. The accepted V2.4 UI/interaction behavior is the parity baseline unless a deliberate redesign is documented.
 2. `src/product/frontend/surfaces/*.json` owns copy, visual tokens, layout mode, shape variants and interaction declarations.
-3. `src/product/frontend/adaptation-policy.json` owns the three-level cross-form-factor adaptation classification.
-4. Generic UX components may implement reusable primitives and engines, but they must not contain route IDs, app IDs, page copy, page colors or page-specific geometry.
-5. Controllers own semantic state and actions only. They must not decide presentation copy, color, radius or screen-shape layout.
-6. A migration is incomplete if functionality or interaction quality is reduced merely to fit the current renderer.
+3. Surface JSON is treated as a Design IR: a structured product-design model intended to be editable by humans, AI and future visual tooling, not merely a serialization format for current UX code.
+4. `src/product/frontend/adaptation-policy.json` owns the three-level cross-form-factor adaptation classification.
+5. Generic UX components may implement reusable primitives and engines, but they must not contain route IDs, app IDs, page copy, page colors or page-specific geometry.
+6. Controllers own semantic state and actions only. They must not decide presentation copy, color, radius or screen-shape layout.
+7. A migration is incomplete if functionality or interaction quality is reduced merely to fit the current renderer.
+8. Declarative does not mean visually identical: Circle, Pill and Rect may look substantially different whenever the selected adaptation level justifies it.
 
 ## Three-level adaptation discipline
 
@@ -19,13 +21,13 @@ The level describes the depth of a **difference**, not page complexity. A route 
 
 Same product and same expression; only geometry/density changes.
 
-Use one shared JSON module tree and shared interaction semantics. Circle/Pill/Rect may override dimensions, spacing, radius and typography. Do not introduce a separate engine merely because a control is interactive: a brightness slider shared by every shape is still L1.
+Use one shared JSON module tree and shared interaction semantics. Circle/Pill/Rect may override dimensions, spacing, radius, typography, density, card proportions and local arrangement. They are not required to look identical. Do not introduce a separate engine merely because a control is interactive: a brightness slider shared by every shape is still L1.
 
 ### L2 — local-expression
 
 Product, data and actions remain shared, but selected local expressions change by form factor.
 
-Keep one shared JSON product model. Allow module-level variant changes for local layout/composition while preserving the rest of the tree. Do not fork the whole page or create a page-specific renderer.
+Keep one shared JSON product model. Allow module-level variant changes for local layout/composition while preserving the rest of the tree. Local expressions may differ visibly when the physical form factor benefits from it—for example row-vs-column trends, compact-vs-expanded metric composition, or different calendar density. Do not fork the whole page or create a page-specific renderer.
 
 ### L3 — independent-surface
 
@@ -39,6 +41,18 @@ JSON remains the product authority, but shape-specific JSON may select a differe
 - Do not upgrade L1/L2 to L3 merely to avoid designing proper shared variants.
 - Do not classify by code size or business complexity. A complex data page can still be L1 if its expression is shared.
 - Do not place fallback visual values inside an engine. If JSON omits a required L3 parameter, fail the contract instead of inventing a design.
+- Do not interpret “single JSON authority” as “single identical composition.” Authority may be shared while form-factor expressions differ.
+- Do not encode every pixel as absolute coordinates just because JSON supports numbers. That turns the Design IR into serialized markup and makes both human and AI editing worse.
+
+## Design IR discipline
+
+The declarative model should prefer product intent over low-level rendering instructions.
+
+Good authored concepts include semantic modules, reusable composition modes, content hierarchy, binding/action IDs, visual tokens, interaction parameters and form-factor variants. Low-level coordinates are acceptable where the interaction genuinely requires them, especially L3 surfaces, but should not become the default representation for ordinary pages.
+
+A useful rule is: if a future visual editor could present the field as a meaningful property in an inspector, it probably belongs in the Design IR. If the field only exists because of one renderer implementation detail, reconsider whether it belongs in JSON or in a generic primitive.
+
+The schema must also resist two opposite failures: becoming too weak and forcing renderer/page special cases, or becoming so expressive that it turns into a second programming language. Prefer a small set of orthogonal primitives and compositions over route-specific fields.
 
 ## Wearable design principles
 
@@ -77,6 +91,8 @@ For every route, audit these dimensions against the accepted baseline:
 
 When a parity feature needs code, first determine its difference level. For L1/L2, extend JSON variants or generic primitives before writing new code. For L3, add or reuse a generic experience engine and make every product-specific decision configurable from Surface JSON. Never restore a page-specific UX implementation just to regain the old appearance.
 
+When designing a new generic primitive, require evidence that it is an actual reusable design concept. A field or component created solely to make one route easier is a warning sign. Conversely, if multiple pages repeatedly encode the same structural pattern with ad-hoc token combinations, promote that pattern into a reusable composition instead of copying more JSON.
+
 ## Design review sequence
 
 1. Read the accepted V2.4 implementation/screenshots.
@@ -87,5 +103,9 @@ When a parity feature needs code, first determine its difference level. For L1/L
 6. Extend only generic primitives/engines where the selected level requires it.
 7. Run architecture, adaptation, interaction-parity and build contracts.
 8. Verify on `vela-miwear-watch-5.0-beta` before declaring parity.
+
+## Tooling direction
+
+Future design tooling should edit the same Surface JSON/Design IR rather than generating a second visual authority. The useful tooling surface is a node tree + token inspector + Circle/Pill/Rect preview + adaptation diff + binding/action picker. Runtime-specific QuickApp markup should remain an implementation detail behind the generic renderer.
 
 This discipline is informed by open frontend-design skill patterns that emphasize intentional hierarchy, responsive adaptation, interaction/motion and critique of existing UI, but the rules above are specific to the Vela wearable runtime and this product.
