@@ -3,6 +3,7 @@ const fs = require('fs')
 const path = require('path')
 
 const protocol = require('../src/product/features/sync/protocol')
+const syncSurface = require('../src/product/frontend/surfaces/settings__bluetooth.json')
 const root = path.resolve(__dirname, '..')
 
 const payload = {
@@ -62,8 +63,14 @@ assert.ok(controllerSource.includes('protocol.createTransfer(payload, 96)'), 'Sy
 assert.ok(controllerSource.includes('transfer.packetAt(index)'), 'Sync controller must materialize only the packet being sent')
 assert.ok(controllerSource.includes('workoutRepository.markAllSynced()'), 'Completion must persist synced flags without a second collection pass')
 assert.ok(!controllerSource.includes('markAllSynced(function'), 'Sync completion must not re-read Activity/History/Workout solely to refresh unchanged counts')
+assert.ok(!controllerSource.includes('packetCount'), 'Lazy sync state must not retain a duplicate eager-packet count')
 const noPayloadIndex = controllerSource.indexOf('if (!callback) return')
 const healthPayloadIndex = controllerSource.indexOf('var health = healthStore.getSnapshot()')
 assert.ok(noPayloadIndex >= 0 && healthPayloadIndex > noPayloadIndex, 'Count-only refresh must emit counts before skipping Health/payload construction')
 
-console.log('Sync protocol verified: packets are lazy and count-only refresh avoids unnecessary payload work')
+const packetModule = syncSurface.modules.filter(function (module) { return module.id === 'packets' })[0]
+assert.ok(packetModule, 'Sync Surface must retain transfer diagnostics')
+const packetBindings = packetModule.props.items.map(function (item) { return item.bind && item.bind.value })
+assert.deepStrictEqual(packetBindings, ['packetSent', 'packetTotal', 'payloadChars'], 'Sync Surface must only display truthful lazy-transfer metrics')
+
+console.log('Sync protocol verified: packets are lazy, state is non-duplicated and count-only refresh avoids unnecessary payload work')
