@@ -10,6 +10,24 @@ const surfacesRoot = path.join(root, 'src', 'product', 'frontend', 'surfaces')
 function filename(route) { return route.replace(/^pages\//, '').replace(/\//g, '__') + '.json' }
 function surface(route) { return require(path.join(surfacesRoot, filename(route))) }
 function nonEmptyObject(value) { return !!value && typeof value === 'object' && Object.keys(value).length > 0 }
+function stable(value) { return JSON.stringify(value === undefined ? null : value) }
+function sliderSemantics(slider) {
+  return {
+    id: slider.id,
+    bind: slider.bind || {},
+    min: slider.min,
+    max: slider.max,
+    step: slider.step,
+    action: slider.action,
+    copy: slider.copy || {}
+  }
+}
+function experienceModes(experience) {
+  return ['base', 'circle', 'pill', 'rect'].map(function (shape) {
+    var branch = experience[shape] || {}
+    return branch.collection && branch.collection.mode ? branch.collection.mode : null
+  }).filter(Boolean)
+}
 
 assert.strictEqual(policy.schemaVersion, 1)
 assert.strictEqual(policy.levels.L1.kind, 'shared-expression')
@@ -50,20 +68,37 @@ routes.forEach(function (route) {
   assert.ok(entry.reason && entry.reason.length > 10, route + ' must document why its level is required')
 
   const experience = value.experience || {}
-  const shapeExperience = ['circle', 'pill', 'rect'].filter(shape => nonEmptyObject(experience[shape]))
-
-  if (entry.routeLevel === 'L1') {
-    assert.deepStrictEqual(shapeExperience, [], route + ' is L1: shape differences must stay token/geometry-only')
+  const modes = experienceModes(experience)
+  const uniqueModes = Array.from(new Set(modes))
+  if (uniqueModes.length > 1) {
+    assert.strictEqual(entry.routeLevel, 'L3', route + ' selects different interaction surfaces by shape and therefore must be L3')
   }
 
-  if (shapeExperience.length > 0) {
-    assert.strictEqual(entry.routeLevel, 'L3', route + ' uses shape-specific independent experience and therefore must be L3')
+  if (entry.routeLevel !== 'L3') {
+    ;['circle', 'pill', 'rect'].forEach(function (shape) {
+      const branch = experience[shape] || {}
+      assert.ok(!branch.collection || !branch.collection.mode, route + ' may not select a shape-specific collection engine below L3')
+      assert.ok(!nonEmptyObject(branch.gestures), route + ' may not change gesture semantics by shape below L3')
+    })
+  }
+
+  if (entry.routeLevel === 'L1' && experience.base && Array.isArray(experience.base.sliders)) {
+    const baseSliders = experience.base.sliders
+    ;['circle', 'pill', 'rect'].forEach(function (shape) {
+      const branch = experience[shape] || {}
+      if (!Array.isArray(branch.sliders)) return
+      assert.strictEqual(branch.sliders.length, baseSliders.length, route + ' L1 slider count must remain shared on ' + shape)
+      for (let i = 0; i < baseSliders.length; i++) {
+        assert.strictEqual(stable(sliderSemantics(branch.sliders[i])), stable(sliderSemantics(baseSliders[i])), route + ' L1 slider semantics must remain identical on ' + shape + '; only frame/tokens may differ')
+      }
+    })
   }
 })
 
 const appList = surface('pages/applist')
 assert.strictEqual(policy.routes['pages/applist'].routeLevel, 'L3')
 assert.ok(nonEmptyObject(appList.experience.circle) && nonEmptyObject(appList.experience.pill) && nonEmptyObject(appList.experience.rect), 'L3 AppList must explicitly author each independent form-factor experience')
+assert.deepStrictEqual(experienceModes(appList.experience), ['honeycomb', 'paged-list', 'designed-grid'], 'AppList L3 must preserve its three accepted form-factor surfaces')
 
 const brightness = surface('pages/settings/brightness')
 assert.strictEqual(policy.routes['pages/settings/brightness'].routeLevel, 'L1')
