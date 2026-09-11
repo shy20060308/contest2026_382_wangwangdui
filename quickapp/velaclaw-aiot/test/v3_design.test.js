@@ -3,6 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const scene = require('../src/product/design/scene')
 const surfaceRuntime = require('../src/product/frontend/runtime/surface_runtime')
+const experienceRuntime = require('../src/product/frontend/runtime/experience_runtime')
 
 const root = path.resolve(__dirname, '..')
 const surfacesRoot = path.join(root, 'src', 'product', 'frontend', 'surfaces')
@@ -47,7 +48,9 @@ const profiles = {
 function resolve(value, profile, state) {
   const host = scene.resolve(profile)
   const safe = scene.safe(profile, host)
-  return surfaceRuntime.resolve(value, profile, host, safe, state || {})
+  const model = state || {}
+  const plan = surfaceRuntime.resolve(value, profile, host, safe, model)
+  return experienceRuntime.decorate(plan, value, profile, host, safe, model)
 }
 
 Object.keys(profiles).forEach(function (shape) {
