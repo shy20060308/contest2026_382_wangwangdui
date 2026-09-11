@@ -1,19 +1,7 @@
 <import name="surfacehost" src="../../components/surface_host.ux"></import>
-
-<template>
-  <surfacehost if="{{ surfaceReady }}" plan="{{ surfacePlan }}" @surfaceaction="onSurfaceAction"></surfacehost>
-</template>
-
+<template><surfacehost if="{{ surfaceReady }}" plan="{{ surfacePlan }}" @surfaceaction="onSurfaceAction"></surfacehost></template>
 <script>
 import surfacePage from '../../runtime/surface_page'
-
-export default {
-  private: { surfaceReady: false, surfacePlan: null },
-  onInit() { surfacePage.bind(this, 'applist') },
-  onShow() { surfacePage.show(this) },
-  onHide() { surfacePage.hide(this) },
-  onDestroy() { surfacePage.destroy(this) },
-  onBackPress() { return surfacePage.back(this) },
-  onSurfaceAction(event) { surfacePage.action(this, event) }
-}
+var surface = require('../../product/frontend/surfaces/applist.json')
+export default { private: { surfaceReady: false, surfacePlan: null }, onInit() { surfacePage.bind(this, surface) }, onShow() { surfacePage.show(this) }, onHide() { surfacePage.hide(this) }, onDestroy() { surfacePage.destroy(this) }, onBackPress() { return surfacePage.back(this) }, onSurfaceAction(event) { surfacePage.action(this, event) } }
 </script>

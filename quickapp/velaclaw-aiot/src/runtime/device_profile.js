@@ -15,57 +15,50 @@ function positiveNumber(value, label) {
   if (!isFinite(next) || next <= 0) throw new Error('V3 Device Profile requires ' + label)
   return next
 }
-
 function optionalPositiveNumber(value, label) {
   if (value === undefined || value === null || value === '') return null
   var next = Number(value)
   if (!isFinite(next) || next <= 0) throw new Error('V3 Device Profile requires canonical ' + label)
   return next
 }
-
-function optionalText(value) {
-  return value === undefined || value === null || value === '' ? null : String(value)
-}
-
+function optionalText(value) { return value === undefined || value === null || value === '' ? null : String(value) }
 function contextDevice(context) { return context && context.$device ? context.$device : {} }
 function pick(primary, secondary, key) {
   if (primary && primary[key] !== undefined && primary[key] !== null && primary[key] !== '') return primary[key]
   return secondary && secondary[key]
 }
-
+function viewportPick(local, info, key) {
+  if (local && local[key] !== undefined && local[key] !== null && local[key] !== '') return local[key]
+  return info && info[key]
+}
 function screenShape(value, width, height) {
   var normalized = String(value || '').toLowerCase()
   if (normalized === 'circle') return 'circle'
   if (normalized === 'pill' || normalized === 'pill-shaped') return 'pill-shaped'
   if (normalized === 'rect') return 'rect'
-
   var ratio = width / height
   if (ratio >= 0.9 && ratio <= 1.1) return 'circle'
   if (ratio > 0.3 && ratio < 0.5) return 'pill-shaped'
   return 'rect'
 }
-
 function formFactor(shape) {
   if (shape === 'circle') return 'circle'
   if (shape === 'pill-shaped') return 'pill'
   if (shape === 'rect') return 'rect'
   throw new Error('V3 Device Profile requires a normalized screen shape')
 }
-
 function declaredInsets(factor) {
   var source = SAFE_INSETS[factor]
   if (!source) throw new Error('V3 Device Profile has no safe insets for ' + factor)
   return { left: source.left, top: source.top, right: source.right, bottom: source.bottom, gestureBar: source.gestureBar }
 }
-
 function make(info, context) {
   info = info || {}
   var local = contextDevice(context)
-  var width = positiveNumber(pick(info, local, 'screenWidth'), 'screenWidth')
-  var height = positiveNumber(pick(info, local, 'screenHeight'), 'screenHeight')
-  var shapeText = screenShape(pick(info, local, 'screenShape'), width, height)
+  var width = positiveNumber(viewportPick(local, info, 'screenWidth'), 'screenWidth')
+  var height = positiveNumber(viewportPick(local, info, 'screenHeight'), 'screenHeight')
+  var shapeText = screenShape(viewportPick(local, info, 'screenShape'), width, height)
   var factor = formFactor(shapeText)
-
   return {
     shape: shapeText,
     formFactor: factor,
@@ -78,16 +71,10 @@ function make(info, context) {
     model: optionalText(pick(info, local, 'model')),
     platformVersionCode: optionalPositiveNumber(pick(info, local, 'platformVersionCode'), 'platformVersionCode'),
     apiLevel: optionalPositiveNumber(pick(info, local, 'APILevel'), 'APILevel'),
-    source: 'v3.capability.device'
+    source: 'v3.host-viewport+capability.device'
   }
 }
-
-function flush(profile) {
-  var current = pending
-  pending = []
-  for (var i = 0; i < current.length; i++) current[i](profile)
-}
-
+function flush(profile) { var current = pending; pending = []; for (var i = 0; i < current.length; i++) current[i](profile) }
 function resolve(context, callback) {
   if (typeof callback !== 'function') return
   if (cached) { callback(cached); return }
@@ -96,12 +83,7 @@ function resolve(context, callback) {
   loading = true
   device.get(function (info) {
     loading = false
-    try {
-      cached = make(info, context)
-    } catch (error) {
-      pending = []
-      throw error
-    }
+    try { cached = make(info, context) } catch (error) { pending = []; throw error }
     flush(cached)
   })
 }

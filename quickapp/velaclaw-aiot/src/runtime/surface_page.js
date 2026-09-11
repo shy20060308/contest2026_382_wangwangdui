@@ -2,7 +2,6 @@ import pageRuntime from './page_runtime'
 import navigation from './navigation'
 import controllerRegistry from '../product/controller_registry'
 
-var surfaces = require('../product/frontend/generated/surfaces')
 var surfaceRuntime = require('../product/frontend/runtime/surface_runtime')
 var experienceRuntime = require('../product/frontend/runtime/experience_runtime')
 
@@ -13,29 +12,21 @@ function initialState(surface) {
   return state
 }
 
-function rebuild(page) {
-  if (!page || !page._surface || !page._surfaceProfile || !page._surfaceScene || !page._surfaceSafe) return
-  var plan = surfaceRuntime.resolve(
-    page._surface,
-    page._surfaceProfile,
-    page._surfaceScene,
-    page._surfaceSafe,
-    page._surfaceState || {}
-  )
-  page.surfacePlan = experienceRuntime.decorate(
-    plan,
-    page._surface,
-    page._surfaceProfile,
-    page._surfaceScene,
-    page._surfaceSafe,
-    page._surfaceState || {}
-  )
+function requireSurface(surface) {
+  if (!surface || typeof surface !== 'object' || Array.isArray(surface)) throw new Error('V3 Surface Page requires a page-local Surface JSON object')
+  if (!surface.id || !surface.route || surface.renderer !== 'surface-v1') throw new Error('Invalid page-local V3 Surface')
+  return surface
 }
 
-function bind(page, surfaceId) {
+function rebuild(page) {
+  if (!page || !page._surface || !page._surfaceProfile || !page._surfaceScene || !page._surfaceSafe) return
+  var plan = surfaceRuntime.resolve(page._surface, page._surfaceProfile, page._surfaceScene, page._surfaceSafe, page._surfaceState || {})
+  page.surfacePlan = experienceRuntime.decorate(plan, page._surface, page._surfaceProfile, page._surfaceScene, page._surfaceSafe, page._surfaceState || {})
+}
+
+function bind(page, surface) {
   if (!page) throw new Error('V3 Surface Page requires a page instance')
-  var surface = surfaces.byId[surfaceId]
-  if (!surface) throw new Error('Unknown V3 Surface: ' + surfaceId)
+  surface = requireSurface(surface)
 
   page.surfaceReady = false
   page.surfacePlan = null
@@ -106,9 +97,7 @@ function actionPayload(event) {
 function action(page, event) {
   var name = actionName(event)
   if (!name) return
-  if (!page || !page._surfaceController || typeof page._surfaceController.action !== 'function') {
-    throw new Error('V3 Surface Page has no action controller for ' + name)
-  }
+  if (!page || !page._surfaceController || typeof page._surfaceController.action !== 'function') throw new Error('V3 Surface Page has no action controller for ' + name)
   page._surfaceController.action(name, actionPayload(event))
 }
 
