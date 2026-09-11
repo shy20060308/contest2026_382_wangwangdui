@@ -89,19 +89,17 @@
       "controllerConfig": { "capabilityPageSize": 4 }
     },
     "circle": {
-      "collection": { "tokens": { "contentInset": 48, "contentTop": 154, "gap": 8, "itemHeight": 20, "itemRadius": 9, "fontSize": 14 } },
-      "controllerConfig": { "capabilityPageSize": 4 }
+      "collection": { "tokens": { "contentInset": 48, "contentTop": 154, "gap": 8, "itemHeight": 20, "itemRadius": 9, "fontSize": 14 } }
     },
     "pill": {
-      "collection": { "tokens": { "contentInset": 40, "contentTop": 298, "gap": 10, "itemHeight": 28, "itemRadius": 10, "fontSize": 17 } },
-      "controllerConfig": { "capabilityPageSize": 6 }
+      "collection": { "tokens": { "contentInset": 40, "contentTop": 298, "gap": 10, "itemHeight": 28, "itemRadius": 10, "fontSize": 17 } }
     },
     "rect": {}
   },
   "variants": {
     "base": {},
     "circle": { "tokens": { "stream": { "top": 14, "width": 148, "height": 132 }, "streamPaddingBottom": 2 }, "modules": { "head": { "height": 24, "titleSize": 10, "subtitleSize": 5, "trailingSize": 6, "titleLineHeight": 14, "subtitleLineHeight": 9 }, "device": { "height": 96, "gap": 4, "rowGap": 3, "itemHeight": 21, "itemRadius": 9, "labelSize": 4, "valueSize": 7 }, "deviceTip": { "height": 16, "fontSize": 4, "lineHeight": 8 }, "capabilityHead": { "height": 24, "titleSize": 9, "subtitleSize": 5 }, "capabilities": { "height": 86, "gap": 5, "rowGap": 5, "itemHeight": 40, "itemRadius": 10, "labelSize": 5, "valueSize": 7, "detailSize": 4 }, "capabilityTip": { "height": 16, "fontSize": 4, "lineHeight": 8 } } },
-    "pill": { "tokens": { "stream": { "top": 0, "width": 168, "height": 286 }, "streamPaddingBottom": 4 }, "modules": { "head": { "height": 38, "titleSize": 16, "subtitleSize": 8, "trailingSize": 9, "titleLineHeight": 23, "subtitleLineHeight": 14 }, "device": { "height": 210, "gap": 8, "rowGap": 6, "itemHeight": 48, "itemRadius": 11, "labelSize": 7, "valueSize": 12, "itemPaddingX": 8, "itemPaddingY": 6 }, "deviceTip": { "height": 24, "fontSize": 6, "lineHeight": 12 }, "capabilityHead": { "height": 40, "titleSize": 13, "subtitleSize": 8, "titleLineHeight": 23, "subtitleLineHeight": 14 }, "capabilities": { "height": 208, "gap": 8, "rowGap": 8, "itemHeight": 64, "itemRadius": 11, "labelSize": 8, "valueSize": 11, "detailSize": 5 }, "capabilityTip": { "height": 24, "fontSize": 6, "lineHeight": 12 } } },
+    "pill": { "tokens": { "stream": { "top": 0, "width": 168, "height": 286 }, "streamPaddingBottom": 4 }, "modules": { "head": { "height": 38, "titleSize": 16, "subtitleSize": 8, "trailingSize": 9, "titleLineHeight": 23, "subtitleLineHeight": 14 }, "device": { "height": 210, "gap": 8, "rowGap": 6, "itemHeight": 48, "itemRadius": 11, "labelSize": 7, "valueSize": 12, "itemPaddingX": 8, "itemPaddingY": 6 }, "deviceTip": { "height": 24, "fontSize": 6, "lineHeight": 12 }, "capabilityHead": { "height": 40, "titleSize": 13, "subtitleSize": 8, "titleLineHeight": 23, "subtitleLineHeight": 14 }, "capabilities": { "height": 152, "gap": 8, "rowGap": 8, "itemHeight": 72, "itemRadius": 11, "labelSize": 8, "valueSize": 11, "detailSize": 5 }, "capabilityTip": { "height": 24, "fontSize": 6, "lineHeight": 12 } } },
     "rect": {}
   }
 }
