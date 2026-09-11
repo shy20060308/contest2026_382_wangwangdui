@@ -8,26 +8,38 @@ function persisted(overrides) {
   return Object.assign({}, core.DEFAULTS, overrides || {})
 }
 
+function readResult(status, error) {
+  return { ok: status === 'ok' || status === 'missing', status: status, error: error || null }
+}
+
 function fakeStorage() {
   const reads = []
   const writes = []
+  const quarantines = []
   return {
     reads: reads,
     writes: writes,
-    getJSON: function (key, callback) { reads.push({ key: key, callback: callback }) },
+    quarantines: quarantines,
+    getJSONResult: function (key, callback) { reads.push({ key: key, callback: callback }) },
     set: function (key, value, callback) {
-      writes.push({ key: key, value: JSON.parse(JSON.stringify(value)), callback: callback })
+      writes.push({ key: key, value: JSON.parse(JSON.stringify(value)), callback: callback, resolved: false })
     },
-    resolveRead: function (value) {
+    quarantine: function (key, callback) { quarantines.push({ key: key, callback: callback }) },
+    resolveRead: function (value, result) {
       const read = reads.shift()
       assert.ok(read, 'expected pending storage read')
-      read.callback(value)
+      read.callback(value, result || readResult(value === null || value === undefined ? 'missing' : 'ok'))
     },
     resolveWrite: function (result) {
       const write = writes.find(function (entry) { return !entry.resolved })
       assert.ok(write, 'expected pending storage write')
       write.resolved = true
-      write.callback(result === undefined ? true : result)
+      write.callback(result === undefined ? { persisted: true, memoryOnly: false, error: null } : result)
+    },
+    resolveQuarantine: function (result) {
+      const entry = quarantines.shift()
+      assert.ok(entry, 'expected pending quarantine')
+      entry.callback(result || { ok: true, status: 'quarantined', backupKey: entry.key + '__corrupt_backup', error: null })
     }
   }
 }
@@ -119,11 +131,69 @@ test('未知 setting key、非法 canonical value 和半合法 patch 必须原�
   assert.deepStrictEqual(store.getSnapshot(), before, 'failed updateMany must not partially mutate canonical settings')
 })
 
-test('已存在的 V4 settings 必须是完整 schema，不能用 DEFAULTS 修补损坏状态', function () {
+test('合法 JSON 但 schema 损坏时使用受限内存默认值且禁止覆盖原 key', function () {
+  const storage = fakeStorage()
+  const store = core.createStore(storage)
+  let loaded = null
+  let loadState = null
+  store.load(function (value, persistence) { loaded = value; loadState = persistence })
+  storage.resolveRead({ brightnessValue: 88 })
+  assert.strictEqual(loaded.brightnessValue, core.DEFAULTS.brightnessValue)
+  assert.strictEqual(loadState.status, 'corrupt')
+  assert.strictEqual(loadState.recoverable, true)
+  store.update('brightnessValue', 199)
+  assert.strictEqual(store.getSnapshot().brightnessValue, 199, 'degraded mode may keep user changes in memory')
+  assert.strictEqual(storage.writes.length, 0, 'corrupt persisted content must not be overwritten before explicit recovery')
+})
+
+test('storage parse corrupt 也必须结算 load 且保持 persistence-blocked', function () {
+  const storage = fakeStorage()
+  const store = core.createStore(storage)
+  let loaded = false
+  store.load(function (value, persistence) {
+    loaded = true
+    assert.strictEqual(value.brightnessValue, core.DEFAULTS.brightnessValue)
+    assert.strictEqual(persistence.status, 'corrupt')
+  })
+  storage.resolveRead(null, readResult('corrupt', new Error('bad json')))
+  assert.strictEqual(loaded, true)
+  store.update('lowPowerEnabled', true)
+  assert.strictEqual(storage.writes.length, 0)
+})
+
+test('I/O 读取失败允许内存启动但不能执行破坏性恢复', function () {
   const storage = fakeStorage()
   const store = core.createStore(storage)
   store.load(function () {})
-  assert.throws(function () { storage.resolveRead({ brightnessValue: 88 }) }, /Incomplete stored Settings state/)
+  storage.resolveRead(null, readResult('io-error', new Error('device unavailable')))
+  assert.strictEqual(store.getPersistenceState().status, 'io-error')
+  assert.strictEqual(store.getPersistenceState().recoverable, false)
+  let recovery = null
+  store.recoverPersistence(function (result) { recovery = result })
+  assert.strictEqual(recovery.status, 'not-recoverable')
+  assert.strictEqual(storage.quarantines.length, 0, 'I/O failure must never delete data without a readable backup')
+})
+
+test('显式恢复必须先 quarantine，再写默认值，成功后解除写保护', function () {
+  const storage = fakeStorage()
+  const store = core.createStore(storage)
+  store.load(function () {})
+  storage.resolveRead({ brightnessValue: 88 })
+  assert.strictEqual(store.getPersistenceState().status, 'corrupt')
+
+  let recovery = null
+  store.recoverPersistence(function (result) { recovery = result })
+  assert.strictEqual(storage.quarantines.length, 1)
+  assert.strictEqual(storage.writes.length, 0, 'reset write must wait until corrupt raw content has been quarantined')
+  storage.resolveQuarantine()
+  assert.strictEqual(storage.writes.length, 1)
+  assert.deepStrictEqual(storage.writes[0].value, core.DEFAULTS, 'explicit recovery resets Settings to canonical defaults')
+  storage.resolveWrite()
+  assert.ok(recovery && recovery.ok)
+  assert.strictEqual(store.getPersistenceState().status, 'ok')
+
+  store.update('brightnessValue', 155)
+  assert.strictEqual(storage.writes.length, 2, 'normal persistence must resume only after recovery completes')
 })
 
 test('load 回调拿到副本，外部修改不会污染 Store', function () {
