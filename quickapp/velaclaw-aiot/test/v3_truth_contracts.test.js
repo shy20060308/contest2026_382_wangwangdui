@@ -4,14 +4,10 @@ const path = require('path')
 
 const root = path.resolve(__dirname, '..')
 const read = file => fs.readFileSync(path.join(root, file), 'utf8')
+const exists = file => fs.existsSync(path.join(root, file))
 
-const domainWatchfaceCatalog = require('../src/domain/watchface/catalog')
 const notificationFactory = require('../src/domain/notification/factory')
 const manifest = require('../src/manifest.json')
-
-assert.throws(function () { domainWatchfaceCatalog.get('missing') }, /Unknown watchface/)
-assert.throws(function () { domainWatchfaceCatalog.list([]) }, /explicit faceIds/)
-assert.throws(function () { domainWatchfaceCatalog.indexOf(['sport'], 'simple') }, /not allowed by Recipe/)
 
 const canonicalNotification = notificationFactory.normalize({ type: 'app', title: '消息', content: '内容' })
 assert.strictEqual(canonicalNotification.appName, '消息')
@@ -59,6 +55,9 @@ assert.ok(!watchfaceStoreSource.includes('getSelectedFaceId'), 'Watchface Store 
 assert.ok(!watchfaceControllerSource.includes("selectedId = 'sport'"), 'Watchface Feature must not own a hardcoded default face')
 assert.ok(watchfaceControllerSource.includes('function requireFaceIds(faceIds)') && watchfaceControllerSource.includes('ids = requireFaceIds(faceIds)'), 'Watchface Feature must validate configured face IDs')
 assert.ok(watchfaceControllerSource.includes('function requireAllowedFace(ids, id)') && watchfaceControllerSource.includes('selectedId = requireAllowedFace(ids, id)'), 'Watchface Feature must reject selections outside the configured set')
+assert.ok(!watchfaceControllerSource.includes('faceCatalog'), 'Watchface Feature must not rebuild JSON-owned display catalog data')
+assert.ok(!watchfaceControllerSource.includes('faces:'), 'Watchface Feature snapshot must stay semantic: selectedId + selectedIndex only')
+assert.strictEqual(exists('src/domain/watchface/catalog.js'), false, 'Watchface display catalog must live in Surface JSON, not duplicate Domain code')
 assert.ok(!watchfacePageSource.includes("selectedName: '活力数字'"), 'Watchface page must not seed visual content')
 
 const appListSurface = require('../src/product/frontend/surfaces/applist.json')
