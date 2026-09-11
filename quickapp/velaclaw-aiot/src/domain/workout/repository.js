@@ -179,7 +179,7 @@ function recoverPersistence(callback) {
 
 export default {
   saveActive: function (session, callback) {
-    if (activeStatus === 'corrupt' || activeStatus === 'io-error' || activeStatus === 'recovering') {
+    if (activeStatus === 'loading' || activeStatus === 'corrupt' || activeStatus === 'io-error' || activeStatus === 'recovering') {
       if (callback) callback(blockedResult(activeError, 'Active workout'))
       return
     }
