@@ -76,6 +76,7 @@
       "properties": {
         "collection": { "type": "object" },
         "sliders": { "type": "array", "items": { "type": "object" } },
+        "stage": { "type": "object" },
         "gestures": { "type": "object", "additionalProperties": { "type": "string" } },
         "controllerConfig": { "type": "object" }
       }
