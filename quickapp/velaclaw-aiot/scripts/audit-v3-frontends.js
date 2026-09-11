@@ -6,6 +6,7 @@ const srcRoot = path.join(root, 'src')
 const pagesRoot = path.join(srcRoot, 'pages')
 const productRoot = path.join(srcRoot, 'product')
 const surfacesRoot = path.join(productRoot, 'frontend', 'surfaces')
+const enginesRoot = path.join(productRoot, 'frontend', 'engines')
 const strict = process.argv.includes('--strict')
 
 const allowedModuleTypes = new Set([
@@ -147,10 +148,12 @@ filesUnder(surfacesRoot, /\.json$/, []).forEach(function (file) {
   if (!expectedSurfaceFiles.has(path.resolve(file))) globalIssues.push('unbound surface JSON: ' + relative(file))
 })
 
-const allowedNonPageUx = new Set([
-  path.resolve(path.join(srcRoot, 'app.ux')),
-  path.resolve(path.join(srcRoot, 'components', 'surface_host.ux'))
-])
+const genericUx = [
+  path.join(srcRoot, 'components', 'surface_host.ux'),
+  path.join(srcRoot, 'components', 'surface_collection.ux'),
+  path.join(srcRoot, 'components', 'surface_slider.ux')
+]
+const allowedNonPageUx = new Set([path.resolve(path.join(srcRoot, 'app.ux'))].concat(genericUx.map(path.resolve)))
 filesUnder(srcRoot, /\.ux$/, []).forEach(function (file) {
   const absolute = path.resolve(file)
   if (absolute.startsWith(path.resolve(pagesRoot) + path.sep)) return
@@ -162,10 +165,11 @@ filesUnder(path.join(productRoot, 'features'), /\.js$/, []).forEach(function (fi
   if (/#[0-9a-f]{3,8}\b/i.test(read(file))) globalIssues.push('feature leaks visual color authority: ' + relative(file))
 })
 
-const genericFiles = [
-  path.join(srcRoot, 'components', 'surface_host.ux'),
-  path.join(productRoot, 'frontend', 'runtime', 'surface_runtime.js')
-].filter(exists)
+const genericFiles = genericUx.concat([
+  path.join(productRoot, 'frontend', 'runtime', 'surface_runtime.js'),
+  path.join(productRoot, 'frontend', 'runtime', 'experience_runtime.js')
+]).concat(filesUnder(enginesRoot, /\.js$/, [])).filter(exists)
+
 genericFiles.forEach(function (file) {
   const source = read(file)
   routes.forEach(function (route) {
