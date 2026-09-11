@@ -9,12 +9,8 @@ const surfacesRoot = path.join(productRoot, 'frontend', 'surfaces')
 const enginesRoot = path.join(productRoot, 'frontend', 'engines')
 const generatedRoot = path.join(productRoot, 'frontend', 'generated')
 const strict = process.argv.includes('--strict')
-
-const allowedModuleTypes = new Set([
-  'header', 'text', 'metric-card', 'metric-pair', 'metric-grid', 'metric-list', 'chart-card',
-  'progress-card', 'list', 'grid', 'calendar', 'button', 'slider', 'status', 'dialog',
-  'image', 'watchface-preview', 'honeycomb', 'spacer'
-])
+const surfaceSchema = JSON.parse(fs.readFileSync(path.join(productRoot, 'frontend', 'surface.schema.json'), 'utf8'))
+const allowedModuleTypes = new Set(surfaceSchema.$defs.module.properties.type.enum)
 
 function exists(file) { return fs.existsSync(file) }
 function read(file) { return fs.readFileSync(file, 'utf8') }
