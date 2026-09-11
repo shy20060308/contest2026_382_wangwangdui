@@ -16,6 +16,7 @@ assert.throws(function () { notificationFactory.normalize({ content: 123 }) }, /
 
 const batterySource = read('src/capabilities/battery.js')
 const storageSource = read('src/capabilities/storage.js')
+const storageReadResultSource = read('src/capabilities/internal/storage_read_result.js')
 const powerControllerSource = read('src/runtime/power/controller.js')
 const navigationSource = read('src/runtime/navigation.js')
 const deviceProfileSource = read('src/runtime/device_profile.js')
@@ -27,7 +28,9 @@ const clockPageSource = read('src/pages/clock/clock.ux')
 const watchfacePageSource = read('src/pages/watchface/index.ux')
 
 assert.ok(!batterySource.includes('cachedPercent = 75'), 'Battery Capability must not seed fabricated battery data')
-assert.ok(storageSource.includes('Invalid persisted JSON for '), 'Malformed persisted JSON must fail visibly instead of becoming an empty fallback')
+assert.ok(storageSource.includes('if (!result.ok) throw result.error'), 'Legacy storage get/getJSON must keep fail-fast behavior until callers explicitly adopt structured recovery')
+assert.ok(storageSource.includes('getJSONResult: function'), 'Recoverable callers must have an explicit structured JSON read API')
+assert.ok(storageReadResultSource.includes("make('corrupt', error)"), 'Malformed persisted JSON must be classified as corrupt rather than silently accepted as fallback')
 assert.ok(!storageSource.includes('safeJsonParse'), 'Storage must not retain the legacy malformed-JSON fallback parser')
 assert.ok(!navigationSource.includes('catch (error)'), 'Navigation must not catch and silently convert router failures')
 assert.ok(navigationSource.includes('router.push({') && navigationSource.includes('router.replace({') && navigationSource.includes('router.back()'), 'Navigation must call the framework router directly inside transition invokes so failures remain observable')
