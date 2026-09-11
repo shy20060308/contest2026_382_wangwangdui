@@ -51,7 +51,8 @@ assert.strictEqual(manifest.versionCode, 30)
 assert.strictEqual(manifest.minAPILevel, 2)
 assert.ok(manifest.router.pages[manifest.router.entry], 'manifest entry must point to a registered page')
 assert.strictEqual(manifest.router.entry, 'pages/clock', 'V3 must boot directly into the clock Surface instead of a routing guard')
-assert.strictEqual(routes.length, 18, 'V3 product route count changed; update the declarative contract deliberately')
+assert.strictEqual(routes.length, 17, 'V3 product route count changed; update the declarative contract deliberately')
+assert.ok(!manifest.router.pages['pages/clock_guard'], 'Clock Guard must stay removed once direct clock entry is verified')
 
 const ids = new Set()
 routes.forEach(function (route) {
@@ -76,6 +77,8 @@ routes.forEach(function (route) {
 assert.strictEqual(exists('src/v2'), false, 'V3 must not keep a duplicate src/v2 implementation tree')
 assert.strictEqual(exists('src/product/design/apps'), false, 'page-specific visual recipes must live in Surface JSON only')
 assert.strictEqual(exists('src/components/watchfaces'), false, 'specialized watchface UX must not survive the Surface migration')
+assert.strictEqual(exists('src/pages/clock_guard/clock_guard.ux'), false, 'obsolete routing guard page must stay deleted')
+assert.strictEqual(exists('src/product/frontend/surfaces/clock_guard.json'), false, 'obsolete routing guard Surface must stay deleted')
 
 const pageRuntime = read('src/runtime/page_runtime.js')
 assert.ok(pageRuntime.includes("require('../product/design/scene')"), 'Page Runtime must consume the single current Scene implementation')
@@ -86,11 +89,9 @@ assert.ok(!adapter.includes('function clamp('), 'Adapter must not repair product
 assert.ok(!adapter.includes('circleChord') && !adapter.includes('circleBand'), 'Adapter must not contain round-screen fitting algorithms')
 assert.ok(!adapter.includes('safeForWidth'), 'Safe area must not depend on component width')
 
-const guardSurface = JSON.parse(read('src/product/frontend/surfaces/clock_guard.json'))
-assert.strictEqual(guardSurface.controller, 'clock-guard')
 const registry = read('src/product/controller_registry.js')
-assert.ok(/function clockGuard\(\)/.test(registry), 'Clock Guard behavior must live in the semantic controller registry')
-assert.ok(registry.includes("navigation.push('/pages/clock')"), 'Clock Guard must restore the clock route')
+assert.ok(!/function clockGuard\(/.test(registry), 'obsolete Clock Guard controller must stay deleted')
+assert.ok(!registry.includes("id === 'clock-guard'"), 'controller registry must not expose obsolete clock-guard')
 
 const pkg = JSON.parse(read('package.json'))
 assert.strictEqual(pkg.version, '3.0.0')
