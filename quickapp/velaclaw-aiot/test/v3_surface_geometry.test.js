@@ -27,6 +27,16 @@ function fitScene(frame, label) {
   assert.ok(frame.left + frame.width <= host.width, label + ' must fit Host Scene width')
   assert.ok(frame.top + frame.height <= host.height, label + ' must fit Host Scene height')
 }
+function fitStage(stage, label) {
+  fitScene(stage.frame, label + ' frame')
+  ;['panels', 'texts', 'metrics', 'progresses', 'analogDials', 'analogPins'].forEach(function (key) {
+    ;(stage[key] || []).forEach(function (item) {
+      assert.ok(item.frame.left >= 0 && item.frame.top >= 0, label + ' ' + key + ' item must start inside stage')
+      assert.ok(item.frame.left + item.frame.width <= stage.frame.width, label + ' ' + key + ' item must fit stage width')
+      assert.ok(item.frame.top + item.frame.height <= stage.frame.height, label + ' ' + key + ' item must fit stage height')
+    })
+  })
+}
 
 const appList = resolve('applist', {})
 assert.ok(appList.collection, 'L3 AppList must resolve a collection experience')
@@ -76,13 +86,20 @@ fit(notification.flowButtons, notification.stream.width, 'Notification action')
 
 const clock = resolve('clock', {
   clockVisible: true, sleepVisible: false,
-  faceSport: false, faceSimple: false, faceDashboard: true, faceMechanical: false, faceAlpine: false,
   notificationAppVisible: false, notificationCallVisible: false,
   faceId: 'dashboard', powerMode: 'ACTIVE', timestamp: Date.now(), steps: 5200, currentHeartRate: 76, goalPercent: 52, batteryPercent: 88
 })
-fit(clock.flowMetricItems, clock.stream.width, 'Clock metric')
-fit(clock.flowButtons, clock.stream.width, 'Clock action')
+assert.ok(clock.stage, 'Clock must resolve its Pill L3 stage')
+assert.strictEqual(clock.stage.variantId, 'dashboard')
+fitStage(clock.stage, 'Clock dashboard')
 assert.strictEqual(clock.gestures.up, '/pages/applist', 'Clock L3 gesture surface must survive geometry resolution')
+
+const alpine = resolve('clock', {
+  clockVisible: true, sleepVisible: false,
+  notificationAppVisible: false, notificationCallVisible: false,
+  faceId: 'alpine', powerMode: 'ACTIVE', timestamp: Date.now(), steps: 5200, currentHeartRate: 76, goalPercent: 52, batteryPercent: 88
+})
+fitStage(alpine.stage, 'Clock alpine')
 
 const cells = []
 for (let i = 0; i < 42; i++) cells.push({ key: 'c' + i, day: (i % 31) + 1, inMonth: i >= 3 && i < 34, isToday: i === 10 })
@@ -96,4 +113,4 @@ const workout = resolve('workout', { confirming: false, type: 'run', status: 'ru
 fit(workout.flowMetricItems, workout.stream.width, 'Workout metric')
 fit(workout.flowButtons, workout.stream.width, 'Workout action')
 
-console.log('V3 surface geometry verified: L1/L2 shared streams and L3 independent collection frames stay inside authored geometry')
+console.log('V3 surface geometry verified: L1/L2 shared streams and L3 independent collection/stage frames stay inside authored geometry')
