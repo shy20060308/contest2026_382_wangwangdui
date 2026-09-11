@@ -50,6 +50,7 @@ assert.strictEqual(manifest.versionName, '3.0.0')
 assert.strictEqual(manifest.versionCode, 30)
 assert.strictEqual(manifest.minAPILevel, 2)
 assert.ok(manifest.router.pages[manifest.router.entry], 'manifest entry must point to a registered page')
+assert.strictEqual(manifest.router.entry, 'pages/clock', 'V3 must boot directly into the clock Surface instead of a routing guard')
 assert.strictEqual(routes.length, 18, 'V3 product route count changed; update the declarative contract deliberately')
 
 const ids = new Set()
