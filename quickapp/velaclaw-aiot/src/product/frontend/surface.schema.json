@@ -11,6 +11,7 @@
     "route": { "type": "string", "pattern": "^pages/[a-z0-9_/-]+$" },
     "renderer": { "const": "surface-v1" },
     "controller": { "type": ["string", "null"], "pattern": "^[a-z][a-z0-9-]*$" },
+    "initialState": { "type": "object" },
     "modules": { "type": "array", "items": { "$ref": "#/$defs/module" } },
     "tokens": { "$ref": "#/$defs/tokenMap" },
     "experience": { "$ref": "#/$defs/experience" },
