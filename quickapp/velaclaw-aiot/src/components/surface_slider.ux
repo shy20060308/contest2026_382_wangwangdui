@@ -1,0 +1,31 @@
+<template>
+  <div class="slider-card" style="left: {{ model.frame.left }}px; top: {{ model.frame.top }}px; width: {{ model.frame.width }}px; height: {{ model.frame.height }}px; border-radius: {{ model.tokens.radius }}px; padding: {{ model.tokens.padding }}px; background-color: {{ model.tokens.background }};">
+    <div class="slider-head" style="height: {{ model.tokens.headHeight }}px;"><text class="slider-title" style="font-size: {{ model.tokens.titleSize }}px; color: {{ model.tokens.titleColor }}; font-weight: bold;">{{ model.title }}</text><text class="slider-value" style="font-size: {{ model.tokens.valueSize }}px; color: {{ model.tokens.valueColor }};">{{ model.value }}</text></div>
+    <slider class="slider-control" min="{{ model.min }}" max="{{ model.max }}" step="{{ model.step }}" value="{{ model.value }}" @change="onChange" style="width: {{ model.tokens.controlWidth }}px; height: {{ model.tokens.controlHeight }}px; color: {{ model.tokens.accent }}; selected-color: {{ model.tokens.accent }}; block-color: {{ model.tokens.thumbColor }};"></slider>
+    <div class="slider-foot" style="height: {{ model.tokens.footHeight }}px;"><text class="slider-label" style="font-size: {{ model.tokens.labelSize }}px; color: {{ model.tokens.labelColor }};">{{ model.minLabel }}</text><text class="slider-subtitle" style="font-size: {{ model.tokens.subtitleSize }}px; color: {{ model.tokens.subtitleColor }}; text-align: center;">{{ model.subtitle }}</text><text class="slider-label" style="font-size: {{ model.tokens.labelSize }}px; color: {{ model.tokens.labelColor }}; text-align: right;">{{ model.maxLabel }}</text></div>
+  </div>
+</template>
+
+<script>
+export default {
+  props: ['model'],
+  onChange(event) {
+    var value = this.model.value
+    if (event && event.progress !== undefined) value = event.progress
+    else if (event && event.value !== undefined) value = event.value
+    else if (event && event.detail && event.detail.progress !== undefined) value = event.detail.progress
+    else if (event && event.detail && event.detail.value !== undefined) value = event.detail.value
+    this.$emit('surfaceaction', { action: this.model.action, value: value })
+  }
+}
+</script>
+
+<style>
+.slider-card { position: absolute; flex-direction: column; }
+.slider-head, .slider-foot { width: 100%; flex-direction: row; align-items: center; justify-content: space-between; }
+.slider-title, .slider-value { flex: 1; }
+.slider-value { text-align: right; }
+.slider-control { margin-top: 2px; }
+.slider-label { width: 28px; }
+.slider-subtitle { flex: 1; }
+</style>
