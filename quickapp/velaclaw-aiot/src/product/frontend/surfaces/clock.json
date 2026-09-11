@@ -88,7 +88,10 @@
         "right": "clock-prev-face",
         "longpress": "/pages/watchface"
       }
-    }
+    },
+    "circle": { "controllerConfig": { "faceIds": ["sport", "simple", "dashboard", "mechanical"] } },
+    "pill": { "controllerConfig": { "faceIds": ["sport", "simple", "dashboard", "alpine"] } },
+    "rect": { "controllerConfig": { "faceIds": ["sport", "simple", "dashboard"] } }
   },
   "variants": {
     "base": {},
