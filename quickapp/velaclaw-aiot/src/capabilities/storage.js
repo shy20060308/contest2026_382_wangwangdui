@@ -2,15 +2,8 @@ import storage from '@system.storage'
 
 var STORAGE_OPERATION_TIMEOUT_MS = 8000
 var queue = require('./internal/operation_queue').createQueue({ timeoutMs: STORAGE_OPERATION_TIMEOUT_MS })
+var readResult = require('./internal/storage_read_result')
 var memoryCache = {}
-
-function parseJson(key, value) {
-  try {
-    return JSON.parse(value)
-  } catch (error) {
-    throw new Error('Invalid persisted JSON for ' + key)
-  }
-}
 
 function storageFailure(action, key, data, code) {
   var error = data instanceof Error ? data : new Error('storage.' + action + ' failed for ' + key)
@@ -72,18 +65,22 @@ function readString(key, success, fail) {
   }
 }
 
-function readJSON(key, fallback, success, fail) {
+function readStructured(key, fallback, classifier, callback) {
   readString(key, function (value) {
-    if (value === '' || value === undefined || value === null) {
-      success(fallback !== undefined ? fallback : null)
-      return
-    }
-    try {
-      success(parseJson(key, value))
-    } catch (error) {
-      fail(error)
-    }
-  }, fail)
+    var classified = classifier(key, value, fallback)
+    callback(classified.value, classified.result)
+  }, function (error) {
+    var failed = readResult.io(fallback, error)
+    callback(failed.value, failed.result)
+  })
+}
+
+function classifyRaw(key, value, fallback) {
+  return readResult.raw(value, fallback)
+}
+
+function classifyJson(key, value, fallback) {
+  return readResult.json(key, value, fallback)
 }
 
 var adapter = {
@@ -110,13 +107,30 @@ var adapter = {
     })
   },
 
+  getResult: function (key, callback, fallback) {
+    if (!callback) return
+    readStructured(key, fallback, classifyRaw, callback)
+  },
+
+  getJSONResult: function (key, callback, fallback) {
+    if (!callback) return
+    readStructured(key, fallback, classifyJson, callback)
+  },
+
   get: function (key, callback) {
     if (!callback) return
-    readString(key, callback, function (error) { throw error })
+    adapter.getResult(key, function (value, result) {
+      if (!result.ok) throw result.error
+      callback(value)
+    })
   },
 
   getJSON: function (key, callback, fallback) {
-    readJSON(key, fallback, callback, function (error) { throw error })
+    if (!callback) return
+    adapter.getJSONResult(key, function (value, result) {
+      if (!result.ok) throw result.error
+      callback(value)
+    }, fallback)
   },
 
   delete: function (key, callback) {
@@ -147,12 +161,42 @@ var adapter = {
     })
   },
 
+  quarantine: function (key, callback) {
+    readString(key, function (raw) {
+      if (raw === '' || raw === undefined || raw === null) {
+        if (callback) callback({ ok: false, status: 'missing', backupKey: '', error: null })
+        return
+      }
+      var backupKey = key + '__corrupt_backup'
+      var envelope = { sourceKey: key, quarantinedAt: Date.now(), raw: raw }
+      adapter.set(backupKey, envelope, function (backupResult) {
+        if (!backupResult || !backupResult.persisted) {
+          if (callback) callback({ ok: false, status: 'io-error', backupKey: backupKey, error: backupResult && backupResult.error ? backupResult.error : new Error('storage quarantine backup failed') })
+          return
+        }
+        adapter.delete(key, function (deleteResult) {
+          if (!deleteResult || !deleteResult.persisted) {
+            if (callback) callback({ ok: false, status: 'io-error', backupKey: backupKey, error: deleteResult && deleteResult.error ? deleteResult.error : new Error('storage quarantine delete failed') })
+            return
+          }
+          if (callback) callback({ ok: true, status: 'quarantined', backupKey: backupKey, error: null })
+        })
+      })
+    }, function (error) {
+      if (callback) callback({ ok: false, status: 'io-error', backupKey: '', error: error })
+    })
+  },
+
   updateJSON: function (key, fallback, updater, callback) {
     var timeoutValue = null
     var memoryUpdated = false
     queue.enqueue(key, function (token) {
-      readJSON(key, fallback, function (current) {
+      adapter.getJSONResult(key, function (current, readState) {
         if (!queue.isActive(key, token)) return
+        if (!readState.ok) {
+          queue.complete(key, token, callback, [null, makeResult(false, false, readState.error)])
+          return
+        }
         var nextValue
         var stringValue
         try {
@@ -167,10 +211,7 @@ var adapter = {
         persistString(key, stringValue, function (result) {
           queue.complete(key, token, callback, [nextValue, result])
         })
-      }, function (error) {
-        if (!queue.isActive(key, token)) return
-        queue.complete(key, token, callback, [null, makeResult(false, false, error)])
-      })
+      }, fallback)
     }, function () {
       if (callback) callback(timeoutValue, makeResult(false, memoryUpdated, storageTimeout('update', key)))
     })
