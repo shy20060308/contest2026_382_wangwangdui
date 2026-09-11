@@ -50,5 +50,8 @@ expectError(unknownTopLevel, 'visualAuthority is not allowed', 'unknown top-leve
 const compileSource = fs.readFileSync(path.join(root, 'scripts', 'compile-v3-surfaces.js'), 'utf8')
 assert.ok(compileSource.includes("require('./lib/surface-contract-validator')"), 'surfaces:compile must execute the Surface contract validator')
 assert.ok(compileSource.includes('surfaceContract.assertValid'), 'surfaces:compile must reject invalid authored JSON before generating resources')
+const auditSource = fs.readFileSync(path.join(root, 'scripts', 'audit-v3-frontends.js'), 'utf8')
+assert.ok(auditSource.includes('surface.schema.json'), 'strict frontend audit must source its module type allowlist from Surface schema')
+assert.ok(auditSource.includes('surfaceSchema.$defs.module.properties.type.enum'), 'strict frontend audit must not maintain a duplicate module type list')
 
-console.log('V3 Surface schema contract verified: ' + files.length + ' authored surfaces valid; unsupported/invisible module configurations fail before runtime')
+console.log('V3 Surface schema contract verified: ' + files.length + ' authored surfaces valid; unsupported/invisible module configurations fail before runtime; strict audit shares schema authority')
