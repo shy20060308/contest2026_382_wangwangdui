@@ -22,14 +22,7 @@ export function createHealthController(onChange) {
   }
 
   function updateWindow(values, changed, value, allowed) {
-    if (!changed || !allowed) return values
-    return healthMetrics.pushWindow(values, value, 10)
-  }
-
-  function seedCurrent(data) {
-    if (!heartValues.length && valid(data, 'heartRate')) heartValues = [data.heartRate]
-    if (!spo2Values.length && valid(data, 'spo2')) spo2Values = [data.spo2]
-    if (!stressValues.length && valid(data, 'stress')) stressValues = [data.stress]
+    return healthMetrics.pushObservedWindow(values, changed, value, allowed, 10)
   }
 
   function semanticSummaryState(anyLive, serviceAvailable, heartZone, spo2Zone, stressZone) {
@@ -62,11 +55,11 @@ export function createHealthController(onChange) {
       stressZone: stressZone,
       summaryState: summaryState,
       sourceState: anyLive ? 'live' : (data.serviceAvailable ? 'waiting-data' : 'waiting-service'),
-      dailyMin: heartStats.min,
-      dailyMax: heartStats.max,
-      stressMin: stressStats.min,
-      stressAvg: stressStats.avg,
-      stressMax: stressStats.max,
+      recentHeartMin: heartStats.min,
+      recentHeartMax: heartStats.max,
+      recentStressMin: stressStats.min,
+      recentStressAvg: stressStats.avg,
+      recentStressMax: stressStats.max,
       heartSource: { live: heartAvailable, errorCode: data.heartRateErrorCode, mode: data.heartRateSource },
       spo2Source: { live: spo2Available, errorCode: data.spo2ErrorCode, mode: data.spo2Source },
       stressSource: { live: stressAvailable, errorCode: data.stressErrorCode, mode: data.stressSource },
@@ -85,7 +78,6 @@ export function createHealthController(onChange) {
     var generation = activeGeneration
     if (!started || generation !== lifecycleGeneration) return
     latest = data
-    seedCurrent(data)
     heartValues = updateWindow(heartValues, data.heartRateChanged, data.heartRate, valid(data, 'heartRate'))
     spo2Values = updateWindow(spo2Values, data.spo2Changed, data.spo2, valid(data, 'spo2'))
     stressValues = updateWindow(stressValues, data.stressChanged, data.stress, valid(data, 'stress'))
