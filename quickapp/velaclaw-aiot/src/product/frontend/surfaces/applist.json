@@ -33,16 +33,19 @@
         "mode": "honeycomb",
         "frame": { "bounds": "scene" },
         "tokens": {
+          "background": "#000000",
           "spacing": 46, "rowHeight": 40, "focusX": 96, "focusY": 90,
-          "iconBase": 34, "iconGrow": 16, "emphasisFalloff": 60,
-          "elasticBase": 0.94, "elasticRange": 0.06,
+          "iconBase": 34, "iconGrow": 16, "radiusRatio": 0.5, "emphasisFalloff": 60,
+          "opacityBase": 0.48, "opacityEmphasis": 0.52, "avoidanceOpacity": 0.72,
+          "elasticBase": 0.94, "elasticRange": 0.06, "elasticFalloff": 90,
           "dragDamping": 0.92, "maxFrameDelta": 24, "frameMs": 24,
           "overscrollLimit": 30, "overscrollDamping": 0.34,
           "inertiaDecay": 0.86, "minVelocity": 0.025, "magnetDistance": 22,
           "visibleMargin": 42, "labelCenterY": 168, "labelHalfHeight": 9, "labelHalfWidth": 43,
           "labelLeft": 53, "labelTop": 159, "labelWidth": 86, "labelHeight": 18,
-          "labelSize": 9, "labelColor": "#FFFFFF", "snapDuration": 144,
-          "edgeBackDistance": 58, "edgeBackStart": 26
+          "labelSize": 9, "labelColor": "#FFFFFF", "movingLabelOpacity": 0.45,
+          "snapDuration": 144, "dragThreshold": 6, "tapSuppressDuration": 220,
+          "edgeBackDistance": 58, "edgeBackStart": 26, "edgeBackVerticalLimit": 30
         }
       }
     },
