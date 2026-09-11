@@ -1,3 +1,5 @@
+var DEFAULT_WINDOW_MS = 300
+
 function paramsKey(params) {
   return JSON.stringify(params || {})
 }
@@ -6,7 +8,7 @@ function create(options) {
   var config = options || {}
   var now = typeof config.now === 'function' ? config.now : Date.now
   var windowMs = Number(config.windowMs)
-  if (!isFinite(windowMs) || windowMs <= 0) windowMs = 300
+  if (!isFinite(windowMs) || windowMs <= 0) windowMs = DEFAULT_WINDOW_MS
   var onSuppressed = typeof config.onSuppressed === 'function' ? config.onSuppressed : function () {}
   var recent = {}
 
@@ -34,4 +36,4 @@ function create(options) {
   return { transition: transition, reset: reset }
 }
 
-module.exports = { create: create }
+module.exports = { create: create, DEFAULT_WINDOW_MS: DEFAULT_WINDOW_MS }
