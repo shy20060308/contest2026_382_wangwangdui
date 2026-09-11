@@ -45,7 +45,6 @@ assert.deepStrictEqual(policyRoutes, routes, 'Every manifest route must have exa
 
 const expectedBaselineLevels = {
   'pages/clock': 'L3',
-  'pages/clock_guard': 'L1',
   'pages/heartrate': 'L1',
   'pages/steps': 'L1',
   'pages/applist': 'L3',
