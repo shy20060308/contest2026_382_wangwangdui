@@ -73,6 +73,10 @@
       </div>
     </div>
 
+    <div class="segmented" if="{{ model.mode === 'segmented' }}" style="width: {{ model.frame.width }}px; height: {{ model.frame.height }}px;">
+      <text class="segment-item" for="{{ segmentItems }}" tid="id" @click="activateItem($item)" style="left: {{ $item.left }}px; top: {{ $item.top }}px; width: {{ $item.width }}px; height: {{ $item.height }}px; line-height: {{ $item.height }}px; border-width: {{ model.tokens.itemBorderWidth }}px; border-radius: {{ model.tokens.itemRadius }}px; border-color: {{ $item.borderColor }}; background-color: {{ $item.background }}; font-size: {{ model.tokens.fontSize }}px; color: {{ $item.color }}; font-weight: {{ model.tokens.fontWeight }}; text-align: center;">{{ $item.label }}</text>
+    </div>
+
     <div class="paged-list" if="{{ model.mode === 'paged-list' }}" style="width: {{ model.frame.width }}px; height: {{ model.frame.height }}px;">
       <div class="collection-head" style="left: {{ model.tokens.headerLeft }}px; top: {{ model.tokens.headerTop }}px; width: {{ model.tokens.headerWidth }}px; height: {{ model.tokens.headerHeight }}px;">
         <text class="collection-title" style="font-size: {{ model.tokens.titleSize }}px; color: {{ model.tokens.titleColor }}; font-weight: {{ model.tokens.titleWeight }};">{{ model.tokens.title }}</text>
@@ -119,14 +123,14 @@ import honeycomb from '../product/frontend/engines/honeycomb'
 export default {
   props: ['model'],
   private: {
-    pageIndex: 0, pageItems: [], gridItems: [], pageText: '', pageProgressWidth: 0,
+    pageIndex: 0, pageItems: [], gridItems: [], segmentItems: [], pageText: '', pageProgressWidth: 0,
     previousColor: '', nextColor: '', honeySlots: [], honeyVisible: [], focusedLabel: '',
     selectorIndex: 0, selectorPreviewName: '', selectedItem: null,
     honeyPanX: 0, honeyPanY: 0, honeyVelocityX: 0, honeyVelocityY: 0, honeyTouchActive: false,
     honeyLabelOpacity: 1, dragMoved: false, suppressTapUntil: 0, layoutTimer: null, motionTimer: null
   },
   onInit() { this.refreshModel() },
-  onDestroy() { this.stopHoneyMotion(); this.honeySlots = []; this.honeyVisible = []; this.pageItems = []; this.gridItems = [] },
+  onDestroy() { this.stopHoneyMotion(); this.honeySlots = []; this.honeyVisible = []; this.pageItems = []; this.gridItems = []; this.segmentItems = [] },
   tokenNumber(name) {
     var value = Number(this.model && this.model.tokens ? this.model.tokens[name] : undefined)
     if (!isFinite(value)) throw new Error('Collection requires numeric token ' + name)
@@ -146,10 +150,34 @@ export default {
   refreshModel() {
     if (!this.model) return
     this.syncSelection()
+    if (this.model.mode === 'segmented') { this.buildSegmented(); return }
     if (this.model.mode === 'honeycomb') { this.initHoneycomb(); return }
     if (this.model.mode === 'preview-swiper') return
     if (this.model.mode === 'preview-grid') { this.pageItems = this.model.items.slice(); this.buildGrid(); return }
     this.refreshPage()
+  },
+  buildSegmented() {
+    var count = Math.max(1, this.model.items.length)
+    var inset = this.tokenNumber('contentInset')
+    var gap = this.tokenNumber('gap')
+    var itemHeight = this.tokenNumber('itemHeight')
+    var top = this.tokenNumber('contentTop')
+    var usable = this.model.frame.width - inset * 2 - gap * (count - 1)
+    var width = Math.floor(usable / count)
+    var items = []
+    for (var i = 0; i < this.model.items.length; i++) {
+      var item = this.model.items[i]
+      var copy = {}; for (var key in item) copy[key] = item[key]
+      copy.left = inset + i * (width + gap)
+      copy.top = top
+      copy.width = width
+      copy.height = itemHeight
+      copy.background = item.selected ? this.model.tokens.selectedBackground : this.model.tokens.itemBackground
+      copy.color = item.selected ? this.model.tokens.selectedColor : this.model.tokens.itemColor
+      copy.borderColor = item.selected ? this.model.tokens.selectedBorderColor : this.model.tokens.itemBorderColor
+      items.push(copy)
+    }
+    this.segmentItems = items
   },
   pageCount() { var size = Math.max(1, Math.round(this.tokenNumber('pageItemCount'))); return Math.max(1, Math.ceil(this.model.items.length / size)) },
   buildGrid() {
@@ -188,7 +216,7 @@ export default {
   previousPage() { if (this.pageIndex <= 0) return; this.pageIndex -= 1; this.refreshPage() },
   nextPage() { if (this.pageIndex >= this.pageCount() - 1) return; this.pageIndex += 1; this.refreshPage() },
   onSwipe(event) {
-    if (!event || this.model.mode === 'honeycomb' || this.model.mode === 'preview-swiper' || this.model.mode === 'preview-grid') return
+    if (!event || this.model.mode === 'honeycomb' || this.model.mode === 'segmented' || this.model.mode === 'preview-swiper' || this.model.mode === 'preview-grid') return
     var direction = event.direction || (event.detail && event.detail.direction) || ''
     if (direction === 'left') this.nextPage()
     else if (direction === 'right') {
@@ -309,7 +337,7 @@ export default {
 </script>
 
 <style>
-.collection-root, .honeycomb, .honey-item, .honey-label, .preview-swiper, .cards-pager, .preview-grid, .selector-head, .selector-swiper, .selector-footer, .selector-card-list, .selector-pager, .selector-grid, .selector-grid-card, .selector-current, .paged-list, .designed-grid, .collection-head, .list-content, .grid-content, .grid-item, .pager { position: absolute; }
+.collection-root, .honeycomb, .honey-item, .honey-label, .preview-swiper, .cards-pager, .preview-grid, .selector-head, .selector-swiper, .selector-footer, .selector-card-list, .selector-pager, .selector-grid, .selector-grid-card, .selector-current, .segmented, .segment-item, .paged-list, .designed-grid, .collection-head, .list-content, .grid-content, .grid-item, .pager { position: absolute; }
 .selector-head, .selector-name-row, .selector-pager, .collection-head, .pager { flex-direction: row; align-items: center; justify-content: space-between; }
 .selector-title, .collection-title { flex: 1; }
 .selector-slide, .circle-preview, .pill-preview, .rect-preview { justify-content: center; align-items: center; }
