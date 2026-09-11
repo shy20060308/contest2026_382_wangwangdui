@@ -192,9 +192,7 @@ export function createSyncController(onChange) {
         state.phase = 'completed'
         state.lastSyncAt = Date.now()
         settingsStore.update('lastSyncAt', state.lastSyncAt)
-        workoutRepository.markAllSynced(function () {
-          if (isLive(epoch)) collect(null, epoch)
-        })
+        workoutRepository.markAllSynced()
         emit()
       }, function () {
         if (!isLive(epoch) || !state.syncing) return
