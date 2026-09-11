@@ -138,22 +138,23 @@ export function createSyncController(onChange) {
     return emit()
   }
 
-  function sendPackets(packets, epoch, success, fail) {
+  function sendTransfer(transfer, epoch, success, fail) {
     var index = 0
-    state.packetTotal = packets.length
+    var total = transfer.packetTotal
+    state.packetTotal = total
     function next() {
       if (!isLive(epoch) || !state.syncing) return
-      if (index >= packets.length) {
+      if (index >= total) {
         success()
         return
       }
-      var packet = packets[index]
+      var packet = transfer.packetAt(index)
       interconnect.send(packet, {
         success: function () {
           if (!isLive(epoch) || !state.syncing) return
           index++
           state.packetSent = index
-          state.progress = Math.round((index / packets.length) * 100)
+          state.progress = Math.round((index / total) * 100)
           state.phase = 'sending'
           emit()
           next()
@@ -178,13 +179,13 @@ export function createSyncController(onChange) {
     emit()
     collect(function (payload) {
       if (!isLive(epoch) || !state.syncing) return
-      var transfer = protocol.encode(payload, 96)
-      state.packetCount = transfer.packets.length
+      var transfer = protocol.createTransfer(payload, 96)
+      state.packetCount = transfer.packetTotal
       state.payloadChars = transfer.bytesText
-      state.packetTotal = transfer.packets.length
+      state.packetTotal = transfer.packetTotal
       state.phase = 'sending'
       emit()
-      sendPackets(transfer.packets, epoch, function () {
+      sendTransfer(transfer, epoch, function () {
         if (!isLive(epoch) || !state.syncing) return
         state.syncing = false
         state.progress = 100
