@@ -53,9 +53,13 @@ function resolve(value, profile, state) {
 Object.keys(profiles).forEach(function (shape) {
   const profile = profiles[shape]
 
-  const appList = resolve(surface('pages/applist'), profile, {})
-  assert.strictEqual(appList.flowButtons.length, 13, 'AppList structure must come from JSON buttons only')
-  assert.strictEqual(appList.flowButtons[0].action, '/pages/workout_select')
+  const appListSurface = surface('pages/applist')
+  const appList = resolve(appListSurface, profile, {})
+  assert.ok(appList.collection, 'AppList must resolve through the generic collection experience')
+  assert.strictEqual(appList.collection.items.length, 12, 'AppList collection must preserve all accepted product entries')
+  assert.strictEqual(appList.collection.items[0].action, '/pages/workout_select')
+  const expectedMode = shape === 'circle' ? 'honeycomb' : (shape === 'pill' ? 'paged-list' : 'designed-grid')
+  assert.strictEqual(appList.collection.mode, expectedMode, 'AppList must preserve the intended ' + shape + ' composition')
 
   const watchface = resolve(surface('pages/watchface'), profile, { selectedId: 'sport', selectedIndex: 0 })
   assert.strictEqual(watchface.flowHeaders[0].trailing, '活力数字')
@@ -78,6 +82,7 @@ Object.keys(profiles).forEach(function (shape) {
   const brightness = resolve(surface('pages/settings/brightness'), profile, { brightnessValue: 128, autoBrightness: false, raiseWakeEnabled: true, lowPowerEnabled: false })
   assert.strictEqual(brightness.flowHeaders[0].trailing, '手动')
   assert.ok(brightness.flowButtons.some(item => item.action === 'brightness-toggle-low-power'))
+  assert.ok(brightness.sliders && brightness.sliders.length === 1, 'Brightness must resolve the declarative direct-manipulation slider')
 
   const clock = resolve(surface('pages/clock'), profile, {
     clockVisible: true, sleepVisible: false,
@@ -89,6 +94,7 @@ Object.keys(profiles).forEach(function (shape) {
   assert.strictEqual(clock.flowHeaders[0].trailing, '活力数字')
   assert.strictEqual(clock.flowTexts.filter(item => item.id === 'sportTime')[0].text, '08:30')
   assert.deepStrictEqual(clock.flowMetricItems.filter(item => item.id.indexOf('sportMetrics-') === 0).map(item => item.value), ['5,200', '76', '52%', '88%'])
+  assert.strictEqual(clock.gestures.up, '/pages/applist', 'Clock must expose JSON-authored gesture navigation')
 })
 
 console.log('V3 design verified: all manifest routes are authored as Surface JSON and representative surfaces resolve on Circle/Pill/Rect')
