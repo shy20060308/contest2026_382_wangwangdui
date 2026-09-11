@@ -6,6 +6,13 @@ var surfaces = require('../product/frontend/generated/surfaces')
 var surfaceRuntime = require('../product/frontend/runtime/surface_runtime')
 var experienceRuntime = require('../product/frontend/runtime/experience_runtime')
 
+function initialState(surface) {
+  var source = surface && surface.initialState ? surface.initialState : {}
+  var state = {}
+  for (var key in source) state[key] = source[key]
+  return state
+}
+
 function rebuild(page) {
   if (!page || !page._surface || !page._surfaceProfile || !page._surfaceScene || !page._surfaceSafe) return
   var plan = surfaceRuntime.resolve(
@@ -33,7 +40,7 @@ function bind(page, surfaceId) {
   page.surfaceReady = false
   page.surfacePlan = null
   page._surface = surface
-  page._surfaceState = {}
+  page._surfaceState = initialState(surface)
   page._surfaceVisible = false
   page._surfaceController = controllerRegistry.create(surface.controller, function (state) {
     page._surfaceState = state || {}
