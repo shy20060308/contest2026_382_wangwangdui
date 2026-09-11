@@ -25,6 +25,8 @@ assert.ok(!experienceRuntimeSource.includes("format === 'weekday'"), 'legacy wee
 const historyTrend = historySurface.modules.filter(function (module) { return module.id === 'trend' })[0]
 assert.strictEqual(historyTrend.props.labelFormat, 'weekday-index')
 assert.deepStrictEqual(historyTrend.props.labelMap, { '0': '日', '1': '一', '2': '二', '3': '三', '4': '四', '5': '五', '6': '六' })
+assert.strictEqual(historyTrend.copy.todayCompactLabel, undefined, 'History must not relabel the final real record as today by array position')
+assert.strictEqual(historyTrend.copy.todayLabel, undefined, 'History row labels must remain real weekday copy unless today is explicitly known')
 
 const clockWeekdayMap = clockSurface.experience.base.stage.valueMaps.weekday
 assert.deepStrictEqual(clockWeekdayMap, { '0': '周日', '1': '周一', '2': '周二', '3': '周三', '4': '周四', '5': '周五', '6': '周六' })
@@ -67,7 +69,7 @@ const rectHistory = surfaceRuntime.resolve(historySurface, rectProfile, rectHost
   records: [{ date: '2026-09-06', steps: 100 }, { date: '2026-09-07', steps: 200 }]
 })
 assert.strictEqual(rectHistory.flowColumnBars[0].label, '日')
-assert.strictEqual(rectHistory.flowColumnBars[1].label, '今')
+assert.strictEqual(rectHistory.flowColumnBars[1].label, '一', 'History must keep the second real record as Monday instead of inventing today copy')
 
 const pillProfile = { formFactor: 'pill', screenWidth: 212, screenHeight: 520, safeInsets: { left: 0, top: 52, right: 0, bottom: 52, gestureBar: 36 } }
 const pillHost = scene.resolve(pillProfile)
@@ -82,6 +84,6 @@ const pillHistory = surfaceRuntime.resolve(historySurface, pillProfile, pillHost
   records: [{ date: '2026-09-06', steps: 100 }, { date: '2026-09-07', steps: 200 }]
 })
 assert.strictEqual(pillHistory.flowRowBars[0].label, '日')
-assert.strictEqual(pillHistory.flowRowBars[1].label, '今天')
+assert.strictEqual(pillHistory.flowRowBars[1].label, '一', 'Pill History must not infer today from record position')
 
-console.log('Copy ownership verified: weekday computation stays generic while Clock/History display labels remain Surface JSON-owned')
+console.log('Copy ownership verified: weekday computation stays generic while Clock/History display labels remain Surface JSON-owned without positional today copy')
