@@ -72,13 +72,10 @@ diagnosticShapes.forEach(function (shape) {
 
 const manifest = JSON.parse(read('src/manifest.json'))
 assert.strictEqual(manifest.router.entry, 'pages/clock', 'The contest runtime must enter the V3 clock page directly')
-const appRoutes = read('src/runtime/app_routes.js')
-const routePattern = /['"](\/pages\/[^'"]+)['"]/g
-let match
-while ((match = routePattern.exec(appRoutes))) {
-  const declared = match[1].replace(/^\//, '')
-  assert.ok(manifest.router.pages[declared], 'Application route must be declared in manifest: ' + match[1])
-}
+assert.strictEqual(fs.existsSync(path.join(root, 'src', 'runtime', 'app_routes.js')), false, 'Runtime must not keep a second dead application route registry beside manifest + authored Surface actions')
+Object.keys(manifest.router.pages || {}).forEach(function (route) {
+  assert.ok(/^pages\//.test(route), 'Manifest route must remain a page-local path: ' + route)
+})
 
 const performanceMetrics = require('../src/runtime/performance_metrics')
 performanceMetrics.reset()
@@ -124,4 +121,4 @@ assert.strictEqual(snapshot.motionUiPercent, 20)
 performanceMetrics.reset()
 assert.strictEqual(performanceMetrics.snapshot().routeSurfaceReadySamples, 0, 'performance reset must clear bounded route samples')
 
-console.log('V3 runtime performance verified: staged Surface JS timing, retry-safe route-to-Surface-ready samples, route and diagnostics geometry contracts')
+console.log('V3 runtime performance verified: staged Surface JS timing, retry-safe route-to-Surface-ready samples, manifest-owned routes and diagnostics geometry contracts')
