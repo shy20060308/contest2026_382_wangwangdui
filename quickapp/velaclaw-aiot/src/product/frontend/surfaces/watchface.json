@@ -23,6 +23,7 @@
       }
     },
     "circle": {
+      "controllerConfig": { "faceIds": ["sport", "simple", "dashboard", "mechanical"] },
       "collection": {
         "mode": "preview-swiper",
         "itemIds": ["sport", "simple", "dashboard", "mechanical"],
@@ -44,6 +45,7 @@
       }
     },
     "pill": {
+      "controllerConfig": { "faceIds": ["sport", "simple", "dashboard", "alpine"] },
       "collection": {
         "mode": "cards-pager",
         "itemIds": ["sport", "simple", "dashboard", "alpine"],
@@ -67,6 +69,7 @@
       }
     },
     "rect": {
+      "controllerConfig": { "faceIds": ["sport", "simple", "dashboard"] },
       "collection": {
         "mode": "preview-grid",
         "itemIds": ["sport", "simple", "dashboard"],
