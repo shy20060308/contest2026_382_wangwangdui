@@ -14,7 +14,7 @@
         "trailingMap": { "controls": { "text": "1 / 2", "color": "#8E8E93" }, "patterns": { "text": "2 / 2", "color": "#8E8E93" } },
         "subtitleTrailingMap": { "loading": { "text": "读取中", "color": "#8E8E93" }, "true": { "text": "已开启", "color": "#30D158" }, "false": { "text": "已关闭", "color": "#8E8E93" } }
       },
-      "tokens": { "flow": true, "height": 30, "titleWidth": 94, "trailingWidth": 62, "subtitleWidth": 104, "subtitleTrailingWidth": 52, "titleSize": 14, "subtitleSize": 7, "trailingSize": 8, "subtitleTrailingSize": 7, "titleLineHeight": 17, "subtitleLineHeight": 10, "titleColor": "#FF9F0A", "subtitleColor": "#8E8E93", "trailingColor": "#8E8E93", "subtitleTrailingColor": "#30D158", "titleWeight": "bold", "trailingWeight": "bold" }
+      "tokens": { "flow": true, "height": 22, "titleWidth": 94, "trailingWidth": 62, "subtitleWidth": 104, "subtitleTrailingWidth": 52, "titleSize": 12, "subtitleSize": 6, "trailingSize": 7, "subtitleTrailingSize": 6, "titleLineHeight": 13, "subtitleLineHeight": 9, "titleColor": "#FF9F0A", "subtitleColor": "#8E8E93", "trailingColor": "#8E8E93", "subtitleTrailingColor": "#30D158", "titleWeight": "bold", "trailingWeight": "bold" }
     },
     {
       "id": "toggle", "type": "button", "visibleWhen": "controlsOpen",
@@ -22,39 +22,23 @@
       "bind": { "state": "enabled" },
       "props": { "stateMap": { "true": { "text": "震动反馈 · 开", "color": "#30D158", "background": "#102018" }, "false": { "text": "震动反馈 · 关", "color": "#FFFFFF", "background": "#14181F" } } },
       "actions": { "tap": "vibration-toggle" },
-      "tokens": { "flow": true, "marginTop": 8, "height": 58, "radius": 14, "paddingX": 12, "background": "#14181F", "titleSize": 12, "titleColor": "#FFFFFF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 3, "subtitleColor": "#8E8E93", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
+      "tokens": { "flow": true, "marginTop": 4, "height": 38, "radius": 12, "paddingX": 10, "background": "#14181F", "titleSize": 10, "titleColor": "#FFFFFF", "titleWeight": "bold", "subtitleSize": 6, "subtitleTop": 1, "subtitleColor": "#8E8E93", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
     },
     {
-      "id": "levelLight", "type": "button", "visibleWhen": "controlsOpen",
-      "copy": { "title": "轻", "subtitle": "基础强度" }, "bind": { "state": "level" },
-      "props": { "stateMap": { "light": { "text": "轻 · 已选", "color": "#FFFFFF", "background": "#FF9F0A" }, "medium": { "text": "轻", "color": "#FFFFFF", "background": "#1C1C1E" }, "strong": { "text": "轻", "color": "#FFFFFF", "background": "#1C1C1E" } } },
-      "actions": { "tap": "vibration-level:light" },
-      "tokens": { "flow": true, "marginTop": 8, "height": 40, "radius": 12, "paddingX": 12, "background": "#1C1C1E", "titleSize": 11, "titleColor": "#FFFFFF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#D1D1D6", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
-    },
-    {
-      "id": "levelMedium", "type": "button", "visibleWhen": "controlsOpen",
-      "copy": { "title": "中", "subtitle": "基础强度" }, "bind": { "state": "level" },
-      "props": { "stateMap": { "light": { "text": "中", "color": "#FFFFFF", "background": "#1C1C1E" }, "medium": { "text": "中 · 已选", "color": "#FFFFFF", "background": "#FF9F0A" }, "strong": { "text": "中", "color": "#FFFFFF", "background": "#1C1C1E" } } },
-      "actions": { "tap": "vibration-level:medium" },
-      "tokens": { "flow": true, "marginTop": 6, "height": 40, "radius": 12, "paddingX": 12, "background": "#1C1C1E", "titleSize": 11, "titleColor": "#FFFFFF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#D1D1D6", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
-    },
-    {
-      "id": "levelStrong", "type": "button", "visibleWhen": "controlsOpen",
-      "copy": { "title": "强", "subtitle": "基础强度" }, "bind": { "state": "level" },
-      "props": { "stateMap": { "light": { "text": "强", "color": "#FFFFFF", "background": "#1C1C1E" }, "medium": { "text": "强", "color": "#FFFFFF", "background": "#1C1C1E" }, "strong": { "text": "强 · 已选", "color": "#FFFFFF", "background": "#FF9F0A" } } },
-      "actions": { "tap": "vibration-level:strong" },
-      "tokens": { "flow": true, "marginTop": 6, "height": 40, "radius": 12, "paddingX": 12, "background": "#1C1C1E", "titleSize": 11, "titleColor": "#FFFFFF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#D1D1D6", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
+      "id": "strengthSlot", "type": "text", "visibleWhen": "controlsOpen",
+      "copy": { "text": "反馈强度" },
+      "tokens": { "flow": true, "marginTop": 4, "height": 42, "fontSize": 7, "lineHeight": 10, "foreground": "#8E8E93", "textAlign": "left" }
     },
     {
       "id": "test", "type": "button", "visibleWhen": "controlsOpen",
       "copy": { "title": "测试当前模式", "subtitle": "播放一次当前强度与模式" },
       "actions": { "tap": "vibration-test" },
-      "tokens": { "flow": true, "marginTop": 9, "height": 54, "radius": 14, "paddingX": 12, "background": "#14181F", "titleSize": 11, "titleColor": "#FFFFFF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 3, "subtitleColor": "#8E8E93", "chevronWidth": 12, "chevronSize": 14, "chevronColor": "#636366", "chevronText": "›" }
+      "tokens": { "flow": true, "marginTop": 4, "height": 34, "radius": 12, "paddingX": 10, "background": "#14181F", "titleSize": 9, "titleColor": "#FFFFFF", "titleWeight": "bold", "subtitleSize": 6, "subtitleTop": 1, "subtitleColor": "#8E8E93", "chevronWidth": 9, "chevronSize": 11, "chevronColor": "#636366", "chevronText": "›" }
     },
     {
       "id": "pageNext", "type": "button", "visibleWhen": "controlsOpen",
       "copy": { "title": "反馈模式 ›", "subtitle": "第 2 页" }, "actions": { "tap": "vibration-page:patterns" },
-      "tokens": { "flow": true, "marginTop": 8, "height": 34, "radius": 12, "paddingX": 10, "background": "#111317", "titleSize": 9, "titleColor": "#FF9F0A", "titleWeight": "bold", "subtitleSize": 6, "subtitleTop": 1, "subtitleColor": "#636366", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
+      "tokens": { "flow": true, "marginTop": 4, "height": 32, "radius": 11, "paddingX": 9, "background": "#111317", "titleSize": 8, "titleColor": "#FF9F0A", "titleWeight": "bold", "subtitleSize": 5, "subtitleTop": 1, "subtitleColor": "#636366", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
     },
     {
       "id": "feedback", "type": "header", "visibleWhen": "patternsOpen",
@@ -100,11 +84,41 @@
       "tokens": { "flow": true, "marginTop": 8, "height": 34, "radius": 12, "paddingX": 10, "background": "#111317", "titleSize": 9, "titleColor": "#FF9F0A", "titleWeight": "bold", "subtitleSize": 6, "subtitleTop": 1, "subtitleColor": "#636366", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
     }
   ],
-  "tokens": { "background": "#000000", "stream": { "top": 0, "width": 164, "heightMode": "scene-bottom" }, "streamPaddingBottom": 20 },
+  "tokens": { "background": "#000000", "stream": { "top": 0, "width": 164, "heightMode": "scene-bottom" }, "streamPaddingBottom": 4 },
+  "experience": {
+    "base": {
+      "collection": {
+        "id": "strength-selector",
+        "mode": "segmented",
+        "visibleWhen": "controlsOpen",
+        "bind": { "selectedId": "level" },
+        "frame": { "top": 68, "width": 164, "height": 42, "align": "center" },
+        "items": [
+          { "id": "light", "label": "轻", "action": "vibration-level:light" },
+          { "id": "medium", "label": "中", "action": "vibration-level:medium" },
+          { "id": "strong", "label": "强", "action": "vibration-level:strong" }
+        ],
+        "tokens": { "contentInset": 0, "contentTop": 12, "gap": 5, "itemHeight": 30, "itemRadius": 10, "itemBorderWidth": 1, "itemBackground": "#1C1C1E", "selectedBackground": "#FF9F0A", "itemColor": "#D1D1D6", "selectedColor": "#FFFFFF", "itemBorderColor": "#2C2C2E", "selectedBorderColor": "#FFB340", "fontSize": 10, "fontWeight": "bold" }
+      }
+    },
+    "circle": {
+      "collection": {
+        "frame": { "top": 76, "width": 148, "height": 38, "align": "center" },
+        "tokens": { "contentTop": 10, "gap": 4, "itemHeight": 28, "itemRadius": 9, "fontSize": 9 }
+      }
+    },
+    "pill": {
+      "collection": {
+        "frame": { "top": 98, "width": 168, "height": 50, "align": "center" },
+        "tokens": { "contentTop": 14, "gap": 6, "itemHeight": 36, "itemRadius": 10, "fontSize": 12 }
+      }
+    },
+    "rect": {}
+  },
   "variants": {
     "base": {},
-    "circle": { "tokens": { "stream": { "top": 14, "width": 148, "heightMode": "scene-bottom" }, "streamPaddingBottom": 20 }, "modules": { "head": { "height": 26, "titleSize": 12, "trailingSize": 7 }, "toggle": { "height": 50, "radius": 13, "titleSize": 10 }, "levelLight": { "height": 34, "radius": 12, "titleSize": 9 }, "levelMedium": { "height": 34, "radius": 12, "titleSize": 9 }, "levelStrong": { "height": 34, "radius": 12, "titleSize": 9 }, "test": { "height": 46, "radius": 13, "titleSize": 10 }, "patternTap": { "height": 42, "radius": 13 }, "patternGoal": { "height": 42, "radius": 13 }, "patternCountdown": { "height": 42, "radius": 13 }, "patternAlert": { "height": 42, "radius": 13 }, "pageNext": { "height": 30 }, "pagePrevious": { "height": 30 } } },
-    "pill": { "tokens": { "stream": { "top": 0, "width": 168, "heightMode": "scene-bottom" }, "streamPaddingBottom": 52 }, "modules": { "head": { "height": 36, "titleSize": 16, "subtitleSize": 9, "trailingSize": 9, "subtitleTrailingSize": 9, "titleLineHeight": 21, "subtitleLineHeight": 13 }, "toggle": { "height": 72, "radius": 12, "titleSize": 14, "subtitleSize": 9 }, "levelLight": { "height": 46, "radius": 12, "titleSize": 13 }, "levelMedium": { "height": 46, "radius": 12, "titleSize": 13 }, "levelStrong": { "height": 46, "radius": 12, "titleSize": 13 }, "test": { "height": 64, "radius": 12, "titleSize": 13, "subtitleSize": 8 }, "feedback": { "height": 40, "titleSize": 12, "trailingSize": 9, "subtitleSize": 8, "subtitleTrailingSize": 8 }, "patternTap": { "height": 58, "radius": 12, "titleSize": 13, "subtitleSize": 8 }, "patternGoal": { "height": 58, "radius": 12, "titleSize": 13, "subtitleSize": 8 }, "patternCountdown": { "height": 58, "radius": 12, "titleSize": 13, "subtitleSize": 8 }, "patternAlert": { "height": 58, "radius": 12, "titleSize": 13, "subtitleSize": 8 }, "pageNext": { "height": 40, "titleSize": 11 }, "pagePrevious": { "height": 40, "titleSize": 11 } } },
+    "circle": { "tokens": { "stream": { "top": 14, "width": 148, "heightMode": "scene-bottom" }, "streamPaddingBottom": 4 }, "modules": { "head": { "height": 20, "titleSize": 10, "subtitleSize": 5, "trailingSize": 6, "subtitleTrailingSize": 5, "titleLineHeight": 12, "subtitleLineHeight": 8 }, "toggle": { "height": 34, "radius": 11, "titleSize": 9, "subtitleSize": 5 }, "strengthSlot": { "height": 38, "fontSize": 6, "lineHeight": 9 }, "test": { "height": 30, "radius": 11, "titleSize": 8, "subtitleSize": 5 }, "pageNext": { "height": 28, "titleSize": 7, "subtitleSize": 5 }, "feedback": { "height": 28, "titleSize": 9, "trailingSize": 7 }, "patternTap": { "height": 42, "radius": 12 }, "patternGoal": { "height": 42, "radius": 12 }, "patternCountdown": { "height": 42, "radius": 12 }, "patternAlert": { "height": 42, "radius": 12 }, "pagePrevious": { "height": 30 } } },
+    "pill": { "tokens": { "stream": { "top": 0, "width": 168, "heightMode": "scene-bottom" }, "streamPaddingBottom": 32 }, "modules": { "head": { "height": 32, "titleSize": 15, "subtitleSize": 8, "trailingSize": 8, "subtitleTrailingSize": 8, "titleLineHeight": 19, "subtitleLineHeight": 13 }, "toggle": { "marginTop": 6, "height": 54, "radius": 12, "titleSize": 13, "subtitleSize": 8 }, "strengthSlot": { "marginTop": 6, "height": 50, "fontSize": 8, "lineHeight": 12 }, "test": { "marginTop": 6, "height": 48, "radius": 12, "titleSize": 12, "subtitleSize": 7 }, "pageNext": { "marginTop": 6, "height": 36, "titleSize": 10, "subtitleSize": 6 }, "feedback": { "height": 40, "titleSize": 12, "trailingSize": 9, "subtitleSize": 8, "subtitleTrailingSize": 8 }, "patternTap": { "height": 58, "radius": 12, "titleSize": 13, "subtitleSize": 8 }, "patternGoal": { "height": 58, "radius": 12, "titleSize": 13, "subtitleSize": 8 }, "patternCountdown": { "height": 58, "radius": 12, "titleSize": 13, "subtitleSize": 8 }, "patternAlert": { "height": 58, "radius": 12, "titleSize": 13, "subtitleSize": 8 }, "pagePrevious": { "height": 40, "titleSize": 11 } } },
     "rect": {}
   }
 }
