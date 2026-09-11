@@ -15,9 +15,22 @@ import { createNotificationController } from './features/notification/controller
 import { createWatchfaceController } from './features/watchface/controller'
 import { createClockController } from './features/clock/controller'
 
-var FACE_IDS = ['sport', 'simple', 'dashboard', 'mechanical', 'alpine']
-
 function noop() {}
+
+function configuredFaceIds(config, label) {
+  var source = config && Array.isArray(config.faceIds) ? config.faceIds : []
+  if (!source.length) throw new Error(label + ' requires JSON controllerConfig.faceIds')
+  var seen = {}
+  var result = []
+  for (var i = 0; i < source.length; i++) {
+    var id = String(source[i] || '')
+    if (!id) throw new Error(label + ' controllerConfig.faceIds may not contain empty ids')
+    if (seen[id]) throw new Error(label + ' controllerConfig.faceIds may not contain duplicates: ' + id)
+    seen[id] = true
+    result.push(id)
+  }
+  return result
+}
 
 function activity(onChange) {
   var controller = createActivityController(function (metrics) {
@@ -290,23 +303,29 @@ function notification(onChange) {
 
 function watchface(onChange) {
   var configured = false
+  var faceIds = []
   var controller = createWatchfaceController(function (model) {
     var state = model || {}
     if (typeof onChange === 'function') onChange({ selectedId: state.selectedId || '', selectedIndex: state.selectedIndex || 0 })
   })
   function ensureConfigured() {
     if (configured) return
+    if (!faceIds.length) throw new Error('Watchface surface controller has not received controllerConfig.faceIds')
     configured = true
-    controller.configure(FACE_IDS)
+    controller.configure(faceIds)
   }
   return {
+    configure: function (profile, scene, safe, config) {
+      faceIds = configuredFaceIds(config, 'Watchface')
+      configured = false
+    },
     start: function () { ensureConfigured(); controller.load() },
     stop: noop,
     destroy: noop,
     action: function (name) {
       if (String(name).indexOf('watchface-select:') === 0) {
         ensureConfigured()
-        controller.select(String(name).slice(17))
+        controller.select(String(name).slice(17), function () { navigation.back() })
         return
       }
       throw new Error('Unknown watchface action: ' + name)
@@ -316,6 +335,7 @@ function watchface(onChange) {
 
 function clock(onChange) {
   var configured = false
+  var faceIds = []
   var clockState = {}
   var notificationState = { visible: false }
 
@@ -350,11 +370,16 @@ function clock(onChange) {
 
   function ensureConfigured() {
     if (configured) return
+    if (!faceIds.length) throw new Error('Clock surface controller has not received controllerConfig.faceIds')
     configured = true
-    controller.configureFaces(FACE_IDS)
+    controller.configureFaces(faceIds)
   }
 
   return {
+    configure: function (profile, scene, safe, config) {
+      faceIds = configuredFaceIds(config, 'Clock')
+      configured = false
+    },
     start: function () { ensureConfigured(); controller.start() },
     stop: function () { controller.stop() },
     destroy: function () { controller.stop() },
