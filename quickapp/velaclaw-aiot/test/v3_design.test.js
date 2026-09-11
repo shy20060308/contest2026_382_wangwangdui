@@ -65,8 +65,15 @@ Object.keys(profiles).forEach(function (shape) {
   assert.strictEqual(appList.collection.mode, expectedMode, 'AppList must preserve the intended ' + shape + ' composition')
 
   const watchface = resolve(surface('pages/watchface'), profile, { selectedId: 'sport', selectedIndex: 0 })
-  assert.strictEqual(watchface.flowHeaders[0].trailing, '活力数字')
-  assert.ok(watchface.flowButtons.some(item => item.action === 'watchface-select:alpine'))
+  const expectedWatchfaceMode = shape === 'circle' ? 'preview-swiper' : (shape === 'pill' ? 'cards-pager' : 'preview-grid')
+  assert.ok(watchface.collection, 'Watchface must resolve through the generic visual collection experience')
+  assert.strictEqual(watchface.collection.mode, expectedWatchfaceMode, 'Watchface must preserve the intended ' + shape + ' L3 composition')
+  assert.strictEqual(watchface.collection.selectedId, 'sport')
+  assert.strictEqual(watchface.collection.selectedItem.label, '活力数字')
+  assert.ok(watchface.collection.items.some(item => item.action === 'watchface-select:sport'))
+  if (shape === 'circle') assert.deepStrictEqual(watchface.collection.items.map(item => item.id), ['sport', 'simple', 'dashboard', 'mechanical'])
+  if (shape === 'pill') assert.deepStrictEqual(watchface.collection.items.map(item => item.id), ['sport', 'simple', 'dashboard', 'alpine'])
+  if (shape === 'rect') assert.deepStrictEqual(watchface.collection.items.map(item => item.id), ['sport', 'simple', 'dashboard'])
 
   const diagnostics = resolve(surface('pages/settings/diagnostics'), profile, {
     device: { model: 'demo', formFactor: shape, screenWidth: profile.screenWidth, screenHeight: profile.screenHeight, platformVersionCode: 1000 },
