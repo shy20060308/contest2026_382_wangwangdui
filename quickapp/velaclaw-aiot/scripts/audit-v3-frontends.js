@@ -33,9 +33,7 @@ function expectedUx(route, page) {
   const component = page.component || route.split('/').pop()
   return path.join(srcRoot, route, component + '.ux')
 }
-function surfaceFilename(route) {
-  return route.replace(/^pages\//, '').replace(/\//g, '__') + '.json'
-}
+function surfaceFilename(route) { return route.replace(/^pages\//, '').replace(/\//g, '__') + '.json' }
 function expectedSurface(route) { return path.join(surfacesRoot, surfaceFilename(route)) }
 function dependencies(source) {
   const found = []
@@ -50,17 +48,17 @@ function dependencies(source) {
   })
   return found
 }
-function allowedPageDependency(dependency) {
-  const normalized = dependency.replace(/\\/g, '/')
-  return /(?:^|\/)components\/surface_host(?:\.ux)?$/.test(normalized) ||
-    /(?:^|\/)runtime\/surface_page$/.test(normalized)
+function resolvedDependency(ux, dependency) {
+  if (!dependency || dependency[0] !== '.') return null
+  return path.resolve(path.dirname(ux), dependency)
 }
-function declaredSurfaceIds(source) {
-  const ids = []
-  const pattern = /surfacePage\.bind\(\s*this\s*,\s*['"]([^'"]+)['"]\s*\)/g
-  let match
-  while ((match = pattern.exec(source)) !== null) ids.push(match[1])
-  return ids
+function isGenericPageDependency(dependency) {
+  const normalized = dependency.replace(/\\/g, '/')
+  return /(?:^|\/)components\/surface_host(?:\.ux)?$/.test(normalized) || /(?:^|\/)runtime\/surface_page$/.test(normalized)
+}
+function isOwnSurfaceDependency(ux, surfaceFile, dependency) {
+  const target = resolvedDependency(ux, dependency)
+  return !!target && path.resolve(target) === path.resolve(surfaceFile)
 }
 
 const manifest = JSON.parse(read(path.join(srcRoot, 'manifest.json')))
@@ -116,19 +114,20 @@ routes.forEach(function (route) {
   if (exists(ux)) {
     const source = read(ux)
     if (!/surface_host\.ux/.test(source)) issues.push('ux:not-thin-surface-host')
-    dependencies(source).forEach(function (dependency) {
-      if (!allowedPageDependency(dependency)) issues.push('ux:unauthorized-dependency')
+    const deps = dependencies(source)
+    deps.forEach(function (dependency) {
+      if (!isGenericPageDependency(dependency) && !isOwnSurfaceDependency(ux, surfaceFile, dependency)) issues.push('ux:unauthorized-dependency')
     })
+    const ownSurfaceDeps = deps.filter(function (dependency) { return isOwnSurfaceDependency(ux, surfaceFile, dependency) })
+    if (ownSurfaceDeps.length !== 1) issues.push('ux:page-local-surface-dependency')
+    if (!/surfacePage\.bind\(\s*this\s*,\s*surface\s*\)/.test(source)) issues.push('ux:surface-object-binding')
+    if (!/\b(?:var|const|let)\s+surface\s*=\s*require\(/.test(source)) issues.push('ux:surface-object-import')
     const template = (source.match(/<template>([\s\S]*?)<\/template>/) || [])[1] || ''
     if (/<(?:div|stack|scroll|text|image|slider|canvas|list|list-item|input|switch|button|progress|swiper)\b/.test(template)) issues.push('ux:handwritten-product-markup')
     if (/#[0-9a-f]{3,8}\b/i.test(source)) issues.push('ux:literal-color')
     if (/\b(?:isPill|isCircle|isRect|formFactor|screenShape)\b|(?:===|!==)\s*['"](?:pill|circle|rect|pill-shaped)['"]/i.test(source)) issues.push('ux:shape-branch')
     const style = (source.match(/<style>([\s\S]*?)<\/style>/) || [])[1]
     if (style && style.trim()) issues.push('ux:page-style-authority')
-    if (surface) {
-      const ids = declaredSurfaceIds(source)
-      if (ids.length !== 1 || ids[0] !== surface.id) issues.push('ux:surface-id-binding')
-    }
   }
 
   rows.push({ route: route, issues: Array.from(new Set(issues)) })
@@ -138,15 +137,9 @@ const globalIssues = []
 if (exists(path.join(srcRoot, 'v2'))) globalIssues.push('legacy namespace still exists: src/v2')
 if (exists(path.join(productRoot, 'design', 'apps'))) globalIssues.push('page-specific design authority still exists: src/product/design/apps')
 
-filesUnder(pagesRoot, /\.ux$/, []).forEach(function (file) {
-  if (!expectedUxFiles.has(path.resolve(file))) globalIssues.push('unrouted page UX: ' + relative(file))
-})
-filesUnder(pagesRoot, /\.js$/, []).forEach(function (file) {
-  globalIssues.push('page-local JS can hide a second frontend authority: ' + relative(file))
-})
-filesUnder(surfacesRoot, /\.json$/, []).forEach(function (file) {
-  if (!expectedSurfaceFiles.has(path.resolve(file))) globalIssues.push('unbound surface JSON: ' + relative(file))
-})
+filesUnder(pagesRoot, /\.ux$/, []).forEach(function (file) { if (!expectedUxFiles.has(path.resolve(file))) globalIssues.push('unrouted page UX: ' + relative(file)) })
+filesUnder(pagesRoot, /\.js$/, []).forEach(function (file) { globalIssues.push('page-local JS can hide a second frontend authority: ' + relative(file)) })
+filesUnder(surfacesRoot, /\.json$/, []).forEach(function (file) { if (!expectedSurfaceFiles.has(path.resolve(file))) globalIssues.push('unbound surface JSON: ' + relative(file)) })
 
 const genericUx = [
   path.join(srcRoot, 'components', 'surface_host.ux'),
@@ -161,7 +154,6 @@ filesUnder(srcRoot, /\.ux$/, []).forEach(function (file) {
   if (allowedNonPageUx.has(absolute)) return
   globalIssues.push('secondary product UX authority: ' + relative(file))
 })
-
 filesUnder(path.join(productRoot, 'features'), /\.js$/, []).forEach(function (file) {
   if (/#[0-9a-f]{3,8}\b/i.test(read(file))) globalIssues.push('feature leaks visual color authority: ' + relative(file))
 })
@@ -173,9 +165,7 @@ const genericFiles = genericUx.concat([
 
 genericFiles.forEach(function (file) {
   const source = read(file)
-  routes.forEach(function (route) {
-    if (source.includes(route)) globalIssues.push('generic renderer contains route-specific branch: ' + relative(file) + ' -> ' + route)
-  })
+  routes.forEach(function (route) { if (source.includes(route)) globalIssues.push('generic renderer contains route-specific branch: ' + relative(file) + ' -> ' + route) })
   seenIds.forEach(function (id) {
     const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     if (new RegExp("['\"]" + escaped + "['\"]").test(source)) globalIssues.push('generic renderer contains surface-specific branch: ' + relative(file) + ' -> ' + id)
@@ -191,9 +181,7 @@ const passed = rows.filter(function (row) { return row.issues.length === 0 }).le
 console.log('V3 Frontend Authority Audit [' + (strict ? 'STRICT' : 'REPORT') + ']')
 console.log('Manifest routes: ' + rows.length + '; compliant: ' + passed + '; pending: ' + (rows.length - passed))
 console.log('')
-rows.forEach(function (row) {
-  console.log((row.issues.length ? 'INVALID ' : 'OK      ') + row.route + (row.issues.length ? '  ' + row.issues.join(', ') : ''))
-})
+rows.forEach(function (row) { console.log((row.issues.length ? 'INVALID ' : 'OK      ') + row.route + (row.issues.length ? '  ' + row.issues.join(', ') : '')) })
 if (globalIssues.length) {
   console.log('\nGlobal authority issues:')
   globalIssues.forEach(function (issue) { console.log('- ' + issue) })
