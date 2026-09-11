@@ -1,3 +1,6 @@
+var MAX_ROUTE_SAMPLES = 64
+var routeSurfaceReadySamples = []
+var lastRouteSurfaceReady = { route: '', kind: '', durationMs: 0 }
 var metrics = {
   surfaceRebuilds: 0,
   surfaceRebuildTotalMs: 0,
@@ -55,6 +58,13 @@ function recordSurfaceRebuild(durationMs, phases) {
   if (jsMs > metrics.surfaceJsMaxMs) metrics.surfaceJsMaxMs = jsMs
 }
 
+function recordRouteSurfaceReady(durationMs, kind, route) {
+  var duration = finiteDuration(durationMs)
+  routeSurfaceReadySamples.push(duration)
+  if (routeSurfaceReadySamples.length > MAX_ROUTE_SAMPLES) routeSurfaceReadySamples.shift()
+  lastRouteSurfaceReady = { route: String(route || ''), kind: String(kind || ''), durationMs: duration }
+}
+
 function recordSurfaceSkippedEqual() { metrics.surfaceSkippedEqual++ }
 function recordSurfaceDeferredHidden() { metrics.surfaceDeferredHidden++ }
 function recordNavigationSuppressed() { metrics.navigationSuppressed++ }
@@ -63,6 +73,23 @@ function recordMotionUiEmit() { metrics.motionUiEmits++ }
 
 function rounded(value) { return Math.round(value * 100) / 100 }
 function average(total, samples) { return samples ? rounded(total / samples) : 0 }
+function sampleAverage(samples) {
+  if (!samples.length) return 0
+  var total = 0
+  for (var i = 0; i < samples.length; i++) total += samples[i]
+  return rounded(total / samples.length)
+}
+function percentile(samples, ratio) {
+  if (!samples.length) return 0
+  var ordered = samples.slice().sort(function (left, right) { return left - right })
+  var index = Math.max(0, Math.min(ordered.length - 1, Math.ceil(ordered.length * ratio) - 1))
+  return ordered[index]
+}
+function sampleMax(samples) {
+  var max = 0
+  for (var i = 0; i < samples.length; i++) if (samples[i] > max) max = samples[i]
+  return max
+}
 
 function snapshot() {
   return {
@@ -80,6 +107,14 @@ function snapshot() {
     surfaceContextMaxMs: metrics.surfaceContextMaxMs,
     surfaceJsAvgMs: average(metrics.surfaceJsTotalMs, metrics.surfaceRebuilds),
     surfaceJsMaxMs: metrics.surfaceJsMaxMs,
+    routeSurfaceReadySamples: routeSurfaceReadySamples.length,
+    routeSurfaceReadyAvgMs: sampleAverage(routeSurfaceReadySamples),
+    routeSurfaceReadyP50Ms: percentile(routeSurfaceReadySamples, 0.5),
+    routeSurfaceReadyP95Ms: percentile(routeSurfaceReadySamples, 0.95),
+    routeSurfaceReadyMaxMs: sampleMax(routeSurfaceReadySamples),
+    routeSurfaceReadyLastMs: lastRouteSurfaceReady.durationMs,
+    routeSurfaceReadyLastRoute: lastRouteSurfaceReady.route,
+    routeSurfaceReadyLastKind: lastRouteSurfaceReady.kind,
     surfaceSkippedEqual: metrics.surfaceSkippedEqual,
     surfaceDeferredHidden: metrics.surfaceDeferredHidden,
     navigationSuppressed: metrics.navigationSuppressed,
@@ -91,11 +126,15 @@ function snapshot() {
 
 function reset() {
   for (var key in metrics) metrics[key] = 0
+  routeSurfaceReadySamples = []
+  lastRouteSurfaceReady = { route: '', kind: '', durationMs: 0 }
 }
 
 module.exports = {
+  MAX_ROUTE_SAMPLES: MAX_ROUTE_SAMPLES,
   recordSurfaceSerialize: recordSurfaceSerialize,
   recordSurfaceRebuild: recordSurfaceRebuild,
+  recordRouteSurfaceReady: recordRouteSurfaceReady,
   recordSurfaceSkippedEqual: recordSurfaceSkippedEqual,
   recordSurfaceDeferredHidden: recordSurfaceDeferredHidden,
   recordNavigationSuppressed: recordNavigationSuppressed,
