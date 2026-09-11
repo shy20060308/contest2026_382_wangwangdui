@@ -26,7 +26,8 @@
           { "id": "screenH", "bind": { "value": "device.screenHeight" }, "props": { "valueFormat": "suffix: px" }, "copy": { "label": "物理高度" }, "tokens": { "accent": "#FFFFFF" } },
           { "id": "hostW", "bind": { "value": "host.width" }, "props": { "valueFormat": "suffix: px" }, "copy": { "label": "Host 宽度" }, "tokens": { "accent": "#30D158" } },
           { "id": "hostH", "bind": { "value": "host.height" }, "props": { "valueFormat": "suffix: px" }, "copy": { "label": "Host 高度" }, "tokens": { "accent": "#30D158" } },
-          { "id": "platform", "bind": { "value": "device.platformVersionCode" }, "props": { "valueFormat": "number", "valueNullText": "--" }, "copy": { "label": "平台版本" }, "tokens": { "accent": "#FFD60A" } }
+          { "id": "platform", "bind": { "value": "device.platformVersionCode" }, "props": { "valueFormat": "number", "valueNullText": "--" }, "copy": { "label": "平台版本" }, "tokens": { "accent": "#FFD60A" } },
+          { "id": "surfaceAvg", "bind": { "value": "performance.surfaceRebuildAvgMs" }, "props": { "valueFormat": "suffix: ms", "valueNullText": "--" }, "copy": { "label": "Surface 均耗" }, "tokens": { "accent": "#BF5AF2" } }
         ]
       },
       "tokens": { "flow": true, "marginTop": 6, "height": 108, "columns": 2, "gap": 5, "rowGap": 4, "itemHeight": 24, "itemRadius": 10, "itemPaddingX": 6, "itemPaddingY": 4, "itemBackground": "#111820", "labelSize": 5, "labelColor": "#8E8E93", "valueSize": 8, "valueTop": 2, "valueWeight": "bold", "valueColor": "#FFFFFF", "detailSize": 0, "detailTop": 0, "detailColor": "#8E8E93" }
@@ -35,7 +36,7 @@
       "id": "deviceTip",
       "type": "text",
       "visibleWhen": "deviceOpen",
-      "copy": { "text": "第 1 页显示运行时档案；左右滑或使用底部分页键查看 Capability。" },
+      "copy": { "text": "第 1 页显示运行时档案与 Surface 平均构建耗时；左右滑查看 Capability。" },
       "tokens": { "flow": true, "marginTop": 5, "height": 18, "fontSize": 5, "lineHeight": 9, "foreground": "#6E7681", "textAlign": "center" }
     },
     {
