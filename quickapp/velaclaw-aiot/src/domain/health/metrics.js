@@ -29,6 +29,12 @@ function pushWindow(values, value, maxLength) {
   return next.length > maxLength ? next.slice(next.length - maxLength) : next
 }
 
+function pushObservedWindow(values, changed, value, allowed, maxLength) {
+  if (!allowed) return values
+  if (values.length && !changed) return values
+  return pushWindow(values, value, maxLength)
+}
+
 function stats(values) {
   if (!values.length) return { min: 0, avg: 0, max: 0 }
   var min = values[0]
@@ -50,5 +56,6 @@ module.exports = {
   classifyHeartRate: classifyHeartRate,
   classifyStress: classifyStress,
   pushWindow: pushWindow,
+  pushObservedWindow: pushObservedWindow,
   stats: stats
 }
