@@ -43,6 +43,7 @@
     "storage:reads": "node test/storage_read_efficiency.test.js",
     "sync:protocol": "node test/sync_protocol.test.js",
     "state:payload": "node test/state_payload_hygiene.test.js",
+    "copy:ownership": "node test/copy_ownership.test.js",
     "power:logic": "node test/power_state_machine.test.js",
     "power:runtime": "node test/power_runtime.test.js",
     "health:logic": "node test/health_metrics.test.js",
@@ -56,7 +57,7 @@
     "haptics:logic": "node test/haptic_patterns.test.js",
     "haptics:runtime": "node test/haptics_runtime.test.js",
     "calendar:logic": "node test/calendar_utils.test.js",
-    "check": "npm run lint && npm run docs:check && npm run v3:architecture && npm run v3:design && npm run v3:adaptation && npm run v3:surfaces && npm run v3:schema && npm run v3:frontend-contract && npm run v3:frontend-runtime && npm run v3:performance && npm run v3:interaction-parity && npm run v3:truth && npm run v3:package-hygiene && npm run capabilities:check && npm run device:profile && npm run clock:notification && npm run design:visibility && npm run watchface:preview && npm run async:ownership && npm run interaction:ownership && npm run display:runtime && npm run storage:queue && npm run storage:reads && npm run sync:protocol && npm run state:payload && npm run power:logic && npm run power:runtime && npm run health:logic && npm run health:official && npm run history:truth && npm run workout:truth && npm run workout:experience && npm run activity:persistence && npm run settings:store && npm run motion:logic && npm run haptics:logic && npm run haptics:runtime && npm run calendar:logic"
+    "check": "npm run lint && npm run docs:check && npm run v3:architecture && npm run v3:design && npm run v3:adaptation && npm run v3:surfaces && npm run v3:schema && npm run v3:frontend-contract && npm run v3:frontend-runtime && npm run v3:performance && npm run v3:interaction-parity && npm run v3:truth && npm run v3:package-hygiene && npm run capabilities:check && npm run device:profile && npm run clock:notification && npm run design:visibility && npm run watchface:preview && npm run async:ownership && npm run interaction:ownership && npm run display:runtime && npm run storage:queue && npm run storage:reads && npm run sync:protocol && npm run state:payload && npm run copy:ownership && npm run power:logic && npm run power:runtime && npm run health:logic && npm run health:official && npm run history:truth && npm run workout:truth && npm run workout:experience && npm run activity:persistence && npm run settings:store && npm run motion:logic && npm run haptics:logic && npm run haptics:runtime && npm run calendar:logic"
   },
   "devDependencies": {
     "@aiot-toolkit/jsc": "^1.0.3",
