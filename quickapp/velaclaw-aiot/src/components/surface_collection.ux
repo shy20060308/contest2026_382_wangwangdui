@@ -1,3 +1,5 @@
+<import name="surfacepreview" src="./surface_preview.ux"></import>
+
 <template>
   <stack class="collection-root" style="left: {{ model.frame.left }}px; top: {{ model.frame.top }}px; width: {{ model.frame.width }}px; height: {{ model.frame.height }}px;" @swipe="onSwipe">
     <stack class="honeycomb" if="{{ model.mode === 'honeycomb' }}" style="width: {{ model.frame.width }}px; height: {{ model.frame.height }}px; background-color: {{ model.tokens.background }};" @touchstart="onHoneyStart" @touchmove="onHoneyMove" @touchend="onHoneyEnd">
@@ -15,10 +17,7 @@
       <swiper class="selector-swiper" index="{{ selectorIndex }}" indicator="{{ model.tokens.indicator }}" @change="onSelectorChange" style="left: {{ model.tokens.previewLeft }}px; top: {{ model.tokens.previewTop }}px; width: {{ model.tokens.previewWidth }}px; height: {{ model.tokens.previewHeight }}px;">
         <div class="selector-slide" for="{{ model.items }}" tid="id" @click="activateItem($item)">
           <div class="circle-preview" style="width: {{ model.tokens.previewSize }}px; height: {{ model.tokens.previewSize }}px; border-radius: {{ model.tokens.previewRadius }}px; border-width: {{ model.tokens.previewBorderWidth }}px; background-color: {{ $item.background }}; border-color: {{ $item.accent }};">
-            <text class="circle-preview-time" style="font-size: {{ model.tokens.previewTimeSize }}px; color: {{ $item.accent }}; font-weight: {{ model.tokens.previewTimeWeight }};">{{ model.tokens.previewTimeText }}</text>
-            <text class="circle-preview-name" style="font-size: {{ model.tokens.previewNameSize }}px; margin-top: {{ model.tokens.previewNameMarginTop }}px; color: {{ model.tokens.previewNameColor }}; font-weight: {{ model.tokens.previewNameWeight }};">{{ $item.label }}</text>
-            <text class="circle-preview-tag" style="font-size: {{ model.tokens.tagSize }}px; margin-top: {{ model.tokens.tagMarginTop }}px; color: {{ model.tokens.tagColor }};">{{ $item.tag }}</text>
-            <div class="selector-selected-line" if="{{ $item.selected }}" style="width: {{ model.tokens.selectedLineWidth }}px; height: {{ model.tokens.selectedLineHeight }}px; margin-top: {{ model.tokens.selectedLineMarginTop }}px; border-radius: {{ model.tokens.selectedLineRadius }}px; background-color: {{ $item.accent }};"></div>
+            <surfacepreview if="{{ $item.preview }}" model="{{ $item.preview }}"></surfacepreview>
           </div>
         </div>
       </swiper>
@@ -33,8 +32,7 @@
       <div class="selector-card-list" style="left: {{ model.tokens.contentLeft }}px; top: {{ model.tokens.contentTop }}px; width: {{ model.tokens.contentWidth }}px; height: {{ model.tokens.contentHeight }}px;">
         <div class="selector-card" for="{{ pageItems }}" tid="id" @click="activateItem($item)" style="width: {{ model.tokens.contentWidth }}px; height: {{ model.tokens.cardHeight }}px; margin-bottom: {{ model.tokens.cardGap }}px; border-width: {{ model.tokens.cardBorderWidth }}px; border-radius: {{ model.tokens.cardRadius }}px; padding: {{ model.tokens.cardPadding }}px; border-color: {{ $item.borderColor }}; background-color: {{ model.tokens.cardBackground }};">
           <div class="pill-preview" style="width: {{ model.tokens.previewWidth }}px; height: {{ model.tokens.previewHeight }}px; border-width: {{ model.tokens.previewBorderWidth }}px; border-radius: {{ model.tokens.previewRadius }}px; background-color: {{ $item.background }}; border-color: {{ $item.accent }};">
-            <text class="pill-preview-hour" style="font-size: {{ model.tokens.previewHourSize }}px; color: {{ $item.accent }}; font-weight: {{ model.tokens.previewHourWeight }};">{{ model.tokens.previewHourText }}</text>
-            <text class="pill-preview-minute" style="font-size: {{ model.tokens.previewMinuteSize }}px; color: {{ model.tokens.previewMinuteColor }}; font-weight: {{ model.tokens.previewMinuteWeight }};">{{ model.tokens.previewMinuteText }}</text>
+            <surfacepreview if="{{ $item.preview }}" model="{{ $item.preview }}"></surfacepreview>
           </div>
           <div class="selector-card-copy" style="margin-left: {{ model.tokens.copyMarginLeft }}px;">
             <div class="selector-name-row"><text class="selector-card-name" style="font-size: {{ model.tokens.nameSize }}px; color: {{ model.tokens.nameColor }}; font-weight: {{ model.tokens.nameWeight }};">{{ $item.label }}</text><text class="selector-badge" if="{{ $item.selected }}" style="height: {{ model.tokens.badgeHeight }}px; border-radius: {{ model.tokens.badgeRadius }}px; padding-left: {{ model.tokens.badgePaddingX }}px; padding-right: {{ model.tokens.badgePaddingX }}px; font-size: {{ model.tokens.badgeSize }}px; color: {{ model.tokens.badgeTextColor }}; background-color: {{ $item.accent }};">{{ model.tokens.selectedBadgeText }}</text></div>
@@ -58,8 +56,7 @@
       <div class="selector-grid" style="left: {{ model.tokens.contentLeft }}px; top: {{ model.tokens.contentTop }}px; width: {{ model.tokens.contentWidth }}px; height: {{ model.tokens.contentHeight }}px;">
         <div class="selector-grid-card" for="{{ gridItems }}" tid="id" @click="activateItem($item)" style="left: {{ $item.left }}px; top: {{ $item.top }}px; width: {{ model.tokens.gridItemWidth }}px; height: {{ model.tokens.cardHeight }}px; border-width: {{ model.tokens.cardBorderWidth }}px; border-radius: {{ model.tokens.cardRadius }}px; padding: {{ model.tokens.cardPadding }}px; border-color: {{ $item.borderColor }}; background-color: {{ model.tokens.cardBackground }};">
           <div class="rect-preview" style="width: 100%; height: {{ model.tokens.previewHeight }}px; border-radius: {{ model.tokens.previewRadius }}px; background-color: {{ $item.background }};">
-            <text class="rect-preview-time" style="font-size: {{ model.tokens.previewTimeSize }}px; color: {{ $item.accent }}; font-weight: {{ model.tokens.previewTimeWeight }};">{{ model.tokens.previewTimeText }}</text>
-            <div class="rect-preview-accent" style="width: {{ model.tokens.accentWidth }}px; height: {{ model.tokens.accentHeight }}px; margin-top: {{ model.tokens.accentMarginTop }}px; border-radius: {{ model.tokens.accentRadius }}px; background-color: {{ $item.accent }};"></div>
+            <surfacepreview if="{{ $item.preview }}" model="{{ $item.preview }}"></surfacepreview>
           </div>
           <text class="rect-preview-name" style="font-size: {{ model.tokens.nameSize }}px; margin-top: {{ model.tokens.nameMarginTop }}px; color: {{ model.tokens.nameColor }}; font-weight: {{ model.tokens.nameWeight }};">{{ $item.label }}</text>
           <text class="rect-selected" if="{{ $item.selected }}" style="font-size: {{ model.tokens.selectedSize }}px; margin-top: {{ model.tokens.selectedMarginTop }}px; color: {{ $item.accent }};">{{ model.tokens.selectedText }}</text>
