@@ -74,6 +74,9 @@ assert.ok(appItems.length && appItems.every(item => item.label && item.icon && i
 const settingsItems = settingsSurface.experience.base.collection.items
 assert.ok(settingsItems.some(item => item.action === '/pages/settings/diagnostics'), 'Settings routes must be declared by the Surface collection')
 assert.ok(notificationSurface.modules.some(module => module.actions && module.actions.tap === 'notification-demo:call'), 'Notification demo interactions must be declared by JSON')
+const diagnosticsHead = diagnosticsSurface.modules.filter(module => module.id === 'head')[0]
+assert.ok(diagnosticsHead && diagnosticsHead.props.trailingNullText === '读取中', 'Diagnostics loading copy must be owned by Surface JSON fallback')
+assert.ok(!registrySource.includes("'读取中'") && !registrySource.includes('"读取中"'), 'Semantic controller registry must not own Diagnostics loading copy')
 const capabilityModule = diagnosticsSurface.modules.filter(module => module.id === 'capabilities')[0]
 assert.ok(capabilityModule.props.fields.value.map.true && capabilityModule.props.fields.value.map.false, 'Diagnostics capability status copy/color must be JSON-owned')
 const circleStage = clockSurface.experience.circle.stage
