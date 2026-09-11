@@ -73,13 +73,14 @@ const diagnostics = resolve('settings__diagnostics', {
 })
 fit(diagnostics.flowMetricItems, diagnostics.stream.width, 'Diagnostics metric')
 
-const autoState = { brightnessValue: 128, autoBrightness: true, raiseWakeEnabled: true, lowPowerEnabled: true }
+const autoState = { brightnessValue: 128, autoBrightness: true, raiseWakeEnabled: true, lowPowerEnabled: true, displayApplyState: 'applied' }
 const brightness = resolve('settings__brightness', autoState)
 fit(brightness.flowButtons, brightness.stream.width, 'Brightness action')
 brightness.flowButtons.forEach(item => assert.strictEqual(typeof item.tokens.radius, 'number', 'Brightness action radius must be JSON-owned'))
 assert.strictEqual(brightness.sliders.length, 1, 'Brightness must expose one shared L1 slider')
 fitScene(brightness.sliders[0].frame, 'Brightness slider')
 assert.strictEqual(brightness.sliders[0].value, 128, 'Brightness slider must project semantic state without changing its meaning')
+assert.strictEqual(brightness.flowHeaders[0].subtitleTrailing, '已应用', 'Brightness header must expose the native apply result without changing layout authority')
 
 const notification = resolve('notification_demo', { homeVisible: true, appVisible: false, callVisible: false, hangupVisible: false })
 fit(notification.flowButtons, notification.stream.width, 'Notification action')
@@ -109,7 +110,7 @@ assert.strictEqual(calendar.length, 42)
 fit(calendar, today.stream.width, 'Today calendar cell')
 assert.strictEqual(calendar[10].tokens.itemBackground, '#0A84FF', 'Today highlight geometry/style must remain JSON-owned')
 
-const workout = resolve('workout', { confirming: false, type: 'run', status: 'running', durationMs: 65000, steps: 420, calories: 31, distanceMeters: 720, currentHeartRate: 136, gpsStatus: 'active' })
+const workout = resolve('workout', { confirming: false, type: 'run', status: 'running', durationMs: 65000, steps: null, calories: null, distanceMeters: 720, currentHeartRate: 136, gpsStatus: 'active' })
 fit(workout.flowMetricItems, workout.stream.width, 'Workout metric')
 fit(workout.flowButtons, workout.stream.width, 'Workout action')
 
