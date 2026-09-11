@@ -12,6 +12,10 @@ import { createMotionController } from './features/settings/motion_controller'
 import { createDiagnosticsController } from './features/settings/diagnostics_controller'
 import { createSyncController } from './features/sync/controller'
 import { createNotificationController } from './features/notification/controller'
+import { createWatchfaceController } from './features/watchface/controller'
+import { createClockController } from './features/clock/controller'
+
+var FACE_IDS = ['sport', 'simple', 'dashboard', 'mechanical', 'alpine']
 
 function noop() {}
 
@@ -287,6 +291,103 @@ function notification(onChange) {
   }
 }
 
+function watchface(onChange) {
+  var configured = false
+  var controller = createWatchfaceController(function (model) {
+    var state = model || {}
+    if (typeof onChange === 'function') onChange({ selectedId: state.selectedId || '', selectedIndex: state.selectedIndex || 0 })
+  })
+  function ensureConfigured() {
+    if (configured) return
+    configured = true
+    controller.configure(FACE_IDS)
+  }
+  return {
+    start: function () { ensureConfigured(); controller.load() },
+    stop: noop,
+    destroy: noop,
+    action: function (name) {
+      if (String(name).indexOf('watchface-select:') === 0) {
+        ensureConfigured()
+        controller.select(String(name).slice(17))
+        return
+      }
+      throw new Error('Unknown watchface action: ' + name)
+    }
+  }
+}
+
+function clock(onChange) {
+  var configured = false
+  var clockState = {}
+  var notificationState = { visible: false }
+
+  function emit() {
+    var state = {}
+    var key
+    for (key in clockState) state[key] = clockState[key]
+    for (key in notificationState) {
+      if (key !== 'visible' && key !== 'type') state[key] = notificationState[key]
+    }
+    var visible = !!notificationState.visible
+    var type = notificationState.type || ''
+    state.faceSport = state.faceId === 'sport' && !visible && state.powerMode !== 'SLEEP'
+    state.faceSimple = state.faceId === 'simple' && !visible && state.powerMode !== 'SLEEP'
+    state.faceDashboard = state.faceId === 'dashboard' && !visible && state.powerMode !== 'SLEEP'
+    state.faceMechanical = state.faceId === 'mechanical' && !visible && state.powerMode !== 'SLEEP'
+    state.faceAlpine = state.faceId === 'alpine' && !visible && state.powerMode !== 'SLEEP'
+    state.clockVisible = !visible && state.powerMode !== 'SLEEP'
+    state.sleepVisible = !visible && state.powerMode === 'SLEEP'
+    state.notificationAppVisible = visible && type !== 'call'
+    state.notificationCallVisible = visible && type === 'call'
+    if (typeof onChange === 'function') onChange(state)
+  }
+
+  var controller = createClockController(function (model) {
+    clockState = model || {}
+    emit()
+  }, function (model) {
+    notificationState = model || { visible: false }
+    emit()
+  })
+
+  function ensureConfigured() {
+    if (configured) return
+    configured = true
+    controller.configureFaces(FACE_IDS)
+  }
+
+  return {
+    start: function () { ensureConfigured(); controller.start() },
+    stop: function () { controller.stop() },
+    destroy: function () { controller.stop() },
+    action: function (name) {
+      ensureConfigured()
+      controller.markActive('surface-action')
+      if (name === 'clock-prev-face') { controller.switchFace(-1); return }
+      if (name === 'clock-next-face') { controller.switchFace(1); return }
+      if (name === 'clock-wake') { controller.wake('surface-wake'); return }
+      if (name === 'clock-dismiss-notification') { controller.dismissNotification(); return }
+      if (name === 'clock-hangup-notification') { controller.hangUpNotification(); return }
+      throw new Error('Unknown clock action: ' + name)
+    }
+  }
+}
+
+function clockGuard() {
+  var redirected = false
+  return {
+    start: function () {
+      if (redirected) return
+      redirected = true
+      navigation.push('/pages/clock')
+    },
+    stop: function () { redirected = false },
+    destroy: function () { redirected = false },
+    action: noop
+  }
+}
+
 function create(id, onChange) {
   if (id === 'activity') return activity(onChange)
   if (id === 'history') return history(onChange)
@@ -301,6 +402,9 @@ function create(id, onChange) {
   if (id === 'diagnostics') return diagnostics(onChange)
   if (id === 'sync') return sync(onChange)
   if (id === 'notification') return notification(onChange)
+  if (id === 'watchface') return watchface(onChange)
+  if (id === 'clock') return clock(onChange)
+  if (id === 'clock-guard') return clockGuard(onChange)
   if (id === null || id === undefined || id === '') return { start: noop, stop: noop, destroy: noop, action: noop }
   throw new Error('Unknown V3 surface controller: ' + id)
 }

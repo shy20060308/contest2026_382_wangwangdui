@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "watchface",
+  "route": "pages/watchface",
+  "renderer": "surface-v1",
+  "controller": "watchface",
+  "modules": [
+    {
+      "id": "head",
+      "type": "header",
+      "copy": { "title": "表盘库", "subtitle": "选择后立即保存为主表盘" },
+      "bind": { "trailing": "selectedId" },
+      "props": { "trailingMap": {
+        "sport": { "text": "活力数字", "color": "#3A7DFF" },
+        "simple": { "text": "极简霓虹", "color": "#64D2FF" },
+        "dashboard": { "text": "运动仪表", "color": "#30D158" },
+        "mechanical": { "text": "曜金机械", "color": "#FFD60A" },
+        "alpine": { "text": "星野远山", "color": "#BF5AF2" }
+      } },
+      "tokens": { "flow": true, "height": 38, "titleWidth": 74, "trailingWidth": 82, "subtitleWidth": 156, "subtitleTrailingWidth": 0, "titleSize": 14, "subtitleSize": 7, "trailingSize": 9, "subtitleTrailingSize": 0, "titleLineHeight": 22, "subtitleLineHeight": 12, "titleColor": "#FFFFFF", "subtitleColor": "#8E8E93", "trailingColor": "#FFFFFF", "subtitleTrailingColor": "#8E8E93", "titleWeight": "bold", "trailingWeight": "bold" }
+    },
+    { "id": "sport", "type": "button", "copy": { "title": "活力数字", "subtitle": "时间、心率、步数集中展示" }, "actions": { "tap": "watchface-select:sport" }, "tokens": { "flow": true, "marginTop": 12, "height": 58, "radius": 14, "paddingX": 13, "background": "#111827", "titleSize": 12, "titleColor": "#3A7DFF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 3, "subtitleColor": "#8E8E93", "chevronWidth": 32, "chevronSize": 8, "chevronColor": "#3A7DFF", "chevronText": "运动日常" } },
+    { "id": "simple", "type": "button", "copy": { "title": "极简霓虹", "subtitle": "大时间和目标完成度" }, "actions": { "tap": "watchface-select:simple" }, "tokens": { "flow": true, "marginTop": 8, "height": 58, "radius": 14, "paddingX": 13, "background": "#102029", "titleSize": 12, "titleColor": "#64D2FF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 3, "subtitleColor": "#8E8E93", "chevronWidth": 32, "chevronSize": 8, "chevronColor": "#64D2FF", "chevronText": "简洁耐看" } },
+    { "id": "dashboard", "type": "button", "copy": { "title": "运动仪表", "subtitle": "进度和关键健康指标" }, "actions": { "tap": "watchface-select:dashboard" }, "tokens": { "flow": true, "marginTop": 8, "height": 58, "radius": 14, "paddingX": 13, "background": "#102018", "titleSize": 12, "titleColor": "#30D158", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 3, "subtitleColor": "#8E8E93", "chevronWidth": 32, "chevronSize": 8, "chevronColor": "#30D158", "chevronText": "数据控" } },
+    { "id": "mechanical", "type": "button", "copy": { "title": "曜金机械", "subtitle": "经典金色机械风格" }, "actions": { "tap": "watchface-select:mechanical" }, "tokens": { "flow": true, "marginTop": 8, "height": 58, "radius": 14, "paddingX": 13, "background": "#211B0D", "titleSize": 12, "titleColor": "#FFD60A", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 3, "subtitleColor": "#8E8E93", "chevronWidth": 32, "chevronSize": 8, "chevronColor": "#FFD60A", "chevronText": "经典机械" } },
+    { "id": "alpine", "type": "button", "copy": { "title": "星野远山", "subtitle": "深色夜景与轻量数据层" }, "actions": { "tap": "watchface-select:alpine" }, "tokens": { "flow": true, "marginTop": 8, "height": 58, "radius": 14, "paddingX": 13, "background": "#1E1325", "titleSize": 12, "titleColor": "#BF5AF2", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 3, "subtitleColor": "#8E8E93", "chevronWidth": 32, "chevronSize": 8, "chevronColor": "#BF5AF2", "chevronText": "沉浸夜景" } },
+    { "id": "back", "type": "button", "copy": { "title": "返回主表盘", "subtitle": "查看刚刚选择的样式" }, "actions": { "tap": "/pages/clock" }, "tokens": { "flow": true, "marginTop": 12, "height": 46, "radius": 14, "paddingX": 13, "background": "#2C2C2E", "titleSize": 10, "titleColor": "#FFFFFF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#8E8E93", "chevronWidth": 18, "chevronSize": 18, "chevronColor": "#636366", "chevronText": "›" } }
+  ],
+  "tokens": { "background": "#000000", "stream": { "top": 0, "width": 164, "heightMode": "scene-bottom" }, "streamPaddingBottom": 22 },
+  "variants": {
+    "base": {},
+    "circle": { "tokens": { "stream": { "top": 16, "width": 144, "heightMode": "scene-bottom" }, "streamPaddingBottom": 24 }, "modules": { "head": { "height": 32, "titleSize": 11, "subtitleSize": 6, "trailingSize": 7 }, "sport": { "height": 50, "radius": 13, "titleSize": 9, "subtitleSize": 6, "chevronSize": 6 }, "simple": { "height": 50, "radius": 13, "titleSize": 9, "subtitleSize": 6, "chevronSize": 6 }, "dashboard": { "height": 50, "radius": 13, "titleSize": 9, "subtitleSize": 6, "chevronSize": 6 }, "mechanical": { "height": 50, "radius": 13, "titleSize": 9, "subtitleSize": 6, "chevronSize": 6 }, "alpine": { "height": 50, "radius": 13, "titleSize": 9, "subtitleSize": 6, "chevronSize": 6 }, "back": { "height": 40, "radius": 13, "titleSize": 8, "subtitleSize": 6 } } },
+    "pill": { "tokens": { "stream": { "top": 0, "width": 168, "heightMode": "scene-bottom" }, "streamPaddingBottom": 52 }, "modules": { "head": { "height": 46, "titleSize": 18, "subtitleSize": 9, "trailingSize": 11 }, "sport": { "height": 78, "radius": 12, "titleSize": 15, "subtitleSize": 8, "chevronSize": 8 }, "simple": { "height": 78, "radius": 12, "titleSize": 15, "subtitleSize": 8, "chevronSize": 8 }, "dashboard": { "height": 78, "radius": 12, "titleSize": 15, "subtitleSize": 8, "chevronSize": 8 }, "mechanical": { "height": 78, "radius": 12, "titleSize": 15, "subtitleSize": 8, "chevronSize": 8 }, "alpine": { "height": 78, "radius": 12, "titleSize": 15, "subtitleSize": 8, "chevronSize": 8 }, "back": { "height": 56, "radius": 12, "titleSize": 13, "subtitleSize": 8 } } },
+    "rect": {}
+  }
+}

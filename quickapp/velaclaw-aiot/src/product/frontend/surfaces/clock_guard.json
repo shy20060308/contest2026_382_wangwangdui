@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "clock-guard",
+  "route": "pages/clock_guard",
+  "renderer": "surface-v1",
+  "controller": "clock-guard",
+  "modules": [
+    { "id": "loading", "type": "text", "copy": { "text": "正在进入主表盘" }, "tokens": { "frame": { "top": 72, "width": 150, "height": 44 }, "fontSize": 10, "lineHeight": 44, "foreground": "#8E8E93", "fontWeight": "normal", "textAlign": "center" } }
+  ],
+  "tokens": { "background": "#000000" },
+  "variants": {
+    "base": {},
+    "circle": { "modules": { "loading": { "frame": { "top": 74, "width": 132, "height": 44 }, "fontSize": 9 } } },
+    "pill": { "modules": { "loading": { "frame": { "top": 184, "width": 150, "height": 52 }, "fontSize": 12, "lineHeight": 52 } } },
+    "rect": {}
+  }
+}

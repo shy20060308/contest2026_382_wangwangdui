@@ -1,107 +1,19 @@
+<import name="surfacehost" src="../../components/surface_host.ux"></import>
+
 <template>
-  <stack class="selector-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }};">
-    <div class="selector-scene" if="{{ ready }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
-      <div class="circle-surface" if="{{ layout.surface === 'preview-swiper' }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
-        <div class="header" style="left: {{ layout.header.left }}px; top: {{ layout.header.top }}px; width: {{ layout.header.width }}px; height: {{ layout.header.height }}px;"><text class="title" style="font-size: {{ layout.titleSize }}px;">表盘库</text><text class="back" style="font-size: {{ layout.chrome.headerBackSize }}px;" @click="goBack">返回</text></div>
-        <swiper class="circle-swiper" index="{{ selectedIndex }}" indicator="true" @change="onCircleChange" style="left: {{ layout.preview.left }}px; top: {{ layout.preview.top }}px; width: {{ layout.preview.width }}px; height: {{ layout.preview.height }}px;">
-          <div class="circle-slide" for="{{ faces }}" tid="id" @click="selectFace($item)">
-            <div class="circle-preview" style="width: {{ layout.chrome.circle.previewSize }}px; height: {{ layout.chrome.circle.previewSize }}px; border-radius: {{ layout.previewRadius }}px; border-width: {{ layout.chrome.circle.previewBorderWidth }}px; background-color: {{ $item.background }}; border-color: {{ $item.accent }};"><text class="circle-time" style="font-size: {{ layout.previewTimeSize }}px; color: {{ $item.accent }};">08:32</text><text class="circle-face-name" style="font-size: {{ layout.previewNameSize }}px; margin-top: {{ layout.chrome.circle.faceNameMarginTop }}px;">{{ $item.name }}</text><text class="circle-tag" style="font-size: {{ layout.chrome.circle.tagSize }}px; margin-top: {{ layout.chrome.circle.tagMarginTop }}px;">{{ $item.tag }}</text><div class="selected-line" if="{{ $item.selected }}" style="width: {{ layout.chrome.circle.selectedLineWidth }}px; height: {{ layout.chrome.circle.selectedLineHeight }}px; border-radius: {{ layout.chrome.circle.selectedLineRadius }}px; margin-top: {{ layout.chrome.circle.selectedLineMarginTop }}px; background-color: {{ $item.accent }};"></div></div>
-          </div>
-        </swiper>
-        <text class="circle-footer" style="left: {{ layout.footer.left }}px; top: {{ layout.footer.top }}px; width: {{ layout.footer.width }}px; height: {{ layout.footer.height }}px; font-size: {{ layout.chrome.circle.footerSize }}px;">{{ previewName }} · 点按应用</text>
-      </div>
-
-      <div class="pill-surface" if="{{ layout.surface === 'cards-pager' }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
-        <div class="header" style="left: {{ layout.header.left }}px; top: {{ layout.header.top }}px; width: {{ layout.header.width }}px; height: {{ layout.header.height }}px;"><text class="title" style="font-size: {{ layout.titleSize }}px;">表盘库</text><text class="back" style="font-size: {{ layout.chrome.headerBackSize }}px;" @click="goBack">返回</text></div>
-        <div class="pill-cards" style="left: {{ layout.content.left }}px; top: {{ layout.content.top }}px; width: {{ layout.content.width }}px; height: {{ layout.content.height }}px;">
-          <div class="face-card" for="{{ visibleFaces }}" tid="id" @click="selectFace($item)" style="width: {{ layout.content.width }}px; height: {{ layout.cardHeight }}px; margin-bottom: {{ layout.cardGap }}px; border-width: {{ layout.chrome.pill.cardBorderWidth }}px; border-radius: {{ layout.chrome.pill.cardRadius }}px; padding: {{ layout.chrome.pill.cardPadding }}px; border-color: {{ $item.borderColor }};">
-            <div class="pill-preview" style="width: {{ layout.previewWidth }}px; height: {{ layout.cardInnerHeight }}px; border-width: {{ layout.chrome.pill.previewBorderWidth }}px; border-radius: {{ layout.chrome.pill.previewRadius }}px; background-color: {{ $item.background }}; border-color: {{ $item.accent }};"><text class="pill-preview-time" style="font-size: {{ layout.chrome.pill.previewTimeSize }}px; color: {{ $item.accent }};">08</text><text class="pill-preview-minute" style="font-size: {{ layout.chrome.pill.previewMinuteSize }}px;">32</text></div>
-            <div class="face-copy" style="margin-left: {{ layout.chrome.pill.copyMarginLeft }}px;"><div class="face-name-row"><text class="face-name" style="font-size: {{ layout.nameSize }}px;">{{ $item.name }}</text><text class="selected-badge" if="{{ $item.selected }}" style="height: {{ layout.chrome.pill.badgeHeight }}px; border-radius: {{ layout.chrome.pill.badgeRadius }}px; font-size: {{ layout.chrome.pill.badgeSize }}px; padding-left: {{ layout.chrome.pill.badgePaddingX }}px; padding-right: {{ layout.chrome.pill.badgePaddingX }}px; background-color: {{ $item.accent }};">已选</text></div><text class="face-desc" style="font-size: {{ layout.descSize }}px; line-height: {{ layout.chrome.pill.descLineHeight }}px; margin-top: {{ layout.chrome.pill.descMarginTop }}px;">{{ $item.description }}</text><text class="face-tag" style="font-size: {{ layout.chrome.pill.tagSize }}px; margin-top: {{ layout.chrome.pill.tagMarginTop }}px; color: {{ $item.accent }};">{{ $item.tag }}</text></div>
-          </div>
-        </div>
-        <div class="pager" style="left: {{ layout.pager.left }}px; top: {{ layout.pager.top }}px; width: {{ layout.pager.width }}px; height: {{ layout.pager.height }}px;"><text class="pager-button" style="width: {{ layout.chrome.pill.pagerButtonWidth }}px; font-size: {{ layout.chrome.pill.pagerButtonSize }}px;" @click="previousPage">‹</text><text class="pager-text" style="font-size: {{ layout.chrome.pill.pagerTextSize }}px;">{{ pageText }}</text><text class="pager-button" style="width: {{ layout.chrome.pill.pagerButtonWidth }}px; font-size: {{ layout.chrome.pill.pagerButtonSize }}px;" @click="nextPage">›</text></div>
-      </div>
-
-      <div class="rect-surface" if="{{ layout.surface === 'preview-grid' }}" style="width: {{ sceneWidth }}px; height: {{ sceneHeight }}px;">
-        <div class="header" style="left: {{ layout.header.left }}px; top: {{ layout.header.top }}px; width: {{ layout.header.width }}px; height: {{ layout.header.height }}px;"><text class="title" style="font-size: {{ layout.titleSize }}px;">表盘库</text><text class="back" style="font-size: {{ layout.chrome.headerBackSize }}px;" @click="goBack">返回</text></div>
-        <div class="rect-grid" style="left: {{ layout.content.left }}px; top: {{ layout.content.top }}px; width: {{ layout.content.width }}px; height: {{ layout.content.height }}px;">
-          <div class="rect-card" for="{{ rectFaces }}" tid="id" @click="selectFace($item)" style="width: {{ layout.cardWidth }}px; height: {{ layout.cardHeight }}px; margin-right: {{ $item.marginRight }}px; margin-bottom: {{ $item.marginBottom }}px; border-width: {{ layout.chrome.rect.cardBorderWidth }}px; border-radius: {{ layout.chrome.rect.cardRadius }}px; padding: {{ layout.chrome.rect.cardPadding }}px; border-color: {{ $item.borderColor }};"><div class="rect-preview" style="height: {{ layout.chrome.rect.previewHeight }}px; border-radius: {{ layout.chrome.rect.previewRadius }}px; background-color: {{ $item.background }};"><text class="rect-time" style="font-size: {{ layout.previewTimeSize }}px; color: {{ $item.accent }};">08:32</text><div class="rect-accent" style="width: {{ layout.chrome.rect.accentWidth }}px; height: {{ layout.chrome.rect.accentHeight }}px; border-radius: {{ layout.chrome.rect.accentRadius }}px; margin-top: {{ layout.chrome.rect.accentMarginTop }}px; background-color: {{ $item.accent }};"></div></div><text class="rect-name" style="font-size: {{ layout.nameSize }}px; margin-top: {{ layout.chrome.rect.nameMarginTop }}px;">{{ $item.name }}</text><text class="rect-selected" if="{{ $item.selected }}" style="font-size: {{ layout.chrome.rect.selectedSize }}px; margin-top: {{ layout.chrome.rect.selectedMarginTop }}px; color: {{ $item.accent }};">已选</text></div>
-          <div class="current-card" style="width: {{ layout.cardWidth }}px; height: {{ layout.cardHeight }}px; margin-left: {{ layout.chrome.rect.currentMarginLeft }}px; border-radius: {{ layout.chrome.rect.cardRadius }}px; padding: {{ layout.chrome.rect.cardPadding }}px;"><text class="current-label" style="font-size: {{ layout.chrome.rect.currentLabelSize }}px; letter-spacing: {{ layout.chrome.rect.currentLetterSpacing }}px;">CURRENT</text><text class="current-name" style="font-size: {{ layout.chrome.rect.currentNameSize }}px; margin-top: {{ layout.chrome.rect.currentNameMarginTop }}px; color: {{ selectedAccent }};">{{ selectedName }}</text><div class="current-line" style="width: {{ layout.chrome.rect.currentLineWidth }}px; height: {{ layout.chrome.rect.currentLineHeight }}px; border-radius: {{ layout.chrome.rect.currentLineRadius }}px; margin-top: {{ layout.chrome.rect.currentLineMarginTop }}px; background-color: {{ selectedAccent }};"></div><text class="current-hint" style="font-size: {{ layout.chrome.rect.currentHintSize }}px; margin-top: {{ layout.chrome.rect.currentHintMarginTop }}px;">点击任意预览应用</text></div>
-        </div>
-      </div>
-    </div>
-  </stack>
+  <surfacehost if="{{ surfaceReady }}" plan="{{ surfacePlan }}" @surfaceaction="onSurfaceAction"></surfacehost>
 </template>
 
 <script>
-import pageRuntime from '../../runtime/page_runtime'
-import navigation from '../../runtime/navigation'
-import { createWatchfaceController } from '../../v2/features/watchface/controller'
-import selectorDesign from '../../v2/design/apps/faces'
-import selectorView from '../../v2/design/apps/faces/view'
-import pager from '../../v2/design/pager'
+import surfacePage from '../../runtime/surface_page'
 
 export default {
-  private: {
-    ready: false, layout: {}, faces: [], visibleFaces: [], rectFaces: [], selectedIndex: 0, selectedName: '', selectedAccent: '', previewName: '', pageIndex: 0, pageText: '', pageSize: 0,
-    sceneWidth: 0, sceneHeight: 0, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%'
-  },
-  onInit() {
-    var self = this
-    this.controller = createWatchfaceController(function (state) { self.applyState(state) })
-    pageRuntime.bind(this, function (profile, scene, safe) {
-      var plan = selectorDesign.resolve(profile, scene, safe)
-      self.layout = plan
-      self.pageSize = plan.pageSize
-      self.controller.configure(plan.faceIds)
-      self.ready = true
-      if (self.pageVisible) self.controller.load()
-    })
-  },
-  onShow() { this.pageVisible = true; if (this.ready) this.controller.load() },
-  onHide() { this.pageVisible = false },
-  onDestroy() { this.pageVisible = false; this.faces = []; this.visibleFaces = []; this.rectFaces = [] },
-  onBackPress() { navigation.back(); return true },
-
-  applyState(state) {
-    var view = selectorView.project(state, this.layout.gap)
-    this.faces = view.faces
-    this.selectedIndex = view.selectedIndex
-    this.selectedName = view.selectedName
-    this.selectedAccent = view.selectedAccent
-    this.previewName = view.previewName
-    this.rectFaces = view.rectFaces
-    this.refreshPage()
-  },
-  refreshPage() { var state = pager.resolve(this.faces, this.pageIndex, this.pageSize); this.pageIndex = state.pageIndex; this.pageText = state.pageText; this.visibleFaces = state.items },
-  previousPage() { this.pageIndex--; this.refreshPage() },
-  nextPage() { this.pageIndex++; this.refreshPage() },
-  onCircleChange(event) { var index = event && (event.index !== undefined ? event.index : event.detail && event.detail.index); if (index === undefined || index === null) return; this.selectedIndex = index; var face = this.faces[index]; if (face) this.previewName = face.name },
-  selectFace(face) { if (!face || this.saving) return; var self = this; this.saving = true; this.controller.select(face.id, function () { self.saving = false; navigation.back() }) },
-  goBack() { navigation.back() }
+  private: { surfaceReady: false, surfacePlan: null },
+  onInit() { surfacePage.bind(this, 'watchface') },
+  onShow() { surfacePage.show(this) },
+  onHide() { surfacePage.hide(this) },
+  onDestroy() { surfacePage.destroy(this) },
+  onBackPress() { return surfacePage.back(this) },
+  onSurfaceAction(event) { surfacePage.action(this, event) }
 }
 </script>
-
-<style>
-.selector-root, .selector-scene, .circle-surface, .pill-surface, .rect-surface { background-color: #000000; }
-.selector-scene, .circle-surface, .pill-surface, .rect-surface { position: absolute; left: 0px; top: 0px; }
-.header, .circle-swiper, .circle-footer, .pill-cards, .pager, .rect-grid { position: absolute; }
-.header { flex-direction: row; justify-content: space-between; align-items: center; }
-.title { color: #FFFFFF; font-weight: bold; } .back { color: #8E8E93; text-align: right; }
-.circle-slide { width: 100%; height: 100%; justify-content: center; align-items: center; }
-.circle-preview { flex-direction: column; justify-content: center; align-items: center; }
-.circle-time { font-weight: bold; } .circle-face-name { color: #FFFFFF; font-weight: bold; } .circle-tag { color: #8E8E93; }
-.circle-footer { color: #8E8E93; text-align: center; }
-.pill-cards { flex-direction: column; overflow: hidden; }
-.face-card { background-color: #111317; flex-direction: row; align-items: center; }
-.pill-preview { flex-direction: column; justify-content: center; align-items: center; }
-.pill-preview-time { font-weight: bold; } .pill-preview-minute { color: #FFFFFF; font-weight: bold; }
-.face-copy { flex: 1; flex-direction: column; } .face-name-row { flex-direction: row; justify-content: space-between; align-items: center; }
-.face-name { color: #FFFFFF; font-weight: bold; } .selected-badge { color: #FFFFFF; }
-.face-desc { color: #8E8E93; } .pager { flex-direction: row; justify-content: space-between; align-items: center; } .pager-button { color: #0A84FF; text-align: center; } .pager-text { color: #8E8E93; }
-.rect-grid { flex-direction: row; flex-wrap: wrap; align-content: flex-start; }
-.rect-card, .current-card { background-color: #111317; flex-direction: column; }
-.rect-preview { width: 100%; flex-direction: column; justify-content: center; align-items: center; }
-.rect-time { font-weight: bold; } .rect-name { color: #FFFFFF; font-weight: bold; }
-.current-card { justify-content: center; } .current-label { color: #636366; } .current-name { font-weight: bold; } .current-hint { color: #8E8E93; }
-</style>
