@@ -151,7 +151,8 @@ filesUnder(surfacesRoot, /\.json$/, []).forEach(function (file) {
 const genericUx = [
   path.join(srcRoot, 'components', 'surface_host.ux'),
   path.join(srcRoot, 'components', 'surface_collection.ux'),
-  path.join(srcRoot, 'components', 'surface_slider.ux')
+  path.join(srcRoot, 'components', 'surface_slider.ux'),
+  path.join(srcRoot, 'components', 'surface_stage.ux')
 ]
 const allowedNonPageUx = new Set([path.resolve(path.join(srcRoot, 'app.ux'))].concat(genericUx.map(function (file) { return path.resolve(file) })))
 filesUnder(srcRoot, /\.ux$/, []).forEach(function (file) {
