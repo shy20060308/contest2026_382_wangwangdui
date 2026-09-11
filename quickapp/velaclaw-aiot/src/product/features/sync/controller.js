@@ -70,19 +70,19 @@ export function createSyncController(onChange) {
     function done() {
       pending--
       if (pending > 0 || !isLive(epoch)) return
-      var health = healthStore.getSnapshot()
       state.todaySteps = activity.steps
       state.historyCount = history.length
       state.workoutCount = workouts.length
-      var payload = {
+      emit()
+      if (!callback) return
+      var health = healthStore.getSnapshot()
+      callback({
         version: protocol.VERSION,
         syncedAt: Date.now(),
         health: { steps: activity.steps, calories: activity.calories, standHours: activity.standHours, heartRate: health.heartRate },
         history: history,
         workouts: workouts
-      }
-      emit()
-      if (callback) callback(payload)
+      })
     }
     activityStore.hydrate(function (value) {
       if (!isLive(epoch)) return
