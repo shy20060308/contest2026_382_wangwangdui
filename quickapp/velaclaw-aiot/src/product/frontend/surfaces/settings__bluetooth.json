@@ -55,7 +55,6 @@
         "items": [
           { "id": "sent", "bind": { "value": "packetSent" }, "props": { "valueFormat": "number" }, "copy": { "label": "已发送包" }, "tokens": { "accent": "#64D2FF" } },
           { "id": "total", "bind": { "value": "packetTotal" }, "props": { "valueFormat": "number" }, "copy": { "label": "总包数" }, "tokens": { "accent": "#64D2FF" } },
-          { "id": "count", "bind": { "value": "packetCount" }, "props": { "valueFormat": "number" }, "copy": { "label": "打包数量" }, "tokens": { "accent": "#BF5AF2" } },
           { "id": "chars", "bind": { "value": "payloadChars" }, "props": { "valueFormat": "number" }, "copy": { "label": "字符数" }, "tokens": { "accent": "#BF5AF2" } }
         ]
       },
