@@ -28,6 +28,11 @@ function experienceModes(experience) {
     return branch.collection && branch.collection.mode ? branch.collection.mode : null
   }).filter(Boolean)
 }
+function faceIds(experience, shape) {
+  var branch = experience && experience[shape] ? experience[shape] : {}
+  var config = branch.controllerConfig || {}
+  return Array.isArray(config.faceIds) ? config.faceIds : []
+}
 
 assert.strictEqual(policy.schemaVersion, 1)
 assert.strictEqual(policy.levels.L1.kind, 'shared-expression')
@@ -79,6 +84,9 @@ routes.forEach(function (route) {
       const branch = experience[shape] || {}
       assert.ok(!branch.collection || !branch.collection.mode, route + ' may not select a shape-specific collection engine below L3')
       assert.ok(!nonEmptyObject(branch.gestures), route + ' may not change gesture semantics by shape below L3')
+      if (nonEmptyObject(branch.controllerConfig)) {
+        assert.strictEqual(stable(branch.controllerConfig), stable((experience.base || {}).controllerConfig || {}), route + ' may not change product/controller availability by shape below L3')
+      }
     })
   }
 
@@ -99,6 +107,19 @@ const appList = surface('pages/applist')
 assert.strictEqual(policy.routes['pages/applist'].routeLevel, 'L3')
 assert.ok(nonEmptyObject(appList.experience.circle) && nonEmptyObject(appList.experience.pill) && nonEmptyObject(appList.experience.rect), 'L3 AppList must explicitly author each independent form-factor experience')
 assert.deepStrictEqual(experienceModes(appList.experience), ['honeycomb', 'paged-list', 'designed-grid'], 'AppList L3 must preserve its three accepted form-factor surfaces')
+
+const watchface = surface('pages/watchface')
+assert.strictEqual(policy.routes['pages/watchface'].routeLevel, 'L3')
+assert.deepStrictEqual(experienceModes(watchface.experience), ['preview-swiper', 'cards-pager', 'preview-grid'], 'Watchface L3 must preserve its three accepted form-factor selectors')
+assert.deepStrictEqual(faceIds(watchface.experience, 'circle'), ['sport', 'simple', 'dashboard', 'mechanical'])
+assert.deepStrictEqual(faceIds(watchface.experience, 'pill'), ['sport', 'simple', 'dashboard', 'alpine'])
+assert.deepStrictEqual(faceIds(watchface.experience, 'rect'), ['sport', 'simple', 'dashboard'])
+
+const clock = surface('pages/clock')
+assert.strictEqual(policy.routes['pages/clock'].routeLevel, 'L3')
+assert.deepStrictEqual(faceIds(clock.experience, 'circle'), ['sport', 'simple', 'dashboard', 'mechanical'], 'Circle Clock must expose the accepted mechanical face')
+assert.deepStrictEqual(faceIds(clock.experience, 'pill'), ['sport', 'simple', 'dashboard', 'alpine'], 'Pill Clock must expose the accepted alpine face')
+assert.deepStrictEqual(faceIds(clock.experience, 'rect'), ['sport', 'simple', 'dashboard'], 'Rect Clock must keep the accepted three-face set')
 
 const brightness = surface('pages/settings/brightness')
 assert.strictEqual(policy.routes['pages/settings/brightness'].routeLevel, 'L1')
