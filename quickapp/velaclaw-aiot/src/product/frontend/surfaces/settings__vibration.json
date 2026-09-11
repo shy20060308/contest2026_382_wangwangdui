@@ -4,7 +4,7 @@
   "route": "pages/settings/vibration",
   "renderer": "surface-v1",
   "controller": "vibration",
-  "initialState": { "pageCode": "controls", "controlsOpen": false, "patternsOpen": false },
+  "initialState": { "pageCode": "controls", "controlsOpen": false, "patternsOpen": false, "enabled": "loading" },
   "modules": [
     {
       "id": "head", "type": "header",
@@ -12,7 +12,7 @@
       "bind": { "trailing": "pageCode", "subtitleTrailing": "enabled" },
       "props": {
         "trailingMap": { "controls": { "text": "1 / 2", "color": "#8E8E93" }, "patterns": { "text": "2 / 2", "color": "#8E8E93" } },
-        "subtitleTrailingMap": { "undefined": { "text": "", "color": "#8E8E93" }, "true": { "text": "已开启", "color": "#30D158" }, "false": { "text": "已关闭", "color": "#8E8E93" } }
+        "subtitleTrailingMap": { "loading": { "text": "读取中", "color": "#8E8E93" }, "true": { "text": "已开启", "color": "#30D158" }, "false": { "text": "已关闭", "color": "#8E8E93" } }
       },
       "tokens": { "flow": true, "height": 30, "titleWidth": 94, "trailingWidth": 62, "subtitleWidth": 104, "subtitleTrailingWidth": 52, "titleSize": 14, "subtitleSize": 7, "trailingSize": 8, "subtitleTrailingSize": 7, "titleLineHeight": 17, "subtitleLineHeight": 10, "titleColor": "#FF9F0A", "subtitleColor": "#8E8E93", "trailingColor": "#8E8E93", "subtitleTrailingColor": "#30D158", "titleWeight": "bold", "trailingWeight": "bold" }
     },
