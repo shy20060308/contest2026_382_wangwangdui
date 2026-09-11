@@ -7,6 +7,7 @@ const readJson = file => JSON.parse(fs.readFileSync(path.join(root, file), 'utf8
 const read = file => fs.readFileSync(path.join(root, file), 'utf8')
 
 const appList = readJson('src/product/frontend/surfaces/applist.json')
+const watchface = readJson('src/product/frontend/surfaces/watchface.json')
 const brightness = readJson('src/product/frontend/surfaces/settings__brightness.json')
 const clock = readJson('src/product/frontend/surfaces/clock.json')
 const collectionUx = read('src/components/surface_collection.ux')
@@ -42,6 +43,26 @@ assert.ok(!/pages\//.test(honeycomb), 'Generic honeycomb engine must not know pr
 assert.ok(honeycomb.includes('requiredNumber(source.spacing'), 'Honeycomb engine must require authored JSON geometry instead of carrying a default design')
 assert.ok(!/#[0-9a-f]{3,8}\b/i.test(honeycomb), 'Generic honeycomb engine must not own product colors')
 
+assert.ok(watchface.experience, 'Watchface must declare its L3 selector experience in JSON')
+assert.strictEqual(watchface.experience.circle.collection.mode, 'preview-swiper', 'Circle watchface selector must remain preview swiper')
+assert.strictEqual(watchface.experience.pill.collection.mode, 'cards-pager', 'Pill watchface selector must remain preview-card pager')
+assert.strictEqual(watchface.experience.rect.collection.mode, 'preview-grid', 'Rect watchface selector must remain preview grid')
+const faceItems = watchface.experience.base.collection.items
+assert.deepStrictEqual(faceItems.map(item => item.id), ['sport', 'simple', 'dashboard', 'mechanical', 'alpine'])
+faceItems.forEach(item => {
+  assert.ok(item.label && item.description && item.tag, item.id + ' presentation copy must remain JSON-owned')
+  assert.ok(/^#[0-9A-Fa-f]{6}$/.test(item.background), item.id + ' preview background must remain JSON-owned')
+  assert.ok(/^#[0-9A-Fa-f]{6}$/.test(item.accent), item.id + ' preview accent must remain JSON-owned')
+  assert.strictEqual(item.action, 'watchface-select:' + item.id)
+})
+assert.deepStrictEqual(watchface.experience.circle.collection.itemIds, ['sport', 'simple', 'dashboard', 'mechanical'])
+assert.deepStrictEqual(watchface.experience.pill.collection.itemIds, ['sport', 'simple', 'dashboard', 'alpine'])
+assert.deepStrictEqual(watchface.experience.rect.collection.itemIds, ['sport', 'simple', 'dashboard'])
+assert.ok(collectionUx.includes("model.mode === 'preview-swiper'") && collectionUx.includes('<swiper'), 'Generic collection must render the Circle watchface preview swiper')
+assert.ok(collectionUx.includes("model.mode === 'cards-pager'"), 'Generic collection must render the Pill watchface preview-card pager')
+assert.ok(collectionUx.includes("model.mode === 'preview-grid'"), 'Generic collection must render the Rect watchface preview grid')
+assert.ok(collectionUx.includes('@click="activateItem($item)"'), 'Watchface previews must remain directly selectable')
+
 assert.ok(brightness.experience, 'Brightness must declare direct-manipulation experience')
 const slider = brightness.experience.base.sliders[0]
 assert.strictEqual(slider.min, 0)
@@ -58,4 +79,4 @@ assert.strictEqual(clock.experience.base.gestures.right, 'clock-prev-face')
 assert.strictEqual(clock.experience.base.gestures.longpress, '/pages/watchface')
 
 assert.ok(designSkill.includes('A migration is incomplete if functionality or interaction quality is reduced'), 'Wearable design contract must explicitly ban interaction regression')
-console.log('V3 interaction parity verified: honeycomb, paging, slider and clock gestures remain first-class declarative behavior')
+console.log('V3 interaction parity verified: L3 launcher/watchface compositions, slider and clock gestures remain first-class declarative behavior')
