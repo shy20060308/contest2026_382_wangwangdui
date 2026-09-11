@@ -15,7 +15,6 @@ export function createSyncController(onChange) {
     progress: 0,
     phase: 'idle',
     lastSyncAt: 0,
-    packetCount: 0,
     payloadChars: 0,
     packetSent: 0,
     packetTotal: 0,
@@ -42,7 +41,6 @@ export function createSyncController(onChange) {
 
   function resetTransfer() {
     state.progress = 0
-    state.packetCount = 0
     state.payloadChars = 0
     state.packetSent = 0
     state.packetTotal = 0
@@ -180,7 +178,6 @@ export function createSyncController(onChange) {
     collect(function (payload) {
       if (!isLive(epoch) || !state.syncing) return
       var transfer = protocol.createTransfer(payload, 96)
-      state.packetCount = transfer.packetTotal
       state.payloadChars = transfer.bytesText
       state.packetTotal = transfer.packetTotal
       state.phase = 'sending'
