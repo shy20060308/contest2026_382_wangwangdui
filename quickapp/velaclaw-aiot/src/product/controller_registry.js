@@ -232,14 +232,15 @@ function diagnostics(onChange) {
   function emit(model) {
     if (model) latest = model
     var capabilities = Array.isArray(latest.capabilities) ? latest.capabilities : []
-    var pageCount = 1 + Math.max(1, Math.ceil(capabilities.length / pageSize))
+    var pageCount = 2 + Math.max(1, Math.ceil(capabilities.length / pageSize))
     pageIndex = Math.max(0, Math.min(pageCount - 1, pageIndex))
     var state = copyState(latest)
     state.ready = configured && !!latest.device && !!latest.host
     state.deviceOpen = state.ready && pageIndex === 0
-    state.capabilitiesOpen = state.ready && pageIndex > 0
+    state.storageOpen = state.ready && pageIndex === 1
+    state.capabilitiesOpen = state.ready && pageIndex > 1
     state.pageText = state.ready ? ((pageIndex + 1) + ' / ' + pageCount) : ''
-    var capabilityPageIndex = Math.max(0, pageIndex - 1)
+    var capabilityPageIndex = Math.max(0, pageIndex - 2)
     state.capabilityPage = capabilities.slice(capabilityPageIndex * pageSize, capabilityPageIndex * pageSize + pageSize)
     if (typeof onChange === 'function') onChange(state)
   }
@@ -258,6 +259,9 @@ function diagnostics(onChange) {
     action: function (name) {
       if (name === 'diagnostics-page:previous') { pageIndex -= 1; emit(); return }
       if (name === 'diagnostics-page:next') { pageIndex += 1; emit(); return }
+      if (name === 'diagnostics-storage:request') { controller.requestStorageRecovery(); return }
+      if (name === 'diagnostics-storage:confirm') { controller.confirmStorageRecovery(); return }
+      if (name === 'diagnostics-storage:cancel') { controller.cancelStorageRecovery(); return }
       throw new Error('Unknown diagnostics action: ' + name)
     }
   }
