@@ -1,0 +1,216 @@
+<template>
+  <stack class="collection-root" style="left: {{ model.frame.left }}px; top: {{ model.frame.top }}px; width: {{ model.frame.width }}px; height: {{ model.frame.height }}px;" @swipe="onSwipe">
+    <stack class="honeycomb" if="{{ model.mode === 'honeycomb' }}" style="width: {{ model.frame.width }}px; height: {{ model.frame.height }}px;" @touchstart="onHoneyStart" @touchmove="onHoneyMove" @touchend="onHoneyEnd">
+      <div class="honey-item" for="{{ honeyVisible }}" tid="slotKey" @click="tapHoney($item)" style="left: {{ $item.left }}px; top: {{ $item.top }}px; width: {{ $item.size }}px; height: {{ $item.size }}px; opacity: {{ $item.opacity }};">
+        <image class="honey-icon" src="{{ $item.icon }}" style="width: {{ $item.size }}px; height: {{ $item.size }}px; border-radius: {{ $item.radius }}px;"></image>
+      </div>
+      <text class="honey-label" style="left: {{ model.tokens.labelLeft }}px; top: {{ model.tokens.labelTop }}px; width: {{ model.tokens.labelWidth }}px; height: {{ model.tokens.labelHeight }}px; line-height: {{ model.tokens.labelHeight }}px; font-size: {{ model.tokens.labelSize }}px; color: {{ model.tokens.labelColor }}; opacity: {{ honeyLabelOpacity }}; text-align: center;">{{ focusedLabel }}</text>
+    </stack>
+
+    <div class="paged-list" if="{{ model.mode === 'paged-list' }}" style="width: {{ model.frame.width }}px; height: {{ model.frame.height }}px;">
+      <div class="collection-head" style="left: {{ model.tokens.headerLeft }}px; top: {{ model.tokens.headerTop }}px; width: {{ model.tokens.headerWidth }}px; height: {{ model.tokens.headerHeight }}px;">
+        <text class="collection-title" style="font-size: {{ model.tokens.titleSize }}px; color: {{ model.tokens.titleColor }}; font-weight: bold;">{{ model.tokens.title }}</text>
+        <text class="collection-page" style="font-size: {{ model.tokens.pageSize }}px; color: {{ model.tokens.pageColor }};">{{ pageText }}</text>
+      </div>
+      <div class="list-content" style="left: {{ model.tokens.contentLeft }}px; top: {{ model.tokens.contentTop }}px; width: {{ model.tokens.contentWidth }}px; height: {{ model.tokens.contentHeight }}px;">
+        <div class="list-item" for="{{ pageItems }}" tid="id" @click="activateItem($item)" style="width: {{ model.tokens.contentWidth }}px; height: {{ model.tokens.itemHeight }}px; margin-bottom: {{ model.tokens.itemGap }}px; border-radius: {{ model.tokens.itemRadius }}px; padding-left: {{ model.tokens.itemPaddingX }}px; padding-right: {{ model.tokens.itemPaddingX }}px; background-color: {{ model.tokens.itemBackground }};">
+          <image class="list-icon" src="{{ $item.icon }}" style="width: {{ model.tokens.iconSize }}px; height: {{ model.tokens.iconSize }}px; border-radius: {{ model.tokens.iconRadius }}px;"></image>
+          <div class="list-copy" style="margin-left: {{ model.tokens.copyGap }}px;"><text class="list-name" style="font-size: {{ model.tokens.nameSize }}px; color: {{ model.tokens.nameColor }}; font-weight: bold;">{{ $item.label }}</text><text class="list-subtitle" style="font-size: {{ model.tokens.subtitleSize }}px; color: {{ model.tokens.subtitleColor }};">{{ $item.subtitle }}</text></div>
+          <text class="list-arrow" style="width: {{ model.tokens.arrowWidth }}px; font-size: {{ model.tokens.arrowSize }}px; color: {{ $item.accent }}; text-align: right;">›</text>
+        </div>
+      </div>
+      <div class="pager" style="left: {{ model.tokens.pagerLeft }}px; top: {{ model.tokens.pagerTop }}px; width: {{ model.tokens.pagerWidth }}px; height: {{ model.tokens.pagerHeight }}px;">
+        <text class="pager-button" style="width: {{ model.tokens.pagerButtonWidth }}px; font-size: {{ model.tokens.pagerButtonSize }}px; color: {{ previousColor }};" @click="previousPage">‹</text>
+        <div class="pager-track" style="width: {{ model.tokens.pagerTrackWidth }}px; height: {{ model.tokens.pagerTrackHeight }}px; border-radius: {{ model.tokens.pagerTrackRadius }}px; background-color: {{ model.tokens.pagerTrackBackground }};"><div class="pager-fill" style="width: {{ pageProgressWidth }}px; height: {{ model.tokens.pagerTrackHeight }}px; border-radius: {{ model.tokens.pagerTrackRadius }}px; background-color: {{ model.tokens.pagerAccent }};"></div></div>
+        <text class="pager-button" style="width: {{ model.tokens.pagerButtonWidth }}px; font-size: {{ model.tokens.pagerButtonSize }}px; color: {{ nextColor }}; text-align: right;" @click="nextPage">›</text>
+      </div>
+    </div>
+
+    <div class="designed-grid" if="{{ model.mode === 'designed-grid' }}" style="width: {{ model.frame.width }}px; height: {{ model.frame.height }}px;">
+      <div class="collection-head" style="left: {{ model.tokens.headerLeft }}px; top: {{ model.tokens.headerTop }}px; width: {{ model.tokens.headerWidth }}px; height: {{ model.tokens.headerHeight }}px;">
+        <text class="collection-title" style="font-size: {{ model.tokens.titleSize }}px; color: {{ model.tokens.titleColor }}; font-weight: bold;">{{ model.tokens.title }}</text>
+        <text class="collection-page" style="font-size: {{ model.tokens.pageSize }}px; color: {{ model.tokens.pageColor }};">{{ pageText }}</text>
+      </div>
+      <div class="grid-content" style="left: {{ model.tokens.contentLeft }}px; top: {{ model.tokens.contentTop }}px; width: {{ model.tokens.contentWidth }}px; height: {{ model.tokens.contentHeight }}px;">
+        <div class="grid-item" for="{{ gridItems }}" tid="id" @click="activateItem($item)" style="left: {{ $item.left }}px; top: {{ $item.top }}px; width: {{ model.tokens.gridItemWidth }}px; height: {{ model.tokens.itemHeight }}px; border-radius: {{ model.tokens.itemRadius }}px; border-color: {{ $item.accent }}; background-color: {{ model.tokens.itemBackground }};">
+          <image class="grid-icon" src="{{ $item.icon }}" style="width: {{ model.tokens.iconSize }}px; height: {{ model.tokens.iconSize }}px; border-radius: {{ model.tokens.iconRadius }}px;"></image>
+          <text class="grid-name" style="font-size: {{ model.tokens.nameSize }}px; color: {{ model.tokens.nameColor }}; font-weight: bold; text-align: center;">{{ $item.label }}</text>
+          <div class="grid-accent" style="width: {{ model.tokens.accentWidth }}px; height: {{ model.tokens.accentHeight }}px; border-radius: {{ model.tokens.accentRadius }}px; background-color: {{ $item.accent }};"></div>
+        </div>
+      </div>
+      <div class="pager" style="left: {{ model.tokens.pagerLeft }}px; top: {{ model.tokens.pagerTop }}px; width: {{ model.tokens.pagerWidth }}px; height: {{ model.tokens.pagerHeight }}px;">
+        <text class="pager-button" style="width: {{ model.tokens.pagerButtonWidth }}px; font-size: {{ model.tokens.pagerButtonSize }}px; color: {{ previousColor }};" @click="previousPage">‹</text>
+        <div class="pager-track" style="width: {{ model.tokens.pagerTrackWidth }}px; height: {{ model.tokens.pagerTrackHeight }}px; border-radius: {{ model.tokens.pagerTrackRadius }}px; background-color: {{ model.tokens.pagerTrackBackground }};"><div class="pager-fill" style="width: {{ pageProgressWidth }}px; height: {{ model.tokens.pagerTrackHeight }}px; border-radius: {{ model.tokens.pagerTrackRadius }}px; background-color: {{ model.tokens.pagerAccent }};"></div></div>
+        <text class="pager-button" style="width: {{ model.tokens.pagerButtonWidth }}px; font-size: {{ model.tokens.pagerButtonSize }}px; color: {{ nextColor }}; text-align: right;" @click="nextPage">›</text>
+      </div>
+    </div>
+  </stack>
+</template>
+
+<script>
+import honeycomb from '../product/frontend/engines/honeycomb'
+
+export default {
+  props: ['model'],
+  private: {
+    pageIndex: 0, pageItems: [], gridItems: [], pageText: '1 / 1', pageProgressWidth: 0,
+    previousColor: '#3A3A3C', nextColor: '#3A3A3C', honeySlots: [], honeyVisible: [], focusedLabel: '',
+    honeyPanX: 0, honeyPanY: 0, honeyVelocityX: 0, honeyVelocityY: 0, honeyTouchActive: false,
+    honeyLabelOpacity: 1, dragMoved: false, suppressTapUntil: 0, layoutTimer: null, motionTimer: null
+  },
+  onInit() { this.refreshModel() },
+  onDestroy() { this.stopHoneyMotion(); this.honeySlots = []; this.honeyVisible = [] },
+  refreshModel() {
+    if (!this.model) return
+    if (this.model.mode === 'honeycomb') this.initHoneycomb()
+    else this.refreshPage()
+  },
+  pageCount() { var size = Math.max(1, Number(this.model.tokens.pageItemCount) || 1); return Math.max(1, Math.ceil(this.model.items.length / size)) },
+  refreshPage() {
+    var size = Math.max(1, Number(this.model.tokens.pageItemCount) || 1)
+    var count = this.pageCount()
+    if (this.pageIndex >= count) this.pageIndex = count - 1
+    if (this.pageIndex < 0) this.pageIndex = 0
+    this.pageItems = this.model.items.slice(this.pageIndex * size, this.pageIndex * size + size)
+    this.pageText = (this.pageIndex + 1) + ' / ' + count
+    var trackWidth = Number(this.model.tokens.pagerTrackWidth) || 0
+    this.pageProgressWidth = Math.max(1, Math.round(trackWidth * (this.pageIndex + 1) / count))
+    this.previousColor = this.pageIndex > 0 ? this.model.tokens.pagerAccent : this.model.tokens.pagerDisabledColor
+    this.nextColor = this.pageIndex < count - 1 ? this.model.tokens.pagerAccent : this.model.tokens.pagerDisabledColor
+    var columns = Math.max(1, Number(this.model.tokens.columns) || 2)
+    var gap = Number(this.model.tokens.gridGap) || 0
+    var width = Number(this.model.tokens.gridItemWidth) || 0
+    var rowHeight = (Number(this.model.tokens.itemHeight) || 0) + (Number(this.model.tokens.gridRowGap) || gap)
+    var grid = []
+    for (var i = 0; i < this.pageItems.length; i++) {
+      var item = this.pageItems[i]
+      var copy = {}; for (var key in item) copy[key] = item[key]
+      copy.left = (i % columns) * (width + gap)
+      copy.top = Math.floor(i / columns) * rowHeight
+      grid.push(copy)
+    }
+    this.gridItems = grid
+  },
+  previousPage() { if (this.pageIndex <= 0) return; this.pageIndex -= 1; this.refreshPage() },
+  nextPage() { if (this.pageIndex >= this.pageCount() - 1) return; this.pageIndex += 1; this.refreshPage() },
+  onSwipe(event) {
+    if (!event || this.model.mode === 'honeycomb') return
+    var direction = event.direction || (event.detail && event.detail.direction) || ''
+    if (direction === 'left') this.nextPage()
+    else if (direction === 'right') {
+      if (this.pageIndex > 0) this.previousPage()
+      else if (this.model.actions && this.model.actions.edgeBack) this.emitAction(this.model.actions.edgeBack)
+    }
+  },
+  activateItem(item) { if (item && item.action) this.emitAction(item.action) },
+  emitAction(action) { this.$emit('surfaceaction', { action: action }) },
+  honeyConfig() { return honeycomb.config(this.model.tokens || {}, this.model.frame.width, this.model.frame.height) },
+  initHoneycomb() {
+    var cfg = this.honeyConfig()
+    this.honeySlots = honeycomb.buildSlots(this.model.items, cfg)
+    var first = this.honeySlots.length ? honeycomb.panForSlot(this.honeySlots[0], cfg) : null
+    this.honeyPanX = first ? first.x : 0
+    this.honeyPanY = first ? first.y : 0
+    this.renderHoneycomb()
+  },
+  renderHoneycomb() {
+    var cfg = this.honeyConfig()
+    var frame = honeycomb.layoutSlots(this.honeySlots, this.honeyPanX, this.honeyPanY, cfg)
+    this.honeyVisible = honeycomb.visibleSlots(frame.slots, cfg)
+    if (frame.nearestIndex >= 0 && this.honeySlots[frame.nearestIndex]) this.focusedLabel = this.honeySlots[frame.nearestIndex].label
+  },
+  scheduleHoneyLayout() {
+    if (this.layoutTimer) return
+    var self = this, cfg = this.honeyConfig()
+    this.layoutTimer = setTimeout(function () { self.layoutTimer = null; self.renderHoneycomb() }, cfg.frameMs)
+  },
+  stopHoneyMotion() {
+    clearTimeout(this.layoutTimer); clearTimeout(this.motionTimer)
+    this.layoutTimer = null; this.motionTimer = null; this.honeyVelocityX = 0; this.honeyVelocityY = 0
+  },
+  onHoneyStart(event) {
+    if (!event.touches || !event.touches[0]) return
+    this.stopHoneyMotion()
+    var p = event.touches[0]
+    this.touchStartX = p.pageX; this.touchStartY = p.pageY; this.touchLastX = p.pageX; this.touchLastY = p.pageY; this.touchLastAt = Date.now()
+    this.honeyTouchActive = true; this.dragMoved = false; this.honeyLabelOpacity = 0
+  },
+  onHoneyMove(event) {
+    if (!this.honeyTouchActive || !event.touches || !event.touches[0]) return
+    var p = event.touches[0], now = Date.now(), cfg = this.honeyConfig()
+    var dx = p.pageX - this.touchLastX, dy = p.pageY - this.touchLastY, dt = Math.max(8, now - (this.touchLastAt || now))
+    this.touchLastX = p.pageX; this.touchLastY = p.pageY; this.touchLastAt = now
+    if (Math.abs(p.pageX - this.touchStartX) > 6 || Math.abs(p.pageY - this.touchStartY) > 6) this.dragMoved = true
+    if (this.dragMoved) { if (event.preventDefault) event.preventDefault(); if (event.stopPropagation) event.stopPropagation() }
+    var pan = honeycomb.nextPan(this.honeySlots, this.honeyPanX, this.honeyPanY, dx, dy, cfg)
+    this.honeyPanX = pan.x; this.honeyPanY = pan.y
+    this.honeyVelocityX = this.honeyVelocityX * 0.45 + (dx / dt) * 0.55
+    this.honeyVelocityY = this.honeyVelocityY * 0.45 + (dy / dt) * 0.55
+    this.scheduleHoneyLayout()
+  },
+  onHoneyEnd(event) {
+    if (!this.honeyTouchActive) return
+    this.honeyTouchActive = false
+    var p = event.changedTouches && event.changedTouches[0]
+    var totalX = p ? p.pageX - this.touchStartX : 0, totalY = p ? p.pageY - this.touchStartY : 0
+    var edgeDistance = Number(this.model.tokens.edgeBackDistance) || 58, edgeStart = Number(this.model.tokens.edgeBackStart) || 26
+    if (totalX > edgeDistance && Math.abs(totalY) < 30 && this.touchStartX < edgeStart && this.model.actions && this.model.actions.edgeBack) {
+      if (event.preventDefault) event.preventDefault(); if (event.stopPropagation) event.stopPropagation()
+      this.stopHoneyMotion(); this.emitAction(this.model.actions.edgeBack); return
+    }
+    if (!this.dragMoved) { this.honeyLabelOpacity = 1; this.scheduleHoneyLayout(); return }
+    if (event.preventDefault) event.preventDefault(); if (event.stopPropagation) event.stopPropagation()
+    this.suppressTapUntil = Date.now() + 220
+    this.startHoneyInertia(this.honeyVelocityX, this.honeyVelocityY)
+  },
+  startHoneyInertia(vx, vy) {
+    clearTimeout(this.motionTimer)
+    this.honeyVelocityX = Number(vx) || 0; this.honeyVelocityY = Number(vy) || 0; this.honeyLabelOpacity = 0.45
+    var self = this, cfg = this.honeyConfig()
+    function tick() {
+      var speed = Math.sqrt(self.honeyVelocityX * self.honeyVelocityX + self.honeyVelocityY * self.honeyVelocityY)
+      if (speed < cfg.minVelocity) { self.motionTimer = null; self.settleHoneycomb(); return }
+      var pan = honeycomb.nextPan(self.honeySlots, self.honeyPanX, self.honeyPanY, self.honeyVelocityX * cfg.frameMs, self.honeyVelocityY * cfg.frameMs, cfg)
+      self.honeyPanX = pan.x; self.honeyPanY = pan.y
+      self.honeyVelocityX *= cfg.inertiaDecay; self.honeyVelocityY *= cfg.inertiaDecay
+      self.renderHoneycomb(); self.motionTimer = setTimeout(tick, cfg.frameMs)
+    }
+    tick()
+  },
+  settleHoneycomb() {
+    var cfg = this.honeyConfig()
+    var strict = honeycomb.clampPan(this.honeySlots, this.honeyPanX, this.honeyPanY, 0, cfg)
+    var frame = honeycomb.layoutSlots(this.honeySlots, strict.x, strict.y, cfg)
+    var target = strict
+    if (frame.nearestIndex >= 0 && frame.nearestDistance <= cfg.magnetDistance) target = honeycomb.panForSlot(this.honeySlots[frame.nearestIndex], cfg) || strict
+    target = honeycomb.clampPan(this.honeySlots, target.x, target.y, 0, cfg)
+    this.animateHoneyPan(target)
+  },
+  animateHoneyPan(target) {
+    clearTimeout(this.motionTimer)
+    var startX = this.honeyPanX, startY = this.honeyPanY, startedAt = Date.now(), duration = Number(this.model.tokens.snapDuration) || 144
+    var self = this, cfg = this.honeyConfig()
+    function tick() {
+      var progress = Math.min(1, (Date.now() - startedAt) / duration), eased = 1 - Math.pow(1 - progress, 3)
+      self.honeyPanX = startX + (target.x - startX) * eased; self.honeyPanY = startY + (target.y - startY) * eased; self.renderHoneycomb()
+      if (progress >= 1) { self.motionTimer = null; self.honeyLabelOpacity = 1; return }
+      self.motionTimer = setTimeout(tick, cfg.frameMs)
+    }
+    tick()
+  },
+  tapHoney(item) { if (!item || Date.now() < this.suppressTapUntil) return; this.stopHoneyMotion(); this.activateItem(item) }
+}
+</script>
+
+<style>
+.collection-root, .honeycomb, .honey-item, .honey-label, .paged-list, .designed-grid, .collection-head, .list-content, .grid-content, .grid-item, .pager { position: absolute; }
+.honeycomb { background-color: #000000; }
+.list-content { flex-direction: column; }
+.list-item { flex-direction: row; align-items: center; }
+.list-copy { flex: 1; flex-direction: column; }
+.collection-head, .pager { flex-direction: row; align-items: center; justify-content: space-between; }
+.collection-title { flex: 1; }
+.grid-item { align-items: center; justify-content: center; flex-direction: column; border-width: 1px; }
+.grid-accent { position: absolute; bottom: 5px; }
+.pager-track { overflow: hidden; flex-direction: row; align-items: center; }
+</style>
