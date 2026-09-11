@@ -36,7 +36,7 @@
           "previewSize": 112, "previewRadius": 56, "previewBorderWidth": 1,
           "previewTimeText": "08:32", "previewTimeSize": 24, "previewTimeWeight": "bold",
           "previewNameSize": 8, "previewNameColor": "#FFFFFF", "previewNameWeight": "bold", "previewNameMarginTop": 6,
-          "tagSize": 6, "tagColor": "#8E8E93", "tagMarginTop": 3,
+          "tagSize": 7, "tagColor": "#8E8E93", "tagMarginTop": 3,
           "selectedLineWidth": 34, "selectedLineHeight": 3, "selectedLineRadius": 2, "selectedLineMarginTop": 7,
           "footerLeft": 36, "footerTop": 148, "footerWidth": 120, "footerHeight": 16,
           "footerSize": 7, "footerColor": "#8E8E93", "footerSuffix": " · 点按应用",
@@ -84,12 +84,12 @@
           "previewHeight": 42, "previewRadius": 9, "previewTimeText": "08:32", "previewTimeSize": 17, "previewTimeWeight": "bold",
           "accentWidth": 28, "accentHeight": 3, "accentRadius": 2, "accentMarginTop": 4,
           "nameSize": 8, "nameColor": "#FFFFFF", "nameWeight": "bold", "nameMarginTop": 5,
-          "selectedText": "已选", "selectedSize": 6, "selectedMarginTop": 2,
+          "selectedText": "已选", "selectedSize": 7, "selectedMarginTop": 2,
           "currentLeft": 86, "currentTop": 84, "currentWidth": 78, "currentHeight": 76,
-          "currentLabel": "CURRENT", "currentLabelSize": 6, "currentLabelColor": "#636366", "currentLetterSpacing": 1,
+          "currentLabel": "CURRENT", "currentLabelSize": 7, "currentLabelColor": "#636366", "currentLetterSpacing": 1,
           "currentNameSize": 12, "currentNameWeight": "bold", "currentNameMarginTop": 5,
           "currentLineWidth": 36, "currentLineHeight": 3, "currentLineRadius": 2, "currentLineMarginTop": 6,
-          "currentHint": "点击任意预览应用", "currentHintSize": 6, "currentHintColor": "#8E8E93", "currentHintMarginTop": 6
+          "currentHint": "点击任意预览应用", "currentHintSize": 7, "currentHintColor": "#8E8E93", "currentHintMarginTop": 6
         }
       }
     }
