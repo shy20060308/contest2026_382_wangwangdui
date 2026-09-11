@@ -1,0 +1,1 @@
+Binary asset restore will use the accepted V2.4 Git blobs.
