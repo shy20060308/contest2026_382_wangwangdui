@@ -7,6 +7,72 @@
       <text class="honey-label" style="left: {{ model.tokens.labelLeft }}px; top: {{ model.tokens.labelTop }}px; width: {{ model.tokens.labelWidth }}px; height: {{ model.tokens.labelHeight }}px; line-height: {{ model.tokens.labelHeight }}px; font-size: {{ model.tokens.labelSize }}px; color: {{ model.tokens.labelColor }}; opacity: {{ honeyLabelOpacity }}; text-align: center;">{{ focusedLabel }}</text>
     </stack>
 
+    <div class="preview-swiper" if="{{ model.mode === 'preview-swiper' }}" style="width: {{ model.frame.width }}px; height: {{ model.frame.height }}px;">
+      <div class="selector-head" style="left: {{ model.tokens.headerLeft }}px; top: {{ model.tokens.headerTop }}px; width: {{ model.tokens.headerWidth }}px; height: {{ model.tokens.headerHeight }}px;">
+        <text class="selector-title" style="font-size: {{ model.tokens.titleSize }}px; color: {{ model.tokens.titleColor }}; font-weight: {{ model.tokens.titleWeight }};">{{ model.tokens.title }}</text>
+        <text class="selector-back" style="font-size: {{ model.tokens.backSize }}px; color: {{ model.tokens.backColor }}; text-align: right;" @click="goBack">{{ model.tokens.backText }}</text>
+      </div>
+      <swiper class="selector-swiper" index="{{ selectorIndex }}" indicator="{{ model.tokens.indicator }}" @change="onSelectorChange" style="left: {{ model.tokens.previewLeft }}px; top: {{ model.tokens.previewTop }}px; width: {{ model.tokens.previewWidth }}px; height: {{ model.tokens.previewHeight }}px;">
+        <div class="selector-slide" for="{{ model.items }}" tid="id" @click="activateItem($item)">
+          <div class="circle-preview" style="width: {{ model.tokens.previewSize }}px; height: {{ model.tokens.previewSize }}px; border-radius: {{ model.tokens.previewRadius }}px; border-width: {{ model.tokens.previewBorderWidth }}px; background-color: {{ $item.background }}; border-color: {{ $item.accent }};">
+            <text class="circle-preview-time" style="font-size: {{ model.tokens.previewTimeSize }}px; color: {{ $item.accent }}; font-weight: {{ model.tokens.previewTimeWeight }};">{{ model.tokens.previewTimeText }}</text>
+            <text class="circle-preview-name" style="font-size: {{ model.tokens.previewNameSize }}px; margin-top: {{ model.tokens.previewNameMarginTop }}px; color: {{ model.tokens.previewNameColor }}; font-weight: {{ model.tokens.previewNameWeight }};">{{ $item.label }}</text>
+            <text class="circle-preview-tag" style="font-size: {{ model.tokens.tagSize }}px; margin-top: {{ model.tokens.tagMarginTop }}px; color: {{ model.tokens.tagColor }};">{{ $item.tag }}</text>
+            <div class="selector-selected-line" if="{{ $item.selected }}" style="width: {{ model.tokens.selectedLineWidth }}px; height: {{ model.tokens.selectedLineHeight }}px; margin-top: {{ model.tokens.selectedLineMarginTop }}px; border-radius: {{ model.tokens.selectedLineRadius }}px; background-color: {{ $item.accent }};"></div>
+          </div>
+        </div>
+      </swiper>
+      <text class="selector-footer" style="left: {{ model.tokens.footerLeft }}px; top: {{ model.tokens.footerTop }}px; width: {{ model.tokens.footerWidth }}px; height: {{ model.tokens.footerHeight }}px; line-height: {{ model.tokens.footerHeight }}px; font-size: {{ model.tokens.footerSize }}px; color: {{ model.tokens.footerColor }}; text-align: center;">{{ selectorPreviewName }}{{ model.tokens.footerSuffix }}</text>
+    </div>
+
+    <div class="cards-pager" if="{{ model.mode === 'cards-pager' }}" style="width: {{ model.frame.width }}px; height: {{ model.frame.height }}px;">
+      <div class="selector-head" style="left: {{ model.tokens.headerLeft }}px; top: {{ model.tokens.headerTop }}px; width: {{ model.tokens.headerWidth }}px; height: {{ model.tokens.headerHeight }}px;">
+        <text class="selector-title" style="font-size: {{ model.tokens.titleSize }}px; color: {{ model.tokens.titleColor }}; font-weight: {{ model.tokens.titleWeight }};">{{ model.tokens.title }}</text>
+        <text class="selector-back" style="font-size: {{ model.tokens.backSize }}px; color: {{ model.tokens.backColor }}; text-align: right;" @click="goBack">{{ model.tokens.backText }}</text>
+      </div>
+      <div class="selector-card-list" style="left: {{ model.tokens.contentLeft }}px; top: {{ model.tokens.contentTop }}px; width: {{ model.tokens.contentWidth }}px; height: {{ model.tokens.contentHeight }}px;">
+        <div class="selector-card" for="{{ pageItems }}" tid="id" @click="activateItem($item)" style="width: {{ model.tokens.contentWidth }}px; height: {{ model.tokens.cardHeight }}px; margin-bottom: {{ model.tokens.cardGap }}px; border-width: {{ model.tokens.cardBorderWidth }}px; border-radius: {{ model.tokens.cardRadius }}px; padding: {{ model.tokens.cardPadding }}px; border-color: {{ $item.borderColor }}; background-color: {{ model.tokens.cardBackground }};">
+          <div class="pill-preview" style="width: {{ model.tokens.previewWidth }}px; height: {{ model.tokens.previewHeight }}px; border-width: {{ model.tokens.previewBorderWidth }}px; border-radius: {{ model.tokens.previewRadius }}px; background-color: {{ $item.background }}; border-color: {{ $item.accent }};">
+            <text class="pill-preview-hour" style="font-size: {{ model.tokens.previewHourSize }}px; color: {{ $item.accent }}; font-weight: {{ model.tokens.previewHourWeight }};">{{ model.tokens.previewHourText }}</text>
+            <text class="pill-preview-minute" style="font-size: {{ model.tokens.previewMinuteSize }}px; color: {{ model.tokens.previewMinuteColor }}; font-weight: {{ model.tokens.previewMinuteWeight }};">{{ model.tokens.previewMinuteText }}</text>
+          </div>
+          <div class="selector-card-copy" style="margin-left: {{ model.tokens.copyMarginLeft }}px;">
+            <div class="selector-name-row"><text class="selector-card-name" style="font-size: {{ model.tokens.nameSize }}px; color: {{ model.tokens.nameColor }}; font-weight: {{ model.tokens.nameWeight }};">{{ $item.label }}</text><text class="selector-badge" if="{{ $item.selected }}" style="height: {{ model.tokens.badgeHeight }}px; border-radius: {{ model.tokens.badgeRadius }}px; padding-left: {{ model.tokens.badgePaddingX }}px; padding-right: {{ model.tokens.badgePaddingX }}px; font-size: {{ model.tokens.badgeSize }}px; color: {{ model.tokens.badgeTextColor }}; background-color: {{ $item.accent }};">{{ model.tokens.selectedBadgeText }}</text></div>
+            <text class="selector-description" style="font-size: {{ model.tokens.descriptionSize }}px; line-height: {{ model.tokens.descriptionLineHeight }}px; margin-top: {{ model.tokens.descriptionMarginTop }}px; color: {{ model.tokens.descriptionColor }};">{{ $item.description }}</text>
+            <text class="selector-tag" style="font-size: {{ model.tokens.tagSize }}px; margin-top: {{ model.tokens.tagMarginTop }}px; color: {{ $item.accent }};">{{ $item.tag }}</text>
+          </div>
+        </div>
+      </div>
+      <div class="selector-pager" style="left: {{ model.tokens.pagerLeft }}px; top: {{ model.tokens.pagerTop }}px; width: {{ model.tokens.pagerWidth }}px; height: {{ model.tokens.pagerHeight }}px;">
+        <text class="selector-pager-button" style="width: {{ model.tokens.pagerButtonWidth }}px; font-size: {{ model.tokens.pagerButtonSize }}px; color: {{ model.tokens.pagerButtonColor }}; text-align: center;" @click="previousPage">{{ model.tokens.pagerPreviousText }}</text>
+        <text class="selector-pager-text" style="font-size: {{ model.tokens.pagerTextSize }}px; color: {{ model.tokens.pagerTextColor }}; text-align: center;">{{ pageText }}</text>
+        <text class="selector-pager-button" style="width: {{ model.tokens.pagerButtonWidth }}px; font-size: {{ model.tokens.pagerButtonSize }}px; color: {{ model.tokens.pagerButtonColor }}; text-align: center;" @click="nextPage">{{ model.tokens.pagerNextText }}</text>
+      </div>
+    </div>
+
+    <div class="preview-grid" if="{{ model.mode === 'preview-grid' }}" style="width: {{ model.frame.width }}px; height: {{ model.frame.height }}px;">
+      <div class="selector-head" style="left: {{ model.tokens.headerLeft }}px; top: {{ model.tokens.headerTop }}px; width: {{ model.tokens.headerWidth }}px; height: {{ model.tokens.headerHeight }}px;">
+        <text class="selector-title" style="font-size: {{ model.tokens.titleSize }}px; color: {{ model.tokens.titleColor }}; font-weight: {{ model.tokens.titleWeight }};">{{ model.tokens.title }}</text>
+        <text class="selector-back" style="font-size: {{ model.tokens.backSize }}px; color: {{ model.tokens.backColor }}; text-align: right;" @click="goBack">{{ model.tokens.backText }}</text>
+      </div>
+      <div class="selector-grid" style="left: {{ model.tokens.contentLeft }}px; top: {{ model.tokens.contentTop }}px; width: {{ model.tokens.contentWidth }}px; height: {{ model.tokens.contentHeight }}px;">
+        <div class="selector-grid-card" for="{{ gridItems }}" tid="id" @click="activateItem($item)" style="left: {{ $item.left }}px; top: {{ $item.top }}px; width: {{ model.tokens.gridItemWidth }}px; height: {{ model.tokens.cardHeight }}px; border-width: {{ model.tokens.cardBorderWidth }}px; border-radius: {{ model.tokens.cardRadius }}px; padding: {{ model.tokens.cardPadding }}px; border-color: {{ $item.borderColor }}; background-color: {{ model.tokens.cardBackground }};">
+          <div class="rect-preview" style="width: 100%; height: {{ model.tokens.previewHeight }}px; border-radius: {{ model.tokens.previewRadius }}px; background-color: {{ $item.background }};">
+            <text class="rect-preview-time" style="font-size: {{ model.tokens.previewTimeSize }}px; color: {{ $item.accent }}; font-weight: {{ model.tokens.previewTimeWeight }};">{{ model.tokens.previewTimeText }}</text>
+            <div class="rect-preview-accent" style="width: {{ model.tokens.accentWidth }}px; height: {{ model.tokens.accentHeight }}px; margin-top: {{ model.tokens.accentMarginTop }}px; border-radius: {{ model.tokens.accentRadius }}px; background-color: {{ $item.accent }};"></div>
+          </div>
+          <text class="rect-preview-name" style="font-size: {{ model.tokens.nameSize }}px; margin-top: {{ model.tokens.nameMarginTop }}px; color: {{ model.tokens.nameColor }}; font-weight: {{ model.tokens.nameWeight }};">{{ $item.label }}</text>
+          <text class="rect-selected" if="{{ $item.selected }}" style="font-size: {{ model.tokens.selectedSize }}px; margin-top: {{ model.tokens.selectedMarginTop }}px; color: {{ $item.accent }};">{{ model.tokens.selectedText }}</text>
+        </div>
+        <div class="selector-current" if="{{ selectedItem }}" style="left: {{ model.tokens.currentLeft }}px; top: {{ model.tokens.currentTop }}px; width: {{ model.tokens.currentWidth }}px; height: {{ model.tokens.currentHeight }}px; border-radius: {{ model.tokens.cardRadius }}px; padding: {{ model.tokens.cardPadding }}px; background-color: {{ model.tokens.cardBackground }};">
+          <text class="current-label" style="font-size: {{ model.tokens.currentLabelSize }}px; letter-spacing: {{ model.tokens.currentLetterSpacing }}px; color: {{ model.tokens.currentLabelColor }};">{{ model.tokens.currentLabel }}</text>
+          <text class="current-name" style="font-size: {{ model.tokens.currentNameSize }}px; margin-top: {{ model.tokens.currentNameMarginTop }}px; color: {{ selectedItem.accent }}; font-weight: {{ model.tokens.currentNameWeight }};">{{ selectedItem.label }}</text>
+          <div class="current-line" style="width: {{ model.tokens.currentLineWidth }}px; height: {{ model.tokens.currentLineHeight }}px; margin-top: {{ model.tokens.currentLineMarginTop }}px; border-radius: {{ model.tokens.currentLineRadius }}px; background-color: {{ selectedItem.accent }};"></div>
+          <text class="current-hint" style="font-size: {{ model.tokens.currentHintSize }}px; margin-top: {{ model.tokens.currentHintMarginTop }}px; color: {{ model.tokens.currentHintColor }};">{{ model.tokens.currentHint }}</text>
+        </div>
+      </div>
+    </div>
+
     <div class="paged-list" if="{{ model.mode === 'paged-list' }}" style="width: {{ model.frame.width }}px; height: {{ model.frame.height }}px;">
       <div class="collection-head" style="left: {{ model.tokens.headerLeft }}px; top: {{ model.tokens.headerTop }}px; width: {{ model.tokens.headerWidth }}px; height: {{ model.tokens.headerHeight }}px;">
         <text class="collection-title" style="font-size: {{ model.tokens.titleSize }}px; color: {{ model.tokens.titleColor }}; font-weight: {{ model.tokens.titleWeight }};">{{ model.tokens.title }}</text>
@@ -55,42 +121,43 @@ export default {
   private: {
     pageIndex: 0, pageItems: [], gridItems: [], pageText: '', pageProgressWidth: 0,
     previousColor: '', nextColor: '', honeySlots: [], honeyVisible: [], focusedLabel: '',
+    selectorIndex: 0, selectorPreviewName: '', selectedItem: null,
     honeyPanX: 0, honeyPanY: 0, honeyVelocityX: 0, honeyVelocityY: 0, honeyTouchActive: false,
     honeyLabelOpacity: 1, dragMoved: false, suppressTapUntil: 0, layoutTimer: null, motionTimer: null
   },
   onInit() { this.refreshModel() },
-  onDestroy() { this.stopHoneyMotion(); this.honeySlots = []; this.honeyVisible = [] },
+  onDestroy() { this.stopHoneyMotion(); this.honeySlots = []; this.honeyVisible = []; this.pageItems = []; this.gridItems = [] },
   tokenNumber(name) {
     var value = Number(this.model && this.model.tokens ? this.model.tokens[name] : undefined)
     if (!isFinite(value)) throw new Error('Collection requires numeric token ' + name)
     return value
   },
+  syncSelection() {
+    var index = Number(this.model.selectedIndex)
+    if (!isFinite(index) || index < 0 || index >= this.model.items.length) index = 0
+    this.selectorIndex = index
+    this.selectedItem = this.model.selectedItem || (this.model.items.length ? this.model.items[index] : null)
+    this.selectorPreviewName = this.model.items[index] ? this.model.items[index].label : ''
+    if (this.model.mode === 'cards-pager') {
+      var size = Math.max(1, Math.round(this.tokenNumber('pageItemCount')))
+      this.pageIndex = Math.floor(index / size)
+    }
+  },
   refreshModel() {
     if (!this.model) return
-    if (this.model.mode === 'honeycomb') this.initHoneycomb()
-    else this.refreshPage()
+    this.syncSelection()
+    if (this.model.mode === 'honeycomb') { this.initHoneycomb(); return }
+    if (this.model.mode === 'preview-swiper') return
+    if (this.model.mode === 'preview-grid') { this.pageItems = this.model.items.slice(); this.buildGrid(); return }
+    this.refreshPage()
   },
-  pageCount() {
-    var size = Math.max(1, Math.round(this.tokenNumber('pageItemCount')))
-    return Math.max(1, Math.ceil(this.model.items.length / size))
-  },
-  refreshPage() {
-    var size = Math.max(1, Math.round(this.tokenNumber('pageItemCount')))
-    var count = this.pageCount()
-    if (this.pageIndex >= count) this.pageIndex = count - 1
-    if (this.pageIndex < 0) this.pageIndex = 0
-    this.pageItems = this.model.items.slice(this.pageIndex * size, this.pageIndex * size + size)
-    this.pageText = (this.pageIndex + 1) + ' / ' + count
-    var trackWidth = this.tokenNumber('pagerTrackWidth')
-    var minimum = this.tokenNumber('pagerMinProgressWidth')
-    this.pageProgressWidth = Math.max(minimum, Math.round(trackWidth * (this.pageIndex + 1) / count))
-    this.previousColor = this.pageIndex > 0 ? this.model.tokens.pagerAccent : this.model.tokens.pagerDisabledColor
-    this.nextColor = this.pageIndex < count - 1 ? this.model.tokens.pagerAccent : this.model.tokens.pagerDisabledColor
-    if (this.model.mode !== 'designed-grid') { this.gridItems = []; return }
+  pageCount() { var size = Math.max(1, Math.round(this.tokenNumber('pageItemCount'))); return Math.max(1, Math.ceil(this.model.items.length / size)) },
+  buildGrid() {
     var columns = Math.max(1, Math.round(this.tokenNumber('columns')))
     var gap = this.tokenNumber('gridGap')
     var width = this.tokenNumber('gridItemWidth')
-    var rowHeight = this.tokenNumber('itemHeight') + this.tokenNumber('gridRowGap')
+    var itemHeight = this.model.mode === 'preview-grid' ? this.tokenNumber('cardHeight') : this.tokenNumber('itemHeight')
+    var rowHeight = itemHeight + this.tokenNumber('gridRowGap')
     var grid = []
     for (var i = 0; i < this.pageItems.length; i++) {
       var item = this.pageItems[i]
@@ -101,10 +168,27 @@ export default {
     }
     this.gridItems = grid
   },
+  refreshPage() {
+    var size = Math.max(1, Math.round(this.tokenNumber('pageItemCount')))
+    var count = this.pageCount()
+    if (this.pageIndex >= count) this.pageIndex = count - 1
+    if (this.pageIndex < 0) this.pageIndex = 0
+    this.pageItems = this.model.items.slice(this.pageIndex * size, this.pageIndex * size + size)
+    this.pageText = (this.pageIndex + 1) + ' / ' + count
+    if (this.model.mode === 'paged-list' || this.model.mode === 'designed-grid') {
+      var trackWidth = this.tokenNumber('pagerTrackWidth')
+      var minimum = this.tokenNumber('pagerMinProgressWidth')
+      this.pageProgressWidth = Math.max(minimum, Math.round(trackWidth * (this.pageIndex + 1) / count))
+      this.previousColor = this.pageIndex > 0 ? this.model.tokens.pagerAccent : this.model.tokens.pagerDisabledColor
+      this.nextColor = this.pageIndex < count - 1 ? this.model.tokens.pagerAccent : this.model.tokens.pagerDisabledColor
+    }
+    if (this.model.mode === 'designed-grid') this.buildGrid()
+    else this.gridItems = []
+  },
   previousPage() { if (this.pageIndex <= 0) return; this.pageIndex -= 1; this.refreshPage() },
   nextPage() { if (this.pageIndex >= this.pageCount() - 1) return; this.pageIndex += 1; this.refreshPage() },
   onSwipe(event) {
-    if (!event || this.model.mode === 'honeycomb') return
+    if (!event || this.model.mode === 'honeycomb' || this.model.mode === 'preview-swiper' || this.model.mode === 'preview-grid') return
     var direction = event.direction || (event.detail && event.detail.direction) || ''
     if (direction === 'left') this.nextPage()
     else if (direction === 'right') {
@@ -112,6 +196,13 @@ export default {
       else if (this.model.actions && this.model.actions.edgeBack) this.emitAction(this.model.actions.edgeBack)
     }
   },
+  onSelectorChange(event) {
+    var index = event && (event.index !== undefined ? event.index : event.detail && event.detail.index)
+    if (index === undefined || index === null || !this.model.items[index]) return
+    this.selectorIndex = index
+    this.selectorPreviewName = this.model.items[index].label
+  },
+  goBack() { if (this.model.actions && this.model.actions.back) this.emitAction(this.model.actions.back) },
   activateItem(item) { if (item && item.action) this.emitAction(item.action) },
   emitAction(action) { this.$emit('surfaceaction', { action: action }) },
   honeyConfig() { return honeycomb.config(this.model.tokens || {}, this.model.frame.width, this.model.frame.height) },
@@ -218,12 +309,17 @@ export default {
 </script>
 
 <style>
-.collection-root, .honeycomb, .honey-item, .honey-label, .paged-list, .designed-grid, .collection-head, .list-content, .grid-content, .grid-item, .pager { position: absolute; }
-.list-content { flex-direction: column; }
+.collection-root, .honeycomb, .honey-item, .honey-label, .preview-swiper, .cards-pager, .preview-grid, .selector-head, .selector-swiper, .selector-footer, .selector-card-list, .selector-pager, .selector-grid, .selector-grid-card, .selector-current, .paged-list, .designed-grid, .collection-head, .list-content, .grid-content, .grid-item, .pager { position: absolute; }
+.selector-head, .selector-name-row, .selector-pager, .collection-head, .pager { flex-direction: row; align-items: center; justify-content: space-between; }
+.selector-title, .collection-title { flex: 1; }
+.selector-slide, .circle-preview, .pill-preview, .rect-preview { justify-content: center; align-items: center; }
+.circle-preview, .pill-preview, .rect-preview, .selector-card-copy, .selector-current { flex-direction: column; }
+.selector-card-list, .list-content { flex-direction: column; }
+.selector-card { flex-direction: row; align-items: center; }
+.selector-card-copy { flex: 1; }
+.selector-grid-card { flex-direction: column; }
 .list-item { flex-direction: row; align-items: center; }
 .list-copy { flex: 1; flex-direction: column; }
-.collection-head, .pager { flex-direction: row; align-items: center; justify-content: space-between; }
-.collection-title { flex: 1; }
 .grid-item { align-items: center; justify-content: center; flex-direction: column; }
 .grid-accent { position: absolute; }
 .pager-track { overflow: hidden; flex-direction: row; align-items: center; }
