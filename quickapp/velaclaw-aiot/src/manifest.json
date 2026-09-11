@@ -36,7 +36,7 @@
     "statusBarTextStyle": "light"
   },
   "router": {
-    "entry": "pages/clock_guard",
+    "entry": "pages/clock",
     "pages": {
       "pages/clock": { "component": "clock" },
       "pages/clock_guard": { "component": "clock_guard" },
