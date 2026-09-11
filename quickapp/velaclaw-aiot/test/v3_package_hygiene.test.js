@@ -15,23 +15,33 @@ function filesUnder(target, result) {
   })
   return result
 }
+function surfaceFilename(route) { return route.replace(/^pages\//, '').replace(/\//g, '__') + '.json' }
 
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
 assert.ok(pkg.scripts.clean === 'node scripts/clean-build.js', 'V3 must expose the deterministic build clean command')
-assert.ok(/^npm run clean && npm run surfaces:compile && aiot build\b/.test(pkg.scripts.build), 'build must clean output and compile JSON surfaces before aiot build')
-assert.ok(/^npm run clean && npm run surfaces:compile && aiot release\b/.test(pkg.scripts.release), 'release must clean output and compile JSON surfaces before aiot release')
-assert.ok(/^npm run surfaces:compile && aiot start\b/.test(pkg.scripts.start), 'debug start must compile JSON surfaces before aiot start')
+assert.ok(/^npm run clean && npm run surfaces:compile && aiot build\b/.test(pkg.scripts.build), 'build must clean output and validate JSON surfaces before aiot build')
+assert.ok(/^npm run clean && npm run surfaces:compile && aiot release\b/.test(pkg.scripts.release), 'release must clean output and validate JSON surfaces before aiot release')
+assert.ok(/^npm run surfaces:compile && aiot start\b/.test(pkg.scripts.start), 'debug start must validate JSON surfaces before aiot start')
 
 const gitignore = fs.readFileSync(path.join(root, '.gitignore'), 'utf8')
-assert.ok(!gitignore.includes('/src/product/frontend/generated/'), 'compiled Surface registry must be available to every AIoT staging mode')
+assert.ok(!gitignore.includes('/src/product/frontend/generated/'), 'generated Surface metadata must be available to every AIoT staging mode')
 
 const generatedRegistryFile = path.join(sourceRoot, 'product', 'frontend', 'generated', 'surfaces.js')
-assert.ok(fs.existsSync(generatedRegistryFile), 'tracked Surface registry must exist before AIoT staging')
-const generatedRegistry = fs.readFileSync(generatedRegistryFile, 'utf8')
-const generatedRequires = generatedRegistry.match(/require\('\.\.\/surfaces\/[^']+\.json'\)/g) || []
-const manifestRouteCount = Object.keys(JSON.parse(fs.readFileSync(path.join(sourceRoot, 'manifest.json'), 'utf8')).router.pages || {}).length
-assert.strictEqual(generatedRequires.length, manifestRouteCount, 'Surface registry must statically reference every manifest Surface JSON')
-assert.ok(Buffer.byteLength(generatedRegistry, 'utf8') < 10000, 'Surface registry must stay compact and must not inline JSON presentation trees')
+assert.ok(fs.existsSync(generatedRegistryFile), 'tracked Surface metadata must exist before AIoT staging')
+const generatedSource = fs.readFileSync(generatedRegistryFile, 'utf8')
+assert.strictEqual((generatedSource.match(/require\(['"]\.\.\/surfaces\//g) || []).length, 0, 'central generated metadata must not eagerly require any Surface JSON')
+const generated = require(generatedRegistryFile)
+const manifest = JSON.parse(fs.readFileSync(path.join(sourceRoot, 'manifest.json'), 'utf8'))
+const routes = Object.keys(manifest.router.pages || {})
+assert.ok(generated && generated.filesByRoute, 'generated metadata must expose route-to-file validation metadata')
+assert.strictEqual(Object.keys(generated.filesByRoute).length, routes.length, 'generated Surface metadata must cover every manifest route')
+routes.forEach(function (route) {
+  assert.strictEqual(generated.filesByRoute[route], surfaceFilename(route), route + ' metadata must point to its one authored Surface JSON')
+})
+assert.ok(Buffer.byteLength(generatedSource, 'utf8') < 10000, 'Surface metadata must stay compact and must not inline JSON presentation trees')
+
+const surfacePageSource = fs.readFileSync(path.join(sourceRoot, 'runtime', 'surface_page.js'), 'utf8')
+assert.ok(!surfacePageSource.includes('frontend/generated/surfaces'), 'runtime Surface Page must not import central Surface metadata')
 
 const sourceFiles = filesUnder(sourceRoot, [])
 const generatedRoot = path.join(sourceRoot, 'product', 'frontend', 'generated')
@@ -52,4 +62,4 @@ authoredSourceFiles.forEach(function (file) {
   assert.ok(!/\.(?:bak|old|orig|rej|tmp|map)$/i.test(file), 'temporary/generated file must not live under authored src: ' + path.relative(root, file))
 })
 
-console.log('V3 package hygiene verified: deterministic compact Surface registry, clean packaging and referenced static assets only')
+console.log('V3 package hygiene verified: page-local Surface loading, metadata-only validation registry, clean packaging and referenced static assets only')
