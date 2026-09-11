@@ -4,10 +4,19 @@ import controllerRegistry from '../product/controller_registry'
 
 var surfaces = require('../product/frontend/generated/surfaces')
 var surfaceRuntime = require('../product/frontend/runtime/surface_runtime')
+var experienceRuntime = require('../product/frontend/runtime/experience_runtime')
 
 function rebuild(page) {
   if (!page || !page._surface || !page._surfaceProfile || !page._surfaceScene || !page._surfaceSafe) return
-  page.surfacePlan = surfaceRuntime.resolve(
+  var plan = surfaceRuntime.resolve(
+    page._surface,
+    page._surfaceProfile,
+    page._surfaceScene,
+    page._surfaceSafe,
+    page._surfaceState || {}
+  )
+  page.surfacePlan = experienceRuntime.decorate(
+    plan,
     page._surface,
     page._surfaceProfile,
     page._surfaceScene,
