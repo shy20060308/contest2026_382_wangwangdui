@@ -5,12 +5,12 @@ import settingsStore from '../../../domain/settings/store'
 import { createNotificationController } from '../notification/controller'
 
 function requireFaceIds(ids) {
-  if (!Array.isArray(ids) || !ids.length) throw new Error('Clock requires resolved faceIds')
+  if (!Array.isArray(ids) || !ids.length) throw new Error('Clock requires Surface faceIds')
   return ids.slice()
 }
 
 function requireAllowedFace(faceIds, id) {
-  if (faceIds.indexOf(id) < 0) throw new Error('Clock watchface is not allowed by Recipe: ' + id)
+  if (faceIds.indexOf(id) < 0) throw new Error('Clock watchface is not allowed by Surface configuration: ' + id)
   return id
 }
 
@@ -135,7 +135,7 @@ export function createClockController(onChange, onNotification) {
         emit()
         return
       }
-      if (!faceIds.length) throw new Error('Clock must configure Recipe faceIds before start')
+      if (!faceIds.length) throw new Error('Clock must configure Surface faceIds before start')
       started = true
       activityStore.subscribe(onActivity)
       applyActivity(activityStore.getSnapshot())
@@ -170,7 +170,7 @@ export function createClockController(onChange, onNotification) {
       })
       watchfaceStore.loadSelectedFaceId(function (id) {
         if (!isCurrent()) return
-        if (id) applyFace(id)
+        if (id && faceIds.indexOf(id) >= 0) applyFace(id)
         if (activityReady) emit()
       })
     },
@@ -184,7 +184,7 @@ export function createClockController(onChange, onNotification) {
     },
     markActive: function (reason) { if (powerRuntime) powerRuntime.markActive(reason) },
     switchFace: function (step) {
-      if (!faceIds.length) throw new Error('Clock must configure Recipe faceIds before switching')
+      if (!faceIds.length) throw new Error('Clock must configure Surface faceIds before switching')
       var current = faceIds.indexOf(selectedFaceId)
       var next = (current + step + faceIds.length) % faceIds.length
       applyFace(faceIds[next])
