@@ -9,6 +9,7 @@ var SAFE_INSETS = {
 var cached = null
 var pending = []
 var loading = false
+var metadataRequested = false
 
 function positiveNumber(value, label) {
   var next = Number(value)
@@ -23,13 +24,19 @@ function optionalPositiveNumber(value, label) {
 }
 function optionalText(value) { return value === undefined || value === null || value === '' ? null : String(value) }
 function contextDevice(context) { return context && context.$device ? context.$device : {} }
+function present(value) { return value !== undefined && value !== null && value !== '' }
 function pick(primary, secondary, key) {
-  if (primary && primary[key] !== undefined && primary[key] !== null && primary[key] !== '') return primary[key]
+  if (primary && present(primary[key])) return primary[key]
   return secondary && secondary[key]
 }
 function viewportPick(local, info, key) {
-  if (local && local[key] !== undefined && local[key] !== null && local[key] !== '') return local[key]
+  if (local && present(local[key])) return local[key]
   return info && info[key]
+}
+function hasHostViewport(local) {
+  var width = Number(local && local.screenWidth)
+  var height = Number(local && local.screenHeight)
+  return isFinite(width) && width > 0 && isFinite(height) && height > 0
 }
 function screenShape(value, width, height) {
   var normalized = String(value || '').toLowerCase()
@@ -74,13 +81,43 @@ function make(info, context) {
     source: 'v3.host-viewport+capability.device'
   }
 }
-function flush(profile) { var current = pending; pending = []; for (var i = 0; i < current.length; i++) current[i](profile) }
+function enrichMetadata(profile, info, local) {
+  if (!profile || !info) return profile
+  profile.model = optionalText(pick(info, local, 'model'))
+  profile.platformVersionCode = optionalPositiveNumber(pick(info, local, 'platformVersionCode'), 'platformVersionCode')
+  profile.apiLevel = optionalPositiveNumber(pick(info, local, 'APILevel'), 'APILevel')
+  return profile
+}
+function flush(profile) {
+  var current = pending
+  pending = []
+  for (var i = 0; i < current.length; i++) current[i](profile)
+}
+function requestMetadata(local) {
+  if (metadataRequested || loading) return
+  metadataRequested = true
+  loading = true
+  device.get(function (info) {
+    loading = false
+    if (cached && info) enrichMetadata(cached, info, local || {})
+  })
+}
 function resolve(context, callback) {
   if (typeof callback !== 'function') return
   if (cached) { callback(cached); return }
+
+  var local = contextDevice(context)
+  if (hasHostViewport(local)) {
+    cached = make({}, context)
+    callback(cached)
+    requestMetadata(local)
+    return
+  }
+
   pending.push(callback)
   if (loading) return
   loading = true
+  metadataRequested = true
   device.get(function (info) {
     loading = false
     try { cached = make(info, context) } catch (error) { pending = []; throw error }
