@@ -2,8 +2,13 @@ import workoutRepository from '../../../domain/workout/repository'
 
 function modelFor(records) {
   var totalSteps = 0
-  for (var i = 0; i < records.length; i++) totalSteps += records[i].steps
-  return { totalSteps: totalSteps, records: records.slice() }
+  var measuredStepRecords = 0
+  for (var i = 0; i < records.length; i++) {
+    if (typeof records[i].steps !== 'number' || !isFinite(records[i].steps)) continue
+    totalSteps += records[i].steps
+    measuredStepRecords++
+  }
+  return { totalSteps: measuredStepRecords ? totalSteps : null, records: records.slice() }
 }
 
 export function createWorkoutHistoryController(onChange) {
