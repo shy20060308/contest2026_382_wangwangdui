@@ -2,6 +2,10 @@ const assert = require('assert')
 const fs = require('fs')
 const path = require('path')
 const dayWindow = require('../src/domain/calendar/day_window')
+const summaryCore = require('../src/product/features/history/summary_core')
+const scene = require('../src/product/design/scene')
+const surfaceRuntime = require('../src/product/frontend/runtime/surface_runtime')
+const historySurface = require('../src/product/frontend/surfaces/history.json')
 
 const root = path.resolve(__dirname, '..')
 const repositorySource = fs.readFileSync(path.join(root, 'src/domain/history/repository.js'), 'utf8')
@@ -32,4 +36,31 @@ assert.ok(repositorySource.includes('dayWindow.filterRecent'), 'History persiste
 assert.ok(!repositorySource.includes('while (result.length > HISTORY_DAYS)'), 'History must not define seven days as the last seven records')
 assert.ok(repositorySource.includes('Duplicate V4 history date:'), 'History must reject duplicate same-day records rather than consume multiple day slots')
 
-console.log('History calendar window verified: only real records inside today-6..today survive and gaps are not fabricated')
+const storedOnly = [
+  { date: '2026-09-06', steps: 600, goalPercent: 10, avgHeartRate: null },
+  { date: '2026-09-08', steps: 800, goalPercent: 20, avgHeartRate: null }
+]
+const missingToday = summaryCore.summarize(storedOnly, '2026-09-12')
+assert.strictEqual(missingToday.todaySteps, null, 'last stored record must not be relabeled as today')
+assert.strictEqual(missingToday.goalPercent, null, 'today goal must be unknown when today has no record')
+assert.strictEqual(missingToday.avgSteps, 700, 'record average may summarize only the real records in the seven-day window')
+assert.strictEqual(missingToday.bestSteps, 800)
+
+const withToday = summaryCore.summarize(storedOnly.concat([{ date: '2026-09-12', steps: 1200, goalPercent: 50, avgHeartRate: null }]), '2026-09-12')
+assert.strictEqual(withToday.todaySteps, 1200)
+assert.strictEqual(withToday.goalPercent, 50)
+
+const profile = { formFactor: 'rect', screenWidth: 432, screenHeight: 514, safeInsets: { left: 0, top: 2, right: 0, bottom: 2, gestureBar: 0 } }
+const host = scene.resolve(profile)
+const safe = scene.safe(profile, host)
+const plan = surfaceRuntime.resolve(historySurface, profile, host, safe, missingToday)
+assert.strictEqual(plan.flowMetricItems.filter(function (item) { return item.id === 'summary-today' })[0].value, '--')
+assert.strictEqual(plan.flowHeaders[0].trailing, '--')
+assert.strictEqual(plan.flowMetricItems.filter(function (item) { return item.id === 'insights-goal' })[0].value, '--')
+assert.ok(plan.flowColumnBars.every(function (item) { return item.label !== '今' && item.label !== '今天' }), 'missing today must not make the last real record render as today')
+assert.strictEqual(historySurface.modules[1].props.items[1].copy.label, '有记录均值')
+assert.strictEqual(historySurface.modules[2].copy.todayCompactLabel, undefined)
+assert.strictEqual(historySurface.modules[2].copy.todayLabel, undefined)
+assert.strictEqual(historySurface.modules[2].tokens.activeColor, historySurface.modules[2].tokens.inactiveColor, 'last record must not receive fake-today highlight color')
+
+console.log('History calendar window verified: real records stay inside today-6..today and missing today remains visibly unknown')
