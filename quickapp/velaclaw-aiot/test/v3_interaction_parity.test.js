@@ -125,9 +125,9 @@ assert.strictEqual(diagnostics.experience.base.collection.mode, 'segmented', 'Di
 assert.deepStrictEqual(diagnostics.experience.base.collection.items.map(item => item.action), ['diagnostics-page:previous', 'diagnostics-page:next'])
 assert.strictEqual(diagnostics.experience.base.gestures.left, 'diagnostics-page:next', 'Diagnostics must support forward swipe paging')
 assert.strictEqual(diagnostics.experience.base.gestures.right, 'diagnostics-page:previous', 'Diagnostics must support backward swipe paging')
-assert.strictEqual(diagnostics.experience.base.controllerConfig.capabilityPageSize, 4, 'Rect/default diagnostics page density stays JSON-authored')
-assert.strictEqual(diagnostics.experience.circle.controllerConfig.capabilityPageSize, 4, 'Circle diagnostics page density stays JSON-authored')
-assert.strictEqual(diagnostics.experience.pill.controllerConfig.capabilityPageSize, 6, 'Pill diagnostics may use its taller viewport without changing interaction semantics')
+assert.strictEqual(diagnostics.experience.base.controllerConfig.capabilityPageSize, 4, 'Diagnostics semantic page size stays shared below L3')
+assert.strictEqual(diagnostics.experience.circle.controllerConfig, undefined, 'Circle L1 diagnostics must not override semantic controller configuration')
+assert.strictEqual(diagnostics.experience.pill.controllerConfig, undefined, 'Pill L1 diagnostics must not override semantic controller configuration')
 assert.ok(controllerRegistry.includes("name === 'diagnostics-page:next'") && controllerRegistry.includes('config.capabilityPageSize'), 'Diagnostics adapter must consume JSON paging configuration and semantic paging actions')
 
 const historyTrend = history.modules.find(module => module.id === 'trend')
