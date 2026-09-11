@@ -1,0 +1,12 @@
+workout.jpg
+history.jpg
+heart.jpg
+clock.jpg
+health.jpg
+faces.jpg
+sync.jpg
+brightness.jpg
+settings.jpg
+vibration.jpg
+notification.jpg
+calendar.jpg
