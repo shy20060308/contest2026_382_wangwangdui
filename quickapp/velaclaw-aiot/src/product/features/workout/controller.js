@@ -139,7 +139,7 @@ export function createWorkoutController(onChange) {
         if (stored === null) { if (callback) callback(null); return }
         var restored = workoutState.restore(stored)
         if (!restored) {
-          workoutRepository.clearActive()
+          workoutRepository.markActiveCorrupt(new Error('Invalid active workout persistence'))
           if (callback) callback(null)
           return
         }
