@@ -174,14 +174,17 @@ export function createWorkoutController(onChange) {
       stopRuntime(false)
       var record = workoutState.finish()
       if (!record) return
-      persist()
-      emit(workoutState.getActive())
-      workoutRepository.saveRecord(record, function (savedRecord, saveResult) {
-        if (!persisted(saveResult)) return
-        workoutRepository.clearActive(function (clearResult) {
-          if (!persisted(clearResult)) return
-          workoutState.complete(record.id)
-          if (callback) callback(savedRecord)
+      var finalized = workoutState.getActive()
+      emit(finalized)
+      workoutRepository.saveActive(finalized, function (finalizeResult) {
+        if (!persisted(finalizeResult)) return
+        workoutRepository.saveRecord(record, function (savedRecord, saveResult) {
+          if (!persisted(saveResult)) return
+          workoutRepository.clearActive(function (clearResult) {
+            if (!persisted(clearResult)) return
+            workoutState.complete(record.id)
+            if (callback) callback(savedRecord)
+          })
         })
       })
     },
