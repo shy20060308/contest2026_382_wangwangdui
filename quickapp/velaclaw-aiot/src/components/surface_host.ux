@@ -1,5 +1,8 @@
+<import name="surfacecollection" src="./surface_collection.ux"></import>
+<import name="surfaceslider" src="./surface_slider.ux"></import>
+
 <template>
-  <stack class="surface-host" style="width: {{ plan.sceneWidth }}px; height: {{ plan.sceneHeight }}px; background-color: {{ plan.background }};">
+  <stack class="surface-host" style="width: {{ plan.sceneWidth }}px; height: {{ plan.sceneHeight }}px; background-color: {{ plan.background }};" @swipe="onSwipe" @longpress="onLongPress">
     <stack class="surface-scene" style="width: {{ plan.sceneWidth }}px; height: {{ plan.sceneHeight }}px; background-color: {{ plan.background }};">
       <text class="surface-header" for="{{ plan.headers }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; line-height: {{ $item.frame.height }}px; font-size: {{ $item.tokens.fontSize }}px; color: {{ $item.tokens.foreground }}; font-weight: {{ $item.tokens.fontWeight }}; text-align: {{ $item.tokens.textAlign }};">{{ $item.copy.text }}</text>
 
@@ -81,6 +84,9 @@
           <div class="flow-row" for="{{ plan.flowRowBars }}" tid="id" style="left: 0px; top: {{ $item.top }}px; width: {{ plan.stream.width }}px; height: {{ $item.height }}px;"><text class="flow-row-label" style="position: absolute; left: {{ $item.labelLeft }}px; width: {{ $item.labelWidth }}px; font-size: {{ $item.tokens.rowLabelSize }}px; color: {{ $item.isActive ? $item.tokens.activeColor : $item.tokens.labelColor }}; font-weight: {{ $item.isActive ? $item.tokens.activeWeight : $item.tokens.labelWeight }};">{{ $item.label }}</text><div class="flow-row-track" style="position: absolute; left: {{ $item.trackLeft }}px; width: {{ $item.trackWidth }}px; height: {{ $item.tokens.rowTrackHeight }}px; border-radius: {{ $item.tokens.rowTrackRadius }}px; background-color: {{ $item.tokens.trackBackground }}; overflow: hidden;"><div class="flow-row-fill" style="width: {{ $item.fillWidth }}px; height: {{ $item.tokens.rowTrackHeight }}px; border-radius: {{ $item.tokens.rowTrackRadius }}px; background-color: {{ $item.color }};"></div></div><text class="flow-row-value" style="position: absolute; left: {{ $item.valueLeft }}px; width: {{ $item.valueWidth }}px; font-size: {{ $item.tokens.rowValueSize }}px; color: {{ $item.isActive ? $item.tokens.activeColor : $item.tokens.valueColor }}; font-weight: {{ $item.tokens.valueWeight }}; text-align: right;">{{ $item.value }}</text></div>
         </stack>
       </scroll>
+
+      <surfacecollection if="{{ plan.collection }}" model="{{ plan.collection }}" @surfaceaction="forwardAction"></surfacecollection>
+      <surfaceslider for="{{ plan.sliders }}" tid="id" model="{{ $item }}" @surfaceaction="forwardAction"></surfaceslider>
     </stack>
   </stack>
 </template>
@@ -90,11 +96,26 @@ import navigation from '../runtime/navigation'
 
 export default {
   props: ['plan'],
-  activate(action) {
+  activate(action, payload) {
     if (!action) return
     if (action === '$back') { navigation.back(); return }
     if (String(action).charAt(0) === '/') { navigation.push(action); return }
-    this.$emit('surfaceaction', { action: action })
+    var event = { action: action }
+    var source = payload || {}
+    for (var key in source) if (key !== 'action') event[key] = source[key]
+    this.$emit('surfaceaction', event)
+  },
+  forwardAction(event) {
+    var detail = event && event.detail && typeof event.detail === 'object' ? event.detail : (event || {})
+    this.activate(detail.action, detail)
+  },
+  onSwipe(event) {
+    if (!this.plan || !this.plan.gestures) return
+    var direction = event && (event.direction || (event.detail && event.detail.direction))
+    if (direction && this.plan.gestures[direction]) this.activate(this.plan.gestures[direction])
+  },
+  onLongPress() {
+    if (this.plan && this.plan.gestures && this.plan.gestures.longpress) this.activate(this.plan.gestures.longpress)
   }
 }
 </script>
