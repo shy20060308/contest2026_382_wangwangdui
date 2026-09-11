@@ -4,16 +4,20 @@
   "route": "pages/settings/diagnostics",
   "renderer": "surface-v1",
   "controller": "diagnostics",
+  "initialState": { "ready": false, "deviceOpen": false, "capabilitiesOpen": false, "pageText": "读取中" },
   "modules": [
     {
       "id": "head",
       "type": "header",
-      "copy": { "title": "设备自检", "subtitle": "运行时设备与系统能力" },
-      "tokens": { "flow": true, "height": 34, "titleWidth": 92, "trailingWidth": 64, "subtitleWidth": 156, "subtitleTrailingWidth": 0, "titleSize": 14, "subtitleSize": 7, "trailingSize": 0, "subtitleTrailingSize": 0, "titleLineHeight": 20, "subtitleLineHeight": 11, "titleColor": "#64D2FF", "subtitleColor": "#8E8E93", "trailingColor": "#8E8E93", "subtitleTrailingColor": "#8E8E93", "titleWeight": "bold", "trailingWeight": "normal" }
+      "copy": { "title": "设备自检", "subtitle": "设备档案与系统能力" },
+      "bind": { "trailing": "pageText" },
+      "props": { "trailingNullText": "读取中" },
+      "tokens": { "flow": true, "height": 28, "titleWidth": 100, "trailingWidth": 56, "subtitleWidth": 156, "subtitleTrailingWidth": 0, "titleSize": 13, "subtitleSize": 6, "trailingSize": 7, "subtitleTrailingSize": 0, "titleLineHeight": 17, "subtitleLineHeight": 10, "titleColor": "#64D2FF", "subtitleColor": "#8E8E93", "trailingColor": "#8E8E93", "subtitleTrailingColor": "#8E8E93", "titleWeight": "bold", "trailingWeight": "bold" }
     },
     {
       "id": "device",
       "type": "metric-grid",
+      "visibleWhen": "deviceOpen",
       "props": {
         "items": [
           { "id": "model", "bind": { "value": "device.model" }, "props": { "valueFormat": "raw", "valueNullText": "--" }, "copy": { "label": "设备型号" }, "tokens": { "accent": "#FFFFFF" } },
@@ -25,18 +29,27 @@
           { "id": "platform", "bind": { "value": "device.platformVersionCode" }, "props": { "valueFormat": "number", "valueNullText": "--" }, "copy": { "label": "平台版本" }, "tokens": { "accent": "#FFD60A" } }
         ]
       },
-      "tokens": { "flow": true, "marginTop": 8, "height": 208, "columns": 2, "gap": 7, "rowGap": 7, "itemHeight": 47, "itemRadius": 13, "itemPaddingX": 8, "itemPaddingY": 7, "itemBackground": "#111820", "labelSize": 6, "labelColor": "#8E8E93", "valueSize": 11, "valueTop": 4, "valueWeight": "bold", "valueColor": "#FFFFFF", "detailSize": 0, "detailTop": 0, "detailColor": "#8E8E93" }
+      "tokens": { "flow": true, "marginTop": 6, "height": 108, "columns": 2, "gap": 5, "rowGap": 4, "itemHeight": 24, "itemRadius": 10, "itemPaddingX": 6, "itemPaddingY": 4, "itemBackground": "#111820", "labelSize": 5, "labelColor": "#8E8E93", "valueSize": 8, "valueTop": 2, "valueWeight": "bold", "valueColor": "#FFFFFF", "detailSize": 0, "detailTop": 0, "detailColor": "#8E8E93" }
+    },
+    {
+      "id": "deviceTip",
+      "type": "text",
+      "visibleWhen": "deviceOpen",
+      "copy": { "text": "第 1 页显示运行时档案；左右滑或使用底部分页键查看 Capability。" },
+      "tokens": { "flow": true, "marginTop": 5, "height": 18, "fontSize": 5, "lineHeight": 9, "foreground": "#6E7681", "textAlign": "center" }
     },
     {
       "id": "capabilityHead",
       "type": "header",
+      "visibleWhen": "capabilitiesOpen",
       "copy": { "title": "系统能力", "subtitle": "应用实际调用的 Capability" },
-      "tokens": { "flow": true, "marginTop": 12, "height": 32, "titleWidth": 92, "trailingWidth": 64, "subtitleWidth": 156, "subtitleTrailingWidth": 0, "titleSize": 11, "subtitleSize": 7, "trailingSize": 0, "subtitleTrailingSize": 0, "titleLineHeight": 18, "subtitleLineHeight": 11, "titleColor": "#FFFFFF", "subtitleColor": "#8E8E93", "trailingColor": "#8E8E93", "subtitleTrailingColor": "#8E8E93", "titleWeight": "bold", "trailingWeight": "normal" }
+      "tokens": { "flow": true, "marginTop": 5, "height": 28, "titleWidth": 100, "trailingWidth": 56, "subtitleWidth": 156, "subtitleTrailingWidth": 0, "titleSize": 10, "subtitleSize": 6, "trailingSize": 0, "subtitleTrailingSize": 0, "titleLineHeight": 16, "subtitleLineHeight": 10, "titleColor": "#FFFFFF", "subtitleColor": "#8E8E93", "trailingColor": "#8E8E93", "subtitleTrailingColor": "#8E8E93", "titleWeight": "bold", "trailingWeight": "normal" }
     },
     {
       "id": "capabilities",
       "type": "metric-grid",
-      "bind": { "items": "capabilities" },
+      "visibleWhen": "capabilitiesOpen",
+      "bind": { "items": "capabilityPage" },
       "props": {
         "fields": {
           "label": { "path": "name" },
@@ -48,20 +61,47 @@
           { "path": "available", "equals": false, "tokens": { "itemBackground": "#251316" } }
         ]
       },
-      "tokens": { "flow": true, "marginTop": 6, "height": 232, "columns": 2, "gap": 7, "rowGap": 7, "itemHeight": 54, "itemRadius": 13, "itemPaddingX": 8, "itemPaddingY": 7, "itemBackground": "#11151B", "labelSize": 7, "labelColor": "#FFFFFF", "valueSize": 10, "valueTop": 3, "valueWeight": "bold", "valueColor": "#FFFFFF", "detailSize": 5, "detailTop": 3, "detailColor": "#777D87" }
+      "tokens": { "flow": true, "marginTop": 5, "height": 94, "columns": 2, "gap": 6, "rowGap": 6, "itemHeight": 44, "itemRadius": 11, "itemPaddingX": 6, "itemPaddingY": 5, "itemBackground": "#11151B", "labelSize": 6, "labelColor": "#FFFFFF", "valueSize": 8, "valueTop": 2, "valueWeight": "bold", "valueColor": "#FFFFFF", "detailSize": 4, "detailTop": 2, "detailColor": "#777D87" }
     },
     {
-      "id": "tip",
+      "id": "capabilityTip",
       "type": "text",
+      "visibleWhen": "capabilitiesOpen",
       "copy": { "text": "传感器实时样本请进入“动作与加速度”。" },
-      "tokens": { "flow": true, "marginTop": 8, "height": 26, "fontSize": 6, "lineHeight": 13, "foreground": "#6E7681", "textAlign": "center" }
+      "tokens": { "flow": true, "marginTop": 5, "height": 18, "fontSize": 5, "lineHeight": 9, "foreground": "#6E7681", "textAlign": "center" }
     }
   ],
-  "tokens": { "background": "#000000", "stream": { "top": 0, "width": 164, "heightMode": "scene-bottom" }, "streamPaddingBottom": 20 },
+  "tokens": { "background": "#000000", "stream": { "top": 0, "width": 164, "height": 154 }, "streamPaddingBottom": 4 },
+  "experience": {
+    "base": {
+      "collection": {
+        "id": "diagnostics-pager",
+        "mode": "segmented",
+        "visibleWhen": "ready",
+        "frame": { "bounds": "scene" },
+        "items": [
+          { "id": "previous", "label": "‹", "action": "diagnostics-page:previous" },
+          { "id": "next", "label": "›", "action": "diagnostics-page:next" }
+        ],
+        "tokens": { "contentInset": 46, "contentTop": 160, "gap": 10, "itemHeight": 22, "itemRadius": 10, "itemBorderWidth": 1, "itemBackground": "#111820", "selectedBackground": "#111820", "itemColor": "#64D2FF", "selectedColor": "#64D2FF", "itemBorderColor": "#263746", "selectedBorderColor": "#263746", "fontSize": 15, "fontWeight": "bold" }
+      },
+      "gestures": { "left": "diagnostics-page:next", "right": "diagnostics-page:previous" },
+      "controllerConfig": { "capabilityPageSize": 4 }
+    },
+    "circle": {
+      "collection": { "tokens": { "contentInset": 48, "contentTop": 154, "gap": 8, "itemHeight": 20, "itemRadius": 9, "fontSize": 14 } },
+      "controllerConfig": { "capabilityPageSize": 4 }
+    },
+    "pill": {
+      "collection": { "tokens": { "contentInset": 40, "contentTop": 298, "gap": 10, "itemHeight": 28, "itemRadius": 10, "fontSize": 17 } },
+      "controllerConfig": { "capabilityPageSize": 6 }
+    },
+    "rect": {}
+  },
   "variants": {
     "base": {},
-    "circle": { "tokens": { "stream": { "top": 14, "width": 148, "heightMode": "scene-bottom" }, "streamPaddingBottom": 20 }, "modules": { "head": { "height": 28, "titleSize": 11, "subtitleSize": 6 }, "device": { "height": 184, "gap": 6, "rowGap": 6, "itemHeight": 42, "itemRadius": 12, "labelSize": 5, "valueSize": 9 }, "capabilityHead": { "height": 28, "titleSize": 10, "subtitleSize": 6 }, "capabilities": { "height": 208, "gap": 6, "rowGap": 6, "itemHeight": 49, "itemRadius": 12, "labelSize": 6, "valueSize": 8, "detailSize": 4 }, "tip": { "height": 24, "fontSize": 5, "lineHeight": 12 } } },
-    "pill": { "tokens": { "stream": { "top": 0, "width": 168, "heightMode": "scene-bottom" }, "streamPaddingBottom": 52 }, "modules": { "head": { "height": 40, "titleSize": 16, "subtitleSize": 9, "titleLineHeight": 24, "subtitleLineHeight": 14 }, "device": { "height": 264, "gap": 8, "rowGap": 8, "itemHeight": 60, "itemRadius": 12, "labelSize": 8, "valueSize": 14 }, "capabilityHead": { "height": 38, "titleSize": 13, "subtitleSize": 8 }, "capabilities": { "height": 296, "gap": 8, "rowGap": 8, "itemHeight": 68, "itemRadius": 12, "labelSize": 8, "valueSize": 12, "detailSize": 6 }, "tip": { "height": 34, "fontSize": 7, "lineHeight": 17 } } },
+    "circle": { "tokens": { "stream": { "top": 14, "width": 148, "height": 132 }, "streamPaddingBottom": 2 }, "modules": { "head": { "height": 24, "titleSize": 10, "subtitleSize": 5, "trailingSize": 6, "titleLineHeight": 14, "subtitleLineHeight": 9 }, "device": { "height": 96, "gap": 4, "rowGap": 3, "itemHeight": 21, "itemRadius": 9, "labelSize": 4, "valueSize": 7 }, "deviceTip": { "height": 16, "fontSize": 4, "lineHeight": 8 }, "capabilityHead": { "height": 24, "titleSize": 9, "subtitleSize": 5 }, "capabilities": { "height": 86, "gap": 5, "rowGap": 5, "itemHeight": 40, "itemRadius": 10, "labelSize": 5, "valueSize": 7, "detailSize": 4 }, "capabilityTip": { "height": 16, "fontSize": 4, "lineHeight": 8 } } },
+    "pill": { "tokens": { "stream": { "top": 0, "width": 168, "height": 286 }, "streamPaddingBottom": 4 }, "modules": { "head": { "height": 38, "titleSize": 16, "subtitleSize": 8, "trailingSize": 9, "titleLineHeight": 23, "subtitleLineHeight": 14 }, "device": { "height": 210, "gap": 8, "rowGap": 6, "itemHeight": 48, "itemRadius": 11, "labelSize": 7, "valueSize": 12, "itemPaddingX": 8, "itemPaddingY": 6 }, "deviceTip": { "height": 24, "fontSize": 6, "lineHeight": 12 }, "capabilityHead": { "height": 40, "titleSize": 13, "subtitleSize": 8, "titleLineHeight": 23, "subtitleLineHeight": 14 }, "capabilities": { "height": 208, "gap": 8, "rowGap": 8, "itemHeight": 64, "itemRadius": 11, "labelSize": 8, "valueSize": 11, "detailSize": 5 }, "capabilityTip": { "height": 24, "fontSize": 6, "lineHeight": 12 } } },
     "rect": {}
   }
 }
