@@ -44,8 +44,10 @@ function bind(page, surfaceId) {
     page._surfaceProfile = profile
     page._surfaceScene = scene
     page._surfaceSafe = safe
+    rebuild(page)
     if (page._surfaceController && typeof page._surfaceController.configure === 'function') {
-      page._surfaceController.configure(profile, scene, safe)
+      var config = page.surfacePlan && page.surfacePlan.controllerConfig ? page.surfacePlan.controllerConfig : {}
+      page._surfaceController.configure(profile, scene, safe, config)
     }
     rebuild(page)
     page.surfaceReady = true
