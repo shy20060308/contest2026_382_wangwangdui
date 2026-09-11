@@ -77,6 +77,8 @@
             "path": "id",
             "map": {
               "activity": { "text": "活动数据", "color": "#FFFFFF" },
+              "history": { "text": "活动历史", "color": "#FFFFFF" },
+              "workout": { "text": "运动数据", "color": "#FFFFFF" },
               "settings": { "text": "设备设置", "color": "#FFFFFF" },
               "watchface": { "text": "表盘选择", "color": "#FFFFFF" }
             }
@@ -101,7 +103,7 @@
           { "path": "status", "equals": "ok", "tokens": { "itemBackground": "#102019" } }
         ]
       },
-      "tokens": { "flow": true, "marginTop": 5, "height": 82, "columns": 1, "gap": 0, "rowGap": 4, "itemHeight": 24, "itemRadius": 10, "itemPaddingX": 7, "itemPaddingY": 4, "itemBackground": "#11151B", "labelSize": 6, "labelColor": "#FFFFFF", "valueSize": 8, "valueTop": 2, "valueWeight": "bold", "valueColor": "#FFFFFF", "detailSize": 4, "detailTop": 1, "detailColor": "#777D87" }
+      "tokens": { "flow": true, "marginTop": 5, "height": 82, "columns": 2, "gap": 5, "rowGap": 4, "itemHeight": 24, "itemRadius": 10, "itemPaddingX": 7, "itemPaddingY": 4, "itemBackground": "#11151B", "labelSize": 6, "labelColor": "#FFFFFF", "valueSize": 8, "valueTop": 2, "valueWeight": "bold", "valueColor": "#FFFFFF", "detailSize": 4, "detailTop": 1, "detailColor": "#777D87" }
     },
     {
       "id": "storageTip",
