@@ -9,6 +9,7 @@ var performanceMetrics = require('./performance_metrics')
 var pageGeneration = require('./page_generation')
 var interactionOwner = require('./interaction_owner')
 var navigationContext = require('./navigation_context')
+var routeTiming = require('./route_timing')
 
 function initialState(surface) {
   var source = surface && surface.initialState ? surface.initialState : {}
@@ -67,6 +68,11 @@ function syncPlanContext(page) {
     }
   }
   if (page._surfaceVisible && owner) navigationContext.set(owner, routesEnabled)
+}
+
+function markRouteSurfaceReady(page) {
+  if (!page || !page.surfaceReady || !page._surfaceVisible || !page._surface || !page._surface.route) return false
+  return routeTiming.complete(page._surface.route)
 }
 
 function rebuild(page) {
@@ -139,6 +145,7 @@ function bind(page, surface) {
     rebuild(page)
     page.surfaceReady = true
     if (page._surfaceVisible && page._surfaceController) page._surfaceController.start()
+    markRouteSurfaceReady(page)
   }, current)
 }
 
@@ -149,6 +156,7 @@ function show(page) {
   if (page.surfaceReady) rebuild(page)
   else syncPlanContext(page)
   if (page.surfaceReady && page._surfaceController) page._surfaceController.start()
+  markRouteSurfaceReady(page)
 }
 
 function hide(page) {
