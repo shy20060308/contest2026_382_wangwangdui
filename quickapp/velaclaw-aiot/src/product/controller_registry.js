@@ -180,20 +180,17 @@ function today(onChange) {
 }
 
 function brightness(onChange) {
-  var latest = null
   var controller = createBrightnessController(function (model) {
-    latest = model || null
     if (typeof onChange === 'function') onChange(model || {})
   })
-  function adjust(delta) {
-    var value = latest ? Number(latest.brightnessValue) || 0 : 0
-    controller.setBrightness(Math.max(0, Math.min(255, value + delta)))
-  }
   return {
     start: function () { controller.load() }, stop: noop, destroy: noop,
-    action: function (name) {
-      if (name === 'brightness-down') { adjust(-16); return }
-      if (name === 'brightness-up') { adjust(16); return }
+    action: function (name, payload) {
+      if (name === 'brightness-set') {
+        var value = payload && payload.value
+        controller.setBrightness(value)
+        return
+      }
       if (name === 'brightness-toggle-auto') { controller.toggleAuto(); return }
       if (name === 'brightness-toggle-raise') { controller.toggleRaiseWake(); return }
       if (name === 'brightness-toggle-low-power') { controller.toggleLowPower(); return }
