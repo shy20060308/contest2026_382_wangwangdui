@@ -5,6 +5,7 @@ import controllerRegistry from '../product/controller_registry'
 var surfaceRuntime = require('../product/frontend/runtime/surface_runtime')
 var experienceRuntime = require('../product/frontend/runtime/experience_runtime')
 var performanceMetrics = require('./performance_metrics')
+var pageGeneration = require('./page_generation')
 
 function initialState(surface) {
   var source = surface && surface.initialState ? surface.initialState : {}
@@ -28,7 +29,7 @@ function renderSignature(page) {
 }
 
 function rebuild(page) {
-  if (!page || !page._surface || !page._surfaceProfile || !page._surfaceScene || !page._surfaceSafe) return false
+  if (!page || page._surfaceDestroyed || !page._surface || !page._surfaceProfile || !page._surfaceScene || !page._surfaceSafe) return false
   var signature = renderSignature(page)
   if (page._surfaceRenderSignature === signature) {
     performanceMetrics.recordSurfaceSkippedEqual()
@@ -45,6 +46,8 @@ function rebuild(page) {
 function bind(page, surface) {
   if (!page) throw new Error('V3 Surface Page requires a page instance')
   surface = requireSurface(surface)
+  var generation = pageGeneration.begin(page)
+  function current() { return pageGeneration.isCurrent(page, generation) }
 
   page.surfaceReady = false
   page.surfacePlan = null
@@ -53,6 +56,7 @@ function bind(page, surface) {
   page._surfaceVisible = false
   page._surfaceRenderSignature = null
   page._surfaceController = controllerRegistry.create(surface.controller, function (state) {
+    if (!current()) return
     page._surfaceState = state || {}
     if (page.surfaceReady && !page._surfaceVisible) {
       performanceMetrics.recordSurfaceDeferredHidden()
@@ -62,6 +66,7 @@ function bind(page, surface) {
   })
 
   pageRuntime.bind(page, function (profile, scene, safe) {
+    if (!current()) return
     page._surfaceProfile = profile
     page._surfaceScene = scene
     page._surfaceSafe = safe
@@ -70,27 +75,29 @@ function bind(page, surface) {
       var config = page.surfacePlan && page.surfacePlan.controllerConfig ? page.surfacePlan.controllerConfig : {}
       page._surfaceController.configure(profile, scene, safe, config)
     }
+    if (!current()) return
     rebuild(page)
     page.surfaceReady = true
     if (page._surfaceVisible && page._surfaceController) page._surfaceController.start()
-  })
+  }, current)
 }
 
 function show(page) {
-  if (!page) return
+  if (!page || page._surfaceDestroyed) return
   page._surfaceVisible = true
   if (page.surfaceReady) rebuild(page)
   if (page.surfaceReady && page._surfaceController) page._surfaceController.start()
 }
 
 function hide(page) {
-  if (!page) return
+  if (!page || page._surfaceDestroyed) return
   page._surfaceVisible = false
   if (page._surfaceController) page._surfaceController.stop()
 }
 
 function destroy(page) {
   if (!page) return
+  pageGeneration.destroy(page)
   page._surfaceVisible = false
   if (page._surfaceController) page._surfaceController.destroy()
   page._surfaceController = null
@@ -122,7 +129,7 @@ function actionPayload(event) {
 function action(page, event) {
   var name = actionName(event)
   if (!name) return
-  if (!page || !page._surfaceController || typeof page._surfaceController.action !== 'function') throw new Error('V3 Surface Page has no action controller for ' + name)
+  if (!page || page._surfaceDestroyed || !page._surfaceController || typeof page._surfaceController.action !== 'function') throw new Error('V3 Surface Page has no action controller for ' + name)
   page._surfaceController.action(name, actionPayload(event))
 }
 
