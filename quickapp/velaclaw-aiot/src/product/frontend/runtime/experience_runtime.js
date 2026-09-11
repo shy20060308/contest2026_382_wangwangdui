@@ -179,6 +179,12 @@ function numberText(value) {
   if (value === undefined || value === null || value === '') return '--'
   return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
+function mappedText(map, key, label) {
+  if (!map || map[key] === undefined) throw new Error('V3 stage has no JSON value mapping for ' + label + ': ' + key)
+  var value = map[key]
+  if (value && typeof value === 'object') return String(value.text || '')
+  return String(value)
+}
 function stageFormat(value, format, nullText) {
   if (value === undefined || value === null || value === '') return nullText === undefined ? '--' : String(nullText)
   if (!format || format === 'raw') return String(value)
@@ -192,10 +198,7 @@ function stageFormat(value, format, nullText) {
   if (format === 'minute') return pad2(new Date(value).getMinutes())
   if (format === 'day') return pad2(new Date(value).getDate())
   if (format === 'month') return pad2(new Date(value).getMonth() + 1)
-  if (format === 'weekday') {
-    var labels = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-    return labels[new Date(value).getDay()]
-  }
+  if (format === 'weekday-index') return String(new Date(value).getDay())
   if (String(format).indexOf('suffix:') === 0) return numberText(value) + String(format).slice(7)
   throw new Error('Unknown V3 stage format: ' + format)
 }
@@ -220,12 +223,16 @@ function localFrame(spec) {
 function elementAction(element) {
   return element && element.actions && element.actions.tap ? element.actions.tap : ''
 }
-function resolveStageText(element, state) {
+function resolveStageText(element, state, valueMaps) {
   var raw = element.bind && element.bind.value ? valueAt(state, element.bind.value) : undefined
   var props = element.props || {}
   var value = raw === undefined && element.copy && element.copy.text !== undefined
     ? String(element.copy.text)
     : stageFormat(raw, props.valueFormat || props.format, props.valueNullText)
+  if (props.valueMap) {
+    var map = typeof props.valueMap === 'string' ? valueMaps[props.valueMap] : props.valueMap
+    value = mappedText(map, value, element.id + '.value')
+  }
   var text = element.copy && element.copy.template ? fill(element.copy.template, { value: value }) : value
   return { id: element.id, frame: localFrame(element.frame), text: text, action: elementAction(element), tokens: adapter.merge({}, element.tokens || {}) }
 }
@@ -336,13 +343,14 @@ function resolveStage(spec, scene, safe, state) {
     panels: [], texts: [], metrics: [], progresses: [], analogDials: [], analogTicks: [], analogHands: [], analogPins: []
   }
   var elements = Array.isArray(definition.elements) ? definition.elements : []
+  var valueMaps = spec.valueMaps || {}
   for (var i = 0; i < elements.length; i++) {
     var element = elements[i]
     if (!element || !stageVisible(element.visibleWhen, state || {})) continue
     if (element.type === 'panel') {
       model.panels.push({ id: element.id, frame: localFrame(element.frame), action: elementAction(element), tokens: adapter.merge({}, element.tokens || {}) })
     } else if (element.type === 'text') {
-      model.texts.push(resolveStageText(element, state || {}))
+      model.texts.push(resolveStageText(element, state || {}, valueMaps))
     } else if (element.type === 'metric') {
       model.metrics.push(resolveStageMetric(element, state || {}))
     } else if (element.type === 'progress') {
