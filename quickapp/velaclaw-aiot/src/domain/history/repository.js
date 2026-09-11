@@ -1,16 +1,8 @@
 import storage from '../../capabilities/storage'
+var dayWindow = require('../calendar/day_window')
 
 var HISTORY_KEY = 'activity_history_v4'
 var HISTORY_DAYS = 7
-
-function pad2(value) {
-  return value < 10 ? '0' + value : '' + value
-}
-
-function dateKey(date) {
-  var d = date || new Date()
-  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate())
-}
 
 function clone(value) {
   return value ? JSON.parse(JSON.stringify(value)) : value
@@ -31,7 +23,7 @@ function requireHeartRate(name, value) {
 
 function requireRecord(record) {
   if (!record || typeof record !== 'object' || Array.isArray(record)) throw new Error('Invalid V4 history record')
-  if (typeof record.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(record.date)) throw new Error('Invalid V4 history field: date')
+  if (!dayWindow.parseDateKey(record.date)) throw new Error('Invalid V4 history field: date')
   return {
     date: record.date,
     steps: requireInteger('steps', record.steps, 0),
@@ -44,18 +36,22 @@ function requireRecord(record) {
   }
 }
 
-function requireHistory(stored) {
+function requireHistory(stored, today) {
   if (!Array.isArray(stored)) throw new Error('V4 history persistence must be an array')
-  var result = []
-  for (var i = 0; i < stored.length; i++) result.push(requireRecord(stored[i]))
-  result.sort(function (a, b) { return a.date > b.date ? 1 : (a.date < b.date ? -1 : 0) })
-  while (result.length > HISTORY_DAYS) result.shift()
-  return result
+  var validated = []
+  var seen = {}
+  for (var i = 0; i < stored.length; i++) {
+    var record = requireRecord(stored[i])
+    if (seen[record.date]) throw new Error('Duplicate V4 history date: ' + record.date)
+    seen[record.date] = true
+    validated.push(record)
+  }
+  return dayWindow.filterRecent(validated, today || dayWindow.dateKey(new Date()), HISTORY_DAYS)
 }
 
-function todayRecord(activity) {
+function todayRecord(activity, date) {
   return {
-    date: dateKey(new Date()),
+    date: date,
     steps: activity.steps,
     calories: activity.calories,
     standHours: activity.standHours,
@@ -66,27 +62,27 @@ function todayRecord(activity) {
   }
 }
 
-function upsertToday(history, activitySnapshot) {
-  var source = requireHistory(history)
-  var key = dateKey(new Date())
+function upsertToday(history, activitySnapshot, today) {
+  var key = today || dayWindow.dateKey(new Date())
+  var source = requireHistory(history, key)
   var merged = []
   for (var i = 0; i < source.length; i++) if (source[i].date !== key) merged.push(source[i])
-  merged.push(todayRecord(activitySnapshot))
-  merged.sort(function (a, b) { return a.date > b.date ? 1 : (a.date < b.date ? -1 : 0) })
-  while (merged.length > HISTORY_DAYS) merged.shift()
-  return merged
+  merged.push(todayRecord(activitySnapshot, key))
+  return requireHistory(merged, key)
 }
 
 function loadHistory(callback) {
+  var today = dayWindow.dateKey(new Date())
   storage.getJSON(HISTORY_KEY, function (stored) {
-    if (callback) callback(requireHistory(stored))
+    if (callback) callback(requireHistory(stored, today))
   }, [])
 }
 
 function saveToday(activitySnapshot, callback) {
   if (!activitySnapshot) throw new Error('History saveToday requires canonical Activity snapshot')
+  var today = dayWindow.dateKey(new Date())
   storage.getJSON(HISTORY_KEY, function (stored) {
-    var history = upsertToday(stored, activitySnapshot)
+    var history = upsertToday(stored, activitySnapshot, today)
     storage.set(HISTORY_KEY, history, function (result) {
       if (callback) callback(clone(history), result)
     })
