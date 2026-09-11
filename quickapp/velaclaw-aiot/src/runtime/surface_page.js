@@ -4,6 +4,7 @@ import controllerRegistry from '../product/controller_registry'
 
 var surfaceRuntime = require('../product/frontend/runtime/surface_runtime')
 var experienceRuntime = require('../product/frontend/runtime/experience_runtime')
+var interactionPolicy = require('../product/interaction_policy')
 var performanceMetrics = require('./performance_metrics')
 var pageGeneration = require('./page_generation')
 var interactionOwner = require('./interaction_owner')
@@ -33,7 +34,8 @@ function renderSignature(page) {
 function syncPlanContext(page) {
   if (!page) return
   var owner = page._surfaceInteractionOwner ? page._surfaceInteractionOwner.key() : ''
-  var routesEnabled = !page._surfaceState || page._surfaceState.routeNavigationEnabled !== false
+  var controllerId = page._surface ? page._surface.controller : null
+  var routesEnabled = interactionPolicy.routeNavigationEnabled(controllerId, page._surfaceState || {})
   if (page.surfacePlan) {
     page.surfacePlan.pageVisible = !!page._surfaceVisible
     page.surfacePlan.interactionOwner = owner
