@@ -43,6 +43,11 @@ function validHeartState(session) {
   return typeof session.currentHeartRate === 'number' && isFinite(session.currentHeartRate) && session.currentHeartRate > 0 && session.heartTotal > 0 && session.heartSource === 'official'
 }
 
+function validFinishedState(session) {
+  if (session.finishedAt === undefined || session.finishedAt === null) return true
+  return validNumber(session.finishedAt, false) && session.finishedAt >= session.lastUpdateAt && session.status === 'paused' && session.gpsStatus === 'paused'
+}
+
 function validActiveSession(session) {
   return !!session &&
     typeof session.id === 'string' && !!session.id &&
@@ -60,11 +65,12 @@ function validActiveSession(session) {
     validDistanceSource(session.distanceSource) &&
     validGpsStatus(session.gpsStatus) &&
     validPoint(session.gpsPoint) &&
-    validHeartState(session)
+    validHeartState(session) &&
+    validFinishedState(session)
 }
 
 function updateRunning(session, now) {
-  if (!session || session.status !== 'running') return session
+  if (!session || session.status !== 'running' || session.finishedAt !== null) return session
   var current = now === undefined ? Date.now() : now
   var elapsedMs = Math.max(0, current - session.lastUpdateAt)
   if (elapsedMs < 500) return session
@@ -110,6 +116,7 @@ function createStateMachine() {
         return null
       }
       activeSession = clone(session)
+      if (activeSession.finishedAt === undefined) activeSession.finishedAt = null
       updateRunning(activeSession)
       return clone(activeSession)
     },
@@ -124,6 +131,7 @@ function createStateMachine() {
         startedAt: startedAt,
         lastUpdateAt: startedAt,
         durationMs: 0,
+        finishedAt: null,
         steps: null,
         calories: null,
         distanceMeters: null,
@@ -158,6 +166,7 @@ function createStateMachine() {
 
     resume: function (now) {
       if (!activeSession) return null
+      if (activeSession.finishedAt !== null) return clone(activeSession)
       if (activeSession.status === 'paused') {
         activeSession.status = 'running'
         activeSession.gpsStatus = 'locating'
@@ -193,10 +202,14 @@ function createStateMachine() {
 
     finish: function (now) {
       if (!activeSession) return null
-      if (activeSession.status === 'running') updateRunning(activeSession, now)
-      activeSession.status = 'paused'
-      activeSession.gpsStatus = 'paused'
-      return rawRecord(activeSession, now)
+      var completedAt = now === undefined ? Date.now() : now
+      if (activeSession.finishedAt === null) {
+        if (activeSession.status === 'running') updateRunning(activeSession, completedAt)
+        activeSession.status = 'paused'
+        activeSession.gpsStatus = 'paused'
+        activeSession.finishedAt = completedAt
+      }
+      return rawRecord(activeSession, activeSession.finishedAt)
     },
 
     complete: function (recordId) {
