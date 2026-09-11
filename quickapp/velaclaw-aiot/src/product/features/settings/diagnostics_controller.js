@@ -1,5 +1,7 @@
 import capabilityIntrospection from '../../../capabilities/introspection'
 import activityStore from '../../../domain/activity/store'
+import historyRepository from '../../../domain/history/repository'
+import workoutRepository from '../../../domain/workout/repository'
 import settingsStore from '../../../domain/settings/store'
 import watchfaceStore from '../../../domain/watchface/store'
 var performanceMetrics = require('../../../runtime/performance_metrics')
@@ -36,12 +38,16 @@ export function createDiagnosticsController(onChange) {
 
   function storageSnapshot() {
     var activity = persistenceState(activityStore)
+    var history = persistenceState(historyRepository)
+    var workout = persistenceState(workoutRepository)
     var settings = persistenceState(settingsStore)
     var watchface = persistenceState(watchfaceStore)
-    var recoverable = activity.recoverable || settings.recoverable
+    var recoverable = activity.recoverable || history.recoverable || workout.recoverable || settings.recoverable
     return {
       items: [
         { id: 'activity', status: activity.status, errorCode: activity.errorCode },
+        { id: 'history', status: history.status, errorCode: history.errorCode },
+        { id: 'workout', status: workout.status, errorCode: workout.errorCode },
         { id: 'settings', status: settings.status, errorCode: settings.errorCode },
         { id: 'watchface', status: watchface.status, errorCode: watchface.errorCode }
       ],
@@ -73,9 +79,18 @@ export function createDiagnosticsController(onChange) {
     return value
   }
 
+  function inspectPersistence() {
+    historyRepository.getHistoryResult(function () { emit() })
+    workoutRepository.loadActive(function () {
+      workoutRepository.getRecords(function () { emit() })
+    })
+  }
+
   function recoverTasks() {
     var tasks = []
     if (persistenceState(activityStore).recoverable) tasks.push(function (done) { activityStore.recoverPersistence(done) })
+    if (persistenceState(historyRepository).recoverable) tasks.push(function (done) { historyRepository.recoverPersistence(done) })
+    if (persistenceState(workoutRepository).recoverable) tasks.push(function (done) { workoutRepository.recoverPersistence(done) })
     if (persistenceState(settingsStore).recoverable) tasks.push(function (done) { settingsStore.recoverPersistence(done) })
     return tasks
   }
@@ -110,7 +125,11 @@ export function createDiagnosticsController(onChange) {
       scene = nextScene
       return emit()
     },
-    refresh: emit,
+    refresh: function () {
+      var value = emit()
+      inspectPersistence()
+      return value
+    },
     requestStorageRecovery: function () {
       if (!storageSnapshot().recoverable) return emit()
       storageRecoveryState = 'confirming'
