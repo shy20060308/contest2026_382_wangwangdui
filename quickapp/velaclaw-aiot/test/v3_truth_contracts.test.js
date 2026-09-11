@@ -76,12 +76,19 @@ assert.ok(settingsItems.some(item => item.action === '/pages/settings/diagnostic
 assert.ok(notificationSurface.modules.some(module => module.actions && module.actions.tap === 'notification-demo:call'), 'Notification demo interactions must be declared by JSON')
 const capabilityModule = diagnosticsSurface.modules.filter(module => module.id === 'capabilities')[0]
 assert.ok(capabilityModule.props.fields.value.map.true && capabilityModule.props.fields.value.map.false, 'Diagnostics capability status copy/color must be JSON-owned')
-const circleFaces = clockSurface.experience.circle.stage.variants
-const pillFaces = clockSurface.experience.pill.stage.variants
-const rectFaces = clockSurface.experience.rect.stage.variants
+const circleStage = clockSurface.experience.circle.stage
+const pillStage = clockSurface.experience.pill.stage
+const rectStage = clockSurface.experience.rect.stage
+const circleFaces = circleStage.variants
+const pillFaces = pillStage.variants
+const rectFaces = rectStage.variants
+assert.strictEqual(circleStage.bind.variant, 'faceId', 'Circle Clock must select authored variants directly from semantic faceId')
+assert.strictEqual(pillStage.bind.variant, 'faceId', 'Pill Clock must select authored variants directly from semantic faceId')
+assert.strictEqual(rectStage.bind.variant, 'faceId', 'Rect Clock must select authored variants directly from semantic faceId')
 assert.ok(circleFaces.sport && circleFaces.simple && circleFaces.dashboard && circleFaces.mechanical, 'Circle Clock compositions must be declared in Surface JSON')
 assert.ok(pillFaces.sport && pillFaces.simple && pillFaces.dashboard && pillFaces.alpine, 'Pill Clock compositions must be declared in Surface JSON')
 assert.ok(rectFaces.sport && rectFaces.simple && rectFaces.dashboard, 'Rect Clock compositions must be declared in Surface JSON')
+assert.ok(!/state\.face(?:Sport|Simple|Dashboard|Mechanical|Alpine)\s*=/.test(registrySource), 'Clock registry must not duplicate faceId into unconsumed per-face booleans')
 assert.ok(!registrySource.includes('#'), 'semantic controller registry must not own visual color tokens')
 
 Object.keys(manifest.router.pages).forEach(function (route) {
