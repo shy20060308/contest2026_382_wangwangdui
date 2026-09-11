@@ -49,9 +49,10 @@ function resolveFrame(scene, safe, spec) {
   })
 }
 
-function collectionItem(item, index, selectedId, idleBorderColor) {
+function collectionItem(item, index, selectedId, idleBorderColor, formFactor) {
   var id = item.id || String(index)
   var selected = selectedId !== undefined && selectedId !== null && String(selectedId) === String(id)
+  var preview = item.previews && item.previews[formFactor] ? item.previews[formFactor] : null
   return {
     id: id,
     label: item.label || '',
@@ -62,19 +63,20 @@ function collectionItem(item, index, selectedId, idleBorderColor) {
     background: item.background || '',
     accent: item.accent || '',
     action: item.action || '',
+    preview: preview,
     selected: selected,
     borderColor: selected ? (item.accent || idleBorderColor) : idleBorderColor
   }
 }
 
-function collection(spec, scene, safe, state) {
+function collection(spec, scene, safe, state, formFactor) {
   if (!spec || !visible(spec.visibleWhen, state || {})) return null
   var source = Array.isArray(spec.items) ? spec.items : []
   var tokens = adapter.merge({}, spec.tokens || {})
   var selectedId = valueAt(state || {}, spec.bind && spec.bind.selectedId)
   var idleBorderColor = tokens.idleBorderColor || ''
   var allItems = source.map(function (item, index) {
-    return collectionItem(item || {}, index, selectedId, idleBorderColor)
+    return collectionItem(item || {}, index, selectedId, idleBorderColor, formFactor)
   })
   var items = allItems
   if (Array.isArray(spec.itemIds) && spec.itemIds.length) {
@@ -320,7 +322,7 @@ function resolveStage(spec, scene, safe, state) {
 function decorate(plan, surface, profile, scene, safe, state) {
   var result = plan || {}
   var selected = select(surface, profile)
-  result.collection = collection(selected.collection, scene, safe, state)
+  result.collection = collection(selected.collection, scene, safe, state, profile.formFactor)
   result.sliders = sliders(selected.sliders, scene, safe, state)
   result.stage = resolveStage(selected.stage, scene, safe, state)
   result.gestures = adapter.merge({}, selected.gestures || {})
