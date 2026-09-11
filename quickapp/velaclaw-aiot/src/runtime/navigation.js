@@ -1,42 +1,30 @@
 import router from '@system.router'
 
 var performanceMetrics = require('./performance_metrics')
-var DUPLICATE_NAV_WINDOW_MS = 300
-var lastTransitionKey = ''
-var lastTransitionAt = 0
+var navigationCore = require('./navigation_core')
+var core = navigationCore.create({
+  windowMs: 300,
+  onSuppressed: function () { performanceMetrics.recordNavigationSuppressed() }
+})
 
-function paramsKey(params) {
-  return JSON.stringify(params || {})
-}
-
-function shouldSuppress(kind, path, params) {
-  var now = Date.now()
-  var key = kind + '|' + String(path || '') + '|' + paramsKey(params)
-  var duplicate = key === lastTransitionKey && now - lastTransitionAt < DUPLICATE_NAV_WINDOW_MS
-  if (duplicate) {
-    performanceMetrics.recordNavigationSuppressed()
-    return true
-  }
-  lastTransitionKey = key
-  lastTransitionAt = now
-  return duplicate
-}
-
-function push(path, params) {
+function push(path, params, owner) {
   if (!path) throw new Error('Navigation requires a target path')
-  if (shouldSuppress('push', path, params)) return
-  router.push({ uri: path, params: params || {} })
+  return core.transition('push', path, params, owner, function () {
+    router.push({ uri: path, params: params || {} })
+  })
 }
 
-function replace(path, params) {
+function replace(path, params, owner) {
   if (!path) throw new Error('Navigation requires a target path')
-  if (shouldSuppress('replace', path, params)) return
-  router.replace({ uri: path, params: params || {} })
+  return core.transition('replace', path, params, owner, function () {
+    router.replace({ uri: path, params: params || {} })
+  })
 }
 
-function back() {
-  if (shouldSuppress('back', '', null)) return
-  router.back()
+function back(owner) {
+  return core.transition('back', '', null, owner, function () {
+    router.back()
+  })
 }
 
 export default {
