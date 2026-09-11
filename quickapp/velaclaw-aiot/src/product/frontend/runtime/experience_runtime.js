@@ -134,7 +134,8 @@ function decorate(plan, surface, profile, scene, safe, state) {
   result.collection = collection(selected.collection, scene, safe, state)
   result.sliders = sliders(selected.sliders, scene, safe, state)
   result.gestures = adapter.merge({}, selected.gestures || {})
+  result.controllerConfig = adapter.merge({}, selected.controllerConfig || {})
   return result
 }
 
-module.exports = { decorate: decorate }
+module.exports = { decorate: decorate, select: select }
