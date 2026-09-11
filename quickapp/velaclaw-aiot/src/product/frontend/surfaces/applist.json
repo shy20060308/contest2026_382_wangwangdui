@@ -45,6 +45,7 @@
           "labelLeft": 53, "labelTop": 159, "labelWidth": 86, "labelHeight": 18,
           "labelSize": 9, "labelColor": "#FFFFFF", "movingLabelOpacity": 0.45,
           "snapDuration": 144, "dragThreshold": 6, "tapSuppressDuration": 220,
+          "velocityPreviousWeight": 0.45, "velocitySampleWeight": 0.55,
           "edgeBackDistance": 58, "edgeBackStart": 26, "edgeBackVerticalLimit": 30
         }
       }
@@ -54,14 +55,15 @@
         "mode": "paged-list",
         "frame": { "bounds": "scene" },
         "tokens": {
-          "title": "应用", "headerLeft": 12, "headerTop": 30, "headerWidth": 168, "headerHeight": 28,
+          "title": "应用", "titleWeight": "bold", "headerLeft": 12, "headerTop": 30, "headerWidth": 168, "headerHeight": 28,
           "titleSize": 18, "titleColor": "#FFFFFF", "pageSize": 8, "pageColor": "#8E8E93",
           "pageItemCount": 4, "contentLeft": 12, "contentTop": 68, "contentWidth": 168, "contentHeight": 300,
           "itemHeight": 62, "itemGap": 8, "itemRadius": 14, "itemPaddingX": 10, "itemBackground": "#111317",
-          "iconSize": 40, "iconRadius": 20, "copyGap": 10, "nameSize": 14, "nameColor": "#FFFFFF",
-          "subtitleSize": 7, "subtitleColor": "#8E8E93", "arrowWidth": 18, "arrowSize": 20,
+          "iconSize": 40, "iconRadius": 20, "copyGap": 10, "nameSize": 14, "nameColor": "#FFFFFF", "nameWeight": "bold",
+          "subtitleSize": 7, "subtitleColor": "#8E8E93", "arrowWidth": 18, "arrowSize": 20, "arrowText": "›",
           "pagerLeft": 12, "pagerTop": 414, "pagerWidth": 168, "pagerHeight": 24,
-          "pagerButtonWidth": 24, "pagerButtonSize": 18, "pagerTrackWidth": 112, "pagerTrackHeight": 4,
+          "pagerPreviousText": "‹", "pagerNextText": "›", "pagerButtonWidth": 24, "pagerButtonSize": 18,
+          "pagerTrackWidth": 112, "pagerTrackHeight": 4, "pagerMinProgressWidth": 1,
           "pagerTrackRadius": 2, "pagerTrackBackground": "#2C2C2E", "pagerAccent": "#FFFFFF", "pagerDisabledColor": "#3A3A3C"
         }
       }
@@ -71,15 +73,16 @@
         "mode": "designed-grid",
         "frame": { "bounds": "scene" },
         "tokens": {
-          "title": "应用", "headerLeft": 14, "headerTop": 20, "headerWidth": 164, "headerHeight": 24,
+          "title": "应用", "titleWeight": "bold", "headerLeft": 14, "headerTop": 20, "headerWidth": 164, "headerHeight": 24,
           "titleSize": 14, "titleColor": "#FFFFFF", "pageSize": 8, "pageColor": "#8E8E93",
           "pageItemCount": 6, "contentLeft": 14, "contentTop": 54, "contentWidth": 164, "contentHeight": 174,
           "columns": 2, "gridItemWidth": 79, "gridGap": 6, "gridRowGap": 6,
-          "itemHeight": 54, "itemRadius": 14, "itemBackground": "#111317",
-          "iconSize": 30, "iconRadius": 15, "nameSize": 9, "nameColor": "#FFFFFF",
-          "accentWidth": 22, "accentHeight": 2, "accentRadius": 1,
+          "itemHeight": 54, "itemRadius": 14, "itemBackground": "#111317", "itemBorderWidth": 1,
+          "iconSize": 30, "iconRadius": 15, "nameSize": 9, "nameColor": "#FFFFFF", "nameWeight": "bold",
+          "accentWidth": 22, "accentHeight": 2, "accentRadius": 1, "accentBottom": 5,
           "pagerLeft": 14, "pagerTop": 236, "pagerWidth": 164, "pagerHeight": 20,
-          "pagerButtonWidth": 22, "pagerButtonSize": 16, "pagerTrackWidth": 112, "pagerTrackHeight": 4,
+          "pagerPreviousText": "‹", "pagerNextText": "›", "pagerButtonWidth": 22, "pagerButtonSize": 16,
+          "pagerTrackWidth": 112, "pagerTrackHeight": 4, "pagerMinProgressWidth": 1,
           "pagerTrackRadius": 2, "pagerTrackBackground": "#2C2C2E", "pagerAccent": "#FFFFFF", "pagerDisabledColor": "#3A3A3C"
         }
       }
