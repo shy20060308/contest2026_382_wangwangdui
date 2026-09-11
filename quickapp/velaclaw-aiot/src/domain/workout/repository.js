@@ -61,7 +61,7 @@ export default {
 
   loadActive: function (callback) {
     storage.getJSON(ACTIVE_KEY, function (session) {
-      if (callback) callback(clone(session))
+      if (callback) callback(session)
     }, null)
   },
 
@@ -89,7 +89,7 @@ export default {
 
   getRecords: function (callback) {
     storage.getJSON(RECORDS_KEY, function (records) {
-      if (callback) callback(clone(requireRecords(records)))
+      if (callback) callback(requireRecords(records))
     }, [])
   },
 
