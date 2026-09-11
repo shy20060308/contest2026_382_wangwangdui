@@ -45,7 +45,7 @@ assert.strictEqual(dim.healthEnabled, true, 'DIM keeps the health subscription a
 assert.strictEqual(sleep.heartInterval, 0, 'SLEEP must stop heart business updates')
 assert.strictEqual(sleep.batteryInterval, 0, 'SLEEP must stop battery polling')
 assert.strictEqual(sleep.healthEnabled, false, 'SLEEP must release health sampling')
-assert.strictEqual(sleep.keepScreenOn, false, 'SLEEP must let the screen turn off')
+assert.strictEqual(sleep.keepScreenOn, true, 'In-app SLEEP must remain interactable; system lifecycle owns physical screen-off')
 
 assert.ok(controllerSource.includes("import heartRate from '../../capabilities/heart_rate'"), 'power controller must inject watchface HR capability')
 assert.ok(controllerSource.includes("import battery from '../../capabilities/battery'"), 'power controller must inject battery capability')
@@ -63,4 +63,4 @@ assert.ok(!policySource.includes('|| POLICIES[stateMachine.MODE_ACTIVE]'), 'Poli
 assert.ok(!controllerSource.includes('@system.') && !coreSource.includes('@system.'), 'power runtime must never own raw Vela APIs')
 assert.ok(!controllerSource.includes('@service.') && !coreSource.includes('@service.'), 'power runtime must never own raw Vela services')
 
-console.log('Power policy verified: one mode/time validator, explicit Settings, ACTIVE/DIM/SLEEP, and runtime-core boundaries')
+console.log('Power policy verified: low-power cadence may dim/release sensors but cannot lock the app out of its own UI')
