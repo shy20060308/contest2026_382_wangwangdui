@@ -40,8 +40,16 @@ assert.ok(appTokens.pagerTop + appTokens.pagerHeight <= appList.collection.frame
 assert.ok(appTokens.itemRadius <= 14, 'Pill AppList rows must remain rectangular')
 
 const watchface = resolve('watchface', { selectedId: 'sport', selectedIndex: 0 })
-fit(watchface.flowButtons, watchface.stream.width, 'Watchface row')
-watchface.flowButtons.forEach(item => assert.ok(item.tokens.radius <= 14, 'Pill watchface rows must not become capsules'))
+assert.ok(watchface.collection, 'L3 Watchface must resolve a visual collection experience')
+assert.strictEqual(watchface.collection.mode, 'cards-pager', 'Pill Watchface must preserve its L3 cards-pager surface')
+fitScene(watchface.collection.frame, 'Watchface collection')
+const faceTokens = watchface.collection.tokens
+assert.ok(faceTokens.headerLeft + faceTokens.headerWidth <= watchface.collection.frame.width, 'Watchface header must fit its independent collection frame')
+assert.ok(faceTokens.contentLeft + faceTokens.contentWidth <= watchface.collection.frame.width, 'Watchface cards must fit its independent collection frame')
+assert.ok(faceTokens.contentTop + faceTokens.contentHeight <= watchface.collection.frame.height, 'Watchface cards must fit vertically')
+assert.ok(faceTokens.pagerLeft + faceTokens.pagerWidth <= watchface.collection.frame.width, 'Watchface pager must fit its independent collection frame')
+assert.ok(faceTokens.pagerTop + faceTokens.pagerHeight <= watchface.collection.frame.height, 'Watchface pager must fit vertically')
+assert.ok(faceTokens.cardRadius <= 14, 'Pill watchface cards must remain information cards rather than capsules')
 
 const diagnostics = resolve('settings__diagnostics', {
   device: { model: 'demo', formFactor: 'pill', screenWidth: 212, screenHeight: 520, platformVersionCode: 1000 },
