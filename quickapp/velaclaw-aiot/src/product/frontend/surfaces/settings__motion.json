@@ -4,6 +4,7 @@
   "route": "pages/settings/motion",
   "renderer": "surface-v1",
   "controller": "motion",
+  "initialState": { "pageCode": "diagnostics", "diagnosticsOpen": false, "measureOpen": false, "sensorStatus": "loading" },
   "modules": [
     {
       "id": "head", "type": "header",
@@ -11,6 +12,7 @@
       "bind": { "trailing": "sensorStatus", "subtitleTrailing": "pageCode" },
       "props": {
         "trailingMap": {
+          "loading": { "text": "读取中", "color": "#8E8E93" },
           "idle": { "text": "未启动", "color": "#8E8E93" }, "waiting": { "text": "等待样本", "color": "#64D2FF" },
           "streaming": { "text": "正在出数", "color": "#30D158" }, "unavailable": { "text": "不可用", "color": "#FF453A" },
           "stopped": { "text": "已停止", "color": "#8E8E93" }, "recalibrating": { "text": "校准中", "color": "#FFD60A" }
