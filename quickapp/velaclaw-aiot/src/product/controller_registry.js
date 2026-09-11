@@ -396,20 +396,6 @@ function clock(onChange) {
   }
 }
 
-function clockGuard() {
-  var redirected = false
-  return {
-    start: function () {
-      if (redirected) return
-      redirected = true
-      navigation.push('/pages/clock')
-    },
-    stop: function () { redirected = false },
-    destroy: function () { redirected = false },
-    action: noop
-  }
-}
-
 function create(id, onChange) {
   if (id === 'activity') return activity(onChange)
   if (id === 'history') return history(onChange)
@@ -426,7 +412,6 @@ function create(id, onChange) {
   if (id === 'notification') return notification(onChange)
   if (id === 'watchface') return watchface(onChange)
   if (id === 'clock') return clock(onChange)
-  if (id === 'clock-guard') return clockGuard(onChange)
   if (id === null || id === undefined || id === '') return { start: noop, stop: noop, destroy: noop, action: noop }
   throw new Error('Unknown V3 surface controller: ' + id)
 }
