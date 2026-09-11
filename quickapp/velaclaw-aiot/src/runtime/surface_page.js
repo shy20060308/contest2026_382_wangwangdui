@@ -31,10 +31,15 @@ function renderSignature(page) {
 }
 
 function syncPlanContext(page) {
-  if (!page || !page.surfacePlan) return
-  page.surfacePlan.pageVisible = !!page._surfaceVisible
-  page.surfacePlan.interactionOwner = page._surfaceInteractionOwner ? page._surfaceInteractionOwner.key() : ''
-  if (page.surfacePlan.collection) page.surfacePlan.collection.active = !!page._surfaceVisible
+  if (!page) return
+  var owner = page._surfaceInteractionOwner ? page._surfaceInteractionOwner.key() : ''
+  var routesEnabled = !page._surfaceState || page._surfaceState.routeNavigationEnabled !== false
+  if (page.surfacePlan) {
+    page.surfacePlan.pageVisible = !!page._surfaceVisible
+    page.surfacePlan.interactionOwner = owner
+    if (page.surfacePlan.collection) page.surfacePlan.collection.active = !!page._surfaceVisible
+  }
+  if (page._surfaceVisible && owner) navigationContext.set(owner, routesEnabled)
 }
 
 function rebuild(page) {
@@ -97,10 +102,7 @@ function bind(page, surface) {
 function show(page) {
   if (!page || page._surfaceDestroyed) return
   page._surfaceVisible = true
-  if (page._surfaceInteractionOwner) {
-    page._surfaceInteractionOwner.activate()
-    navigationContext.set(page._surfaceInteractionOwner.key())
-  }
+  if (page._surfaceInteractionOwner) page._surfaceInteractionOwner.activate()
   if (page.surfaceReady) rebuild(page)
   else syncPlanContext(page)
   if (page.surfaceReady && page._surfaceController) page._surfaceController.start()
