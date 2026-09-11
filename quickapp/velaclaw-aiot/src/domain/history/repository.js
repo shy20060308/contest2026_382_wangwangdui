@@ -3,6 +3,8 @@ var dayWindow = require('../calendar/day_window')
 
 var HISTORY_KEY = 'activity_history_v4'
 var HISTORY_DAYS = 7
+var persistenceStatus = 'loading'
+var persistenceError = null
 
 function clone(value) {
   return value ? JSON.parse(JSON.stringify(value)) : value
@@ -71,25 +73,110 @@ function upsertToday(history, activitySnapshot, today) {
   return requireHistory(merged, key)
 }
 
-function loadHistory(callback) {
+function persistenceSnapshot() {
+  return {
+    status: persistenceStatus,
+    blocked: persistenceStatus === 'corrupt' || persistenceStatus === 'io-error' || persistenceStatus === 'recovering',
+    recoverable: persistenceStatus === 'corrupt',
+    errorCode: persistenceError && persistenceError.code !== undefined ? String(persistenceError.code) : '',
+    errorMessage: persistenceError && persistenceError.message ? persistenceError.message : ''
+  }
+}
+
+function markPersistence(status, error) {
+  persistenceStatus = status
+  persistenceError = error || null
+}
+
+function corrupt(error) {
+  markPersistence('corrupt', error)
+  return persistenceSnapshot()
+}
+
+function blockedResult() {
+  var error = persistenceError || new Error('History persistence is blocked: ' + persistenceStatus)
+  error.code = error.code || 'ESTORAGE_RECOVERY_REQUIRED'
+  return { persisted: false, memoryOnly: true, error: error }
+}
+
+function loadHistoryResult(callback) {
   var today = dayWindow.dateKey(new Date())
-  storage.getJSON(HISTORY_KEY, function (stored) {
-    if (callback) callback(requireHistory(stored, today))
+  storage.getJSONResult(HISTORY_KEY, function (stored, result) {
+    if (!result || !result.ok) {
+      markPersistence(result && result.status ? result.status : 'io-error', result && result.error ? result.error : new Error('History persistence read failed'))
+      if (callback) callback([], persistenceSnapshot())
+      return
+    }
+    try {
+      var history = requireHistory(stored, today)
+      markPersistence(result.status || 'ok', null)
+      if (callback) callback(history, persistenceSnapshot())
+    } catch (error) {
+      if (callback) callback([], corrupt(error))
+    }
   }, [])
+}
+
+function loadHistory(callback) {
+  loadHistoryResult(function (history, state) {
+    if (callback) callback(history, state)
+  })
 }
 
 function saveToday(activitySnapshot, callback) {
   if (!activitySnapshot) throw new Error('History saveToday requires canonical Activity snapshot')
   var today = dayWindow.dateKey(new Date())
-  storage.getJSON(HISTORY_KEY, function (stored) {
-    var history = upsertToday(stored, activitySnapshot, today)
+  loadHistoryResult(function (stored) {
+    if (persistenceSnapshot().blocked) {
+      if (callback) callback([], blockedResult())
+      return
+    }
+    var history
+    try {
+      history = upsertToday(stored, activitySnapshot, today)
+    } catch (error) {
+      corrupt(error)
+      if (callback) callback([], blockedResult())
+      return
+    }
     storage.set(HISTORY_KEY, history, function (result) {
+      if (result && result.persisted) markPersistence('ok', null)
+      else if (result && result.error) markPersistence('io-error', result.error)
       if (callback) callback(clone(history), result)
     })
-  }, [])
+  })
+}
+
+function recoverPersistence(callback) {
+  if (persistenceStatus !== 'corrupt') {
+    if (callback) callback({ ok: false, status: 'not-recoverable', backupKey: '', error: persistenceError })
+    return
+  }
+  persistenceStatus = 'recovering'
+  storage.quarantine(HISTORY_KEY, function (result) {
+    if (!result || !result.ok) {
+      var error = result && result.error ? result.error : new Error('History quarantine failed')
+      markPersistence('corrupt', error)
+      if (callback) callback({ ok: false, status: result && result.status ? result.status : 'io-error', backupKey: result && result.backupKey ? result.backupKey : '', error: error })
+      return
+    }
+    storage.set(HISTORY_KEY, [], function (writeResult) {
+      if (writeResult && writeResult.persisted) {
+        markPersistence('ok', null)
+        if (callback) callback({ ok: true, status: 'recovered', backupKey: result.backupKey || '', error: null })
+        return
+      }
+      var error = writeResult && writeResult.error ? writeResult.error : new Error('History recovery reset write failed')
+      markPersistence('io-error', error)
+      if (callback) callback({ ok: false, status: 'io-error', backupKey: result.backupKey || '', error: error })
+    })
+  })
 }
 
 export default {
   saveToday: saveToday,
-  getHistory: loadHistory
+  getHistory: loadHistory,
+  getHistoryResult: loadHistoryResult,
+  getPersistenceState: persistenceSnapshot,
+  recoverPersistence: recoverPersistence
 }
