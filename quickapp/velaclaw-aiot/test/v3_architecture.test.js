@@ -33,9 +33,14 @@ function relativeDependencies(source) {
 }
 function dependencyExists(file, dependency) {
   const base = path.resolve(path.dirname(path.join(root, file)), dependency)
-  return [base, base + '.js', base + '.ux', path.join(base, 'index.js'), path.join(base, 'index.ux')].some(fs.existsSync)
+  return [base, base + '.js', base + '.ux', base + '.json', path.join(base, 'index.js'), path.join(base, 'index.ux')].some(fs.existsSync)
 }
 function surfaceFilename(route) { return route.replace(/^pages\//, '').replace(/\//g, '__') + '.json' }
+function normalizedRelative(fromFile, toFile) {
+  let value = path.relative(path.dirname(path.join(root, fromFile)), path.join(root, toFile)).split(path.sep).join('/')
+  if (value[0] !== '.') value = './' + value
+  return value
+}
 
 filesUnder('src', []).forEach(function (file) {
   const source = read(file)
@@ -64,15 +69,25 @@ routes.forEach(function (route) {
 
   const source = read(pageFile)
   const surface = JSON.parse(read(surfaceFile))
+  const expectedDependency = normalizedRelative(pageFile, surfaceFile)
   assert.strictEqual(surface.route, route)
   assert.strictEqual(surface.renderer, 'surface-v1')
   assert.ok(surface.id && !ids.has(surface.id), route + ' must own a unique Surface id')
   ids.add(surface.id)
   assert.ok(source.includes('surface_host.ux'), pageFile + ' must render the generic Surface Host')
-  assert.ok(source.includes("surfacePage.bind(this, '" + surface.id + "')"), pageFile + ' must bind its Surface id')
+  assert.ok(source.includes("require('" + expectedDependency + "')") || source.includes('require("' + expectedDependency + '")'), pageFile + ' must require only its own Surface JSON')
+  assert.ok(source.includes('surfacePage.bind(this, surface)'), pageFile + ' must bind the page-local Surface object')
+  const surfaceDependencies = relativeDependencies(source).filter(dep => dep.indexOf('/product/frontend/surfaces/') >= 0 && dep.endsWith('.json'))
+  assert.deepStrictEqual(surfaceDependencies, [expectedDependency], pageFile + ' must not pull another page Surface into this route bundle')
   assert.ok(!/(?:\.\.\/)+(?:v2|product\/design\/apps|product\/features|domain|capabilities)(?:\/|['"])/.test(source), pageFile + ' must not reach product implementation layers')
   assert.ok(!/<(?:div|stack|scroll|text|image|slider|canvas|list|button)\b/.test((source.match(/<template>([\s\S]*?)<\/template>/) || [])[1] || ''), pageFile + ' must not own product markup')
 })
+
+const surfacePage = read('src/runtime/surface_page.js')
+assert.ok(!surfacePage.includes('frontend/generated/surfaces'), 'Surface Page must not import a central eager Surface registry')
+assert.ok(!surfacePage.includes('surfaces.byId'), 'Surface Page must consume the page-local Surface object directly')
+const generatedSurfaceMetadata = read('src/product/frontend/generated/surfaces.js')
+assert.ok(!/require\([^)]*surfaces\//.test(generatedSurfaceMetadata), 'generated Surface metadata must never eagerly require authored JSON')
 
 assert.strictEqual(exists('src/v2'), false, 'V3 must not keep a duplicate src/v2 implementation tree')
 assert.strictEqual(exists('src/product/design/apps'), false, 'page-specific visual recipes must live in Surface JSON only')
@@ -89,6 +104,10 @@ assert.ok(!adapter.includes('function clamp('), 'Adapter must not repair product
 assert.ok(!adapter.includes('circleChord') && !adapter.includes('circleBand'), 'Adapter must not contain round-screen fitting algorithms')
 assert.ok(!adapter.includes('safeForWidth'), 'Safe area must not depend on component width')
 
+const deviceProfile = read('src/runtime/device_profile.js')
+assert.ok(deviceProfile.includes("viewportPick(local, info, 'screenWidth')"), 'layout projection must prefer the actual host viewport over system metadata')
+assert.ok(deviceProfile.includes("viewportPick(local, info, 'screenHeight')"), 'layout projection must prefer the actual host viewport height')
+
 const registry = read('src/product/controller_registry.js')
 assert.ok(!/function clockGuard\(/.test(registry), 'obsolete Clock Guard controller must stay deleted')
 assert.ok(!registry.includes("id === 'clock-guard'"), 'controller registry must not expose obsolete clock-guard')
@@ -100,4 +119,4 @@ assert.ok(pkg.scripts.check.includes('v3:frontend-contract'), 'strict frontend a
 assert.ok(!pkg.scripts.check.includes('v3:frontend-staged'), 'completed migration must not use the staged gate')
 assert.strictEqual(Object.keys(pkg.scripts).some(name => name.startsWith('v2:') || name === 'check:legacy'), false)
 
-console.log('V3 architecture verified: all ' + routes.length + ' routes use one declarative Surface path with no legacy visual tree')
+console.log('V3 architecture verified: all ' + routes.length + ' routes own exactly one page-local Surface dependency with no eager cross-route registry')
