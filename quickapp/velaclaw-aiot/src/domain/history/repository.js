@@ -1,6 +1,6 @@
 import storage from '../../capabilities/storage'
 
-var HISTORY_KEY = 'activity_history_v3'
+var HISTORY_KEY = 'activity_history_v4'
 var HISTORY_DAYS = 7
 
 function pad2(value) {
@@ -18,20 +18,20 @@ function clone(value) {
 
 function requireInteger(name, value, min, max) {
   if (typeof value !== 'number' || !isFinite(value) || Math.round(value) !== value || value < min || (max !== undefined && value > max)) {
-    throw new Error('Invalid V3 history field: ' + name)
+    throw new Error('Invalid V4 history field: ' + name)
   }
   return value
 }
 
 function requireHeartRate(name, value) {
   if (value === null) return null
-  if (typeof value !== 'number' || !isFinite(value) || value <= 0) throw new Error('Invalid V3 history field: ' + name)
+  if (typeof value !== 'number' || !isFinite(value) || value <= 0) throw new Error('Invalid V4 history field: ' + name)
   return value
 }
 
 function requireRecord(record) {
-  if (!record || typeof record !== 'object' || Array.isArray(record)) throw new Error('Invalid V3 history record')
-  if (typeof record.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(record.date)) throw new Error('Invalid V3 history field: date')
+  if (!record || typeof record !== 'object' || Array.isArray(record)) throw new Error('Invalid V4 history record')
+  if (typeof record.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(record.date)) throw new Error('Invalid V4 history field: date')
   return {
     date: record.date,
     steps: requireInteger('steps', record.steps, 0),
@@ -45,7 +45,7 @@ function requireRecord(record) {
 }
 
 function requireHistory(stored) {
-  if (!Array.isArray(stored)) throw new Error('V3 history persistence must be an array')
+  if (!Array.isArray(stored)) throw new Error('V4 history persistence must be an array')
   var result = []
   for (var i = 0; i < stored.length; i++) result.push(requireRecord(stored[i]))
   result.sort(function (a, b) { return a.date > b.date ? 1 : (a.date < b.date ? -1 : 0) })
