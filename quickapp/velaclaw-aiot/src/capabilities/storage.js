@@ -1,6 +1,7 @@
 import storage from '@system.storage'
 
-var queue = require('./internal/operation_queue').createQueue()
+var STORAGE_OPERATION_TIMEOUT_MS = 8000
+var queue = require('./internal/operation_queue').createQueue({ timeoutMs: STORAGE_OPERATION_TIMEOUT_MS })
 var memoryCache = {}
 
 function parseJson(key, value) {
@@ -14,6 +15,12 @@ function parseJson(key, value) {
 function storageFailure(action, key, data, code) {
   var error = data instanceof Error ? data : new Error('storage.' + action + ' failed for ' + key)
   if (code !== undefined) error.code = code
+  return error
+}
+
+function storageTimeout(action, key) {
+  var error = new Error('storage.' + action + ' timed out for ' + key)
+  error.code = 'ETIMEDOUT'
   return error
 }
 
@@ -85,17 +92,21 @@ var adapter = {
   },
 
   set: function (key, value, callback) {
-    queue.enqueue(key, function () {
+    var memoryWritten = false
+    queue.enqueue(key, function (token) {
       var stringValue
       try {
         stringValue = typeof value === 'string' ? value : JSON.stringify(value)
       } catch (error) {
-        queue.complete(key, callback, [makeResult(false, false, error)])
+        queue.complete(key, token, callback, [makeResult(false, false, error)])
         return
       }
+      memoryWritten = true
       persistString(key, stringValue, function (result) {
-        queue.complete(key, callback, [result])
+        queue.complete(key, token, callback, [result])
       })
+    }, function () {
+      if (callback) callback(makeResult(false, memoryWritten, storageTimeout('set', key)))
     })
   },
 
@@ -109,47 +120,59 @@ var adapter = {
   },
 
   delete: function (key, callback) {
-    queue.enqueue(key, function () {
+    var memoryDeleted = false
+    queue.enqueue(key, function (token) {
       delete memoryCache[key]
+      memoryDeleted = true
       try {
         if (storage && storage.delete) {
           storage.delete({
             key: key,
             success: function () {
-              queue.complete(key, callback, [makeResult(true, false)])
+              queue.complete(key, token, callback, [makeResult(true, false)])
             },
             fail: function (data, code) {
-              queue.complete(key, callback, [makeResult(false, true, storageFailure('delete', key, data, code))])
+              queue.complete(key, token, callback, [makeResult(false, true, storageFailure('delete', key, data, code))])
             }
           })
           return
         }
       } catch (error) {
-        queue.complete(key, callback, [makeResult(false, true, error)])
+        queue.complete(key, token, callback, [makeResult(false, true, error)])
         return
       }
-      queue.complete(key, callback, [makeResult(false, true, new Error('storage.delete unavailable'))])
+      queue.complete(key, token, callback, [makeResult(false, true, new Error('storage.delete unavailable'))])
+    }, function () {
+      if (callback) callback(makeResult(false, memoryDeleted, storageTimeout('delete', key)))
     })
   },
 
   updateJSON: function (key, fallback, updater, callback) {
-    queue.enqueue(key, function () {
+    var timeoutValue = null
+    var memoryUpdated = false
+    queue.enqueue(key, function (token) {
       readJSON(key, fallback, function (current) {
+        if (!queue.isActive(key, token)) return
         var nextValue
         var stringValue
         try {
           nextValue = updater(current)
           stringValue = JSON.stringify(nextValue)
         } catch (error) {
-          queue.complete(key, callback, [current, makeResult(false, false, error)])
+          queue.complete(key, token, callback, [current, makeResult(false, false, error)])
           return
         }
+        timeoutValue = nextValue
+        memoryUpdated = true
         persistString(key, stringValue, function (result) {
-          queue.complete(key, callback, [nextValue, result])
+          queue.complete(key, token, callback, [nextValue, result])
         })
       }, function (error) {
-        queue.complete(key, callback, [null, makeResult(false, false, error)])
+        if (!queue.isActive(key, token)) return
+        queue.complete(key, token, callback, [null, makeResult(false, false, error)])
       })
+    }, function () {
+      if (callback) callback(timeoutValue, makeResult(false, memoryUpdated, storageTimeout('update', key)))
     })
   }
 }
