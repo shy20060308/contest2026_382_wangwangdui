@@ -24,11 +24,23 @@ launcherItems.forEach(item => {
   assert.ok(item.icon && item.icon.indexOf('/common/icons/') === 0, item.id + ' must retain visual icon')
   assert.ok(item.action && item.action.charAt(0) === '/', item.id + ' must retain navigation action')
 })
-assert.ok(appList.experience.circle.collection.tokens.inertiaDecay < 1, 'Honeycomb must declare inertia')
-assert.ok(appList.experience.circle.collection.tokens.magnetDistance > 0, 'Honeycomb must declare center snap')
+const honeyTokens = appList.experience.circle.collection.tokens
+;[
+  'spacing', 'rowHeight', 'focusX', 'focusY', 'iconBase', 'iconGrow', 'radiusRatio', 'emphasisFalloff',
+  'opacityBase', 'opacityEmphasis', 'avoidanceOpacity', 'elasticBase', 'elasticRange', 'elasticFalloff',
+  'dragDamping', 'maxFrameDelta', 'frameMs', 'overscrollLimit', 'overscrollDamping', 'inertiaDecay',
+  'minVelocity', 'magnetDistance', 'visibleMargin', 'labelCenterY', 'labelHalfHeight', 'labelHalfWidth',
+  'movingLabelOpacity', 'snapDuration', 'dragThreshold', 'tapSuppressDuration', 'velocityPreviousWeight',
+  'velocitySampleWeight', 'edgeBackDistance', 'edgeBackStart', 'edgeBackVerticalLimit'
+].forEach(name => assert.strictEqual(typeof honeyTokens[name], 'number', 'L3 Honeycomb must author ' + name + ' in JSON'))
+assert.ok(honeyTokens.inertiaDecay < 1, 'Honeycomb must declare inertia')
+assert.ok(honeyTokens.magnetDistance > 0, 'Honeycomb must declare center snap')
 assert.ok(collectionUx.includes('@touchstart="onHoneyStart"') && collectionUx.includes('startHoneyInertia'), 'Generic collection must implement direct honeycomb drag/inertia')
 assert.ok(collectionUx.includes('@swipe="onSwipe"'), 'Generic collection must implement swipe pagination')
+assert.ok(!/#[0-9a-f]{3,8}\b/i.test(collectionUx), 'Generic collection renderer must not own product colors')
 assert.ok(!/pages\//.test(honeycomb), 'Generic honeycomb engine must not know product routes')
+assert.ok(honeycomb.includes('requiredNumber(source.spacing'), 'Honeycomb engine must require authored JSON geometry instead of carrying a default design')
+assert.ok(!/#[0-9a-f]{3,8}\b/i.test(honeycomb), 'Generic honeycomb engine must not own product colors')
 
 assert.ok(brightness.experience, 'Brightness must declare direct-manipulation experience')
 const slider = brightness.experience.base.sliders[0]
