@@ -1,4 +1,5 @@
 import capabilityIntrospection from '../../../capabilities/introspection'
+var performanceMetrics = require('../../../runtime/performance_metrics')
 
 function deviceSnapshot(profile) {
   return {
@@ -23,6 +24,7 @@ export function createDiagnosticsController(onChange) {
     return {
       device: deviceSnapshot(profile),
       host: hostSnapshot(scene),
+      performance: performanceMetrics.snapshot(),
       capabilities: capabilityIntrospection.list()
     }
   }
