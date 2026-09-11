@@ -1,8 +1,3 @@
-var difference = require('./difference')
-
-var SYSTEM_ID = 'recipe-translator-v3.0'
-var VERSION = '3.0'
-
 function requiredNumber(value, label) {
   if (typeof value !== 'number' || !isFinite(value)) throw new Error('V3 Adapter requires ' + label)
   return value
@@ -29,20 +24,6 @@ function merge(base, override) {
     else result[key] = clone(value)
   }
   return result
-}
-
-function select(recipe, profile) {
-  if (!recipe || typeof recipe !== 'object') throw new Error('V3 Adapter requires a recipe object')
-  if (!recipe.base || typeof recipe.base !== 'object') throw new Error('V3 Adapter requires recipe.base')
-  var shape = profile.formFactor
-  var base = recipe.base
-  var override = recipe[shape]
-  if (override !== undefined && (!override || typeof override !== 'object')) throw new Error('V3 Adapter requires recipe.' + shape + ' to be an object')
-  return merge(base, override || {})
-}
-
-function contentWidth(profile, recipe) {
-  return requiredNumber(select(recipe, profile).contentWidth, 'recipe.contentWidth')
 }
 
 function region(left, top, width, height) {
@@ -90,29 +71,10 @@ function contentBox(outerWidth, outerHeight, paddingX, paddingY) {
   return { width: contentWidth, height: contentHeight }
 }
 
-function createPlan(profile, scene, safe, level, surface) {
-  var differenceInfo = difference.describe(level)
-  if (!surface || typeof surface !== 'string') throw new Error('V3 Adapter requires recipe.surface')
-  return {
-    designSystem: SYSTEM_ID,
-    designSystemVersion: VERSION,
-    difference: differenceInfo,
-    differenceLevel: level,
-    shape: profile.formFactor,
-    surface: surface,
-    content: { left: safe.left, top: safe.top, width: safe.width, height: safe.height }
-  }
-}
-
 module.exports = {
-  SYSTEM_ID: SYSTEM_ID,
-  VERSION: VERSION,
-  select: select,
   merge: merge,
-  contentWidth: contentWidth,
   region: region,
   placeBand: placeBand,
   grid: grid,
-  contentBox: contentBox,
-  createPlan: createPlan
+  contentBox: contentBox
 }
