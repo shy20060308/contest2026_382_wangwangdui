@@ -75,16 +75,20 @@ Object.keys(profiles).forEach(function (shape) {
   if (shape === 'pill') assert.deepStrictEqual(watchface.collection.items.map(item => item.id), ['sport', 'simple', 'dashboard', 'alpine'])
   if (shape === 'rect') assert.deepStrictEqual(watchface.collection.items.map(item => item.id), ['sport', 'simple', 'dashboard'])
 
+  const capabilityPage = [
+    { id: 'motion', name: '加速度计', api: 'motion.subscribe', available: true },
+    { id: 'health', name: '健康服务', api: 'heartRate.subscribe', available: false }
+  ]
   const diagnostics = resolve(surface('pages/settings/diagnostics'), profile, {
+    ready: true, deviceOpen: false, capabilitiesOpen: true, pageText: '2 / 2',
     device: { model: 'demo', formFactor: shape, screenWidth: profile.screenWidth, screenHeight: profile.screenHeight, platformVersionCode: 1000 },
     host: { width: 192, height: shape === 'pill' ? 471 : 192 },
-    capabilities: [
-      { id: 'motion', name: '加速度计', api: 'motion.subscribe', available: true },
-      { id: 'health', name: '健康服务', api: 'heartRate.subscribe', available: false }
-    ]
+    capabilityPage: capabilityPage
   })
-  assert.strictEqual(diagnostics.flowMetricItems.filter(item => item.id.indexOf('capabilities-') === 0)[0].value, '接口存在')
-  assert.strictEqual(diagnostics.flowMetricItems.filter(item => item.id.indexOf('capabilities-') === 0)[1].value, '接口缺失')
+  const diagnosticItems = diagnostics.flowMetricItems.filter(item => item.id.indexOf('capabilities-') === 0)
+  assert.strictEqual(diagnosticItems[0].value, '接口存在')
+  assert.strictEqual(diagnosticItems[1].value, '接口缺失')
+  assert.ok(diagnostics.collection && diagnostics.collection.mode === 'segmented', 'Diagnostics pager must resolve as a generic segmented control')
 
   const notificationHome = resolve(surface('pages/notification_demo'), profile, { homeVisible: true, appVisible: false, callVisible: false, hangupVisible: false })
   assert.deepStrictEqual(notificationHome.flowButtons.slice(0, 3).map(item => item.action), ['notification-demo:sms', 'notification-demo:call', 'notification-demo:app'])
