@@ -332,11 +332,6 @@ function clock(onChange) {
     for (var key in notificationState) if (key !== 'visible' && key !== 'type') state[key] = notificationState[key]
     var visible = !!notificationState.visible
     var type = notificationState.type || ''
-    state.faceSport = state.faceId === 'sport' && !visible && state.powerMode !== 'SLEEP'
-    state.faceSimple = state.faceId === 'simple' && !visible && state.powerMode !== 'SLEEP'
-    state.faceDashboard = state.faceId === 'dashboard' && !visible && state.powerMode !== 'SLEEP'
-    state.faceMechanical = state.faceId === 'mechanical' && !visible && state.powerMode !== 'SLEEP'
-    state.faceAlpine = state.faceId === 'alpine' && !visible && state.powerMode !== 'SLEEP'
     state.clockVisible = !visible && state.powerMode !== 'SLEEP'
     state.sleepVisible = !visible && state.powerMode === 'SLEEP'
     state.notificationAppVisible = visible && type !== 'call'
