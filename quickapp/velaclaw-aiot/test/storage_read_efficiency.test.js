@@ -15,8 +15,8 @@ const cacheAssignments = Array.from(storage.matchAll(/memoryCache\[key\]\s*=\s*(
 assert.deepStrictEqual(cacheAssignments.sort(), ['stringValue', 'value'], 'Storage cache assignments must stay limited to serialized writes and native string reads')
 assert.ok(!storage.includes('memoryCache[key] = current') && !storage.includes('memoryCache[key] = nextValue'), 'Parsed mutable objects must never enter the storage cache')
 
-assert.ok(history.includes('callback(requireHistory(stored))'), 'History reads must return the validated/rebuilt read result directly')
-assert.ok(!history.includes('callback(clone(requireHistory(stored)))'), 'History reads must not JSON-clone an already rebuilt read result')
+assert.ok(history.includes('callback(requireHistory(stored, today))'), 'History reads must return the validated/calendar-window result directly')
+assert.ok(!history.includes('callback(clone(requireHistory('), 'History reads must not JSON-clone an already rebuilt read result')
 assert.ok(history.includes('callback(clone(history), result)'), 'History write callback isolation must stay explicit')
 
 assert.ok(workout.includes('if (callback) callback(session)'), 'Active workout reads must use the fresh getJSON parse directly')
