@@ -4,27 +4,83 @@
   "route": "pages/applist",
   "renderer": "surface-v1",
   "controller": null,
-  "modules": [
-    { "id": "head", "type": "header", "copy": { "title": "应用", "subtitle": "VelaClaw 功能入口" }, "tokens": { "flow": true, "height": 36, "titleWidth": 156, "trailingWidth": 0, "subtitleWidth": 156, "subtitleTrailingWidth": 0, "titleSize": 15, "subtitleSize": 7, "trailingSize": 0, "subtitleTrailingSize": 0, "titleLineHeight": 22, "subtitleLineHeight": 11, "titleColor": "#FFFFFF", "subtitleColor": "#8E8E93", "trailingColor": "#FFFFFF", "subtitleTrailingColor": "#8E8E93", "titleWeight": "bold", "trailingWeight": "normal" } },
-    { "id": "workout", "type": "button", "copy": { "title": "运动", "subtitle": "开始步行或跑步训练" }, "actions": { "tap": "/pages/workout_select" }, "tokens": { "flow": true, "marginTop": 8, "height": 50, "radius": 14, "paddingX": 12, "background": "#111827", "titleSize": 11, "titleColor": "#3A7DFF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#8E8E93", "chevronWidth": 18, "chevronSize": 18, "chevronColor": "#3A7DFF", "chevronText": "›" } },
-    { "id": "history", "type": "button", "copy": { "title": "趋势", "subtitle": "查看活动与健康历史" }, "actions": { "tap": "/pages/history" }, "tokens": { "flow": true, "marginTop": 7, "height": 50, "radius": 14, "paddingX": 12, "background": "#102018", "titleSize": 11, "titleColor": "#30D158", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#8E8E93", "chevronWidth": 18, "chevronSize": 18, "chevronColor": "#30D158", "chevronText": "›" } },
-    { "id": "heart", "type": "button", "copy": { "title": "心率", "subtitle": "实时心率与短期趋势" }, "actions": { "tap": "/pages/heartrate" }, "tokens": { "flow": true, "marginTop": 7, "height": 50, "radius": 14, "paddingX": 12, "background": "#211014", "titleSize": 11, "titleColor": "#FF375F", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#8E8E93", "chevronWidth": 18, "chevronSize": 18, "chevronColor": "#FF375F", "chevronText": "›" } },
-    { "id": "clock", "type": "button", "copy": { "title": "表盘", "subtitle": "返回当前主表盘" }, "actions": { "tap": "/pages/clock" }, "tokens": { "flow": true, "marginTop": 7, "height": 50, "radius": 14, "paddingX": 12, "background": "#201C0D", "titleSize": 11, "titleColor": "#FFD60A", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#8E8E93", "chevronWidth": 18, "chevronSize": 18, "chevronColor": "#FFD60A", "chevronText": "›" } },
-    { "id": "steps", "type": "button", "copy": { "title": "健康", "subtitle": "步数、热量与站立目标" }, "actions": { "tap": "/pages/steps" }, "tokens": { "flow": true, "marginTop": 7, "height": 50, "radius": 14, "paddingX": 12, "background": "#102029", "titleSize": 11, "titleColor": "#64D2FF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#8E8E93", "chevronWidth": 18, "chevronSize": 18, "chevronColor": "#64D2FF", "chevronText": "›" } },
-    { "id": "faces", "type": "button", "copy": { "title": "表盘库", "subtitle": "选择主表盘风格" }, "actions": { "tap": "/pages/watchface" }, "tokens": { "flow": true, "marginTop": 7, "height": 50, "radius": 14, "paddingX": 12, "background": "#1E1325", "titleSize": 11, "titleColor": "#BF5AF2", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#8E8E93", "chevronWidth": 18, "chevronSize": 18, "chevronColor": "#BF5AF2", "chevronText": "›" } },
-    { "id": "sync", "type": "button", "copy": { "title": "同步", "subtitle": "通过系统互联发送数据" }, "actions": { "tap": "/pages/settings/bluetooth" }, "tokens": { "flow": true, "marginTop": 7, "height": 50, "radius": 14, "paddingX": 12, "background": "#101A25", "titleSize": 11, "titleColor": "#0A84FF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#8E8E93", "chevronWidth": 18, "chevronSize": 18, "chevronColor": "#0A84FF", "chevronText": "›" } },
-    { "id": "brightness", "type": "button", "copy": { "title": "亮度", "subtitle": "亮度、抬腕与省电" }, "actions": { "tap": "/pages/settings/brightness" }, "tokens": { "flow": true, "marginTop": 7, "height": 50, "radius": 14, "paddingX": 12, "background": "#201C0D", "titleSize": 11, "titleColor": "#FFD60A", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#8E8E93", "chevronWidth": 18, "chevronSize": 18, "chevronColor": "#FFD60A", "chevronText": "›" } },
-    { "id": "settings", "type": "button", "copy": { "title": "设置", "subtitle": "设备能力与反馈设置" }, "actions": { "tap": "/pages/settings/settings" }, "tokens": { "flow": true, "marginTop": 7, "height": 50, "radius": 14, "paddingX": 12, "background": "#17191D", "titleSize": 11, "titleColor": "#FFFFFF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#8E8E93", "chevronWidth": 18, "chevronSize": 18, "chevronColor": "#8E8E93", "chevronText": "›" } },
-    { "id": "vibration", "type": "button", "copy": { "title": "振动", "subtitle": "反馈强度与模式" }, "actions": { "tap": "/pages/settings/vibration" }, "tokens": { "flow": true, "marginTop": 7, "height": 50, "radius": 14, "paddingX": 12, "background": "#21170D", "titleSize": 11, "titleColor": "#FF9F0A", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#8E8E93", "chevronWidth": 18, "chevronSize": 18, "chevronColor": "#FF9F0A", "chevronText": "›" } },
-    { "id": "notification", "type": "button", "copy": { "title": "通知", "subtitle": "消息与来电演示" }, "actions": { "tap": "/pages/notification_demo" }, "tokens": { "flow": true, "marginTop": 7, "height": 50, "radius": 14, "paddingX": 12, "background": "#251316", "titleSize": 11, "titleColor": "#FF453A", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#8E8E93", "chevronWidth": 18, "chevronSize": 18, "chevronColor": "#FF453A", "chevronText": "›" } },
-    { "id": "today", "type": "button", "copy": { "title": "今日日历", "subtitle": "今日摘要与月历" }, "actions": { "tap": "/pages/today" }, "tokens": { "flow": true, "marginTop": 7, "height": 50, "radius": 14, "paddingX": 12, "background": "#102018", "titleSize": 11, "titleColor": "#30D158", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 2, "subtitleColor": "#8E8E93", "chevronWidth": 18, "chevronSize": 18, "chevronColor": "#30D158", "chevronText": "›" } },
-    { "id": "back", "type": "button", "copy": { "title": "返回", "subtitle": "" }, "actions": { "tap": "$back" }, "tokens": { "flow": true, "marginTop": 12, "height": 40, "radius": 14, "paddingX": 12, "background": "#2C2C2E", "titleSize": 10, "titleColor": "#8E8E93", "titleWeight": "bold", "subtitleSize": 0, "subtitleTop": 0, "subtitleColor": "#8E8E93", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" } }
-  ],
-  "tokens": { "background": "#000000", "stream": { "top": 0, "width": 164, "heightMode": "scene-bottom" }, "streamPaddingBottom": 22 },
-  "variants": {
-    "base": {},
-    "circle": { "tokens": { "stream": { "top": 16, "width": 144, "heightMode": "scene-bottom" }, "streamPaddingBottom": 24 }, "modules": { "head": { "height": 30, "titleSize": 12, "subtitleSize": 6 }, "workout": { "height": 44, "titleSize": 9, "subtitleSize": 6, "radius": 13 }, "history": { "height": 44, "titleSize": 9, "subtitleSize": 6, "radius": 13 }, "heart": { "height": 44, "titleSize": 9, "subtitleSize": 6, "radius": 13 }, "clock": { "height": 44, "titleSize": 9, "subtitleSize": 6, "radius": 13 }, "steps": { "height": 44, "titleSize": 9, "subtitleSize": 6, "radius": 13 }, "faces": { "height": 44, "titleSize": 9, "subtitleSize": 6, "radius": 13 }, "sync": { "height": 44, "titleSize": 9, "subtitleSize": 6, "radius": 13 }, "brightness": { "height": 44, "titleSize": 9, "subtitleSize": 6, "radius": 13 }, "settings": { "height": 44, "titleSize": 9, "subtitleSize": 6, "radius": 13 }, "vibration": { "height": 44, "titleSize": 9, "subtitleSize": 6, "radius": 13 }, "notification": { "height": 44, "titleSize": 9, "subtitleSize": 6, "radius": 13 }, "today": { "height": 44, "titleSize": 9, "subtitleSize": 6, "radius": 13 }, "back": { "height": 34, "titleSize": 8, "radius": 13 } } },
-    "pill": { "tokens": { "stream": { "top": 0, "width": 168, "heightMode": "scene-bottom" }, "streamPaddingBottom": 52 }, "modules": { "head": { "height": 44, "titleSize": 19, "subtitleSize": 9 }, "workout": { "height": 64, "titleSize": 14, "subtitleSize": 8, "radius": 12 }, "history": { "height": 64, "titleSize": 14, "subtitleSize": 8, "radius": 12 }, "heart": { "height": 64, "titleSize": 14, "subtitleSize": 8, "radius": 12 }, "clock": { "height": 64, "titleSize": 14, "subtitleSize": 8, "radius": 12 }, "steps": { "height": 64, "titleSize": 14, "subtitleSize": 8, "radius": 12 }, "faces": { "height": 64, "titleSize": 14, "subtitleSize": 8, "radius": 12 }, "sync": { "height": 64, "titleSize": 14, "subtitleSize": 8, "radius": 12 }, "brightness": { "height": 64, "titleSize": 14, "subtitleSize": 8, "radius": 12 }, "settings": { "height": 64, "titleSize": 14, "subtitleSize": 8, "radius": 12 }, "vibration": { "height": 64, "titleSize": 14, "subtitleSize": 8, "radius": 12 }, "notification": { "height": 64, "titleSize": 14, "subtitleSize": 8, "radius": 12 }, "today": { "height": 64, "titleSize": 14, "subtitleSize": 8, "radius": 12 }, "back": { "height": 48, "titleSize": 12, "radius": 12 } } },
-    "rect": {}
-  }
+  "modules": [],
+  "tokens": { "background": "#000000" },
+  "experience": {
+    "base": {
+      "collection": {
+        "id": "apps",
+        "items": [
+          { "id": "workout", "label": "运动", "subtitle": "开始训练", "icon": "/common/icons/workout.jpg", "accent": "#3A7DFF", "action": "/pages/workout_select" },
+          { "id": "history", "label": "趋势", "subtitle": "活动与健康历史", "icon": "/common/icons/history.jpg", "accent": "#30D158", "action": "/pages/history" },
+          { "id": "heart", "label": "心率", "subtitle": "实时心率与趋势", "icon": "/common/icons/heart.jpg", "accent": "#FF375F", "action": "/pages/heartrate" },
+          { "id": "clock", "label": "表盘", "subtitle": "返回主表盘", "icon": "/common/icons/clock.jpg", "accent": "#FFD60A", "action": "/pages/clock" },
+          { "id": "steps", "label": "健康", "subtitle": "步数与活动目标", "icon": "/common/icons/health.jpg", "accent": "#64D2FF", "action": "/pages/steps" },
+          { "id": "faces", "label": "表盘库", "subtitle": "选择表盘风格", "icon": "/common/icons/faces.jpg", "accent": "#BF5AF2", "action": "/pages/watchface" },
+          { "id": "sync", "label": "同步", "subtitle": "设备数据同步", "icon": "/common/icons/sync.jpg", "accent": "#0A84FF", "action": "/pages/settings/bluetooth" },
+          { "id": "brightness", "label": "亮度", "subtitle": "亮度与省电", "icon": "/common/icons/brightness.jpg", "accent": "#FFD60A", "action": "/pages/settings/brightness" },
+          { "id": "settings", "label": "设置", "subtitle": "设备设置", "icon": "/common/icons/settings.jpg", "accent": "#8E8E93", "action": "/pages/settings/settings" },
+          { "id": "vibration", "label": "振动", "subtitle": "反馈强度与模式", "icon": "/common/icons/vibration.jpg", "accent": "#FF9F0A", "action": "/pages/settings/vibration" },
+          { "id": "notification", "label": "通知", "subtitle": "消息与来电演示", "icon": "/common/icons/notification.jpg", "accent": "#FF453A", "action": "/pages/notification_demo" },
+          { "id": "today", "label": "今日日历", "subtitle": "摘要与月历", "icon": "/common/icons/calendar.jpg", "accent": "#30D158", "action": "/pages/today" }
+        ],
+        "actions": { "edgeBack": "$back" },
+        "tokens": {}
+      }
+    },
+    "circle": {
+      "collection": {
+        "mode": "honeycomb",
+        "frame": { "bounds": "scene" },
+        "tokens": {
+          "spacing": 46, "rowHeight": 40, "focusX": 96, "focusY": 90,
+          "iconBase": 34, "iconGrow": 16, "emphasisFalloff": 60,
+          "elasticBase": 0.94, "elasticRange": 0.06,
+          "dragDamping": 0.92, "maxFrameDelta": 24, "frameMs": 24,
+          "overscrollLimit": 30, "overscrollDamping": 0.34,
+          "inertiaDecay": 0.86, "minVelocity": 0.025, "magnetDistance": 22,
+          "visibleMargin": 42, "labelCenterY": 168, "labelHalfHeight": 9, "labelHalfWidth": 43,
+          "labelLeft": 53, "labelTop": 159, "labelWidth": 86, "labelHeight": 18,
+          "labelSize": 9, "labelColor": "#FFFFFF", "snapDuration": 144,
+          "edgeBackDistance": 58, "edgeBackStart": 26
+        }
+      }
+    },
+    "pill": {
+      "collection": {
+        "mode": "paged-list",
+        "frame": { "bounds": "scene" },
+        "tokens": {
+          "title": "应用", "headerLeft": 12, "headerTop": 30, "headerWidth": 168, "headerHeight": 28,
+          "titleSize": 18, "titleColor": "#FFFFFF", "pageSize": 8, "pageColor": "#8E8E93",
+          "pageItemCount": 4, "contentLeft": 12, "contentTop": 68, "contentWidth": 168, "contentHeight": 300,
+          "itemHeight": 62, "itemGap": 8, "itemRadius": 14, "itemPaddingX": 10, "itemBackground": "#111317",
+          "iconSize": 40, "iconRadius": 20, "copyGap": 10, "nameSize": 14, "nameColor": "#FFFFFF",
+          "subtitleSize": 7, "subtitleColor": "#8E8E93", "arrowWidth": 18, "arrowSize": 20,
+          "pagerLeft": 12, "pagerTop": 414, "pagerWidth": 168, "pagerHeight": 24,
+          "pagerButtonWidth": 24, "pagerButtonSize": 18, "pagerTrackWidth": 112, "pagerTrackHeight": 4,
+          "pagerTrackRadius": 2, "pagerTrackBackground": "#2C2C2E", "pagerAccent": "#FFFFFF", "pagerDisabledColor": "#3A3A3C"
+        }
+      }
+    },
+    "rect": {
+      "collection": {
+        "mode": "designed-grid",
+        "frame": { "bounds": "scene" },
+        "tokens": {
+          "title": "应用", "headerLeft": 14, "headerTop": 20, "headerWidth": 164, "headerHeight": 24,
+          "titleSize": 14, "titleColor": "#FFFFFF", "pageSize": 8, "pageColor": "#8E8E93",
+          "pageItemCount": 6, "contentLeft": 14, "contentTop": 54, "contentWidth": 164, "contentHeight": 174,
+          "columns": 2, "gridItemWidth": 79, "gridGap": 6, "gridRowGap": 6,
+          "itemHeight": 54, "itemRadius": 14, "itemBackground": "#111317",
+          "iconSize": 30, "iconRadius": 15, "nameSize": 9, "nameColor": "#FFFFFF",
+          "accentWidth": 22, "accentHeight": 2, "accentRadius": 1,
+          "pagerLeft": 14, "pagerTop": 236, "pagerWidth": 164, "pagerHeight": 20,
+          "pagerButtonWidth": 22, "pagerButtonSize": 16, "pagerTrackWidth": 112, "pagerTrackHeight": 4,
+          "pagerTrackRadius": 2, "pagerTrackBackground": "#2C2C2E", "pagerAccent": "#FFFFFF", "pagerDisabledColor": "#3A3A3C"
+        }
+      }
+    }
+  },
+  "variants": { "base": {}, "circle": {}, "pill": {}, "rect": {} }
 }
