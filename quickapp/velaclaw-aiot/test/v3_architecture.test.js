@@ -105,8 +105,10 @@ assert.ok(!adapter.includes('circleChord') && !adapter.includes('circleBand'), '
 assert.ok(!adapter.includes('safeForWidth'), 'Safe area must not depend on component width')
 
 const deviceProfile = read('src/runtime/device_profile.js')
-assert.ok(deviceProfile.includes("viewportPick(local, info, 'screenWidth')"), 'layout projection must prefer the actual host viewport over system metadata')
-assert.ok(deviceProfile.includes("viewportPick(local, info, 'screenHeight')"), 'layout projection must prefer the actual host viewport height')
+const deviceProfileCore = read('src/runtime/device_profile_core.js')
+assert.ok(deviceProfile.includes("require('./device_profile_core')"), 'Device Profile wrapper must delegate viewport/shape projection to the single core')
+assert.ok(deviceProfileCore.includes("viewportPick(local, info, 'screenWidth')"), 'layout projection must prefer the actual host viewport over system metadata')
+assert.ok(deviceProfileCore.includes("viewportPick(local, info, 'screenHeight')"), 'layout projection must prefer the actual host viewport height')
 
 const registry = read('src/product/controller_registry.js')
 assert.ok(!/function clockGuard\(/.test(registry), 'obsolete Clock Guard controller must stay deleted')
