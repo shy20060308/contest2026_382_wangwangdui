@@ -11,6 +11,13 @@ function valueAt(source, pathValue) {
   return cursor
 }
 
+function visible(expression, state) {
+  if (!expression) return true
+  var text = String(expression)
+  if (text.charAt(0) === '!') return !valueAt(state, text.slice(1))
+  return !!valueAt(state, text)
+}
+
 function select(surface, profile) {
   var source = surface && surface.experience ? surface.experience : {}
   var base = source.base || {}
@@ -61,7 +68,7 @@ function collectionItem(item, index, selectedId, idleBorderColor) {
 }
 
 function collection(spec, scene, safe, state) {
-  if (!spec) return null
+  if (!spec || !visible(spec.visibleWhen, state || {})) return null
   var source = Array.isArray(spec.items) ? spec.items : []
   var tokens = adapter.merge({}, spec.tokens || {})
   var selectedId = valueAt(state || {}, spec.bind && spec.bind.selectedId)
@@ -160,10 +167,7 @@ function fill(template, values) {
   })
 }
 function stageVisible(expression, state) {
-  if (!expression) return true
-  var text = String(expression)
-  if (text.charAt(0) === '!') return !valueAt(state, text.slice(1))
-  return !!valueAt(state, text)
+  return visible(expression, state)
 }
 function localFrame(spec) {
   var source = spec || {}
