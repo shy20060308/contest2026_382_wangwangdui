@@ -2,8 +2,6 @@ import location from '../../../capabilities/location'
 import heartRate from '../../../capabilities/heart_rate'
 import workoutState from '../../../domain/workout/state_machine'
 import workoutRepository from '../../../domain/workout/repository'
-import activityStore from '../../../domain/activity/store'
-import historyRepository from '../../../domain/history/repository'
 var distance = require('../../../domain/workout/distance')
 var healthMetrics = require('../../../domain/health/metrics')
 
@@ -25,6 +23,7 @@ export function createWorkoutController(onChange) {
   function emit(session) { return emitValue(onChange, session) }
   function persist() { var active = workoutState.getActive(); if (active) workoutRepository.saveActive(active) }
   function isCurrent(generation) { return generation === lifecycleGeneration }
+  function persisted(result) { return !!(result && result.persisted) }
 
   function stopLocation() {
     clearTimeout(locationTimeout)
@@ -171,14 +170,16 @@ export function createWorkoutController(onChange) {
     finish: function (callback) {
       stopRuntime(false)
       var record = workoutState.finish()
-      workoutRepository.clearActive()
-      if (!record) { if (callback) callback(null); return }
-      activityStore.addAndPersist(record.steps, record.calories, function (activitySnapshot) {
-        var pending = 2
-        var savedRecord = record
-        function done() { pending--; if (pending === 0 && callback) callback(savedRecord) }
-        historyRepository.saveToday(activitySnapshot, done)
-        workoutRepository.saveRecord(record, function (saved) { savedRecord = saved; done() })
+      if (!record) return
+      persist()
+      emit(workoutState.getActive())
+      workoutRepository.saveRecord(record, function (savedRecord, saveResult) {
+        if (!persisted(saveResult)) return
+        workoutRepository.clearActive(function (clearResult) {
+          if (!persisted(clearResult)) return
+          workoutState.complete(record.id)
+          if (callback) callback(savedRecord)
+        })
       })
     },
     stop: function () { stopRuntime(true) }
