@@ -1,0 +1,54 @@
+const assert = require('assert')
+const fs = require('fs')
+const path = require('path')
+const navigationCore = require('../src/runtime/navigation_core')
+const interactionOwner = require('../src/runtime/interaction_owner')
+const interactionPolicy = require('../src/product/interaction_policy')
+const sliderInput = require('../src/product/frontend/runtime/slider_input')
+
+const root = path.resolve(__dirname, '..')
+const read = name => fs.readFileSync(path.join(root, name), 'utf8')
+
+let clock = 1000
+let suppressed = 0
+const nav = navigationCore.create({ now: () => clock, windowMs: 300, onSuppressed: () => { suppressed++ } })
+let calls = 0
+assert.throws(() => nav.transition('push', '/pages/a', {}, 'page-a', () => { calls++; throw new Error('router failed') }), /router failed/)
+assert.strictEqual(nav.transition('push', '/pages/a', {}, 'page-a', () => { calls++ }), true, 'failed router call must not poison retry dedupe')
+assert.strictEqual(calls, 2)
+assert.strictEqual(nav.transition('push', '/pages/a', {}, 'page-a', () => { calls++ }), false, 'same owner/action inside window must dedupe')
+assert.strictEqual(suppressed, 1)
+assert.strictEqual(nav.transition('back', '', null, 'page-a', () => { calls++ }), true)
+assert.strictEqual(nav.transition('back', '', null, 'page-b', () => { calls++ }), true, 'different page owners must not share one global back lock')
+
+const owner = interactionOwner.create('workout')
+owner.activate()
+const token = owner.capture()
+assert.strictEqual(owner.isCurrent(token), true)
+owner.deactivate()
+assert.strictEqual(owner.isCurrent(token), false, 'hidden page must invalidate pending async navigation token')
+owner.activate()
+assert.strictEqual(owner.isCurrent(token), false, 'old token must stay invalid after page becomes visible again')
+
+assert.strictEqual(interactionPolicy.routeNavigationEnabled('clock', { clockVisible: true }), true)
+assert.strictEqual(interactionPolicy.routeNavigationEnabled('clock', { clockVisible: false, notificationCallVisible: true }), false, 'Clock overlay must block direct route gestures')
+assert.strictEqual(interactionPolicy.routeNavigationEnabled('clock', { clockVisible: false, sleepVisible: true }), false, 'Clock sleep state must block direct route gestures')
+assert.strictEqual(interactionPolicy.routeNavigationEnabled('health', {}), true)
+
+assert.deepStrictEqual(sliderInput.value({ progress: 180, isFromUser: false }, 120), { accepted: false, value: 120 }, 'programmatic slider projection must not emit a business write')
+assert.deepStrictEqual(sliderInput.value({ detail: { progress: 180, isFromUser: true } }, 120), { accepted: true, value: 180 }, 'explicit user slider change must emit its value')
+
+const registry = read('src/product/controller_registry.js')
+const surfacePage = read('src/runtime/surface_page.js')
+const navigation = read('src/runtime/navigation.js')
+const slider = read('src/components/surface_slider.ux')
+const brightness = read('src/product/features/settings/brightness_controller.js')
+assert.ok(registry.includes('ownerCurrent(owner, token)'), 'async route callbacks must check their page owner token')
+assert.ok(registry.includes("notificationState.visible || clockState.powerMode === 'SLEEP'"), 'Clock face switching must reject overlay and sleep actions')
+assert.ok(surfacePage.includes("{ interactionOwner: page._surfaceInteractionOwner }"), 'Surface Page must pass its owner to registered controllers')
+assert.ok(surfacePage.includes('interactionPolicy.routeNavigationEnabled'), 'Surface Page must publish product route permissions')
+assert.ok(navigation.includes('navigationContext.routesEnabled()'), 'direct route pushes must obey current page interaction policy')
+assert.ok(slider.includes('sliderInput.value(event, this.model.value)'), 'Slider component must use the user-origin parser')
+assert.ok(brightness.includes("settingsStore.update('autoBrightness', false)"), 'user brightness drag while auto is enabled must explicitly take over manual mode')
+
+console.log('Interaction ownership verified: retry-safe navigation, page-scoped async routing, Clock route policy and user-only slider commits')
