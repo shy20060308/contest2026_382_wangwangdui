@@ -7,6 +7,7 @@ var experienceRuntime = require('../product/frontend/runtime/experience_runtime'
 var performanceMetrics = require('./performance_metrics')
 var pageGeneration = require('./page_generation')
 var interactionOwner = require('./interaction_owner')
+var navigationContext = require('./navigation_context')
 
 function initialState(surface) {
   var source = surface && surface.initialState ? surface.initialState : {}
@@ -33,6 +34,7 @@ function syncPlanContext(page) {
   if (!page || !page.surfacePlan) return
   page.surfacePlan.pageVisible = !!page._surfaceVisible
   page.surfacePlan.interactionOwner = page._surfaceInteractionOwner ? page._surfaceInteractionOwner.key() : ''
+  if (page.surfacePlan.collection) page.surfacePlan.collection.active = !!page._surfaceVisible
 }
 
 function rebuild(page) {
@@ -95,7 +97,10 @@ function bind(page, surface) {
 function show(page) {
   if (!page || page._surfaceDestroyed) return
   page._surfaceVisible = true
-  if (page._surfaceInteractionOwner) page._surfaceInteractionOwner.activate()
+  if (page._surfaceInteractionOwner) {
+    page._surfaceInteractionOwner.activate()
+    navigationContext.set(page._surfaceInteractionOwner.key())
+  }
   if (page.surfaceReady) rebuild(page)
   else syncPlanContext(page)
   if (page.surfaceReady && page._surfaceController) page._surfaceController.start()
@@ -104,7 +109,10 @@ function show(page) {
 function hide(page) {
   if (!page || page._surfaceDestroyed) return
   page._surfaceVisible = false
-  if (page._surfaceInteractionOwner) page._surfaceInteractionOwner.deactivate()
+  if (page._surfaceInteractionOwner) {
+    navigationContext.clear(page._surfaceInteractionOwner.key())
+    page._surfaceInteractionOwner.deactivate()
+  }
   syncPlanContext(page)
   if (page._surfaceController) page._surfaceController.stop()
 }
@@ -113,7 +121,10 @@ function destroy(page) {
   if (!page) return
   pageGeneration.destroy(page)
   page._surfaceVisible = false
-  if (page._surfaceInteractionOwner) page._surfaceInteractionOwner.deactivate()
+  if (page._surfaceInteractionOwner) {
+    navigationContext.clear(page._surfaceInteractionOwner.key())
+    page._surfaceInteractionOwner.deactivate()
+  }
   if (page._surfaceController) page._surfaceController.destroy()
   page._surfaceController = null
   page._surfaceInteractionOwner = null
