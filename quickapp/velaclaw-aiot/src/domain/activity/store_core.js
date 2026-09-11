@@ -39,6 +39,16 @@ function clampPercent(value, goal) {
   return percent
 }
 
+function healthyReadResult(value) {
+  return { ok: true, status: value === null || value === undefined ? 'missing' : 'ok', error: null }
+}
+
+function blockedResult(status, error) {
+  var reason = error || new Error('Activity persistence is blocked: ' + status)
+  reason.code = reason.code || 'ESTORAGE_RECOVERY_REQUIRED'
+  return { persisted: false, memoryOnly: true, error: reason }
+}
+
 function createStore(repository, defaults, options) {
   var base = defaults ? copyState(defaults) : copyState(DEFAULT_STATE)
   var state = copyState(base)
@@ -51,6 +61,8 @@ function createStore(repository, defaults, options) {
   var saveQueue = []
   var saveInFlight = false
   var listeners = []
+  var persistenceStatus = 'loading'
+  var persistenceError = null
 
   function rawSnapshot() {
     var stepsPercent = clampPercent(state.steps, state.stepsGoal)
@@ -69,6 +81,26 @@ function createStore(repository, defaults, options) {
       stepsPercent: stepsPercent,
       goalPercent: goalPercent
     }
+  }
+
+  function persistenceSnapshot() {
+    return {
+      status: persistenceStatus,
+      blocked: persistenceStatus === 'corrupt' || persistenceStatus === 'io-error' || persistenceStatus === 'recovering',
+      recoverable: persistenceStatus === 'corrupt',
+      errorCode: persistenceError && persistenceError.code !== undefined ? String(persistenceError.code) : '',
+      errorMessage: persistenceError && persistenceError.message ? persistenceError.message : ''
+    }
+  }
+
+  function markPersistence(result) {
+    var next = result || healthyReadResult(null)
+    persistenceStatus = next.status || (next.ok ? 'ok' : 'io-error')
+    persistenceError = next.error || null
+  }
+
+  function persistenceBlocked() {
+    return persistenceSnapshot().blocked
   }
 
   function rolloverIfNeeded() {
@@ -114,6 +146,10 @@ function createStore(repository, defaults, options) {
   }
 
   function enqueueSave(value, callback, day) {
+    if (persistenceBlocked()) {
+      if (callback) callback(value, blockedResult(persistenceStatus, persistenceError))
+      return
+    }
     saveQueue.push({ snapshot: value, callback: callback, day: day || activeDay })
     flushSaveQueue()
   }
@@ -128,8 +164,9 @@ function createStore(repository, defaults, options) {
     pendingMutations = remaining
   }
 
-  function finishHydrate(persisted, loadDay) {
-    applyPersisted(persisted)
+  function finishHydrate(persisted, loadDay, readState) {
+    markPersistence(readState || healthyReadResult(persisted))
+    applyPersisted(readState && !readState.ok ? null : persisted)
     activeDay = loadDay
     hydrated = true
     loading = false
@@ -145,18 +182,40 @@ function createStore(repository, defaults, options) {
     var value = publish()
     var waiters = hydrateWaiters
     hydrateWaiters = []
-    for (var i = 0; i < waiters.length; i++) waiters[i](value)
+    for (var i = 0; i < waiters.length; i++) waiters[i](value, persistenceSnapshot())
   }
 
   function startHydrate() {
     if (hydrated || loading) return
     loading = true
     var loadDay = activeDay
-    repository.load(function (persisted) { finishHydrate(persisted, loadDay) }, loadDay)
+    if (repository && typeof repository.loadResult === 'function') {
+      repository.loadResult(function (persisted, result) { finishHydrate(persisted, loadDay, result) }, loadDay)
+      return
+    }
+    repository.load(function (persisted) { finishHydrate(persisted, loadDay, healthyReadResult(persisted)) }, loadDay)
+  }
+
+  function saveRecoveredDefaults(quarantineResult, callback) {
+    state = copyState(base)
+    activeDay = dayKey()
+    publish()
+    repository.save(rawSnapshot(), function (saved, result) {
+      var persisted = result === true || !!(result && result.persisted)
+      if (persisted) {
+        markPersistence({ ok: true, status: 'ok', error: null })
+        if (callback) callback({ ok: true, status: 'recovered', backupKey: quarantineResult.backupKey || '', error: null })
+        return
+      }
+      var error = result && result.error ? result.error : new Error('Activity recovery reset write failed')
+      markPersistence({ ok: false, status: 'io-error', error: error })
+      if (callback) callback({ ok: false, status: 'io-error', backupKey: quarantineResult.backupKey || '', error: error })
+    }, activeDay)
   }
 
   return {
     getSnapshot: snapshot,
+    getPersistenceState: persistenceSnapshot,
     subscribe: function (listener) {
       if (typeof listener !== 'function' || listeners.indexOf(listener) >= 0) return
       listeners.push(listener)
@@ -168,7 +227,7 @@ function createStore(repository, defaults, options) {
     hydrate: function (callback) {
       if (hydrated) {
         rolloverIfNeeded()
-        if (callback) callback(rawSnapshot())
+        if (callback) callback(rawSnapshot(), persistenceSnapshot())
         return
       }
       if (callback) hydrateWaiters.push(callback)
@@ -185,6 +244,26 @@ function createStore(repository, defaults, options) {
       var value = applyAdd(steps, calories)
       publish()
       enqueueSave(value, callback, activeDay)
+    },
+    recoverPersistence: function (callback) {
+      if (persistenceStatus !== 'corrupt') {
+        if (callback) callback({ ok: false, status: 'not-recoverable', backupKey: '', error: persistenceError })
+        return
+      }
+      if (!repository || typeof repository.quarantine !== 'function') {
+        if (callback) callback({ ok: false, status: 'unavailable', backupKey: '', error: new Error('Activity quarantine unavailable') })
+        return
+      }
+      persistenceStatus = 'recovering'
+      repository.quarantine(function (result) {
+        if (!result || !result.ok) {
+          var error = result && result.error ? result.error : new Error('Activity quarantine failed')
+          markPersistence({ ok: false, status: 'corrupt', error: error })
+          if (callback) callback({ ok: false, status: result && result.status ? result.status : 'io-error', backupKey: result && result.backupKey ? result.backupKey : '', error: error })
+          return
+        }
+        saveRecoveredDefaults(result, callback)
+      })
     }
   }
 }
