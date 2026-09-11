@@ -12,9 +12,10 @@ assert.ok(surfacePage.indexOf('page.surfaceReady && !page._surfaceVisible') >= 0
 assert.ok(surfacePage.indexOf('recordSurfaceDeferredHidden') >= 0, 'Hidden rebuild deferrals must be measurable')
 
 const navigation = read('src/runtime/navigation.js')
-const navigationWindow = Number((navigation.match(/DUPLICATE_NAV_WINDOW_MS\s*=\s*(\d+)/) || [])[1])
-assert.ok(navigationWindow >= 200 && navigationWindow <= 500, 'Duplicate navigation suppression should stay within a wearable tap-burst window')
+const navigationCore = require('../src/runtime/navigation_core')
+assert.ok(navigationCore.DEFAULT_WINDOW_MS >= 200 && navigationCore.DEFAULT_WINDOW_MS <= 500, 'Duplicate navigation suppression should stay within a wearable tap-burst window')
 assert.ok(navigation.indexOf('recordNavigationSuppressed') >= 0, 'Suppressed navigation must be measurable')
+assert.ok(navigation.indexOf('navigationCore.create') >= 0, 'Navigation wrapper must delegate dedupe semantics to the testable core')
 
 const motion = read('src/product/features/settings/motion_controller.js')
 const uiSampleInterval = Number((motion.match(/UI_SAMPLE_INTERVAL_MS\s*=\s*(\d+)/) || [])[1])
