@@ -28,6 +28,14 @@ function finishOperation(key) {
   queue[0]()
 }
 
+function completeOperation(key, callback, args) {
+  try {
+    if (callback) callback.apply(null, args || [])
+  } finally {
+    finishOperation(key)
+  }
+}
+
 function enqueueOperation(key, operation) {
   if (!operationQueues[key]) operationQueues[key] = []
   operationQueues[key].push(operation)
@@ -107,13 +115,11 @@ var adapter = {
       try {
         stringValue = typeof value === 'string' ? value : JSON.stringify(value)
       } catch (error) {
-        if (callback) callback(makeResult(false, false, error))
-        finishOperation(key)
+        completeOperation(key, callback, [makeResult(false, false, error)])
         return
       }
       persistString(key, stringValue, function (result) {
-        if (callback) callback(result)
-        finishOperation(key)
+        completeOperation(key, callback, [result])
       })
     })
   },
@@ -135,23 +141,19 @@ var adapter = {
           storage.delete({
             key: key,
             success: function () {
-              if (callback) callback(makeResult(true, false))
-              finishOperation(key)
+              completeOperation(key, callback, [makeResult(true, false)])
             },
             fail: function (data, code) {
-              if (callback) callback(makeResult(false, true, storageFailure('delete', key, data, code)))
-              finishOperation(key)
+              completeOperation(key, callback, [makeResult(false, true, storageFailure('delete', key, data, code))])
             }
           })
           return
         }
       } catch (error) {
-        if (callback) callback(makeResult(false, true, error))
-        finishOperation(key)
+        completeOperation(key, callback, [makeResult(false, true, error)])
         return
       }
-      if (callback) callback(makeResult(false, true, new Error('storage.delete unavailable')))
-      finishOperation(key)
+      completeOperation(key, callback, [makeResult(false, true, new Error('storage.delete unavailable'))])
     })
   },
 
@@ -164,17 +166,14 @@ var adapter = {
           nextValue = updater(current)
           stringValue = JSON.stringify(nextValue)
         } catch (error) {
-          if (callback) callback(current, makeResult(false, false, error))
-          finishOperation(key)
+          completeOperation(key, callback, [current, makeResult(false, false, error)])
           return
         }
         persistString(key, stringValue, function (result) {
-          if (callback) callback(nextValue, result)
-          finishOperation(key)
+          completeOperation(key, callback, [nextValue, result])
         })
       }, function (error) {
-        if (callback) callback(null, makeResult(false, false, error))
-        finishOperation(key)
+        completeOperation(key, callback, [null, makeResult(false, false, error)])
       })
     })
   }
