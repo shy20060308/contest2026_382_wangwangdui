@@ -39,7 +39,6 @@
     "entry": "pages/clock",
     "pages": {
       "pages/clock": { "component": "clock" },
-      "pages/clock_guard": { "component": "clock_guard" },
       "pages/heartrate": { "component": "heartrate" },
       "pages/steps": { "component": "steps" },
       "pages/applist": { "component": "applist" },
