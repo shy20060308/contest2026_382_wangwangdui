@@ -23,7 +23,15 @@ assert.ok(/^npm run clean && npm run surfaces:compile && aiot release\b/.test(pk
 assert.ok(/^npm run surfaces:compile && aiot start\b/.test(pkg.scripts.start), 'debug start must compile JSON surfaces before aiot start')
 
 const gitignore = fs.readFileSync(path.join(root, '.gitignore'), 'utf8')
-assert.ok(gitignore.includes('/src/product/frontend/generated/'), 'compiled Surface registry must stay generated and outside source authority')
+assert.ok(!gitignore.includes('/src/product/frontend/generated/'), 'compiled Surface registry must be available to every AIoT staging mode')
+
+const generatedRegistryFile = path.join(sourceRoot, 'product', 'frontend', 'generated', 'surfaces.js')
+assert.ok(fs.existsSync(generatedRegistryFile), 'tracked Surface registry must exist before AIoT staging')
+const generatedRegistry = fs.readFileSync(generatedRegistryFile, 'utf8')
+const generatedRequires = generatedRegistry.match(/require\('\.\.\/surfaces\/[^']+\.json'\)/g) || []
+const manifestRouteCount = Object.keys(JSON.parse(fs.readFileSync(path.join(sourceRoot, 'manifest.json'), 'utf8')).router.pages || {}).length
+assert.strictEqual(generatedRequires.length, manifestRouteCount, 'Surface registry must statically reference every manifest Surface JSON')
+assert.ok(Buffer.byteLength(generatedRegistry, 'utf8') < 10000, 'Surface registry must stay compact and must not inline JSON presentation trees')
 
 const sourceFiles = filesUnder(sourceRoot, [])
 const generatedRoot = path.join(sourceRoot, 'product', 'frontend', 'generated')
@@ -44,4 +52,4 @@ authoredSourceFiles.forEach(function (file) {
   assert.ok(!/\.(?:bak|old|orig|rej|tmp|map)$/i.test(file), 'temporary/generated file must not live under authored src: ' + path.relative(root, file))
 })
 
-console.log('V3 package hygiene verified: deterministic Surface generation, clean packaging and referenced static assets only')
+console.log('V3 package hygiene verified: deterministic compact Surface registry, clean packaging and referenced static assets only')
