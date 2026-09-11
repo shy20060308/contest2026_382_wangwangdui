@@ -6,7 +6,7 @@ var lastTransitionKey = ''
 var lastTransitionAt = 0
 
 function paramsKey(params) {
-  try { return JSON.stringify(params || {}) } catch (error) { return String(params || '') }
+  return JSON.stringify(params || {})
 }
 
 function shouldSuppress(kind, path, params) {
@@ -19,27 +19,24 @@ function shouldSuppress(kind, path, params) {
   }
   lastTransitionKey = key
   lastTransitionAt = now
-  return false
+  return duplicate
 }
 
 function push(path, params) {
   if (!path) throw new Error('Navigation requires a target path')
-  if (shouldSuppress('push', path, params)) return false
+  if (shouldSuppress('push', path, params)) return
   router.push({ uri: path, params: params || {} })
-  return true
 }
 
 function replace(path, params) {
   if (!path) throw new Error('Navigation requires a target path')
-  if (shouldSuppress('replace', path, params)) return false
+  if (shouldSuppress('replace', path, params)) return
   router.replace({ uri: path, params: params || {} })
-  return true
 }
 
 function back() {
-  if (shouldSuppress('back', '', null)) return false
+  if (shouldSuppress('back', '', null)) return
   router.back()
-  return true
 }
 
 export default {
