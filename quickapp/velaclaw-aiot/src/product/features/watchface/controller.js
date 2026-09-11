@@ -2,12 +2,12 @@ import watchfaceStore from '../../../domain/watchface/store'
 import faceCatalog from '../../../domain/watchface/catalog'
 
 function requireFaceIds(faceIds) {
-  if (!Array.isArray(faceIds) || !faceIds.length) throw new Error('Watchface controller requires Recipe faceIds')
+  if (!Array.isArray(faceIds) || !faceIds.length) throw new Error('Watchface controller requires Surface faceIds')
   return faceIds.slice()
 }
 
 function requireAllowedFace(ids, id) {
-  if (ids.indexOf(id) < 0) throw new Error('Watchface is not allowed by Recipe: ' + id)
+  if (ids.indexOf(id) < 0) throw new Error('Watchface is not allowed by Surface configuration: ' + id)
   return id
 }
 
@@ -37,7 +37,7 @@ export function createWatchfaceController(onChange) {
     load: function () {
       if (!ids.length) throw new Error('Watchface controller must be configured before load')
       watchfaceStore.loadSelectedFaceId(function (id) {
-        if (id) selectedId = requireAllowedFace(ids, id)
+        if (id && ids.indexOf(id) >= 0) selectedId = id
         emit()
       })
     },
