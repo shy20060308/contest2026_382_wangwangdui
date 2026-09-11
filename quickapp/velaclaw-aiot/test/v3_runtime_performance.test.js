@@ -30,7 +30,8 @@ const diagnosticsSurface = JSON.parse(read('src/product/frontend/surfaces/settin
 const deviceModule = diagnosticsSurface.modules.filter(function (module) { return module.id === 'device' })[0]
 assert.ok(deviceModule, 'Diagnostics must retain its device metric grid')
 assert.ok(deviceModule.props.items.some(function (item) { return item.bind && item.bind.value === 'performance.surfaceRebuildAvgMs' }), 'Diagnostics must render the measured Surface average rebuild cost')
-;['base', 'circle', 'pill'].forEach(function (shape) {
+const diagnosticShapes = ['base', 'circle', 'pill']
+diagnosticShapes.forEach(function (shape) {
   const override = shape === 'base' ? {} : (((diagnosticsSurface.variants[shape] || {}).modules || {}).device || {})
   const tokens = Object.assign({}, deviceModule.tokens, override)
   const rows = Math.ceil(deviceModule.props.items.length / tokens.columns)
