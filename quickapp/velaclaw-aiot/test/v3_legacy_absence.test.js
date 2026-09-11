@@ -25,7 +25,6 @@ function filesUnder(relative, matcher, result) {
   ['src/product/design/apps', 'page-specific JS design recipes'],
   ['src/product/features/launcher', 'retired launcher pagination controller'],
   ['src/components/watchfaces', 'specialized watchface UX'],
-  ['src/common/icons', 'retired launcher/settings raster icon pack'],
   ['src/common/watchfaces', 'retired baked watchface backgrounds'],
   ['assets/icons', 'retired icon source pack'],
   ['assets/watchfaces', 'retired watchface source pack'],
@@ -60,9 +59,9 @@ assert.ok(!adapter.includes('function clamp('), 'Adapter must not repair authore
 
 const packageSource = read('package.json')
 assert.ok(!packageSource.includes('render-soft-icons'), 'tooling must not regenerate retired soft icons')
-assert.ok(!packageSource.includes('icons:render'), 'tooling must not regenerate retired launcher raster icons')
+assert.ok(!packageSource.includes('icons:render'), 'tooling must not regenerate product icons from a second visual authority')
 assert.ok(!packageSource.includes('backgrounds:render'), 'tooling must not regenerate retired watchface backgrounds')
-assert.ok(!packageSource.includes('honeycomb:logic'), 'retired Honeycomb product math must not stay in the validation contract')
+assert.ok(!packageSource.includes('honeycomb:logic'), 'page-specific Honeycomb product math must not return to the validation contract')
 assert.ok(!packageSource.includes('analog:logic'), 'retired analog watchface helper must not stay in the validation contract')
 
-console.log('V3 legacy absence verified: duplicate namespaces, retired launcher pagination, page-specific visual JS/UX and retired visual assets stay absent')
+console.log('V3 legacy absence verified: duplicate namespaces and page-specific visual authorities stay absent while JSON-referenced static assets remain allowed')
