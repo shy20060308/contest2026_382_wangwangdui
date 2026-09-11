@@ -79,7 +79,7 @@ function upsertToday(history, activitySnapshot) {
 
 function loadHistory(callback) {
   storage.getJSON(HISTORY_KEY, function (stored) {
-    if (callback) callback(clone(requireHistory(stored)))
+    if (callback) callback(requireHistory(stored))
   }, [])
 }
 
