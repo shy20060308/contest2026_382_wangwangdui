@@ -82,12 +82,12 @@ assert.ok(powerRuntime.includes("../../capabilities/heart_rate"), 'Power Runtime
 assert.ok(powerRuntime.includes("../../capabilities/battery"), 'Power Runtime must use battery gateway')
 assert.ok(!hasRawDeviceApi(powerRuntime), 'Power Runtime must never regress to raw device APIs')
 
-const brightnessFeature = read('src/v2/features/settings/brightness_controller.js')
-const motionFeature = read('src/v2/features/settings/motion_controller.js')
-const diagnosticsFeature = read('src/v2/features/settings/diagnostics_controller.js')
-const workoutFeature = read('src/v2/features/workout/controller.js')
-const notificationFeature = read('src/v2/features/notification/controller.js')
-const syncFeature = read('src/v2/features/sync/controller.js')
+const brightnessFeature = read('src/product/features/settings/brightness_controller.js')
+const motionFeature = read('src/product/features/settings/motion_controller.js')
+const diagnosticsFeature = read('src/product/features/settings/diagnostics_controller.js')
+const workoutFeature = read('src/product/features/workout/controller.js')
+const notificationFeature = read('src/product/features/notification/controller.js')
+const syncFeature = read('src/product/features/sync/controller.js')
 const deviceProfile = read('src/runtime/device_profile.js')
 
 assert.ok(brightnessFeature.includes("../../../capabilities/display_power"), 'brightness Feature must use display gateway')
