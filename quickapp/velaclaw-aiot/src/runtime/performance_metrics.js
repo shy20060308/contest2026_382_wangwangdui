@@ -2,6 +2,17 @@ var metrics = {
   surfaceRebuilds: 0,
   surfaceRebuildTotalMs: 0,
   surfaceRebuildMaxMs: 0,
+  surfaceSerializeSamples: 0,
+  surfaceSerializeTotalMs: 0,
+  surfaceSerializeMaxMs: 0,
+  surfaceResolveTotalMs: 0,
+  surfaceResolveMaxMs: 0,
+  surfaceDecorateTotalMs: 0,
+  surfaceDecorateMaxMs: 0,
+  surfaceContextTotalMs: 0,
+  surfaceContextMaxMs: 0,
+  surfaceJsTotalMs: 0,
+  surfaceJsMaxMs: 0,
   surfaceSkippedEqual: 0,
   surfaceDeferredHidden: 0,
   navigationSuppressed: 0,
@@ -14,11 +25,34 @@ function finiteDuration(value) {
   return isFinite(next) && next >= 0 ? next : 0
 }
 
-function recordSurfaceRebuild(durationMs) {
+function recordSurfaceSerialize(durationMs) {
   var duration = finiteDuration(durationMs)
+  metrics.surfaceSerializeSamples++
+  metrics.surfaceSerializeTotalMs += duration
+  if (duration > metrics.surfaceSerializeMaxMs) metrics.surfaceSerializeMaxMs = duration
+}
+
+function recordSurfaceRebuild(durationMs, phases) {
+  var duration = finiteDuration(durationMs)
+  var parts = phases || {}
+  var resolveMs = finiteDuration(parts.resolveMs)
+  var decorateMs = finiteDuration(parts.decorateMs)
+  var contextMs = finiteDuration(parts.contextMs)
+  var serializeMs = finiteDuration(parts.serializeMs)
+  var jsMs = serializeMs + resolveMs + decorateMs + contextMs
+
   metrics.surfaceRebuilds++
   metrics.surfaceRebuildTotalMs += duration
   if (duration > metrics.surfaceRebuildMaxMs) metrics.surfaceRebuildMaxMs = duration
+
+  metrics.surfaceResolveTotalMs += resolveMs
+  if (resolveMs > metrics.surfaceResolveMaxMs) metrics.surfaceResolveMaxMs = resolveMs
+  metrics.surfaceDecorateTotalMs += decorateMs
+  if (decorateMs > metrics.surfaceDecorateMaxMs) metrics.surfaceDecorateMaxMs = decorateMs
+  metrics.surfaceContextTotalMs += contextMs
+  if (contextMs > metrics.surfaceContextMaxMs) metrics.surfaceContextMaxMs = contextMs
+  metrics.surfaceJsTotalMs += jsMs
+  if (jsMs > metrics.surfaceJsMaxMs) metrics.surfaceJsMaxMs = jsMs
 }
 
 function recordSurfaceSkippedEqual() { metrics.surfaceSkippedEqual++ }
@@ -28,12 +62,24 @@ function recordMotionSample() { metrics.motionSamples++ }
 function recordMotionUiEmit() { metrics.motionUiEmits++ }
 
 function rounded(value) { return Math.round(value * 100) / 100 }
+function average(total, samples) { return samples ? rounded(total / samples) : 0 }
 
 function snapshot() {
   return {
     surfaceRebuilds: metrics.surfaceRebuilds,
-    surfaceRebuildAvgMs: metrics.surfaceRebuilds ? rounded(metrics.surfaceRebuildTotalMs / metrics.surfaceRebuilds) : 0,
+    surfaceRebuildAvgMs: average(metrics.surfaceRebuildTotalMs, metrics.surfaceRebuilds),
     surfaceRebuildMaxMs: metrics.surfaceRebuildMaxMs,
+    surfaceSerializeSamples: metrics.surfaceSerializeSamples,
+    surfaceSerializeAvgMs: average(metrics.surfaceSerializeTotalMs, metrics.surfaceSerializeSamples),
+    surfaceSerializeMaxMs: metrics.surfaceSerializeMaxMs,
+    surfaceResolveAvgMs: average(metrics.surfaceResolveTotalMs, metrics.surfaceRebuilds),
+    surfaceResolveMaxMs: metrics.surfaceResolveMaxMs,
+    surfaceDecorateAvgMs: average(metrics.surfaceDecorateTotalMs, metrics.surfaceRebuilds),
+    surfaceDecorateMaxMs: metrics.surfaceDecorateMaxMs,
+    surfaceContextAvgMs: average(metrics.surfaceContextTotalMs, metrics.surfaceRebuilds),
+    surfaceContextMaxMs: metrics.surfaceContextMaxMs,
+    surfaceJsAvgMs: average(metrics.surfaceJsTotalMs, metrics.surfaceRebuilds),
+    surfaceJsMaxMs: metrics.surfaceJsMaxMs,
     surfaceSkippedEqual: metrics.surfaceSkippedEqual,
     surfaceDeferredHidden: metrics.surfaceDeferredHidden,
     navigationSuppressed: metrics.navigationSuppressed,
@@ -48,6 +94,7 @@ function reset() {
 }
 
 module.exports = {
+  recordSurfaceSerialize: recordSurfaceSerialize,
   recordSurfaceRebuild: recordSurfaceRebuild,
   recordSurfaceSkippedEqual: recordSurfaceSkippedEqual,
   recordSurfaceDeferredHidden: recordSurfaceDeferredHidden,
