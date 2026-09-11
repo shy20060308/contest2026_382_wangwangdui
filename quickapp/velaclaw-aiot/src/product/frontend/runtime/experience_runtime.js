@@ -42,24 +42,55 @@ function resolveFrame(scene, safe, spec) {
   })
 }
 
-function collection(spec, scene, safe) {
+function collectionItem(item, index, selectedId, idleBorderColor) {
+  var id = item.id || String(index)
+  var selected = selectedId !== undefined && selectedId !== null && String(selectedId) === String(id)
+  return {
+    id: id,
+    label: item.label || '',
+    subtitle: item.subtitle || '',
+    description: item.description || item.subtitle || '',
+    tag: item.tag || '',
+    icon: item.icon || '',
+    background: item.background || '',
+    accent: item.accent || '',
+    action: item.action || '',
+    selected: selected,
+    borderColor: selected ? (item.accent || idleBorderColor) : idleBorderColor
+  }
+}
+
+function collection(spec, scene, safe, state) {
   if (!spec) return null
-  var items = Array.isArray(spec.items) ? spec.items : []
+  var source = Array.isArray(spec.items) ? spec.items : []
+  var tokens = adapter.merge({}, spec.tokens || {})
+  var selectedId = valueAt(state || {}, spec.bind && spec.bind.selectedId)
+  var idleBorderColor = tokens.idleBorderColor || ''
+  var allItems = source.map(function (item, index) {
+    return collectionItem(item || {}, index, selectedId, idleBorderColor)
+  })
+  var items = allItems
+  if (Array.isArray(spec.itemIds) && spec.itemIds.length) {
+    var allowed = {}
+    for (var allowIndex = 0; allowIndex < spec.itemIds.length; allowIndex++) allowed[String(spec.itemIds[allowIndex])] = true
+    items = allItems.filter(function (item) { return !!allowed[String(item.id)] })
+  }
+  var selectedIndex = -1
+  for (var i = 0; i < items.length; i++) if (items[i].selected) { selectedIndex = i; break }
+  var selectedItem = null
+  for (var j = 0; j < allItems.length; j++) if (allItems[j].selected) { selectedItem = allItems[j]; break }
+  if (selectedIndex < 0 && items.length) selectedIndex = 0
+  if (!selectedItem && items.length) selectedItem = items[selectedIndex]
   return {
     id: spec.id || 'collection',
     mode: spec.mode || 'list',
     frame: resolveFrame(scene, safe, spec.frame),
-    items: items.map(function (item, index) {
-      return {
-        id: item.id || String(index),
-        label: item.label || '',
-        subtitle: item.subtitle || '',
-        icon: item.icon || '',
-        accent: item.accent || '',
-        action: item.action || ''
-      }
-    }),
-    tokens: adapter.merge({}, spec.tokens || {}),
+    items: items,
+    allItems: allItems,
+    selectedId: selectedId === undefined || selectedId === null ? '' : String(selectedId),
+    selectedIndex: selectedIndex,
+    selectedItem: selectedItem,
+    tokens: tokens,
     actions: adapter.merge({}, spec.actions || {})
   }
 }
@@ -100,7 +131,7 @@ function sliders(specs, scene, safe, state) {
 function decorate(plan, surface, profile, scene, safe, state) {
   var result = plan || {}
   var selected = select(surface, profile)
-  result.collection = collection(selected.collection, scene, safe)
+  result.collection = collection(selected.collection, scene, safe, state)
   result.sliders = sliders(selected.sliders, scene, safe, state)
   result.gestures = adapter.merge({}, selected.gestures || {})
   return result
