@@ -49,10 +49,47 @@ function resolveFrame(scene, safe, spec) {
   })
 }
 
-function collectionItem(item, index, selectedId, idleBorderColor, formFactor) {
+function previewForItem(item, formFactor, selected, tokens) {
+  var source = item.previews && item.previews[formFactor] ? item.previews[formFactor] : null
+  if (!source) return null
+  var preview = {}
+  for (var key in source) preview[key] = source[key]
+  preview.boxes = Array.isArray(source.boxes) ? source.boxes.slice() : []
+  preview.texts = Array.isArray(source.texts) ? source.texts.slice() : []
+  if (!selected) return preview
+
+  var width = Number(tokens.selectedLineWidth)
+  var height = Number(tokens.selectedLineHeight)
+  if (!isFinite(width) || !isFinite(height) || width <= 0 || height <= 0) return preview
+  var left = Number(tokens.selectedLineLeft)
+  var bottom = Number(tokens.selectedLineBottom)
+  var previewWidth = Number(preview.width)
+  var previewHeight = Number(preview.height)
+  if (!isFinite(left)) left = isFinite(previewWidth) ? (previewWidth - width) / 2 : 0
+  if (!isFinite(bottom)) bottom = 0
+  var top = isFinite(previewHeight) ? previewHeight - bottom - height : 0
+  preview.boxes.push({
+    id: 'selection-indicator',
+    frame: {
+      left: Math.round(left),
+      top: Math.max(0, Math.round(top)),
+      width: Math.round(width),
+      height: Math.round(height)
+    },
+    radius: Math.max(0, Number(tokens.selectedLineRadius) || 0),
+    borderWidth: 0,
+    borderColor: '',
+    background: item.accent || '',
+    originX: 0,
+    originY: 0,
+    transform: ''
+  })
+  return preview
+}
+
+function collectionItem(item, index, selectedId, idleBorderColor, formFactor, tokens) {
   var id = item.id || String(index)
   var selected = selectedId !== undefined && selectedId !== null && String(selectedId) === String(id)
-  var preview = item.previews && item.previews[formFactor] ? item.previews[formFactor] : null
   return {
     id: id,
     label: item.label || '',
@@ -63,7 +100,7 @@ function collectionItem(item, index, selectedId, idleBorderColor, formFactor) {
     background: item.background || '',
     accent: item.accent || '',
     action: item.action || '',
-    preview: preview,
+    preview: previewForItem(item, formFactor, selected, tokens || {}),
     selected: selected,
     borderColor: selected ? (item.accent || idleBorderColor) : idleBorderColor
   }
@@ -76,7 +113,7 @@ function collection(spec, scene, safe, state, formFactor) {
   var selectedId = valueAt(state || {}, spec.bind && spec.bind.selectedId)
   var idleBorderColor = tokens.idleBorderColor || ''
   var allItems = source.map(function (item, index) {
-    return collectionItem(item || {}, index, selectedId, idleBorderColor, formFactor)
+    return collectionItem(item || {}, index, selectedId, idleBorderColor, formFactor, tokens)
   })
   var items = allItems
   if (Array.isArray(spec.itemIds) && spec.itemIds.length) {
