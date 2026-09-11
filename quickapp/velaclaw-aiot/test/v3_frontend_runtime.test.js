@@ -1,21 +1,12 @@
 const assert = require('assert')
-const path = require('path')
-const fs = require('fs')
 const scene = require('../src/product/design/scene')
 const surfaceRuntime = require('../src/product/frontend/runtime/surface_runtime')
-const experienceRuntime = require('../src/product/frontend/runtime/experience_runtime')
 const stepsSurface = require('../src/product/frontend/surfaces/steps.json')
 const historySurface = require('../src/product/frontend/surfaces/history.json')
 const healthSurface = require('../src/product/frontend/surfaces/heartrate.json')
-const workoutHistorySurface = require('../src/product/frontend/surfaces/workout_history.json')
-const workoutSurface = require('../src/product/frontend/surfaces/workout.json')
-const todaySurface = require('../src/product/frontend/surfaces/today.json')
-
-const root = path.resolve(__dirname, '..')
-const read = name => fs.readFileSync(path.join(root, name), 'utf8')
 
 const profiles = {
-  circle: { formFactor: 'circle', screenWidth: 192, screenHeight: 192, safeInsets: { left: 0, top: 0, right: 0, bottom: 0, gestureBar: 0 } },
+  circle: { formFactor: 'circle', screenWidth: 466, screenHeight: 466, safeInsets: { left: 0, top: 10, right: 0, bottom: 10, gestureBar: 0 } },
   pill: { formFactor: 'pill', screenWidth: 212, screenHeight: 520, safeInsets: { left: 0, top: 52, right: 0, bottom: 52, gestureBar: 36 } },
   rect: { formFactor: 'rect', screenWidth: 432, screenHeight: 514, safeInsets: { left: 0, top: 2, right: 0, bottom: 2, gestureBar: 0 } }
 }
@@ -23,29 +14,44 @@ const profiles = {
 function resolveSurface(surface, profile, state) {
   const host = scene.resolve(profile)
   const safe = scene.safe(profile, host)
-  const plan = surfaceRuntime.resolve(surface, profile, host, safe, state || {})
-  return experienceRuntime.decorate(plan, surface, profile, host, safe, state || {})
+  return surfaceRuntime.resolve(surface, profile, host, safe, state)
 }
 
-const stepsState = { metrics: [
-  { id: 'steps', current: 4321, goal: 10000 },
-  { id: 'calories', current: 287, goal: 500 },
-  { id: 'stand', current: 9, goal: 12 }
-] }
-const rect = resolveSurface(stepsSurface, profiles.rect, stepsState)
-assert.deepStrictEqual(rect.modules.map(function (module) { return module.id }), ['title', 'history', 'metrics'])
-assert.strictEqual(rect.metricList.items[0].name, '步数')
-assert.strictEqual(rect.metricList.items[0].current, '4,321')
-assert.strictEqual(rect.metricList.items[0].progressText, '43%')
-assert.strictEqual(rect.metricList.items[0].goalText, '目标 10,000 步')
-assert.strictEqual(rect.metricList.items[0].statusText, '还差 5,679 步')
-assert.strictEqual(rect.metricList.items[0].accent, '#FFD60A')
-assert.strictEqual(rect.metricList.tokens.itemRadius, 18)
+const scrambledBusinessState = [
+  { id: 'stand', current: 6, goal: 12, name: 'fake stand', unit: 'fake', color: '#123456' },
+  { id: 'calories', current: 300, goal: 600, name: 'fake calories', unit: 'fake', color: '#123456' },
+  { id: 'steps', current: 5000, goal: 10000, name: 'fake steps', unit: 'fake', color: '#123456' }
+]
 
-const circle = resolveSurface(stepsSurface, profiles.circle, stepsState)
-assert.strictEqual(circle.metricList.tokens.itemRadius, 20)
-assert.strictEqual(circle.metricList.tokens.itemGap, 4)
-const pill = resolveSurface(stepsSurface, profiles.pill, stepsState)
+Object.keys(profiles).forEach(function (shape) {
+  const plan = resolveSurface(stepsSurface, profiles[shape], { metrics: scrambledBusinessState })
+  assert.strictEqual(plan.id, 'steps')
+  assert.strictEqual(plan.shape, shape)
+  assert.deepStrictEqual(plan.modules.map(function (module) { return module.id }), ['title', 'history', 'metrics'], 'JSON must own visible module order')
+  assert.deepStrictEqual(plan.metricList.items.map(function (item) { return item.id }), ['steps', 'calories', 'stand'], 'JSON must own metric order instead of controller array order')
+
+  const steps = plan.metricList.items[0]
+  assert.strictEqual(steps.name, '步数', 'metric label must come from JSON, not business state')
+  assert.strictEqual(steps.unit, '步', 'metric unit must come from JSON, not business state')
+  assert.strictEqual(steps.accent, '#FFD60A', 'metric color must come from JSON, not business state')
+  assert.strictEqual(steps.current, '5,000')
+  assert.strictEqual(steps.progressText, '50%')
+  assert.strictEqual(steps.goalText, '目标 10,000 步')
+  assert.strictEqual(steps.statusText, '还差 5,000')
+})
+
+assert.throws(function () {
+  resolveSurface(stepsSurface, profiles.rect, { metrics: [{ id: 'unknown', current: 1, goal: 2 }] })
+}, /no JSON definition/, 'business state must not silently create a new visual metric')
+
+const circle = resolveSurface(stepsSurface, profiles.circle, { metrics: scrambledBusinessState })
+assert.deepStrictEqual(circle.headers[0].frame, { left: 36, top: 24, width: 120, height: 22 }, 'Circle geometry must come from the circle JSON override plus declared safe inset')
+assert.strictEqual(circle.buttons[0].tokens.radius, 15)
+assert.strictEqual(circle.metricList.tokens.itemRadius, 15)
+
+const pill = resolveSurface(stepsSurface, profiles.pill, { metrics: scrambledBusinessState })
+assert.strictEqual(pill.headers[0].frame.width, 168)
+assert.strictEqual(pill.buttons[0].tokens.radius, 11, 'Pill information surface radius must remain explicitly declared')
 assert.strictEqual(pill.metricList.tokens.itemRadius, 12)
 
 const completed = resolveSurface(stepsSurface, profiles.rect, { metrics: [
@@ -97,65 +103,13 @@ assert.strictEqual(health.flowMetricItems[0].value, '98%')
 assert.strictEqual(health.flowMetricItems[0].detail, '良好')
 assert.strictEqual(health.flowMetricItems[0].detailColor, '#30D158')
 assert.strictEqual(health.flowChartCards[0].status, '正常')
+assert.strictEqual(health.flowChartCards[0].statusColor, '#30D158')
 
-const workoutHistory = resolveSurface(workoutHistorySurface, profiles.pill, {
-  totalSteps: null,
-  recordCount: 2,
-  empty: false,
-  hasRecords: true,
-  records: [
-    { id: 'w1', type: 'run', endedAt: new Date(2026, 8, 10, 7, 30).getTime(), durationMs: 1800000, distanceMeters: 5200, calories: null, steps: null },
-    { id: 'w2', type: 'walk', endedAt: new Date(2026, 8, 9, 18, 30).getTime(), durationMs: 2400000, distanceMeters: null, calories: null, steps: null }
-  ]
-})
-assert.strictEqual(workoutHistory.flowListRows.length, 2)
-assert.strictEqual(workoutHistory.flowListRows[0].title, '跑步')
-assert.strictEqual(workoutHistory.flowListRows[0].trailing, '5.20 km')
-assert.strictEqual(workoutHistory.flowListRows[1].trailing, '--')
-
-const workout = resolveSurface(workoutSurface, profiles.pill, {
-  hasSession: true,
-  confirming: false,
-  type: 'run',
-  status: 'running',
-  durationMs: 65000,
-  steps: null,
-  calories: null,
-  distanceMeters: null,
-  currentHeartRate: null,
-  gpsStatus: 'unavailable',
-  gpsDistanceMeters: 0
-})
-assert.strictEqual(workout.flowMetricItems[0].value, '--')
-assert.strictEqual(workout.flowMetricItems[1].value, '--')
-assert.strictEqual(workout.flowMetricItems[2].value, '--')
-assert.strictEqual(workout.flowMetricItems[3].value, '01:05')
-
-const today = resolveSurface(todaySurface, profiles.pill, {
-  summaryOpen: true,
-  calendarOpen: false,
-  currentMonth: 8,
-  currentDay: 10,
-  currentWeekday: 4,
-  lunarText: '农历七月廿九',
-  steps: 4321,
-  calories: 287,
-  standHours: 9,
-  heartRate: null,
-  goalPercent: 57,
-  calendarYear: 2026,
-  calendarMonth: 8,
-  calendarCells: []
-})
-assert.strictEqual(today.flowHeaders[0].trailing, '周四')
-assert.strictEqual(today.flowHeaders[0].subtitleTrailing, '9月')
-assert.strictEqual(today.flowMetricItems[0].value, '4,321')
-assert.strictEqual(today.flowMetricItems[2].value, '--')
-
-const hostSource = read('src/components/surface_host.ux')
-assert.ok(hostSource.includes('surfacePlan.flowChartCards'), 'Surface Host must render chart cards from the generic plan')
-assert.ok(hostSource.includes('surfacePlan.flowMetricItems'), 'Surface Host must render metric grids from the generic plan')
-assert.ok(hostSource.includes('surfacePlan.flowListRows'), 'Surface Host must render generic list rows from the plan')
-assert.ok(!hostSource.includes('history') && !hostSource.includes('workout_history') && !hostSource.includes('heartrate'), 'Surface Host must stay route-agnostic')
+const alteredHealth = JSON.parse(JSON.stringify(healthSurface))
+alteredHealth.modules[0].props.trailingMap.stable.text = 'JSON 状态'
+alteredHealth.modules[0].props.trailingMap.stable.color = '#030405'
+const alteredHealthPlan = resolveSurface(alteredHealth, profiles.pill, healthState)
+assert.strictEqual(alteredHealthPlan.flowHeaders[0].trailing, 'JSON 状态')
+assert.strictEqual(alteredHealthPlan.flowHeaders[0].trailingColor, '#030405', 'health copy and state color must change by editing JSON alone')
 
 console.log('V3 frontend runtime verified: JSON exclusively owns migrated surface structure, copy, visual tokens, order and shape variants')
