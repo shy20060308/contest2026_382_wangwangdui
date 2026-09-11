@@ -1,6 +1,9 @@
 const assert = require('assert')
+const fs = require('fs')
+const path = require('path')
 
 const protocol = require('../src/product/features/sync/protocol')
+const root = path.resolve(__dirname, '..')
 
 const payload = {
   version: protocol.VERSION,
@@ -54,4 +57,10 @@ assert.throws(function () { transfer.packetAt(transfer.packetTotal) }, /out of r
 assert.throws(function () { protocol.createTransfer(payload, 0) }, /positive chunk size/)
 assert.throws(function () { protocol.createTransfer(undefined, 96) }, /serializable payload/)
 
-console.log('Sync protocol verified: packets are materialized on demand without eager pieces/packets arrays')
+const controllerSource = fs.readFileSync(path.join(root, 'src/product/features/sync/controller.js'), 'utf8')
+assert.ok(controllerSource.includes('protocol.createTransfer(payload, 96)'), 'Sync controller must use lazy transfer creation')
+assert.ok(controllerSource.includes('transfer.packetAt(index)'), 'Sync controller must materialize only the packet being sent')
+assert.ok(controllerSource.includes('workoutRepository.markAllSynced()'), 'Completion must persist synced flags without a second collection pass')
+assert.ok(!controllerSource.includes('markAllSynced(function'), 'Sync completion must not re-read Activity/History/Workout solely to refresh unchanged counts')
+
+console.log('Sync protocol verified: packets are materialized on demand and completion avoids redundant full recollection')
