@@ -67,12 +67,19 @@ const diagnosticsSurface = require('../src/product/frontend/surfaces/settings__d
 const clockSurface = require('../src/product/frontend/surfaces/clock.json')
 
 assert.strictEqual(appListSurface.controller, null, 'static navigation catalog must not need a page-specific feature controller')
-assert.ok(appListSurface.modules.every(module => !module.bind || Object.keys(module.bind).length >= 0), 'AppList visual catalog belongs to JSON')
-assert.ok(settingsSurface.modules.some(module => module.actions && module.actions.tap === '/pages/settings/diagnostics'), 'Settings routes must be declared by the Surface')
+const appItems = appListSurface.experience.base.collection.items
+assert.ok(appItems.length && appItems.every(item => item.label && item.icon && item.action), 'AppList visual/navigation catalog belongs to JSON collection items')
+const settingsItems = settingsSurface.experience.base.collection.items
+assert.ok(settingsItems.some(item => item.action === '/pages/settings/diagnostics'), 'Settings routes must be declared by the Surface collection')
 assert.ok(notificationSurface.modules.some(module => module.actions && module.actions.tap === 'notification-demo:call'), 'Notification demo interactions must be declared by JSON')
 const capabilityModule = diagnosticsSurface.modules.filter(module => module.id === 'capabilities')[0]
 assert.ok(capabilityModule.props.fields.value.map.true && capabilityModule.props.fields.value.map.false, 'Diagnostics capability status copy/color must be JSON-owned')
-assert.ok(clockSurface.modules.some(module => module.id === 'sportTime') && clockSurface.modules.some(module => module.id === 'alpineTime'), 'Clock face expressions must be declared in one Surface JSON')
+const circleFaces = clockSurface.experience.circle.stage.variants
+const pillFaces = clockSurface.experience.pill.stage.variants
+const rectFaces = clockSurface.experience.rect.stage.variants
+assert.ok(circleFaces.sport && circleFaces.simple && circleFaces.dashboard && circleFaces.mechanical, 'Circle Clock compositions must be declared in Surface JSON')
+assert.ok(pillFaces.sport && pillFaces.simple && pillFaces.dashboard && pillFaces.alpine, 'Pill Clock compositions must be declared in Surface JSON')
+assert.ok(rectFaces.sport && rectFaces.simple && rectFaces.dashboard, 'Rect Clock compositions must be declared in Surface JSON')
 assert.ok(!registrySource.includes('#'), 'semantic controller registry must not own visual color tokens')
 
 Object.keys(manifest.router.pages).forEach(function (route) {
@@ -81,4 +88,4 @@ Object.keys(manifest.router.pages).forEach(function (route) {
   assert.ok(/"variants"\s*:/.test(source), route + ' must keep shape differences in JSON')
 })
 
-console.log('V3 truth contracts verified: business state remains semantic while copy, color, order and shape variants belong to Surface JSON')
+console.log('V3 truth contracts verified: business state remains semantic while copy, color, order, interaction catalogs and shape variants belong to Surface JSON')
