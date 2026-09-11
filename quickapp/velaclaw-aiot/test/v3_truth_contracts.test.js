@@ -39,6 +39,8 @@ assert.ok(!powerControllerSource.includes('evaluateIdle') && !powerControllerSou
 
 assert.ok(!clockControllerSource.includes('batteryPercent: 75'), 'Clock controller must not seed fabricated battery data')
 assert.ok(!clockControllerSource.includes('currentHeartRate: 88'), 'Clock controller must not seed fabricated heart-rate data')
+assert.ok(!clockControllerSource.includes('heartRateValues'), 'Clock controller must not copy an unconsumed heart-rate history window into every Surface state')
+assert.ok(!clockControllerSource.includes('faceIndex'), 'Clock controller must not emit an unconsumed face index when faceId is the authored Stage selector')
 assert.ok(!/batteryPercent:\s*\d+/.test(clockPageSource), 'Clock page must not seed fabricated battery data')
 assert.ok(!/currentHeartRate:\s*\d+/.test(clockPageSource), 'Clock page must not seed fabricated heart-rate data')
 assert.ok(clockControllerSource.includes('function requireFaceIds(ids)') && clockControllerSource.includes('faceIds = requireFaceIds(allowedFaceIds)'), 'Clock must validate allowed face IDs at configuration boundary')
