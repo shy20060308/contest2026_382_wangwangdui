@@ -1,6 +1,10 @@
 import workoutState from '../../../domain/workout/state_machine'
 import workoutRepository from '../../../domain/workout/repository'
 
+function persisted(result) {
+  return result === true || !!(result && result.persisted)
+}
+
 export default {
   getModeTypes: function () { return workoutState.getSupportedTypes() },
   hasActive: function (callback) {
@@ -10,6 +14,12 @@ export default {
   },
   create: function (type, callback) {
     var session = workoutState.start(type)
-    workoutRepository.saveActive(session, function () { if (callback) callback(session) })
+    workoutRepository.saveActive(session, function (result) {
+      if (!persisted(result)) {
+        workoutState.cancel()
+        return
+      }
+      if (callback) callback(session)
+    })
   }
 }
