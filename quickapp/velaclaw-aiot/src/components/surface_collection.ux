@@ -14,10 +14,10 @@
         <text class="selector-title" style="font-size: {{ model.tokens.titleSize }}px; color: {{ model.tokens.titleColor }}; font-weight: {{ model.tokens.titleWeight }};">{{ model.tokens.title }}</text>
         <text class="selector-back" style="font-size: {{ model.tokens.backSize }}px; color: {{ model.tokens.backColor }}; text-align: right;" @click="goBack">{{ model.tokens.backText }}</text>
       </div>
-      <swiper class="selector-swiper" index="{{ selectorIndex }}" indicator="{{ model.tokens.indicator }}" @change="onSelectorChange" style="left: {{ model.tokens.previewLeft }}px; top: {{ model.tokens.previewTop }}px; width: {{ model.tokens.previewWidth }}px; height: {{ model.tokens.previewHeight }}px;">
+      <swiper class="selector-swiper" index="{{ selectorIndex }}" indicator="{{ model.tokens.indicator }}" loop="false" @change="onSelectorChange" style="left: {{ model.tokens.previewLeft }}px; top: {{ model.tokens.previewTop }}px; width: {{ model.tokens.previewWidth }}px; height: {{ model.tokens.previewHeight }}px;">
         <div class="selector-slide" for="{{ model.items }}" tid="id" @click="activateItem($item)">
           <div class="circle-preview" style="width: {{ model.tokens.previewSize }}px; height: {{ model.tokens.previewSize }}px; border-radius: {{ model.tokens.previewRadius }}px; border-width: {{ model.tokens.previewBorderWidth }}px; background-color: {{ $item.background }}; border-color: {{ $item.accent }};">
-            <surfacepreview if="{{ $item.preview }}" model="{{ $item.preview }}"></surfacepreview>
+            <surfacepreview if="{{ $item.preview && $idx >= selectorIndex - 1 && $idx <= selectorIndex + 1 }}" model="{{ $item.preview }}"></surfacepreview>
           </div>
         </div>
       </swiper>
