@@ -69,7 +69,13 @@
       "type": "chart-card",
       "copy": { "title": "步数趋势", "caption": "近7日", "todayCompactLabel": "今", "todayLabel": "今天" },
       "bind": { "items": "records" },
-      "props": { "valueField": "steps", "labelField": "date", "valueFormat": "number", "labelFormat": "weekday-short" },
+      "props": {
+        "valueField": "steps",
+        "labelField": "date",
+        "valueFormat": "number",
+        "labelFormat": "weekday-index",
+        "labelMap": { "0": "日", "1": "一", "2": "二", "3": "三", "4": "四", "5": "五", "6": "六" }
+      },
       "tokens": {
         "flow": true,
         "marginTop": 6,
