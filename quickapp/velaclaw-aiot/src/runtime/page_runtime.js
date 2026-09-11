@@ -1,12 +1,14 @@
 import deviceProfile from './device_profile'
 var scene = require('../product/design/scene')
 
-function bind(page, callback) {
+function bind(page, callback, isCurrent) {
   if (!page) throw new Error('V3 Page Runtime requires a page instance')
   if (typeof callback !== 'function') throw new Error('V3 Page Runtime requires a resolve callback')
   deviceProfile.resolve(page, function (profile) {
+    if (typeof isCurrent === 'function' && !isCurrent()) return
     var host = scene.resolve(profile)
     var safe = scene.safe(profile, host)
+    if (typeof isCurrent === 'function' && !isCurrent()) return
 
     page.viewportClass = ''
     page.viewportPosition = 'absolute'
