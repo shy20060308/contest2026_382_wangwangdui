@@ -17,6 +17,12 @@ function initialState(surface) {
   return state
 }
 
+function copyObject(source) {
+  var result = {}
+  for (var key in (source || {})) result[key] = source[key]
+  return result
+}
+
 function requireSurface(surface) {
   if (!surface || typeof surface !== 'object' || Array.isArray(surface)) throw new Error('V3 Surface Page requires a page-local Surface JSON object')
   if (!surface.id || !surface.route || surface.renderer !== 'surface-v1') throw new Error('Invalid page-local V3 Surface')
@@ -37,9 +43,24 @@ function syncPlanContext(page) {
   var controllerId = page._surface ? page._surface.controller : null
   var routesEnabled = interactionPolicy.routeNavigationEnabled(controllerId, page._surfaceState || {})
   if (page.surfacePlan) {
-    page.surfacePlan.pageVisible = !!page._surfaceVisible
-    page.surfacePlan.interactionOwner = owner
-    if (page.surfacePlan.collection) page.surfacePlan.collection.active = !!page._surfaceVisible
+    var visible = !!page._surfaceVisible
+    if (page.surfacePlan.pageVisible !== visible) {
+      var nextPlan = copyObject(page.surfacePlan)
+      nextPlan.pageVisible = visible
+      nextPlan.interactionOwner = owner
+      if (page.surfacePlan.collection) {
+        nextPlan.collection = copyObject(page.surfacePlan.collection)
+        nextPlan.collection.active = visible
+      }
+      page.surfacePlan = nextPlan
+    } else {
+      page.surfacePlan.interactionOwner = owner
+      if (page.surfacePlan.collection && page.surfacePlan.collection.active !== visible) {
+        var nextCollection = copyObject(page.surfacePlan.collection)
+        nextCollection.active = visible
+        page.surfacePlan.collection = nextCollection
+      }
+    }
   }
   if (page._surfaceVisible && owner) navigationContext.set(owner, routesEnabled)
 }
