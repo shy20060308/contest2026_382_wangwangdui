@@ -62,5 +62,8 @@ assert.ok(controllerSource.includes('protocol.createTransfer(payload, 96)'), 'Sy
 assert.ok(controllerSource.includes('transfer.packetAt(index)'), 'Sync controller must materialize only the packet being sent')
 assert.ok(controllerSource.includes('workoutRepository.markAllSynced()'), 'Completion must persist synced flags without a second collection pass')
 assert.ok(!controllerSource.includes('markAllSynced(function'), 'Sync completion must not re-read Activity/History/Workout solely to refresh unchanged counts')
+const noPayloadIndex = controllerSource.indexOf('if (!callback) return')
+const healthPayloadIndex = controllerSource.indexOf('var health = healthStore.getSnapshot()')
+assert.ok(noPayloadIndex >= 0 && healthPayloadIndex > noPayloadIndex, 'Count-only refresh must emit counts before skipping Health/payload construction')
 
-console.log('Sync protocol verified: packets are materialized on demand and completion avoids redundant full recollection')
+console.log('Sync protocol verified: packets are lazy and count-only refresh avoids unnecessary payload work')
