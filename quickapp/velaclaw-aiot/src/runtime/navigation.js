@@ -12,6 +12,10 @@ function ownerKey(owner) { return owner || navigationContext.get() || 'global' }
 
 function push(path, params, owner) {
   if (!path) throw new Error('Navigation requires a target path')
+  if (!owner && !navigationContext.routesEnabled()) {
+    performanceMetrics.recordNavigationSuppressed()
+    return false
+  }
   return core.transition('push', path, params, ownerKey(owner), function () {
     router.push({ uri: path, params: params || {} })
   })
