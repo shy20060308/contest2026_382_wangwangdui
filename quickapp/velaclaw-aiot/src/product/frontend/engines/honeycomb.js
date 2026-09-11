@@ -1,6 +1,7 @@
-function number(value, fallback) {
+function requiredNumber(value, label) {
   var parsed = Number(value)
-  return isFinite(parsed) ? parsed : fallback
+  if (!isFinite(parsed)) throw new Error('Honeycomb requires numeric ' + label)
+  return parsed
 }
 
 function clamp(value, min, max) { return value < min ? min : value > max ? max : value }
@@ -8,32 +9,36 @@ function clamp01(value) { return clamp(value, 0, 1) }
 function smoothStep(value) { var t = clamp01(value); return t * t * (3 - 2 * t) }
 
 function config(tokens, width, height) {
-  var spacing = number(tokens.spacing, 46)
+  var source = tokens || {}
   return {
-    width: number(width, 192),
-    height: number(height, 192),
-    spacing: spacing,
-    rowHeight: number(tokens.rowHeight, Math.round(spacing * Math.sqrt(3) / 2)),
-    focusX: number(tokens.focusX, number(width, 192) / 2),
-    focusY: number(tokens.focusY, number(height, 192) * 0.47),
-    iconBase: number(tokens.iconBase, 34),
-    iconGrow: number(tokens.iconGrow, 16),
-    emphasisFalloff: number(tokens.emphasisFalloff, 60),
-    centerRadius: number(tokens.centerRadius, 27),
-    elasticBase: number(tokens.elasticBase, 0.94),
-    elasticRange: number(tokens.elasticRange, 0.06),
-    dragDamping: number(tokens.dragDamping, 0.92),
-    maxFrameDelta: number(tokens.maxFrameDelta, 24),
-    frameMs: number(tokens.frameMs, 24),
-    overscrollLimit: number(tokens.overscrollLimit, 30),
-    overscrollDamping: number(tokens.overscrollDamping, 0.34),
-    inertiaDecay: number(tokens.inertiaDecay, 0.86),
-    minVelocity: number(tokens.minVelocity, 0.025),
-    magnetDistance: number(tokens.magnetDistance, 22),
-    visibleMargin: number(tokens.visibleMargin, 42),
-    labelCenterY: number(tokens.labelCenterY, number(height, 192) * 0.875),
-    labelHalfHeight: number(tokens.labelHalfHeight, 9),
-    labelHalfWidth: number(tokens.labelHalfWidth, 43)
+    width: requiredNumber(width, 'viewport.width'),
+    height: requiredNumber(height, 'viewport.height'),
+    spacing: requiredNumber(source.spacing, 'spacing'),
+    rowHeight: requiredNumber(source.rowHeight, 'rowHeight'),
+    focusX: requiredNumber(source.focusX, 'focusX'),
+    focusY: requiredNumber(source.focusY, 'focusY'),
+    iconBase: requiredNumber(source.iconBase, 'iconBase'),
+    iconGrow: requiredNumber(source.iconGrow, 'iconGrow'),
+    radiusRatio: requiredNumber(source.radiusRatio, 'radiusRatio'),
+    emphasisFalloff: requiredNumber(source.emphasisFalloff, 'emphasisFalloff'),
+    opacityBase: requiredNumber(source.opacityBase, 'opacityBase'),
+    opacityEmphasis: requiredNumber(source.opacityEmphasis, 'opacityEmphasis'),
+    avoidanceOpacity: requiredNumber(source.avoidanceOpacity, 'avoidanceOpacity'),
+    elasticBase: requiredNumber(source.elasticBase, 'elasticBase'),
+    elasticRange: requiredNumber(source.elasticRange, 'elasticRange'),
+    elasticFalloff: requiredNumber(source.elasticFalloff, 'elasticFalloff'),
+    dragDamping: requiredNumber(source.dragDamping, 'dragDamping'),
+    maxFrameDelta: requiredNumber(source.maxFrameDelta, 'maxFrameDelta'),
+    frameMs: requiredNumber(source.frameMs, 'frameMs'),
+    overscrollLimit: requiredNumber(source.overscrollLimit, 'overscrollLimit'),
+    overscrollDamping: requiredNumber(source.overscrollDamping, 'overscrollDamping'),
+    inertiaDecay: requiredNumber(source.inertiaDecay, 'inertiaDecay'),
+    minVelocity: requiredNumber(source.minVelocity, 'minVelocity'),
+    magnetDistance: requiredNumber(source.magnetDistance, 'magnetDistance'),
+    visibleMargin: requiredNumber(source.visibleMargin, 'visibleMargin'),
+    labelCenterY: requiredNumber(source.labelCenterY, 'labelCenterY'),
+    labelHalfHeight: requiredNumber(source.labelHalfHeight, 'labelHalfHeight'),
+    labelHalfWidth: requiredNumber(source.labelHalfWidth, 'labelHalfWidth')
   }
 }
 
@@ -52,7 +57,8 @@ function axialPoint(q, r, cfg) {
 }
 
 function buildCoords(count, cfg) {
-  var wanted = Math.max(1, Math.floor(Number(count) || 1))
+  var wanted = Math.max(0, Math.floor(Number(count) || 0))
+  if (!wanted) return []
   var coords = [axialPoint(0, 0, cfg)]
   var ring = 1
   while (coords.length < wanted) {
@@ -99,7 +105,7 @@ function projectPoint(x, y, panX, panY, cfg) {
   var dx = centerX - cfg.focusX
   var dy = centerY - cfg.focusY
   var distance = Math.sqrt(dx * dx + dy * dy)
-  var elastic = cfg.elasticBase + clamp01(1 - distance / 90) * cfg.elasticRange
+  var elastic = cfg.elasticBase + clamp01(1 - distance / cfg.elasticFalloff) * cfg.elasticRange
   centerX = cfg.focusX + dx * elastic
   centerY = cfg.focusY + dy * elastic
   dx = centerX - cfg.focusX
@@ -128,9 +134,10 @@ function layoutSlots(slots, panX, panY, cfg) {
       icon: slot.icon,
       action: slot.action,
       accent: slot.accent,
+      sourceIndex: slot.sourceIndex,
       size: point.size,
-      radius: Math.round(point.size / 2),
-      opacity: (0.48 + point.emphasis * 0.52) * (1 - avoidance * 0.72),
+      radius: Math.round(point.size * cfg.radiusRatio),
+      opacity: (cfg.opacityBase + point.emphasis * cfg.opacityEmphasis) * (1 - avoidance * cfg.avoidanceOpacity),
       left: Math.round(point.centerX - point.size / 2),
       top: Math.round(point.centerY - point.size / 2),
       centerX: point.centerX,
