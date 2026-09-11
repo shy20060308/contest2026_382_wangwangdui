@@ -85,9 +85,11 @@ assert.ok(controller.includes("!snapshot.live || snapshot.source !== 'live'"), '
 assert.ok(controller.includes('heartRate.subscribe(onHeartRate)'), 'Workout must subscribe while active')
 assert.ok(controller.includes('heartRate.unsubscribe(onHeartRate)'), 'Workout must release the subscription when inactive')
 assert.ok(controller.includes('if (!restored)'), 'Invalid persisted workout state must be discarded, not repaired')
-assert.ok(page.includes("surfacePage.bind(this, 'workout')"), 'Workout UX must be a thin Surface host')
+assert.ok(page.includes("var surface = require('../../product/frontend/surfaces/workout.json')"), 'Workout UX must load its page-local declarative surface')
+assert.ok(page.includes('surfacePage.bind(this, surface)'), 'Workout UX must bind the page-local Surface through the generic runtime')
+assert.strictEqual((page.match(/surfacePage\.bind\(/g) || []).length, 1, 'Workout UX must bind exactly one declarative surface')
 assert.ok(!page.includes('status-chip') && !page.includes('heroBackground') && !page.includes('heartRateLabel'), 'Workout UX must not retain the old handcrafted presentation')
 assert.ok(surface.includes('"workout-toggle-pause"') && surface.includes('"workout-confirm-finish"'), 'Workout actions must be declared by the JSON surface')
 assert.ok(surface.includes('"running": { "text": "运动中"') && surface.includes('"paused": { "text": "已暂停"'), 'Workout status copy and colors must be JSON-owned')
 
-console.log('Workout experience verified: clean V3 persistence, official data and JSON-owned presentation')
+console.log('Workout experience verified: clean V3 persistence, official data and page-local JSON-owned presentation')
