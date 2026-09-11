@@ -13,6 +13,7 @@
     "controller": { "type": ["string", "null"], "pattern": "^[a-z][a-z0-9-]*$" },
     "modules": { "type": "array", "items": { "$ref": "#/$defs/module" } },
     "tokens": { "$ref": "#/$defs/tokenMap" },
+    "experience": { "$ref": "#/$defs/experience" },
     "variants": {
       "type": "object",
       "additionalProperties": false,
@@ -57,6 +58,25 @@
       "properties": {
         "tokens": { "$ref": "#/$defs/tokenMap" },
         "modules": { "type": "object", "additionalProperties": { "$ref": "#/$defs/tokenMap" } }
+      }
+    },
+    "experience": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "base": { "$ref": "#/$defs/experienceVariant" },
+        "circle": { "$ref": "#/$defs/experienceVariant" },
+        "pill": { "$ref": "#/$defs/experienceVariant" },
+        "rect": { "$ref": "#/$defs/experienceVariant" }
+      }
+    },
+    "experienceVariant": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "collection": { "type": "object" },
+        "sliders": { "type": "array", "items": { "type": "object" } },
+        "gestures": { "type": "object", "additionalProperties": { "type": "string" } }
       }
     }
   }
