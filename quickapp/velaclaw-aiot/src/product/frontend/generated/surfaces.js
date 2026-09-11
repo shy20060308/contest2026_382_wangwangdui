@@ -5,7 +5,6 @@
 var list = [
   require('../surfaces/applist.json'),
   require('../surfaces/clock.json'),
-  require('../surfaces/clock_guard.json'),
   require('../surfaces/heartrate.json'),
   require('../surfaces/history.json'),
   require('../surfaces/notification_demo.json'),
