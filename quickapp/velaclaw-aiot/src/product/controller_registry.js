@@ -239,7 +239,7 @@ function diagnostics(onChange) {
     state.ready = configured && !!latest.device && !!latest.host
     state.deviceOpen = state.ready && pageIndex === 0
     state.capabilitiesOpen = state.ready && pageIndex > 0
-    state.pageText = state.ready ? ((pageIndex + 1) + ' / ' + pageCount) : '读取中'
+    state.pageText = state.ready ? ((pageIndex + 1) + ' / ' + pageCount) : ''
     var capabilityPageIndex = Math.max(0, pageIndex - 1)
     state.capabilityPage = capabilities.slice(capabilityPageIndex * pageSize, capabilityPageIndex * pageSize + pageSize)
     if (typeof onChange === 'function') onChange(state)
