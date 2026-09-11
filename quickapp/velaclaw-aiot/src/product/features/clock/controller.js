@@ -25,7 +25,6 @@ export function createClockController(onChange, onNotification) {
     if (typeof onNotification === 'function') onNotification(state)
   })
   var state = {
-    faceIndex: 0,
     faceId: '',
     timestamp: Date.now(),
     batteryPercent: null,
@@ -39,7 +38,6 @@ export function createClockController(onChange, onNotification) {
 
   function snapshot() {
     return {
-      faceIndex: state.faceIndex,
       faceId: state.faceId,
       timestamp: state.timestamp,
       batteryPercent: state.batteryPercent,
@@ -61,7 +59,6 @@ export function createClockController(onChange, onNotification) {
   function applyFace(id) {
     selectedFaceId = requireAllowedFace(faceIds, id)
     state.faceId = selectedFaceId
-    state.faceIndex = faceIds.indexOf(selectedFaceId)
   }
 
   function applyActivity(activity) {
