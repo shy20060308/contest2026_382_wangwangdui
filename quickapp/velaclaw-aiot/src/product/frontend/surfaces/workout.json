@@ -70,7 +70,7 @@
         "stateMap": {
           "locating": { "text": "正在定位", "color": "#8E8E93", "background": "#10151A" },
           "active": { "text": "GPS 已定位", "color": "#64D2FF", "background": "#10151A" },
-          "unavailable": { "text": "GPS 不可用 · 步幅估算", "color": "#FF9F0A", "background": "#10151A" },
+          "unavailable": { "text": "GPS 不可用 · 距离暂无", "color": "#FF9F0A", "background": "#10151A" },
           "paused": { "text": "GPS 已暂停", "color": "#8E8E93", "background": "#19170F" }
         }
       },
@@ -189,7 +189,7 @@
       "id": "confirmCard",
       "type": "button",
       "visibleWhen": "confirming",
-      "copy": { "title": "结束本次运动？", "subtitle": "记录会保存并计入今日活动和 7 日趋势。" },
+      "copy": { "title": "结束本次运动？", "subtitle": "保存可确认的数据；未接入的指标会显示为暂无。" },
       "tokens": {
         "flow": true,
         "marginTop": 34,
