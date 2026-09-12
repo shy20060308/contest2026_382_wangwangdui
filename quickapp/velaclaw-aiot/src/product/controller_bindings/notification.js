@@ -1,7 +1,13 @@
-import { createNotificationController } from '../features/notification/controller'
 import { copyState } from './shared'
 
+function notificationControllerFactory() {
+  var feature = require('../features/notification/controller')
+  if (!feature || typeof feature.createNotificationController !== 'function') throw new Error('Notification feature controller module unavailable')
+  return feature.createNotificationController
+}
+
 function create(onChange) {
+  var createNotificationController = notificationControllerFactory()
   var controller = createNotificationController(function (model) {
     var state = model || {}
     var visible = !!state.visible
