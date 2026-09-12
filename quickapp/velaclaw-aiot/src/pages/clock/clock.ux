@@ -1,4 +1,4 @@
-<import name="surfacehost" src="../../components/surface_host.ux"></import>
+<import name="surfacehost" src="../../components/surface_host_stage.ux"></import>
 <template><surfacehost if="{{ surfaceReady }}" plan="{{ surfacePlan }}" @surfaceaction="onSurfaceAction"></surfacehost></template>
 <script>
 import surfacePage from '../../runtime/surface_page'
