@@ -2,35 +2,84 @@
 
 **English** | [简体中文](../README.md)
 
-`vela_band` is a Xiaomi Vela Quick App reference project for smart bands and watches. The current implementation is built around the **V2 Design Engine + Capability Runtime** and supports pill, circular, and rectangular wearable form factors in one RPK.
+`vela_band` is a Xiaomi Vela Quick App reference for wearable products. V2.5 evolves the V2.4 engineering base with a stronger multi-form-factor design model, clearer native capability boundaries, stricter lifecycle ownership, truthful health-data presentation, and a design toolchain that shares runtime layout semantics.
 
-> This project is intended for contest demos, architecture validation, and wearable UI exploration. It is not medical software or production firmware. When a health capability is unavailable, the app may fall back to clearly labelled demo data.
+The application targets pill, circular, and rectangular wearable displays in one codebase. It is intended for contest demonstration, wearable UI research, and engineering practice. It is not medical software. Health values are shown as system-backed data only when trustworthy samples are available; missing samples remain visibly unavailable or pending.
 
-The frozen checkpoint before the next feature/UX phase is documented in [V2 Stable Baseline](STABLE_BASELINE_V2.md).
+## Capabilities
 
-## Current capabilities
-
-| Area | Current implementation |
+| Area | Implementation |
 | --- | --- |
-| Watchfaces | Multiple faces, persistence, circular mechanical face, pill Alpine face, selector |
-| Launcher | Circle honeycomb, pill paged list, rectangular grid |
-| Health | Heart rate, SpO2, stress, window trends and capability fallback |
-| History | Seven-day trends with shape-specific L2 compositions |
-| Workout | Walk/run, pause/resume, workout history, location when available |
-| Today | Date, lunar calendar, health summary and circular month calendar |
-| Notifications | Local/event-based call, SMS and app notification demos |
-| Sync | Protocol, chunking, ACK, progress and mock transport |
-| Power | ACTIVE / DIM / SLEEP and raise-to-wake demo |
-| Settings | Sync, vibration, brightness, motion diagnostics, device diagnostics and paging |
+| Watchfaces | Multiple persisted faces with form-factor-specific compositions |
+| Launcher | Honeycomb on Circle and Rect, vertical paged list on Pill |
+| Health | Heart rate, SpO2, stress, source state, and real persisted history |
+| Activity | Daily metrics, goals, and seven-day trends |
+| Workout | Walk/run sessions, pause/resume, recovery, location distance, official heart rate, and history |
+| Today | Date, calendar, and health summaries with shape-aware density |
+| Notifications | Local call, message, and application-notification presentation paths |
+| Sync | Business payloads, packet sequencing, ACK progress, and a replaceable transport boundary |
+| Settings | Brightness, vibration, motion diagnostics, sync, and device information |
+| Power | ACTIVE, DIM, SLEEP state handling and resource release |
 
-## Requirements
+`src/manifest.json` registers 20 application routes and declares the system capabilities used by the project.
 
-- Node.js 18+
-- npm
-- AIoT-IDE or compatible Vela Quick App tooling
-- A compatible Vela emulator/device
+## Architecture
 
-## Quick start
+```text
+Vela Native APIs
+      ↓
+Capability Adapters
+      ↓
+Domain State and Persistence
+      ↓
+Feature Controllers
+      ↓
+Design Specs and Design Views
+      ↓
+Shape-aware Scene and Adapter
+      ↓
+Vela Pages
+```
+
+V2.5 keeps the existing `src/v2` namespace to avoid a cosmetic source migration. Native APIs live behind `src/capabilities`, domain facts and state machines live in `src/domain`, and the `src/v2` tree owns application runtime, features, design, and device profiles.
+
+Business semantics are shared; shape-specific composition stays in the Design layer. Pages remain responsible for Vela lifecycle and event binding rather than duplicating business calculations.
+
+See [Architecture](ARCHITECTURE.md).
+
+## Shape-native design
+
+V2.5 uses three design-freedom levels:
+
+- **L1 Auto** for ordinary settings, lists, and straightforward controls.
+- **L2 Assisted** for shared semantics that need different compositions on Circle, Pill, and Rect.
+- **L3 Free** for watchfaces, honeycomb launchers, and other interaction-heavy surfaces.
+
+A full Scene and safe semantic content are treated separately. Decorative layers may use the complete display while text, metrics, and controls remain chord-aware or gesture-aware.
+
+See [Design System](DESIGN_SYSTEM.md).
+
+## Engineering highlights
+
+The project combines several ideas that are implemented in the repository rather than described only as concepts:
+
+- one semantic application core with shape-native visual composition;
+- explicit L1/L2/L3 design freedom instead of unlimited responsive exceptions;
+- Design Specs for geometry and Design Views for display-ready semantics;
+- a local Layout Studio that reuses project Scene and Adapter logic;
+- provenance-aware health and workout heart-rate presentation;
+- explicit ownership and release of health, sensor, location, timer, and event resources;
+- quality gates for architecture, interaction, visual contracts, data truthfulness, persistence, power behavior, text fit, and page bundle size.
+
+See [Innovations](INNOVATIONS.md).
+
+## Getting started
+
+Requirements:
+
+- Node.js 18 or newer;
+- npm;
+- a compatible Xiaomi Vela Quick App development environment.
 
 ```bash
 npm ci
@@ -38,113 +87,58 @@ npm run check
 npm run build
 ```
 
-The default debug artifact is:
-
-```text
-dist/com.application.watch.demo.debug.1.0.0.rpk
-```
-
-Development watch mode:
+Development mode:
 
 ```bash
 npm run start
 ```
 
-See [Compatibility](COMPATIBILITY.md) for emulator and capability differences.
+Release build:
 
-## V2 architecture
-
-```text
-Vela Native APIs
-      ↓
-Capability Runtime
-      ↓
-Domain / State Machines
-      ↓
-V2 Feature Controllers
-      ↓
-V2 Design Specs + Design Views
-      ↓
-Full-bleed Design Scene
-      ↓
-Pages
+```bash
+npm run release
 ```
 
-Key source directories:
+Layout tooling:
+
+```bash
+npm run studio
+```
+
+`npm run check` is a repository contract suite, not a replacement for simulator or device smoke testing. Gesture behavior, absolute geometry, native feature availability, and lifecycle-sensitive changes still require runtime validation.
+
+## Repository structure
 
 ```text
 src/
-├── capabilities/          # Native Vela capability gateways
-├── domain/                # Business state, persistence and state machines
+├── capabilities/       # Vela native capability adapters
+├── domain/             # state, persistence, and domain state machines
 ├── v2/
-│   ├── app/               # Page runtime, navigation and routes
-│   ├── features/          # Application-level controllers
-│   ├── design/            # Scene, geometry, specs, views and engines
-│   └── system/            # Device profile and system facade
-├── components/watchfaces/
-└── pages/
+│   ├── app/            # application runtime and navigation
+│   ├── features/       # feature controllers
+│   ├── design/         # Scene, Adapter, specs, views, and layouts
+│   └── system/         # device profiles and system facade
+├── pages/              # Vela pages and lifecycle binding
+└── components/         # reusable components
+
+tools/layout-studio/    # local visual layout tool
+scripts/                # build and verification utilities
+test/                   # contract and pure-logic tests
+docs/                   # maintained project documentation
 ```
 
-Legacy/reference directories such as `src/common` and the earlier `src/presentation` tree may remain for project history, compatibility references, or assets. New V2 pages must not reintroduce legacy common code-module dependencies.
+`src/common` and `src/presentation` still contain compatibility code or resources. New work should prefer the Capability → Domain → Feature → Design → Page dependency direction.
 
-Normative documents:
+## Documentation
 
-- [V2 Stable Architecture](REWRITE_V2_ARCHITECTURE.md)
-- [Wearable Design Engine](DESIGN_ENGINE.md)
-- [V2 Stable Baseline](STABLE_BASELINE_V2.md)
+- [Architecture](ARCHITECTURE.md)
+- [Design System](DESIGN_SYSTEM.md)
+- [Innovations](INNOVATIONS.md)
+- [Layout Studio](LAYOUT_STUDIO.md)
+- [Workout and Sync](WORKOUT_AND_SYNC.md)
 - [Compatibility](COMPATIBILITY.md)
+- [Contributing](../CONTRIBUTING.md)
 
-## Design Freedom
+## License
 
-V2 uses three design freedom levels:
-
-- **L1 Auto** — ordinary settings, details and paged lists;
-- **L2 Assisted** — health, history and workout surfaces that share semantics but benefit from shape-specific composition;
-- **L3 Free** — watchfaces, honeycomb launchers and strongly art-directed surfaces.
-
-The stable shape language is:
-
-- **Circle** — use the circular canvas and chord-aware placement rather than shrinking the entire page into a small inscribed rectangle;
-- **Pill** — use the long vertical axis and horizontal comparisons where narrow seven-column charts become cramped;
-- **Rect** — use wider dashboard/grid compositions.
-
-History is the reference L2 example: Circle uses compact tracked bars, Pill uses a vertical comparative trend with full numeric values, and Rect uses a dashboard.
-
-## Full-bleed Scene and safe content
-
-The stable V2 contract separates scene coverage from foreground safety:
-
-1. The Design Scene starts at `(0, 0)` and covers the complete logical/physical projection.
-2. Background/watchface layers may render full-bleed.
-3. Safe geometry controls semantic content placement; it does not crop the whole page.
-4. Circular pages use chord-aware geometry.
-5. Full-page wrappers with absolutely positioned children must still have explicit scene dimensions to avoid zero-height black screens on Vela.
-
-## Interaction contract
-
-Clock is the single owner of watchface navigation gestures. Native swipe and a raw-touch compatibility fallback may coexist only under that same owner when required by beta runtimes. Nested components must not create competing navigation owners.
-
-Settings supports both left/right swipe and visible paging arrows; both inputs update the same page state.
-
-## Lifecycle contract
-
-Resource lifetime is part of the stable product behavior:
-
-- health subscriptions stay active only while needed;
-- pausing a workout releases its 1 Hz tick and location resources;
-- hidden/destroyed pages stop transient listeners and timers;
-- sleep may suspend expensive live capabilities and restore them after wake.
-
-Visual redesigns must preserve these guarantees.
-
-## Quality gate
-
-`npm run check` currently runs lint plus V2 scene, architecture, runtime, visual, interaction and Design View contracts, followed by capability, power, health, activity, settings, motion, haptics, calendar, analog, honeycomb and documentation checks.
-
-Changes to Scene geometry, gesture ownership, absolute layout, watchfaces or form-factor-specific compositions still require simulator/device smoke testing even after static checks pass.
-
-## Stable checkpoint and next phase
-
-The baseline recorded on 2026-09-04 passed the complete local project check and the key pill/circle/rect interaction smoke tests according to the project maintainer. It is intended to be merged to the default branch as the recovery point before the next feature/UX phase.
-
-The next planned phase is **L2 Design System v2.1**: consolidate proven Circle/Pill/Rect patterns into reusable design primitives without reopening a broad Host Scene/Runtime rewrite.
+Source code is distributed under the Apache License 2.0. See [LICENSE](../LICENSE) and [NOTICE](../NOTICE).
