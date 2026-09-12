@@ -12,7 +12,7 @@
 
         <div class="summary-row" style="width: {{ streamWidth }}px; height: {{ summaryRowHeight }}px; margin-top: {{ cardGap }}px;">
           <div class="summary-card" style="width: {{ summaryWidth }}px; height: {{ summaryHeight }}px; padding: {{ summaryPaddingY }}px {{ summaryPaddingX }}px; border-radius: {{ cardRadius }}px;"><text class="summary-label" style="font-size: {{ summaryLabelSize }}px;">今日步数</text><text class="summary-value yellow" style="font-size: {{ summaryValueSize }}px;">{{ todayStepsText }}</text></div>
-          <div class="summary-card" style="width: {{ summaryWidth }}px; height: {{ summaryHeight }}px; padding: {{ summaryPaddingY }}px {{ summaryPaddingX }}px; border-radius: {{ cardRadius }}px;"><text class="summary-label" style="font-size: {{ summaryLabelSize }}px;">日均步数</text><text class="summary-value blue" style="font-size: {{ summaryValueSize }}px;">{{ avgStepsText }}</text></div>
+          <div class="summary-card" style="width: {{ summaryWidth }}px; height: {{ summaryHeight }}px; padding: {{ summaryPaddingY }}px {{ summaryPaddingX }}px; margin-left: {{ summaryGap }}px; border-radius: {{ cardRadius }}px;"><text class="summary-label" style="font-size: {{ summaryLabelSize }}px;">日均步数</text><text class="summary-value blue" style="font-size: {{ summaryValueSize }}px;">{{ avgStepsText }}</text></div>
         </div>
 
         <div class="trend-card {{ trendMode }}" style="width: {{ trendWidth }}px; height: {{ trendHeight }}px; padding: {{ trendPaddingY }}px {{ trendPaddingX }}px; margin-top: {{ cardGap }}px; border-radius: {{ cardRadius }}px;">
@@ -34,8 +34,8 @@
 
         <div class="insight-row" style="width: {{ streamWidth }}px; height: {{ insightRowHeight }}px; margin-top: {{ cardGap }}px;">
           <div class="insight-card" style="width: {{ insightWidth }}px; height: {{ insightHeight }}px; padding: {{ insightPadding }}px; border-radius: {{ cardRadius }}px;"><text class="insight-label" style="font-size: {{ insightLabelSize }}px;">最佳</text><text class="insight-value" style="font-size: {{ insightValueSize }}px;">{{ bestStepsText }}</text><text class="insight-detail">{{ bestDayText }}</text></div>
-          <div class="insight-card" style="width: {{ insightWidth }}px; height: {{ insightHeight }}px; padding: {{ insightPadding }}px; border-radius: {{ cardRadius }}px;"><text class="insight-label" style="font-size: {{ insightLabelSize }}px;">平均心率</text><text class="insight-value heart" style="font-size: {{ insightValueSize }}px;">{{ avgHeartText }}</text><text class="insight-detail">7日</text></div>
-          <div class="insight-card" style="width: {{ insightWidth }}px; height: {{ insightHeight }}px; padding: {{ insightPadding }}px; border-radius: {{ cardRadius }}px;"><text class="insight-label" style="font-size: {{ insightLabelSize }}px;">今日达成</text><text class="insight-value yellow" style="font-size: {{ insightValueSize }}px;">{{ goalText }}</text><text class="insight-detail">目标</text></div>
+          <div class="insight-card" style="width: {{ insightWidth }}px; height: {{ insightHeight }}px; padding: {{ insightPadding }}px; margin-left: {{ insightGap }}px; border-radius: {{ cardRadius }}px;"><text class="insight-label" style="font-size: {{ insightLabelSize }}px;">平均心率</text><text class="insight-value heart" style="font-size: {{ insightValueSize }}px;">{{ avgHeartText }}</text><text class="insight-detail">7日</text></div>
+          <div class="insight-card" style="width: {{ insightWidth }}px; height: {{ insightHeight }}px; padding: {{ insightPadding }}px; margin-left: {{ insightGap }}px; border-radius: {{ cardRadius }}px;"><text class="insight-label" style="font-size: {{ insightLabelSize }}px;">今日达成</text><text class="insight-value yellow" style="font-size: {{ insightValueSize }}px;">{{ goalText }}</text><text class="insight-detail">目标</text></div>
         </div>
       </scroll>
     </stack>
@@ -55,10 +55,10 @@ export default {
     streamLeft: 28, streamTop: 24, streamWidth: 136, streamHeight: 158, headerWidth: 128, headerHeight: 26,
     titleWidth: 78, goalWidth: 42, titleSize: 13, subtitleSize: 6, goalSize: 13, titleLineHeight: 17, subtitleLineHeight: 9, goalLineHeight: 17,
     cardGap: 4, cardRadius: 15,
-    summaryRowHeight: 38, summaryWidth: 51, summaryHeight: 26, summaryPaddingX: 7, summaryPaddingY: 6, summaryLabelSize: 6, summaryValueSize: 13,
+    summaryRowHeight: 38, summaryGap: 4, summaryWidth: 51, summaryHeight: 26, summaryPaddingX: 7, summaryPaddingY: 6, summaryLabelSize: 6, summaryValueSize: 13,
     trendWidth: 110, trendHeight: 56, trendPaddingX: 7, trendPaddingY: 6, trendHeadHeight: 12, trendTitleSize: 8, trendCaptionSize: 5,
     columnTrackHeight: 30, columnCellWidth: 15, columnBarWidth: 7, columnLabelSize: 5, columnLabelLineHeight: 8,
-    insightRowHeight: 36, insightWidth: 32, insightHeight: 26, insightPadding: 5, insightLabelSize: 5, insightValueSize: 8,
+    insightRowHeight: 36, insightGap: 4, insightWidth: 32, insightHeight: 26, insightPadding: 5, insightLabelSize: 5, insightValueSize: 8,
     sceneWidth: 192, sceneHeight: 192, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%',
     todayStepsText: '0', avgStepsText: '0', bestStepsText: '0', bestDayText: '--', avgHeartText: '--', goalText: '0%', bars: []
   },
@@ -72,10 +72,10 @@ export default {
       self.headerWidth = plan.headerWidth; self.headerHeight = plan.headerHeight; self.titleWidth = plan.titleWidth; self.goalWidth = plan.goalWidth
       self.titleSize = plan.titleSize; self.subtitleSize = plan.subtitleSize; self.goalSize = plan.goalSize; self.titleLineHeight = plan.titleLineHeight; self.subtitleLineHeight = plan.subtitleLineHeight; self.goalLineHeight = plan.goalLineHeight
       self.cardGap = plan.cardGap; self.cardRadius = plan.cardRadius
-      self.summaryRowHeight = plan.summaryRowHeight; self.summaryWidth = plan.summaryWidth; self.summaryHeight = plan.summaryHeight; self.summaryPaddingX = plan.summaryPaddingX; self.summaryPaddingY = plan.summaryPaddingY; self.summaryLabelSize = plan.summaryLabelSize; self.summaryValueSize = plan.summaryValueSize
+      self.summaryRowHeight = plan.summaryRowHeight; self.summaryGap = plan.summaryGap; self.summaryWidth = plan.summaryWidth; self.summaryHeight = plan.summaryHeight; self.summaryPaddingX = plan.summaryPaddingX; self.summaryPaddingY = plan.summaryPaddingY; self.summaryLabelSize = plan.summaryLabelSize; self.summaryValueSize = plan.summaryValueSize
       self.trendWidth = plan.trendWidth; self.trendHeight = plan.trendHeight; self.trendPaddingX = plan.trendPaddingX; self.trendPaddingY = plan.trendPaddingY; self.trendHeadHeight = plan.trendHeadHeight; self.trendTitleSize = plan.trendTitleSize; self.trendCaptionSize = plan.trendCaptionSize
       self.columnTrackHeight = plan.chartHeight; self.columnCellWidth = plan.columnCellWidth; self.columnBarWidth = plan.columnBarWidth; self.columnLabelSize = plan.columnLabelSize; self.columnLabelLineHeight = plan.columnLabelLineHeight
-      self.insightRowHeight = plan.insightRowHeight; self.insightWidth = plan.insightWidth; self.insightHeight = plan.insightHeight; self.insightPadding = plan.insightPadding; self.insightLabelSize = plan.insightLabelSize; self.insightValueSize = plan.insightValueSize
+      self.insightRowHeight = plan.insightRowHeight; self.insightGap = plan.insightGap; self.insightWidth = plan.insightWidth; self.insightHeight = plan.insightHeight; self.insightPadding = plan.insightPadding; self.insightLabelSize = plan.insightLabelSize; self.insightValueSize = plan.insightValueSize
       self.ready = true; self.controller.load()
     })
   },
@@ -93,7 +93,8 @@ export default {
 .history-scene, .history-stream { position: absolute; }
 .history-stream { flex-direction: column; align-items: center; padding-bottom: 18px; }
 .history-head { flex-direction: column; }
-.history-title-row, .summary-row, .insight-row, .trend-head, .row-item { flex-direction: row; justify-content: space-between; align-items: center; }
+.history-title-row, .trend-head, .row-item { flex-direction: row; justify-content: space-between; align-items: center; }
+.summary-row, .insight-row { flex-direction: row; justify-content: center; align-items: center; }
 .history-title { color: #FFFFFF; font-weight: bold; lines: 1; }
 .history-subtitle, .trend-caption, .summary-label, .insight-label, .insight-detail { color: #8E8E93; }
 .history-subtitle { lines: 1; }
