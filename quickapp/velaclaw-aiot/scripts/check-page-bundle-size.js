@@ -8,6 +8,7 @@ const candidates = [
 ]
 const hardLimit = 1024 * 1024
 const softLimit = 900 * 1024
+const inlineMapMarker = '//# sourceMappingURL=data:'
 
 function filesUnder(dir, out) {
   out = out || []
@@ -41,19 +42,27 @@ if (!files.length) {
 
 files.sort(function (a, b) { return b.size - a.size })
 const failures = []
-console.log('V3 page JavaScript bundle budget (hard limit 1024 KiB)')
+console.log('V3 page JavaScript bundle budget (hard limit 1024 KiB; inline source maps forbidden)')
 console.log('Bundle root: ' + pagesRoot)
 files.forEach(function (entry) {
   const relative = path.relative(root, entry.file).split(path.sep).join('/')
+  const source = fs.readFileSync(entry.file, 'utf8')
+  const inlineIndex = source.lastIndexOf(inlineMapMarker)
+  const hasInlineMap = inlineIndex >= 0
+  const inlineBytes = hasInlineMap ? Buffer.byteLength(source.slice(inlineIndex), 'utf8') : 0
+  const executableBytes = entry.size - inlineBytes
   const kib = (entry.size / 1024).toFixed(1)
-  const label = entry.size > hardLimit ? 'FAIL' : (entry.size > softLimit ? 'WARN' : 'OK  ')
-  console.log(label + '  ' + kib + ' KiB  ' + relative)
+  const executableKib = (executableBytes / 1024).toFixed(1)
+  const label = (entry.size > hardLimit || hasInlineMap) ? 'FAIL' : (entry.size > softLimit ? 'WARN' : 'OK  ')
+  const mapNote = hasInlineMap ? '  inline-map=' + (inlineBytes / 1024).toFixed(1) + ' KiB; executable=' + executableKib + ' KiB' : ''
+  console.log(label + '  ' + kib + ' KiB  ' + relative + mapNote)
+  if (hasInlineMap) failures.push(relative + ' embeds a base64 inline source map (' + inlineBytes + ' bytes)')
   if (entry.size > hardLimit) failures.push(relative + ' = ' + entry.size + ' bytes')
 })
 
 if (failures.length) {
-  console.error('\nPage JavaScript files above the simulator 1 MiB single-file limit:')
+  console.error('\nPage JavaScript bundle violations:')
   failures.forEach(function (failure) { console.error('- ' + failure) })
   process.exit(1)
 }
-console.log('\nPage bundle budget verified: ' + files.length + ' page JS files are <= 1024 KiB')
+console.log('\nPage bundle budget verified: ' + files.length + ' page JS files are <= 1024 KiB and contain no inline source maps')
