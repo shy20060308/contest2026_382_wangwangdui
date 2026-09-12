@@ -1,0 +1,130 @@
+<import name="surfacestage" src="./surface_stage.ux"></import>
+
+<template>
+  <stack class="surface-host" style="width: {{ plan.sceneWidth }}px; height: {{ plan.sceneHeight }}px; background-color: {{ plan.background }};" @swipe="onSwipe" @longpress="onLongPress">
+    <stack class="surface-scene" style="width: {{ plan.sceneWidth }}px; height: {{ plan.sceneHeight }}px; background-color: {{ plan.background }};">
+      <text class="surface-header" for="{{ plan.headers }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; line-height: {{ $item.frame.height }}px; font-size: {{ $item.tokens.fontSize }}px; color: {{ $item.tokens.foreground }}; font-weight: {{ $item.tokens.fontWeight }}; text-align: {{ $item.tokens.textAlign }};">{{ $item.copy.text }}</text>
+
+      <text class="surface-text" for="{{ plan.texts }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; line-height: {{ $item.tokens.lineHeight }}px; font-size: {{ $item.tokens.fontSize }}px; color: {{ $item.tokens.foreground }}; font-weight: {{ $item.tokens.fontWeight }}; text-align: {{ $item.tokens.textAlign }};">{{ $item.text }}</text>
+
+      <div class="surface-button" for="{{ plan.buttons }}" tid="id" @click="activate($item.action)" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.radius }}px; padding-left: {{ $item.tokens.paddingX }}px; padding-right: {{ $item.tokens.paddingX }}px; background-color: {{ $item.tokens.background }};">
+        <text class="surface-button-title" style="font-size: {{ $item.tokens.titleSize }}px; color: {{ $item.tokens.titleColor }}; font-weight: {{ $item.tokens.titleWeight }};">{{ $item.copy.title }}</text>
+        <text class="surface-button-subtitle" style="font-size: {{ $item.tokens.subtitleSize }}px; color: {{ $item.tokens.subtitleColor }};">{{ $item.copy.subtitle }}</text>
+      </div>
+
+      <scroll class="surface-metric-list" if="{{ plan.metricList }}" scroll-y="true" style="left: {{ plan.metricList.frame.left }}px; top: {{ plan.metricList.frame.top }}px; width: {{ plan.metricList.frame.width }}px; height: {{ plan.metricList.frame.height }}px;">
+        <div class="surface-metric-card" for="{{ plan.metricList.items }}" tid="id" style="width: {{ plan.metricList.frame.width }}px; min-height: {{ plan.metricList.tokens.itemHeight }}px; margin-bottom: {{ plan.metricList.tokens.itemGap }}px; border-radius: {{ plan.metricList.tokens.itemRadius }}px; padding: {{ plan.metricList.tokens.itemPadding }}px; background-color: {{ plan.metricList.tokens.itemBackground }};">
+          <div class="surface-metric-head" style="height: {{ plan.metricList.tokens.headHeight }}px;">
+            <text class="surface-metric-name" style="font-size: {{ plan.metricList.tokens.labelSize }}px; color: {{ $item.accent }}; font-weight: {{ plan.metricList.tokens.labelWeight }};">{{ $item.name }}</text>
+            <text class="surface-metric-progress" style="font-size: {{ plan.metricList.tokens.progressTextSize }}px; color: {{ $item.accent }}; font-weight: {{ plan.metricList.tokens.progressWeight }};">{{ $item.progressText }}</text>
+          </div>
+          <div class="surface-metric-value-row" style="height: {{ plan.metricList.tokens.valueRowHeight }}px;">
+            <text class="surface-metric-value" style="font-size: {{ plan.metricList.tokens.valueSize }}px; color: {{ $item.accent }}; font-weight: {{ plan.metricList.tokens.valueWeight }};">{{ $item.current }}</text>
+            <text class="surface-metric-unit" style="font-size: {{ plan.metricList.tokens.unitSize }}px; margin-left: {{ plan.metricList.tokens.unitGap }}px; margin-bottom: {{ plan.metricList.tokens.unitBottom }}px; color: {{ plan.metricList.tokens.secondaryColor }};">{{ $item.unit }}</text>
+          </div>
+          <div class="surface-progress-track" style="width: {{ $item.trackWidth }}px; height: {{ plan.metricList.tokens.trackHeight }}px; border-radius: {{ plan.metricList.tokens.trackRadius }}px; margin-top: {{ plan.metricList.tokens.progressGap }}px; background-color: {{ plan.metricList.tokens.trackBackground }};">
+            <div class="surface-progress-fill" style="width: {{ $item.progressWidth }}px; height: {{ plan.metricList.tokens.trackHeight }}px; border-radius: {{ plan.metricList.tokens.trackRadius }}px; background-color: {{ $item.accent }};"></div>
+          </div>
+          <div class="surface-metric-foot" style="width: {{ $item.trackWidth }}px; height: {{ plan.metricList.tokens.footHeight }}px; margin-top: {{ plan.metricList.tokens.footTop }}px;">
+            <text class="surface-metric-goal" style="font-size: {{ plan.metricList.tokens.footerSize }}px; color: {{ plan.metricList.tokens.secondaryColor }};">{{ $item.goalText }}</text>
+            <text class="surface-metric-status" style="font-size: {{ plan.metricList.tokens.footerSize }}px; color: {{ $item.statusColor }};">{{ $item.statusText }}</text>
+          </div>
+        </div>
+      </scroll>
+
+      <scroll class="surface-flow" if="{{ plan.stream }}" scroll-y="true" style="left: {{ plan.stream.left }}px; top: {{ plan.stream.top }}px; width: {{ plan.stream.width }}px; height: {{ plan.stream.height }}px;">
+        <stack class="surface-flow-content" style="width: {{ plan.stream.width }}px; height: {{ plan.flowContentHeight }}px;">
+          <div class="flow-header" for="{{ plan.flowHeaders }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px;">
+            <div class="flow-header-row" style="height: {{ $item.tokens.titleLineHeight }}px;">
+              <text class="flow-header-title" style="width: {{ $item.tokens.titleWidth }}px; height: {{ $item.tokens.titleLineHeight }}px; line-height: {{ $item.tokens.titleLineHeight }}px; font-size: {{ $item.tokens.titleSize }}px; color: {{ $item.tokens.titleColor }}; font-weight: {{ $item.tokens.titleWeight }};">{{ $item.title }}</text>
+              <text class="flow-header-trailing" style="width: {{ $item.tokens.trailingWidth }}px; height: {{ $item.tokens.titleLineHeight }}px; line-height: {{ $item.tokens.titleLineHeight }}px; font-size: {{ $item.tokens.trailingSize }}px; color: {{ $item.trailingColor }}; font-weight: {{ $item.tokens.trailingWeight }}; text-align: right;">{{ $item.trailing }}</text>
+            </div>
+            <div class="flow-header-row" style="height: {{ $item.tokens.subtitleLineHeight }}px;">
+              <text class="flow-header-subtitle" style="width: {{ $item.tokens.subtitleWidth }}px; height: {{ $item.tokens.subtitleLineHeight }}px; line-height: {{ $item.tokens.subtitleLineHeight }}px; font-size: {{ $item.tokens.subtitleSize }}px; color: {{ $item.tokens.subtitleColor }};">{{ $item.subtitle }}</text>
+              <text class="flow-header-subtitle-trailing" style="width: {{ $item.tokens.subtitleTrailingWidth }}px; height: {{ $item.tokens.subtitleLineHeight }}px; line-height: {{ $item.tokens.subtitleLineHeight }}px; font-size: {{ $item.tokens.subtitleTrailingSize }}px; color: {{ $item.subtitleTrailingColor }}; text-align: right;">{{ $item.subtitleTrailing }}</text>
+            </div>
+          </div>
+
+          <text class="flow-text" for="{{ plan.flowTexts }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; line-height: {{ $item.tokens.lineHeight }}px; font-size: {{ $item.tokens.fontSize }}px; color: {{ $item.tokens.foreground }}; text-align: {{ $item.tokens.textAlign }};">{{ $item.text }}</text>
+
+          <div class="flow-button" for="{{ plan.flowButtons }}" tid="id" @click="activate($item.action)" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.radius }}px; padding-left: {{ $item.tokens.paddingX }}px; padding-right: {{ $item.tokens.paddingX }}px; background-color: {{ $item.tokens.background }};">
+            <div class="flow-button-copy"><text class="flow-button-title" style="font-size: {{ $item.tokens.titleSize }}px; color: {{ $item.tokens.titleColor }}; font-weight: {{ $item.tokens.titleWeight }};">{{ $item.copy.title }}</text><text class="flow-button-subtitle" style="font-size: {{ $item.tokens.subtitleSize }}px; margin-top: {{ $item.tokens.subtitleTop }}px; color: {{ $item.tokens.subtitleColor }};">{{ $item.copy.subtitle }}</text></div>
+            <text class="flow-chevron" style="width: {{ $item.tokens.chevronWidth }}px; font-size: {{ $item.tokens.chevronSize }}px; color: {{ $item.tokens.chevronColor }}; text-align: right;">{{ $item.tokens.chevronText }}</text>
+          </div>
+
+          <div class="flow-menu-item" for="{{ plan.flowMenuItems }}" tid="id" @click="activate($item.action)" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.itemRadius }}px; padding-left: {{ $item.tokens.itemPaddingX }}px; padding-right: {{ $item.tokens.itemPaddingX }}px; background-color: {{ $item.tokens.itemBackground }};">
+            <div class="flow-menu-accent" style="width: {{ $item.tokens.accentWidth }}px; height: {{ $item.tokens.accentHeight }}; border-radius: {{ $item.tokens.accentRadius }}px; background-color: {{ $item.accent }};"></div>
+            <div class="flow-menu-copy" style="margin-left: {{ $item.tokens.copyGap }}px;"><text class="flow-menu-title" style="font-size: {{ $item.tokens.titleSize }}px; color: {{ $item.tokens.titleColor }}; font-weight: {{ $item.tokens.titleWeight }};">{{ $item.title }}</text><text class="flow-menu-subtitle" style="font-size: {{ $item.tokens.subtitleSize }}px; margin-top: {{ $item.tokens.subtitleTop }}px; color: {{ $item.tokens.subtitleColor }};">{{ $item.subtitle }}</text></div>
+            <text class="flow-chevron" style="width: {{ $item.tokens.chevronWidth }}px; font-size: {{ $item.tokens.chevronSize }}px; color: {{ $item.tokens.chevronColor }}; text-align: right;">{{ $item.tokens.chevronText }}</text>
+          </div>
+
+          <div class="flow-record-item" for="{{ plan.flowRecordItems }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.itemRadius }}px; padding: {{ $item.tokens.itemPadding }}px; background-color: {{ $item.tokens.itemBackground }};">
+            <div class="flow-record-head"><text class="flow-record-title" style="font-size: {{ $item.tokens.titleSize }}px; color: {{ $item.titleColor }}; font-weight: {{ $item.tokens.titleWeight }};">{{ $item.title }}</text><text class="flow-record-trailing" style="font-size: {{ $item.tokens.metaSize }}px; color: {{ $item.trailingColor }};">{{ $item.trailing }}</text></div>
+            <text class="flow-record-subtitle" style="font-size: {{ $item.tokens.metaSize }}px; margin-top: {{ $item.tokens.subtitleTop }}px; color: {{ $item.subtitleColor }};">{{ $item.subtitle }}</text>
+            <div class="flow-record-metrics" style="margin-top: {{ $item.tokens.metricsTop }}px;"><text class="flow-record-metric" style="font-size: {{ $item.tokens.metaSize }}px; color: {{ $item.tokens.metricColor }};">{{ $item.metric1 }}</text><text class="flow-record-metric" style="font-size: {{ $item.tokens.metaSize }}px; color: {{ $item.tokens.metricColor }};">{{ $item.metric2 }}</text><text class="flow-record-metric" style="font-size: {{ $item.tokens.metaSize }}px; color: {{ $item.tokens.metricColor }};">{{ $item.metric3 }}</text></div>
+            <div class="flow-record-footer" style="margin-top: {{ $item.tokens.footerTop }}px;"><text class="flow-record-footer-text" style="font-size: {{ $item.tokens.metaSize }}px; color: {{ $item.footerColor }};">{{ $item.footer }}</text><text class="flow-record-footer-text" style="font-size: {{ $item.tokens.metaSize }}px; color: {{ $item.footerTrailingColor }};">{{ $item.footerTrailing }}</text></div>
+          </div>
+
+          <div class="flow-metric-card" for="{{ plan.flowMetricItems }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.itemRadius }}px; padding: {{ $item.tokens.itemPaddingY }}px {{ $item.tokens.itemPaddingX }}px; background-color: {{ $item.tokens.itemBackground }};">
+            <text class="flow-metric-label" style="font-size: {{ $item.tokens.labelSize }}px; color: {{ $item.tokens.labelColor }};">{{ $item.label }}</text>
+            <text class="flow-metric-value" style="font-size: {{ $item.tokens.valueSize }}px; margin-top: {{ $item.tokens.valueTop }}px; color: {{ $item.accent }}; font-weight: {{ $item.tokens.valueWeight }};">{{ $item.value }}</text>
+            <text class="flow-metric-detail" if="{{ $item.detail }}" style="font-size: {{ $item.tokens.detailSize }}px; margin-top: {{ $item.tokens.detailTop }}px; color: {{ $item.detailColor }};">{{ $item.detail }}</text>
+          </div>
+
+          <div class="flow-chart-card" for="{{ plan.flowChartCards }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.radius }}px; padding: {{ $item.tokens.paddingY }}px {{ $item.tokens.paddingX }}px; background-color: {{ $item.tokens.background }};">
+            <div class="flow-chart-head" style="height: {{ $item.tokens.headHeight }}px;"><text class="flow-chart-title" style="font-size: {{ $item.tokens.titleSize }}px; color: {{ $item.tokens.titleColor }}; font-weight: {{ $item.tokens.titleWeight }};">{{ $item.title }}</text><text class="flow-chart-caption" style="font-size: {{ $item.tokens.captionSize }}px; color: {{ $item.tokens.captionColor }};">{{ $item.caption }}</text></div>
+            <div class="flow-chart-value-row" if="{{ $item.value }}" style="height: {{ $item.tokens.valueBlockHeight }}px;"><text class="flow-chart-value" style="width: {{ $item.tokens.valueWidth }}px; font-size: {{ $item.tokens.valueSize }}px; color: {{ $item.tokens.valueColor }}; font-weight: {{ $item.tokens.valueWeight }};">{{ $item.value }}</text><text class="flow-chart-unit" style="font-size: {{ $item.tokens.metaSize }}px; margin-left: {{ $item.tokens.unitGap }}px; color: {{ $item.tokens.metaColor }};">{{ $item.unit }}</text><text class="flow-chart-status" style="font-size: {{ $item.tokens.metaSize }}px; margin-left: {{ $item.tokens.statusGap }}px; color: {{ $item.statusColor }};">{{ $item.status }}</text></div>
+            <text class="flow-chart-footer" if="{{ $item.footer }}" style="position: absolute; left: {{ $item.tokens.paddingX }}px; bottom: {{ $item.tokens.footerBottom }}px; font-size: {{ $item.tokens.metaSize }}px; color: {{ $item.tokens.metaColor }};">{{ $item.footer }}</text>
+          </div>
+
+          <div class="flow-column-bar" for="{{ plan.flowColumnBars }}" tid="id" style="left: {{ $item.barLeft }}px; top: {{ $item.barTop }}px; width: {{ $item.barWidth }}px; height: {{ $item.barHeight }}px; border-radius: {{ $item.tokens.barRadius }}px; background-color: {{ $item.color }};"></div>
+          <text class="flow-column-label" for="{{ plan.flowColumnBars }}" tid="id" style="left: {{ $item.labelLeft }}px; top: {{ $item.labelTop }}px; width: {{ $item.labelWidth }}px; height: {{ $item.tokens.labelLineHeight }}px; line-height: {{ $item.tokens.labelLineHeight }}px; font-size: {{ $item.tokens.labelSize }}px; color: {{ $item.isActive ? $item.tokens.activeColor : $item.tokens.labelColor }}; font-weight: {{ $item.isActive ? $item.tokens.activeWeight : $item.tokens.labelWeight }}; text-align: center;">{{ $item.label }}</text>
+
+          <div class="flow-row" for="{{ plan.flowRowBars }}" tid="id" style="left: 0px; top: {{ $item.top }}px; width: {{ plan.stream.width }}px; height: {{ $item.height }}px;"><text class="flow-row-label" style="position: absolute; left: {{ $item.labelLeft }}px; width: {{ $item.labelWidth }}px; font-size: {{ $item.tokens.rowLabelSize }}px; color: {{ $item.isActive ? $item.tokens.activeColor : $item.tokens.labelColor }}; font-weight: {{ $item.isActive ? $item.tokens.activeWeight : $item.tokens.labelWeight }};">{{ $item.label }}</text><div class="flow-row-track" style="position: absolute; left: {{ $item.trackLeft }}px; width: {{ $item.trackWidth }}px; height: {{ $item.tokens.rowTrackHeight }}px; border-radius: {{ $item.tokens.rowTrackRadius }}px; background-color: {{ $item.tokens.trackBackground }}; overflow: hidden;"><div class="flow-row-fill" style="width: {{ $item.fillWidth }}px; height: {{ $item.tokens.rowTrackHeight }}px; border-radius: {{ $item.tokens.rowTrackRadius }}px; background-color: {{ $item.color }};"></div></div><text class="flow-row-value" style="position: absolute; left: {{ $item.valueLeft }}px; width: {{ $item.valueWidth }}px; font-size: {{ $item.tokens.rowValueSize }}px; color: {{ $item.isActive ? $item.tokens.activeColor : $item.tokens.valueColor }}; font-weight: {{ $item.tokens.valueWeight }}; text-align: right;">{{ $item.value }}</text></div>
+        </stack>
+      </scroll>
+
+      <surfacestage if="{{ plan.stage }}" model="{{ plan.stage }}" @surfaceaction="forwardAction"></surfacestage>
+    </stack>
+  </stack>
+</template>
+
+<script>
+import navigation from '../runtime/navigation'
+
+export default {
+  props: ['plan'],
+  activate(action, payload) {
+    if (!action) return
+    if (action === '$back') { navigation.back(); return }
+    if (String(action).charAt(0) === '/') { navigation.push(action); return }
+    var event = { action: action }
+    var source = payload || {}
+    for (var key in source) if (key !== 'action') event[key] = source[key]
+    this.$emit('surfaceaction', event)
+  },
+  forwardAction(event) {
+    var detail = event && event.detail && typeof event.detail === 'object' ? event.detail : (event || {})
+    this.activate(detail.action, detail)
+  },
+  onSwipe(event) {
+    if (!this.plan || !this.plan.gestures) return
+    var direction = event && (event.direction || (event.detail && event.detail.direction))
+    if (direction && this.plan.gestures[direction]) this.activate(this.plan.gestures[direction])
+  },
+  onLongPress() {
+    if (this.plan && this.plan.gestures && this.plan.gestures.longpress) this.activate(this.plan.gestures.longpress)
+  }
+}
+</script>
+
+<style>
+.surface-host, .surface-scene, .surface-header, .surface-text, .surface-button, .surface-metric-list, .surface-flow, .surface-flow-content, .flow-header, .flow-text, .flow-button, .flow-menu-item, .flow-record-item, .flow-metric-card, .flow-chart-card, .flow-column-bar, .flow-column-label, .flow-row { position: absolute; }
+.surface-button, .surface-metric-head, .surface-metric-value-row, .surface-metric-foot, .flow-header-row, .flow-button, .flow-menu-item, .flow-record-head, .flow-record-metrics, .flow-record-footer, .flow-chart-head, .flow-chart-value-row { flex-direction: row; align-items: center; }
+.surface-button, .surface-metric-head, .surface-metric-foot, .flow-header-row, .flow-button, .flow-menu-item, .flow-record-head, .flow-record-metrics, .flow-record-footer, .flow-chart-head { justify-content: space-between; }
+.surface-metric-list, .surface-metric-card, .flow-header, .flow-button-copy, .flow-menu-copy, .flow-record-item, .flow-metric-card, .flow-chart-card { flex-direction: column; }
+.surface-metric-value-row { align-items: flex-end; }
+.surface-progress-track { overflow: hidden; flex-direction: row; align-items: center; }
+.surface-metric-status { text-align: right; }
+.flow-menu-copy { flex: 1; }
+</style>
