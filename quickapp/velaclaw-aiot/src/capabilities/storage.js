@@ -45,14 +45,6 @@ function rememberPersisted(key, value) {
   persistedCache[key] = value
 }
 
-function finishDedupedWrite(key, stringValue, callback, value) {
-  if (persistedCache[key] !== stringValue) return false
-  memoryCache[key] = stringValue
-  if (callback) callback(value !== undefined ? value : makeResult(true, false), value !== undefined ? makeResult(true, false) : undefined)
-  finishOperation(key)
-  return true
-}
-
 var adapter = {
   set: function (key, value, callback) {
     enqueueOperation(key, function () {
