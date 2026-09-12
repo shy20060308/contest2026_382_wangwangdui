@@ -21,4 +21,5 @@ jobs:
           cache-dependency-path: quickapp/velaclaw-aiot/package-lock.json
       - run: npm ci
       - run: npm run check
+      - run: npm run bundle:audit
       - run: npm run build
