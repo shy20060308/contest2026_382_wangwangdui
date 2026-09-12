@@ -122,6 +122,17 @@ export function createWorkoutController(onChange) {
     if (wasActive && shouldPersist !== false) persist()
   }
 
+  function commitFinalized(record, callback) {
+    workoutRepository.saveRecord(record, function (savedRecord, saveResult) {
+      if (!persisted(saveResult)) return
+      workoutRepository.clearActive(function (clearResult) {
+        if (!persisted(clearResult)) return
+        workoutState.complete(record.id)
+        if (callback) callback(savedRecord)
+      })
+    })
+  }
+
   return {
     loadActive: function (callback) {
       var generation = ++lifecycleGeneration
@@ -172,20 +183,19 @@ export function createWorkoutController(onChange) {
     },
     finish: function (callback) {
       stopRuntime(false)
+      var beforeFinish = workoutState.getActive()
+      var alreadyFinalized = !!(beforeFinish && beforeFinish.finishedAt !== null && beforeFinish.finishedAt !== undefined)
       var record = workoutState.finish()
       if (!record) return
       var finalized = workoutState.getActive()
       emit(finalized)
+      if (alreadyFinalized) {
+        commitFinalized(record, callback)
+        return
+      }
       workoutRepository.saveActive(finalized, function (finalizeResult) {
         if (!persisted(finalizeResult)) return
-        workoutRepository.saveRecord(record, function (savedRecord, saveResult) {
-          if (!persisted(saveResult)) return
-          workoutRepository.clearActive(function (clearResult) {
-            if (!persisted(clearResult)) return
-            workoutState.complete(record.id)
-            if (callback) callback(savedRecord)
-          })
-        })
+        commitFinalized(record, callback)
       })
     },
     stop: function () { stopRuntime(true) }
