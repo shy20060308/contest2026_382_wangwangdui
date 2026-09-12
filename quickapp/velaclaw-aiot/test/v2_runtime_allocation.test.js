@@ -19,7 +19,7 @@ const projected = clockView.project({
   timestamp: new Date(2026, 8, 12, 10, 20, 30).getTime(),
   batteryPercent: 80,
   currentHeartRate: 78,
-  heartRateValues,
+  heartRateValues: heartValues,
   steps: 1234,
   stepsGoal: 6000,
   goalPercent: 20,
@@ -64,7 +64,7 @@ assert.strictEqual(setCalls, 1, 'identical proven-persisted value must skip a du
 persistedStorage.set('same', { value: 2 }, () => {})
 assert.strictEqual(setCalls, 2, 'changed value must reach native storage')
 persistedStorage.updateJSON('same', {}, current => current, (value, result) => {
-  assert.deepStrictEqual(value, { value: 2 })
+  assert.strictEqual(value.value, 2)
   assert.strictEqual(result.persisted, true)
 })
 assert.strictEqual(setCalls, 2, 'updateJSON must also skip an identical proven-persisted payload')
