@@ -38,6 +38,8 @@ module.exports = {
   },
   rect: {
     contentWidth: 164,
-    surface: 'designed-grid'
+    surface: 'honeycomb',
+    pageSize: 12,
+    frame: 'scene'
   }
 }
