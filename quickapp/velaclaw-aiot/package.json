@@ -29,6 +29,7 @@
     "v2:design-system": "node test/v2_design_system.test.js",
     "v2:declarative": "node test/v2_declarative_adapter.test.js",
     "history:spacing": "node test/history_card_spacing.test.js",
+    "v2:box-model": "node test/v2_box_model_spacing.test.js",
     "capabilities:check": "node test/capability_runtime.test.js",
     "power:logic": "node test/power_state_machine.test.js",
     "power:runtime": "node test/power_runtime.test.js",
