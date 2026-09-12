@@ -58,7 +58,7 @@ function dependencyJsPath(ux, dependency) {
 }
 function isGenericPageDependency(dependency) {
   const normalized = dependency.replace(/\\/g, '/')
-  return /(?:^|\/)components\/surface_host(?:\.ux)?$/.test(normalized) || /(?:^|\/)runtime\/surface_page$/.test(normalized)
+  return /(?:^|\/)components\/surface_host(?:_stage)?(?:\.ux)?$/.test(normalized) || /(?:^|\/)runtime\/surface_page$/.test(normalized)
 }
 function isOwnSurfaceDependency(ux, surfaceFile, dependency) {
   const target = resolvedDependency(ux, dependency)
@@ -140,7 +140,7 @@ routes.forEach(function (route) {
 
   if (exists(ux)) {
     const source = read(ux)
-    if (!/surface_host\.ux/.test(source)) issues.push('ux:not-thin-surface-host')
+    if (!/surface_host(?:_stage)?\.ux/.test(source)) issues.push('ux:not-thin-surface-host')
     const deps = dependencies(source)
     const generatedDeps = deps.filter(function (dependency) { return isGeneratedPageDataDependency(ux, surface, dependency) })
     const controllerDeps = deps.filter(function (dependency) { return isAnyControllerBindingDependency(ux, dependency) })
@@ -192,6 +192,7 @@ if (exists(surfacePageFile) && /controller_registry/.test(read(surfacePageFile))
 
 const genericUx = [
   path.join(srcRoot, 'components', 'surface_host.ux'),
+  path.join(srcRoot, 'components', 'surface_host_stage.ux'),
   path.join(srcRoot, 'components', 'surface_collection.ux'),
   path.join(srcRoot, 'components', 'surface_slider.ux'),
   path.join(srcRoot, 'components', 'surface_stage.ux'),
