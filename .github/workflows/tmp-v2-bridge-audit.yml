@@ -1,0 +1,26 @@
+name: Temporary V2 Bridge Audit
+
+on:
+  push:
+    branches:
+      - refactor/v2-remove-compat-bridges-20260912
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: quickapp/velaclaw-aiot
+    steps:
+      - uses: actions/checkout@v4
+      - name: List compatibility bridge imports
+        shell: bash
+        run: |
+          echo '--- routed/page and test bridge imports ---'
+          grep -RInE "v2/design/(specs|views)|design/(specs|views)" src/pages test || true
+          echo '--- bridge file contents ---'
+          for f in src/v2/design/specs/*.js src/v2/design/views/*.js; do
+            echo "[$f]"
+            cat "$f"
+          done
