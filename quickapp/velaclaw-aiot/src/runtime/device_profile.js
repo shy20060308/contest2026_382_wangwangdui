@@ -15,6 +15,14 @@ function hasHostViewport(local) {
   var height = Number(local && local.screenHeight)
   return isFinite(width) && width > 0 && isFinite(height) && height > 0
 }
+function sameInsets(a, b) {
+  if (!a || !b) return false
+  return a.left === b.left && a.top === b.top && a.right === b.right && a.bottom === b.bottom && a.gestureBar === b.gestureBar
+}
+function sameLayout(a, b) {
+  if (!a || !b) return false
+  return a.formFactor === b.formFactor && a.shape === b.shape && a.screenWidth === b.screenWidth && a.screenHeight === b.screenHeight && sameInsets(a.safeInsets, b.safeInsets)
+}
 function flush(list, profile) {
   var current = list.slice()
   list.length = 0
@@ -44,8 +52,15 @@ function requestMetadata(local) {
       return
     }
     try {
-      cached = core.make(info, local || {})
-      flush(metadataWaiters, cached)
+      var previous = cached
+      var corrected = core.make(info, local || {})
+      cached = corrected
+      if (sameLayout(previous, corrected)) {
+        metadataWaiters.length = 0
+        return
+      }
+      console.log('[V3_DEVICE] layout corrected ' + (previous ? previous.formFactor : 'unknown') + ' -> ' + corrected.formFactor)
+      flush(metadataWaiters, corrected)
     } catch (error) {
       metadataWaiters.length = 0
       console.log('[V3_BOOT] device-profile metadata correction failed: ' + (error && error.message ? error.message : error))
