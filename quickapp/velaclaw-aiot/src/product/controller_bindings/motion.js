@@ -1,5 +1,10 @@
-import { createMotionController } from '../features/settings/motion_controller'
 import { copyState } from './shared'
+
+function motionControllerFactory() {
+  var feature = require('../features/settings/motion_controller')
+  if (!feature || typeof feature.createMotionController !== 'function') throw new Error('Motion feature controller module unavailable')
+  return feature.createMotionController
+}
 
 function create(onChange) {
   var page = 'diagnostics'
@@ -12,6 +17,7 @@ function create(onChange) {
     state.pageCode = page
     if (typeof onChange === 'function') onChange(state)
   }
+  var createMotionController = motionControllerFactory()
   var controller = createMotionController(emit)
   return {
     start: function () { controller.refresh() }, stop: function () { controller.stop() }, destroy: function () { controller.stop() },
