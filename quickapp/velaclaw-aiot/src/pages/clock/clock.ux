@@ -1,45 +1,104 @@
+<import name="surfacehost" src="../../components/surface_host_stage.ux"></import>
+
 <template>
-  <div class="boot-probe">
-    <text class="boot-title">V3 BOOT PROBE</text>
-    <text class="boot-detail">clock page mounted</text>
-  </div>
+  <stack class="stage-probe">
+    <surfacehost if="{{ stageReady }}" plan="{{ stagePlan }}"></surfacehost>
+    <div class="probe-banner">
+      <text class="probe-title">{{ probeStatus }}</text>
+      <text class="probe-detail">{{ probeDetail }}</text>
+    </div>
+  </stack>
 </template>
 
 <script>
+var surfaceRuntime = require('../../product/frontend/runtime/surface_runtime')
+var experienceRuntime = require('../../product/frontend/runtime/experience_runtime')
+var surface = require('../../product/frontend/surfaces/clock.json')
+
 export default {
-  onInit() {
-    console.log('V3 BOOT PROBE:init')
+  private: {
+    stageReady: false,
+    stagePlan: null,
+    probeStatus: 'STAGE PROBE:init',
+    probeDetail: 'fixed rect profile; no device/controller'
   },
-  onShow() {
-    console.log('V3 BOOT PROBE:show')
+  onInit() {
+    try {
+      this.probeStatus = 'STAGE PROBE:resolve'
+      var profile = {
+        shape: 'rect',
+        formFactor: 'rect',
+        isCircle: false,
+        isPill: false,
+        isRect: true,
+        screenWidth: 336,
+        screenHeight: 480,
+        safeInsets: { left: 0, top: 2, right: 0, bottom: 2, gestureBar: 0 }
+      }
+      var scene = { width: 192, height: 275, hostTop: 0, hostBottom: 275, shape: 'rect' }
+      var safe = { left: 0, top: 2, right: 192, bottom: 273, width: 192, height: 271, gestureBar: 0 }
+      var state = {
+        faceId: 'sport',
+        timestamp: Date.now(),
+        batteryPercent: 88,
+        currentHeartRate: 76,
+        steps: 9999,
+        stepsGoal: 12000,
+        goalPercent: 83,
+        stepsPercent: 83,
+        powerMode: 'ACTIVE',
+        clockVisible: true,
+        sleepVisible: false,
+        notificationAppVisible: false,
+        notificationCallVisible: false
+      }
+      var plan = surfaceRuntime.resolve(surface, profile, scene, safe, state)
+      this.probeStatus = 'STAGE PROBE:decorate'
+      this.stagePlan = experienceRuntime.decorate(plan, surface, profile, scene, safe, state)
+      this.stageReady = true
+      this.probeStatus = 'STAGE PROBE:ready'
+      this.probeDetail = 'surface + runtime + stage renderer OK'
+      console.log('STAGE PROBE:ready')
+    } catch (error) {
+      this.stageReady = false
+      this.probeStatus = 'STAGE PROBE:error'
+      this.probeDetail = error && error.message ? error.message : String(error)
+      console.log('STAGE PROBE:error ' + this.probeDetail)
+    }
   }
 }
 </script>
 
 <style>
-.boot-probe {
-  width: 100%;
-  height: 100%;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+.stage-probe {
+  width: 192px;
+  height: 275px;
   background-color: #000000;
 }
-.boot-title {
-  width: 90%;
-  height: 32px;
-  line-height: 32px;
-  font-size: 14px;
+.probe-banner {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 192px;
+  height: 36px;
+  flex-direction: column;
+  align-items: center;
+  background-color: #202124;
+}
+.probe-title {
+  width: 188px;
+  height: 18px;
+  line-height: 18px;
+  font-size: 8px;
   text-align: center;
   color: #FFFFFF;
 }
-.boot-detail {
-  width: 90%;
-  height: 24px;
-  line-height: 24px;
-  margin-top: 8px;
-  font-size: 9px;
+.probe-detail {
+  width: 188px;
+  height: 16px;
+  line-height: 16px;
+  font-size: 6px;
   text-align: center;
-  color: #8E8E93;
+  color: #B0B3B8;
 }
 </style>
