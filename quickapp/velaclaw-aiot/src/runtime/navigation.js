@@ -1,39 +1,20 @@
 import router from '@system.router'
 
-function errorText(error) {
-  return error && error.message ? error.message : String(error || 'unknown')
-}
-
 function push(path, params) {
-  if (!path) return false
-  try {
-    router.push({ uri: path, params: params || {} })
-    return true
-  } catch (error) {
-    console.log('[V3_ROUTE] push failed ' + path + ': ' + errorText(error))
-    return false
-  }
+  if (!path) throw new Error('Navigation requires a target path')
+  router.push({ uri: path, params: params || {} })
+  return true
 }
 
 function replace(path, params) {
-  if (!path) return false
-  try {
-    router.replace({ uri: path, params: params || {} })
-    return true
-  } catch (error) {
-    console.log('[V3_ROUTE] replace failed ' + path + ': ' + errorText(error))
-    return false
-  }
+  if (!path) throw new Error('Navigation requires a target path')
+  router.replace({ uri: path, params: params || {} })
+  return true
 }
 
 function back() {
-  try {
-    router.back()
-    return true
-  } catch (error) {
-    console.log('[V3_ROUTE] back failed: ' + errorText(error))
-    return false
-  }
+  router.back()
+  return true
 }
 
 export default {
