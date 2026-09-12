@@ -303,6 +303,8 @@ function action(page, event) {
   var name = actionName(event)
   if (!name) return
   if (!page || page._surfaceDestroyed || !page._surfaceVisible) return
+  if (name === '$back') { back(page); return }
+  if (String(name).charAt(0) === '/') { navigation.push(name); return }
   if (page._surfaceControllerError) {
     console.log('[V3_CONTROLLER] action suppressed after ' + page._surfaceControllerError.stage + ': ' + name)
     return
