@@ -1,9 +1,9 @@
 const assert = require('assert')
 const fs = require('fs')
 const path = require('path')
-const workoutView = require('../src/v2/design/views/workout')
-const workoutDesign = require('../src/v2/design/specs/workout')
-const workoutHistoryDesign = require('../src/v2/design/specs/workout_history')
+const workoutView = require('../src/v2/design/apps/workout/view')
+const workoutDesign = require('../src/v2/design/apps/workout')
+const workoutHistoryDesign = require('../src/v2/design/apps/workout/history')
 
 const root = path.resolve(__dirname, '..')
 const read = name => fs.readFileSync(path.join(root, name), 'utf8')

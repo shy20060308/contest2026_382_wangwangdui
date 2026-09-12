@@ -157,6 +157,6 @@ assert.deepStrictEqual(circleWorkoutHistory.summary, { left: 26, top: 49, width:
 
 assert.ok(!exists('src/v2/design/assisted.js'), 'v2.1 assisted heuristic helper should be removed')
 assert.ok(!exists('src/v2/design/paged_stack.js'), 'dynamic settings stack heuristic should be removed')
-assert.ok(!exists('src/v2/design/specs/simple_center.js'), 'unused generic screenshot helper should be removed')
+assert.ok(!exists('src/v2/design/specs') && !exists('src/v2/design/views'), 'v2.3 compatibility bridge directories should stay removed')
 
 console.log('Declarative Adapter v2.3 verified: recipes own design intent, Adapter only merges, places, validates and computes necessary box/grid geometry')

@@ -31,8 +31,8 @@
 import pageRuntime from '../../v2/app/page_runtime'
 import navigation from '../../v2/app/navigation'
 import { createWorkoutController } from '../../v2/features/workout/controller'
-import workoutDesign from '../../v2/design/specs/workout'
-import workoutView from '../../v2/design/views/workout'
+import workoutDesign from '../../v2/design/apps/workout'
+import workoutView from '../../v2/design/apps/workout/view'
 
 function applyRegion(page, prefix, value) {
   page[prefix + 'Left'] = value.left

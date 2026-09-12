@@ -26,8 +26,8 @@
 import pageRuntime from '../../../v2/app/page_runtime'
 import navigation from '../../../v2/app/navigation'
 import { createVibrationController } from '../../../v2/features/settings/vibration_controller'
-import detailDesign from '../../../v2/design/specs/settings_detail'
-import vibrationView from '../../../v2/design/views/settings_vibration'
+import detailDesign from '../../../v2/design/apps/vibration'
+import vibrationView from '../../../v2/design/apps/vibration/view'
 
 export default {
   private: {

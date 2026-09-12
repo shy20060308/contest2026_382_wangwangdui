@@ -107,7 +107,7 @@ assert.ok(workout.includes('historyRepository.saveToday(activitySnapshot'), 'His
 assert.ok(activityFeature.includes("../../../domain/activity/store"), 'Activity Feature must own page-facing Activity access')
 assert.ok(activityFeature.includes('lifecycleEpoch'), 'Activity Feature must ignore stale hydration callbacks')
 assert.ok(!activityFeature.includes("name: '步数'") && !activityFeature.includes('RATIOS') && !activityFeature.includes("unit: '步'"), 'Activity Feature must remain presentation-free')
-assert.ok(steps.includes("../../v2/features/activity/controller") && steps.includes("../../v2/design/specs/activity") && steps.includes("../../v2/design/views/activity"), 'Steps Page must bind Activity Feature through Design')
+assert.ok(steps.includes("../../v2/features/activity/controller") && steps.includes("../../v2/design/apps/steps") && steps.includes("../../v2/design/apps/steps/view"), 'Steps Page must bind Activity Feature through Design')
 assert.ok(!steps.includes("../../domain/activity/store") && !steps.includes('profile.formFactor'), 'Steps Page must not bypass Feature or own shape policy')
 assert.ok(today.includes("../../v2/features/today/controller") && !today.includes("../../domain/activity/store"), 'Today Page must consume Activity only through its Feature orchestration')
 

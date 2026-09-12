@@ -3,7 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const vm = require('vm')
 const analog = require('../src/v2/design/analog')
-const clockView = require('../src/v2/design/views/clock')
+const clockView = require('../src/v2/design/apps/clock/view')
 
 const root = path.resolve(__dirname, '..')
 const read = name => fs.readFileSync(path.join(root, name), 'utf8')
