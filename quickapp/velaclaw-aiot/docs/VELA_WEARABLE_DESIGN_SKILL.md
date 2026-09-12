@@ -102,7 +102,7 @@ When designing a new generic primitive, require evidence that it is an actual re
 5. Encode product decisions in Surface JSON.
 6. Extend only generic primitives/engines where the selected level requires it.
 7. Run architecture, adaptation, interaction-parity and build contracts.
-8. Verify on `vela-miwear-watch-5.0-beta` before declaring parity.
+8. Verify on `vela-miwear-watch-5.0(开发者大赛)` before declaring device parity.
 
 ## Tooling direction
 
