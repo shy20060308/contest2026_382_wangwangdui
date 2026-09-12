@@ -58,7 +58,7 @@ function dependencyJsPath(ux, dependency) {
 }
 function isGenericPageDependency(dependency) {
   const normalized = dependency.replace(/\\/g, '/')
-  return /(?:^|\/)components\/(?:surface_host(?:_stage)?|surface_entry_stage)(?:\.ux)?$/.test(normalized) || /(?:^|\/)runtime\/surface_page$/.test(normalized)
+  return /(?:^|\/)components\/surface_host(?:_stage)?(?:\.ux)?$/.test(normalized) || /(?:^|\/)runtime\/surface_page$/.test(normalized)
 }
 function isOwnSurfaceDependency(ux, surfaceFile, dependency) {
   const target = resolvedDependency(ux, dependency)
@@ -140,7 +140,7 @@ routes.forEach(function (route) {
 
   if (exists(ux)) {
     const source = read(ux)
-    if (!/surface_(?:host(?:_stage)?|entry_stage)\.ux/.test(source)) issues.push('ux:not-thin-surface-host')
+    if (!/surface_host(?:_stage)?\.ux/.test(source)) issues.push('ux:not-thin-surface-host')
     const deps = dependencies(source)
     const generatedDeps = deps.filter(function (dependency) { return isGeneratedPageDataDependency(ux, surface, dependency) })
     const controllerDeps = deps.filter(function (dependency) { return isAnyControllerBindingDependency(ux, dependency) })
@@ -190,10 +190,17 @@ filesUnder(controllerBindingsRoot, /\.js$/, []).forEach(function (file) {
 const surfacePageFile = path.join(srcRoot, 'runtime', 'surface_page.js')
 if (exists(surfacePageFile) && /controller_registry/.test(read(surfacePageFile))) globalIssues.push('surface_page must not import the eager controller registry')
 
+const stageHostFile = path.join(srcRoot, 'components', 'surface_host_stage.ux')
+if (exists(stageHostFile)) {
+  const stageHost = read(stageHostFile)
+  if (/surface_stage\.ux|<surfacestage\b/.test(stageHost)) globalIssues.push('clock stage host must inline Stage primitives instead of nesting surface_stage.ux')
+  if (!/plan\.stage\.texts/.test(stageHost) || !/plan\.stage\.metrics/.test(stageHost) || !/plan\.stage\.progresses/.test(stageHost)) globalIssues.push('clock stage host must render resolved Stage primitive collections')
+}
+if (exists(path.join(srcRoot, 'components', 'surface_entry_stage.ux'))) globalIssues.push('temporary clock boot wrapper must stay removed')
+
 const genericUx = [
   path.join(srcRoot, 'components', 'surface_host.ux'),
   path.join(srcRoot, 'components', 'surface_host_stage.ux'),
-  path.join(srcRoot, 'components', 'surface_entry_stage.ux'),
   path.join(srcRoot, 'components', 'surface_collection.ux'),
   path.join(srcRoot, 'components', 'surface_slider.ux'),
   path.join(srcRoot, 'components', 'surface_stage.ux'),
