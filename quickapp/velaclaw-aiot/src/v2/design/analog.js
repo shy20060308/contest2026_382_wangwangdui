@@ -18,12 +18,16 @@ function angles(hours, minutes, seconds) {
 
 function transform(value) { return JSON.stringify({ rotate: roundOne(value) + 'deg' }) }
 
-function ticks() {
+function buildTicks() {
   var result = []
   for (var i = 0; i < 60; i++) {
     result.push({ index: i, className: i % 5 === 0 ? 'mechanical-major-tick' : 'mechanical-minute-tick', transform: transform(i * 6) })
   }
   return result
 }
+
+var STATIC_TICKS = buildTicks()
+
+function ticks() { return STATIC_TICKS }
 
 module.exports = { angles: angles, transform: transform, ticks: ticks }

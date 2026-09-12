@@ -23,7 +23,6 @@ export function createClockController(onChange, onNotification) {
     timestamp: Date.now(),
     batteryPercent: 75,
     currentHeartRate: 88,
-    heartRateValues: [],
     steps: 0,
     stepsGoal: 0,
     goalPercent: 0,
@@ -38,7 +37,7 @@ export function createClockController(onChange, onNotification) {
       timestamp: state.timestamp,
       batteryPercent: state.batteryPercent,
       currentHeartRate: state.currentHeartRate,
-      heartRateValues: state.heartRateValues.slice(),
+      heartRateValues: heartValues.slice(),
       steps: state.steps,
       stepsGoal: state.stepsGoal,
       goalPercent: state.goalPercent,
@@ -78,7 +77,6 @@ export function createClockController(onChange, onNotification) {
     state.currentHeartRate = Math.round(Number(sample.value) || state.currentHeartRate)
     heartValues.push(state.currentHeartRate)
     if (heartValues.length > 10) heartValues.shift()
-    state.heartRateValues = heartValues.slice()
     emit()
   }
 
