@@ -1,8 +1,45 @@
-<import name="surfaceentry" src="../../components/surface_entry_stage.ux"></import>
-<template><surfaceentry ready="{{ surfaceReady }}" plan="{{ surfacePlan }}" boot-status="{{ surfaceBootStatus }}" boot-detail="{{ surfaceBootDetail }}" @surfaceaction="onSurfaceAction"></surfaceentry></template>
+<template>
+  <div class="boot-probe">
+    <text class="boot-title">V3 BOOT PROBE</text>
+    <text class="boot-detail">clock page mounted</text>
+  </div>
+</template>
+
 <script>
-import surfacePage from '../../runtime/surface_page'
-import controllerBinding from '../../product/controller_bindings/clock'
-var surface = require('../../product/frontend/surfaces/clock.json')
-export default { private: { surfaceReady: false, surfacePlan: null, surfaceBootStatus: 'BOOT:page', surfaceBootDetail: '' }, onInit() { surfacePage.bind(this, surface, controllerBinding) }, onShow() { surfacePage.show(this) }, onHide() { surfacePage.hide(this) }, onDestroy() { surfacePage.destroy(this) }, onBackPress() { return true }, onSurfaceAction(event) { surfacePage.action(this, event) } }
+export default {
+  onInit() {
+    console.log('V3 BOOT PROBE:init')
+  },
+  onShow() {
+    console.log('V3 BOOT PROBE:show')
+  }
+}
 </script>
+
+<style>
+.boot-probe {
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #000000;
+}
+.boot-title {
+  width: 90%;
+  height: 32px;
+  line-height: 32px;
+  font-size: 14px;
+  text-align: center;
+  color: #FFFFFF;
+}
+.boot-detail {
+  width: 90%;
+  height: 24px;
+  line-height: 24px;
+  margin-top: 8px;
+  font-size: 9px;
+  text-align: center;
+  color: #8E8E93;
+}
+</style>
