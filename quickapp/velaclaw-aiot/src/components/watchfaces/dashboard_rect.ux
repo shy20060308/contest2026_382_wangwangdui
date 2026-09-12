@@ -10,7 +10,7 @@
 var watchfaceChart = require('../../v2/design/watchface_chart')
 export default {
   props: ['displayWeek','displayMonth','displayDate','displayHours','displayMinutes','faceAccent','stepsText','stepsGoalText','stepsProgressWidth','currentHeartRate','heartRateData','batteryPercent','batteryColor'],
-  heartBarHeight(index) { return watchfaceChart.sampleBarHeight(this.heartRateData, index, 3, 18, 8) },
+  heartBarHeight(index) { return watchfaceChart.sampleBarHeight(this.heartRateData, index, 4, 24, 8) },
   openHealth() { this.$emit('openHealth') },
   openSteps() { this.$emit('openSteps') }
 }
@@ -18,15 +18,15 @@ export default {
 
 <style>
 .rect-dashboard-face { width: 192px; height: 100%; flex-direction: column; align-items: center; background-color: #07090D; }
-.dash-top { width: 164px; height: 48px; margin-top: 14px; flex-direction: row; justify-content: space-between; align-items: center; }
-.dash-time-block { width: 120px; flex-direction: column; } .dash-time { width: 120px; font-size: 28px; color: #FFFFFF; font-weight: bold; } .dash-date { width: 120px; font-size: 7px; font-weight: bold; margin-top: 2px; }
-.dash-power { width: 38px; font-size: 9px; font-weight: bold; text-align: right; }
-.dash-card { width: 164px; height: 56px; border-radius: 10px; background-color: #14181F; padding: 7px 10px; flex-direction: column; }
-.dash-heart-card { margin-top: 8px; }
-.dash-card-head { width: 144px; height: 18px; flex-direction: row; justify-content: space-between; align-items: center; }
-.dash-label { font-size: 8px; color: #D1D1D6; } .dash-value { width: 70px; font-size: 15px; font-weight: bold; text-align: right; lines: 1; }
+.dash-top { width: 164px; height: 54px; margin-top: 8px; border-radius: 12px; background-color: #0D1117; flex-direction: row; justify-content: space-between; align-items: center; padding-left: 10px; padding-right: 10px; }
+.dash-time-block { width: 112px; flex-direction: column; } .dash-time { width: 112px; height: 34px; font-size: 30px; color: #FFFFFF; font-weight: bold; } .dash-date { width: 112px; font-size: 7px; font-weight: bold; margin-top: 1px; }
+.dash-power { width: 30px; font-size: 9px; font-weight: bold; text-align: right; }
+.dash-card { width: 144px; height: 56px; border-radius: 10px; background-color: #14181F; padding: 8px 10px; margin-top: 6px; flex-direction: column; }
+.dash-card-head { width: 144px; height: 20px; flex-direction: row; justify-content: space-between; align-items: center; }
+.dash-label { font-size: 8px; color: #D1D1D6; } .dash-value { width: 72px; font-size: 16px; font-weight: bold; text-align: right; lines: 1; }
 .dash-steps { font-size: 13px; color: #FFD60A; } .dash-heart { color: #FF375F; }
-.dash-track { width: 144px; height: 4px; border-radius: 2px; background-color: #2C2C2E; margin-top: 5px; } .dash-fill { height: 4px; border-radius: 2px; background-color: #FFD60A; }
-.dash-bars { width: 144px; height: 18px; flex-direction: row; justify-content: space-between; align-items: flex-end; margin-top: 2px; } .dash-bar { width: 7px; border-radius: 3px; background-color: #FF375F; }
-.dash-sub { font-size: 6px; color: #636366; margin-top: 2px; }
+.dash-track { width: 144px; height: 5px; border-radius: 3px; background-color: #2C2C2E; margin-top: 7px; } .dash-fill { height: 5px; border-radius: 3px; background-color: #FFD60A; }
+.dash-bars { width: 144px; height: 24px; flex-direction: row; justify-content: space-between; align-items: flex-end; margin-top: 3px; } .dash-bar { width: 7px; border-radius: 3px; background-color: #FF375F; }
+.dash-sub { font-size: 6px; color: #636366; margin-top: 4px; }
+.dash-heart-card { margin-top: 8px; }
 </style>
