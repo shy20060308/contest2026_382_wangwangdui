@@ -18,12 +18,14 @@ function filesUnder(target, result) {
 function surfaceFilename(route) { return route.replace(/^pages\//, '').replace(/\//g, '__') + '.json' }
 
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
+const cleanSource = fs.readFileSync(path.join(root, 'scripts', 'clean-build.js'), 'utf8')
 assert.ok(pkg.scripts.clean === 'node scripts/clean-build.js', 'V3 must expose the deterministic build clean command')
+assert.ok(cleanSource.includes("'.temp_velaclaw-aiot'"), 'clean must remove AIoT staging so local watch builds cannot reuse stale page bundles')
 assert.ok(/^npm run clean && npm run surfaces:compile && aiot build && npm run bundle:pages$/.test(pkg.scripts['build:js-budget']), 'debug bundle budget must build non-JSC page JavaScript and measure it immediately')
 assert.ok(/^npm run build:js-budget && npm run clean && npm run surfaces:compile && aiot build --enable-jsc$/.test(pkg.scripts.build), 'build must gate simulator page JS size before a clean JSC production build')
 assert.ok(pkg.scripts['bundle:pages'] === 'node scripts/check-page-bundle-size.js', 'page bundle budget must use the tracked single-file size gate')
 assert.ok(/^npm run clean && npm run surfaces:compile && aiot release\b/.test(pkg.scripts.release), 'release must clean output and validate JSON surfaces before aiot release')
-assert.ok(/^npm run surfaces:compile && aiot start\b/.test(pkg.scripts.start), 'debug start must validate JSON surfaces before aiot start')
+assert.ok(/^npm run clean && npm run surfaces:compile && aiot start\b/.test(pkg.scripts.start), 'debug start must cold-clean AIoT staging and validate JSON surfaces before watch mode')
 
 const gitignore = fs.readFileSync(path.join(root, '.gitignore'), 'utf8')
 assert.ok(!gitignore.includes('/src/product/frontend/generated/'), 'generated Surface metadata must be available to every AIoT staging mode')
@@ -77,4 +79,4 @@ authoredSourceFiles.forEach(function (file) {
   assert.ok(!/\.(?:bak|old|orig|rej|tmp|map)$/i.test(file), 'temporary/generated file must not live under authored src: ' + path.relative(root, file))
 })
 
-console.log('V3 package hygiene verified: page-local Surface/controller loading, bounded generated preview data, debug bundle budget and clean packaging')
+console.log('V3 package hygiene verified: page-local Surface/controller loading, cold debug staging, bounded generated preview data and clean packaging')
