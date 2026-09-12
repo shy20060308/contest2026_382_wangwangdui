@@ -16,8 +16,20 @@ function resolve(profile, scene, safe) {
   plan.header = fill(profile, scene, safe, config.header)
   plan.summary = fill(profile, scene, safe, config.summary)
   plan.stream = fill(profile, scene, safe, config.stream)
-  plan.stream.itemHeight = config.itemHeight
+
+  plan.summaryGap = config.summaryGap
+  plan.summaryPaddingLeft = config.summaryPaddingLeft
+  var summaryGrid = adapter.grid(plan.summary, 2, plan.summaryGap)
+  plan.summaryCardOuterWidth = summaryGrid.itemWidth
+  plan.summaryCardWidth = Math.max(1, plan.summaryCardOuterWidth - plan.summaryPaddingLeft)
+
+  var recordBox = adapter.contentBox(plan.stream.width, config.itemHeight, config.padding, config.padding)
+  plan.stream.itemWidth = recordBox.width
+  plan.stream.itemHeight = recordBox.height
+  plan.stream.outerItemWidth = plan.stream.width
+  plan.stream.outerItemHeight = config.itemHeight
   plan.stream.gap = config.itemGap
+
   plan.titleSize = config.titleSize
   plan.backSize = config.backSize
   plan.summaryValueSize = config.summaryValueSize

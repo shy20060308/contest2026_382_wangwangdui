@@ -7,6 +7,8 @@ module.exports = {
     stream: { top: 86, width: 164 },
     itemHeight: 78,
     itemGap: 7,
+    summaryGap: 6,
+    summaryPaddingLeft: 10,
     titleSize: 14,
     backSize: 8,
     summaryValueSize: 16,
