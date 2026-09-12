@@ -115,12 +115,18 @@ const circleHeart = resolve(apps.heart, profiles[0]).plan
 assert.strictEqual(circleHeart.surface, 'vitals-stream')
 assert.strictEqual(circleHeart.stream.width, 136)
 assert.strictEqual(circleHeart.cardWidth + circleHeart.cardPaddingX * 2, circleHeart.stream.width)
-assert.strictEqual(circleHeart.miniWidth + circleHeart.cardPaddingX * 2, circleHeart.miniOuterWidth)
-assert.ok(circleHeart.miniOuterWidth * 2 + circleHeart.cardGap <= circleHeart.stream.width)
+assert.strictEqual(circleHeart.miniWidth + circleHeart.miniPaddingX * 2, circleHeart.miniOuterWidth)
+assert.strictEqual(circleHeart.miniOuterWidth * 2 + circleHeart.cardGap, circleHeart.stream.width - 1)
+assert.ok(circleHeart.miniPaddingX < circleHeart.cardPaddingX, 'Health mini cards keep their compact padding independent from hero/detail cards')
 const healthPage = read('src/pages/heartrate/heartrate.ux')
 assert.ok(healthPage.includes("../../v2/design/apps/heart"))
 assert.ok(!healthPage.includes('isCircle') && !healthPage.includes('isPill') && !healthPage.includes('isRect'))
 assert.ok(!healthPage.includes('{{ spo2Source }}') && !healthPage.includes('{{ stressSource }}'), 'per-card System labels must stay out of Health mini cards')
+assert.ok(healthPage.includes('padding: {{ miniPaddingY }}px {{ miniPaddingX }}px'), 'Health mini cards must use their own padded-card geometry')
+assert.ok(healthPage.includes('margin-left: {{ cardGap }}px'), 'Health mini cards must use an explicit fixed visual gap')
+assert.ok(healthPage.includes('.mini-row { flex-direction: row; justify-content: center; }'), 'Health mini row must center a fixed-gap pair')
+assert.ok(!healthPage.includes('.mini-row { flex-direction: row; justify-content: space-between; }'), 'space-between must not amplify box-model rounding into a giant center gap')
+assert.ok(healthPage.includes('.mini-value { width: 100%;') && healthPage.includes('.mini-status { width: 100%;'), 'Health mini-card text stays inside its padded content box')
 
 const circleHistory = resolve(apps.history, profiles[0]).plan
 const pillHistory = resolve(apps.history, profiles[1]).plan

@@ -28,12 +28,12 @@
         </div>
 
         <div class="mini-row" style="width: {{ streamWidth }}px; height: {{ miniRowHeight }}px; margin-top: {{ cardGap }}px;">
-          <div class="mini-card spo2-card" style="width: {{ miniWidth }}px; height: {{ miniHeight }}px; padding: {{ cardPaddingY }}px {{ cardPaddingX }}px; border-radius: {{ cardRadius }}px;">
+          <div class="mini-card spo2-card" style="width: {{ miniWidth }}px; height: {{ miniHeight }}px; padding: {{ miniPaddingY }}px {{ miniPaddingX }}px; border-radius: {{ cardRadius }}px;">
             <text class="card-label spo2-color" style="height: {{ labelLineHeight }}px; line-height: {{ labelLineHeight }}px; font-size: {{ labelSize }}px;">血氧</text>
             <text class="mini-value spo2-color" style="height: {{ miniValueLineHeight }}px; line-height: {{ miniValueLineHeight }}px; font-size: {{ miniValueSize }}px;">{{ spo2 }}%</text>
             <text class="mini-status" style="height: {{ metaLineHeight }}px; line-height: {{ metaLineHeight }}px; font-size: {{ metaSize }}px; color: {{ spo2StatusColor }};">{{ spo2Status }}</text>
           </div>
-          <div class="mini-card stress-card" style="width: {{ miniWidth }}px; height: {{ miniHeight }}px; padding: {{ cardPaddingY }}px {{ cardPaddingX }}px; border-radius: {{ cardRadius }}px;">
+          <div class="mini-card stress-card" style="width: {{ miniWidth }}px; height: {{ miniHeight }}px; padding: {{ miniPaddingY }}px {{ miniPaddingX }}px; margin-left: {{ cardGap }}px; border-radius: {{ cardRadius }}px;">
             <text class="card-label stress-color" style="height: {{ labelLineHeight }}px; line-height: {{ labelLineHeight }}px; font-size: {{ labelSize }}px;">压力</text>
             <text class="mini-value stress-color" style="height: {{ miniValueLineHeight }}px; line-height: {{ miniValueLineHeight }}px; font-size: {{ miniValueSize }}px;">{{ stress }}</text>
             <text class="mini-status" style="height: {{ metaLineHeight }}px; line-height: {{ metaLineHeight }}px; font-size: {{ metaSize }}px; color: {{ stressStatusColor }};">{{ stressStatus }}</text>
@@ -69,7 +69,7 @@ export default {
     ready: false, pageVisible: false, designPlan: null, healthModel: null,
     streamLeft: 28, streamTop: 22, streamWidth: 136, streamHeight: 160, headerWidth: 124, headerHeight: 26,
     headTitleWidth: 64, headSummaryWidth: 56, headSubtitleWidth: 72, headSourceWidth: 48,
-    cardWidth: 122, cardGap: 5, cardRadius: 15, cardPaddingY: 6, cardPaddingX: 7, heroHeight: 70, miniRowHeight: 52, miniHeight: 40, miniWidth: 51, detailHeight: 46, chartHeight: 18, scrollPaddingBottom: 28,
+    cardWidth: 122, cardGap: 5, cardRadius: 15, cardPaddingY: 6, cardPaddingX: 7, miniPaddingY: 6, miniPaddingX: 6, heroHeight: 70, miniRowHeight: 52, miniHeight: 40, miniWidth: 53, detailHeight: 46, chartHeight: 18, scrollPaddingBottom: 28,
     titleSize: 12, subtitleSize: 6, valueSize: 23, miniValueSize: 14, labelSize: 7, metaSize: 5,
     titleLineHeight: 16, subtitleLineHeight: 9, labelLineHeight: 10, metaLineHeight: 8, valueLineHeight: 30, miniValueLineHeight: 19,
     sceneWidth: 192, sceneHeight: 192, viewportClass: '', viewportPosition: 'relative', viewportLeft: '0px', viewportTop: '0px', viewportWidth: '100%', viewportHeight: '100%',
@@ -88,6 +88,7 @@ export default {
       self.streamLeft = plan.stream.left; self.streamTop = plan.stream.top; self.streamWidth = plan.stream.width; self.streamHeight = plan.stream.height
       self.headerWidth = plan.headerWidth; self.headerHeight = plan.headerHeight; self.headTitleWidth = plan.headTitleWidth; self.headSummaryWidth = plan.headSummaryWidth; self.headSubtitleWidth = plan.headSubtitleWidth; self.headSourceWidth = plan.headSourceWidth
       self.cardWidth = plan.cardWidth; self.cardGap = plan.cardGap; self.cardRadius = plan.cardRadius; self.cardPaddingY = plan.cardPaddingY; self.cardPaddingX = plan.cardPaddingX
+      self.miniPaddingY = plan.miniPaddingY; self.miniPaddingX = plan.miniPaddingX
       self.heroHeight = plan.heroHeight; self.miniRowHeight = plan.miniRowHeight; self.miniHeight = plan.miniHeight; self.miniWidth = plan.miniWidth; self.detailHeight = plan.detailHeight; self.chartHeight = plan.chartHeight; self.scrollPaddingBottom = plan.scrollPaddingBottom
       self.titleSize = plan.titleSize; self.subtitleSize = plan.subtitleSize; self.valueSize = plan.valueSize; self.miniValueSize = plan.miniValueSize; self.labelSize = plan.labelSize; self.metaSize = plan.metaSize
       self.titleLineHeight = plan.titleLineHeight; self.subtitleLineHeight = plan.subtitleLineHeight; self.labelLineHeight = plan.labelLineHeight; self.metaLineHeight = plan.metaLineHeight; self.valueLineHeight = plan.valueLineHeight; self.miniValueLineHeight = plan.miniValueLineHeight
@@ -136,9 +137,9 @@ export default {
 .trend-row { width: 100%; flex-direction: row; align-items: flex-end; justify-content: space-between; margin-top: 2px; }
 .trend-bar { width: 5px; border-radius: 3px; }
 .foot { width: 100%; margin-top: 2px; lines: 1; }
-.mini-row { flex-direction: row; justify-content: space-between; }
-.mini-value { margin-top: 2px; }
-.mini-status { margin-top: 1px; lines: 1; }
+.mini-row { flex-direction: row; justify-content: center; }
+.mini-value { width: 100%; margin-top: 2px; lines: 1; }
+.mini-status { width: 100%; margin-top: 1px; lines: 1; }
 .detail-trend { margin-top: 3px; }
 .updated { width: 100%; text-align: center; margin-top: 6px; margin-bottom: 10px; }
 </style>

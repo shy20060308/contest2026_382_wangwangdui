@@ -31,6 +31,8 @@ function resolve(profile, scene, safe) {
   plan.cardRadius = config.cardRadius
   plan.cardPaddingX = config.cardPaddingX
   plan.cardPaddingY = config.cardPaddingY
+  plan.miniPaddingX = config.miniPaddingX
+  plan.miniPaddingY = config.miniPaddingY
   plan.chartHeight = config.chartHeight
   plan.trendMinHeight = config.trendMinHeight
   plan.scrollPaddingBottom = config.scrollPaddingBottom
@@ -40,7 +42,7 @@ function resolve(profile, scene, safe) {
   plan.heroHeight = hero.height
 
   var miniGrid = adapter.grid(plan.stream, 2, plan.cardGap)
-  var mini = adapter.contentBox(miniGrid.itemWidth, config.miniOuterHeight, plan.cardPaddingX, plan.cardPaddingY)
+  var mini = adapter.contentBox(miniGrid.itemWidth, config.miniOuterHeight, plan.miniPaddingX, plan.miniPaddingY)
   plan.miniOuterWidth = miniGrid.itemWidth
   plan.miniWidth = mini.width
   plan.miniRowHeight = config.miniOuterHeight
