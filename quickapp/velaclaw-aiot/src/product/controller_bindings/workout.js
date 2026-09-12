@@ -1,6 +1,11 @@
 import navigation from '../../runtime/navigation'
-import { createWorkoutController } from '../features/workout/controller'
 import { interactionOwner, ownerToken, ownerCurrent, ownerKey } from './shared'
+
+function workoutControllerFactory() {
+  var feature = require('../features/workout/controller')
+  if (!feature || typeof feature.createWorkoutController !== 'function') throw new Error('Workout feature controller module unavailable')
+  return feature.createWorkoutController
+}
 
 function workoutState(session, confirming) {
   if (!session) return { hasSession: false, confirming: !!confirming, finalized: false }
@@ -27,6 +32,7 @@ function create(onChange, context) {
       if (ownerCurrent(owner, token)) navigation.replace('/pages/workout_history', null, ownerKey(owner))
     })
   }
+  var createWorkoutController = workoutControllerFactory()
   var controller = createWorkoutController(function (session) { current = session; emit() })
   return {
     start: function () {
