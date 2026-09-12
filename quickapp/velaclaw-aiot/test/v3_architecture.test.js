@@ -101,6 +101,8 @@ routes.forEach(function (route) {
 controllerIds.forEach(function (id) {
   const binding = read('src/product/controller_bindings/' + id + '.js')
   assert.ok(binding.includes("id: '" + id + "'"), id + ' binding must declare the same semantic controller id as Surface JSON')
+  assert.ok(!/\bimport\b[^\n]*\bfrom\s+['"]\.\.\/features\//.test(binding), id + ' binding must not execute its feature module while the page script is loading')
+  assert.ok(/\brequire\(\s*['"]\.\.\/features\//.test(binding), id + ' binding must defer its feature module until controller creation')
 })
 
 const surfacePage = read('src/runtime/surface_page.js')
@@ -108,6 +110,8 @@ assert.ok(!surfacePage.includes('frontend/generated/surfaces'), 'Surface Page mu
 assert.ok(!surfacePage.includes('surfaces.byId'), 'Surface Page must consume the page-local Surface object directly')
 assert.ok(!surfacePage.includes('controller_registry'), 'Surface Page must not eagerly import the all-feature controller registry')
 assert.ok(surfacePage.includes('binding.id !== surface.controller'), 'Surface Page must reject a page-local controller binding that disagrees with Surface JSON')
+assert.ok(surfacePage.indexOf("boot(page, 'BOOT:surface-resolve'") < surfacePage.indexOf("boot(page, 'BOOT:controller-create'"), 'Surface Page must make the static Surface renderable before executing a feature controller')
+assert.ok(surfacePage.includes("controllerCall(page, 'controller-stop', 'stop')"), 'Surface Page must isolate controller stop failures so navigation can finish')
 const generatedSurfaceMetadata = read('src/product/frontend/generated/surfaces.js')
 assert.ok(!/require\([^)]*surfaces\//.test(generatedSurfaceMetadata), 'generated Surface metadata must never eagerly require authored JSON')
 
