@@ -261,14 +261,14 @@ function hide(page) {
 
 function destroy(page) {
   if (!page) return
-  if (page._surfaceController && typeof page._surfaceController.destroy === 'function') {
-    try { page._surfaceController.destroy() } catch (error) { console.log('[V3_CONTROLLER] controller-destroy: ' + errorText(error)) }
-  }
   pageGeneration.destroy(page)
   page._surfaceVisible = false
   if (page._surfaceInteractionOwner) {
     navigationContext.clear(page._surfaceInteractionOwner.key())
     page._surfaceInteractionOwner.deactivate()
+  }
+  if (page._surfaceController && typeof page._surfaceController.destroy === 'function') {
+    try { page._surfaceController.destroy() } catch (error) { console.log('[V3_CONTROLLER] controller-destroy: ' + errorText(error)) }
   }
   page._surfaceController = null
   page._surfaceControllerError = null
