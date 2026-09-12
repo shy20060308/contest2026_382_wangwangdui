@@ -1,8 +1,8 @@
 {
   "package": "com.application.watch.demo",
   "name": "vela_band",
-  "versionName": "2.3.0",
-  "versionCode": 23,
+  "versionName": "2.4.0",
+  "versionCode": 24,
   "minAPILevel": 2,
   "minPlatformVersion": 1000,
   "icon": "/common/logo.png",
