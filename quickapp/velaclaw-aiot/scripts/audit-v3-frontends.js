@@ -8,6 +8,7 @@ const productRoot = path.join(srcRoot, 'product')
 const surfacesRoot = path.join(productRoot, 'frontend', 'surfaces')
 const enginesRoot = path.join(productRoot, 'frontend', 'engines')
 const generatedRoot = path.join(productRoot, 'frontend', 'generated')
+const controllerBindingsRoot = path.join(productRoot, 'controller_bindings')
 const strict = process.argv.includes('--strict')
 const surfaceSchema = JSON.parse(fs.readFileSync(path.join(productRoot, 'frontend', 'surface.schema.json'), 'utf8'))
 const allowedModuleTypes = new Set(surfaceSchema.$defs.module.properties.type.enum)
@@ -32,6 +33,7 @@ function expectedUx(route, page) {
 }
 function surfaceFilename(route) { return route.replace(/^pages\//, '').replace(/\//g, '__') + '.json' }
 function expectedSurface(route) { return path.join(surfacesRoot, surfaceFilename(route)) }
+function expectedControllerBinding(surface) { return surface && surface.controller ? path.join(controllerBindingsRoot, surface.controller + '.js') : null }
 function dependencies(source) {
   const found = []
   const patterns = [
@@ -49,6 +51,11 @@ function resolvedDependency(ux, dependency) {
   if (!dependency || dependency[0] !== '.') return null
   return path.resolve(path.dirname(ux), dependency)
 }
+function dependencyJsPath(ux, dependency) {
+  const target = resolvedDependency(ux, dependency)
+  if (!target) return null
+  return path.resolve(target.endsWith('.js') ? target : target + '.js')
+}
 function isGenericPageDependency(dependency) {
   const normalized = dependency.replace(/\\/g, '/')
   return /(?:^|\/)components\/surface_host(?:\.ux)?$/.test(normalized) || /(?:^|\/)runtime\/surface_page$/.test(normalized)
@@ -56,6 +63,16 @@ function isGenericPageDependency(dependency) {
 function isOwnSurfaceDependency(ux, surfaceFile, dependency) {
   const target = resolvedDependency(ux, dependency)
   return !!target && path.resolve(target) === path.resolve(surfaceFile)
+}
+function isOwnControllerBindingDependency(ux, surface, dependency) {
+  const expected = expectedControllerBinding(surface)
+  const target = dependencyJsPath(ux, dependency)
+  return !!expected && !!target && target === path.resolve(expected)
+}
+function isAnyControllerBindingDependency(ux, dependency) {
+  const target = dependencyJsPath(ux, dependency)
+  if (!target) return false
+  return target.startsWith(path.resolve(controllerBindingsRoot) + path.sep)
 }
 function isGeneratedPageDataDependency(ux, surface, dependency) {
   const target = resolvedDependency(ux, dependency)
@@ -126,13 +143,21 @@ routes.forEach(function (route) {
     if (!/surface_host\.ux/.test(source)) issues.push('ux:not-thin-surface-host')
     const deps = dependencies(source)
     const generatedDeps = deps.filter(function (dependency) { return isGeneratedPageDataDependency(ux, surface, dependency) })
+    const controllerDeps = deps.filter(function (dependency) { return isAnyControllerBindingDependency(ux, dependency) })
     if (generatedDeps.length > 1) issues.push('ux:multiple-generated-page-data')
     deps.forEach(function (dependency) {
-      if (!isGenericPageDependency(dependency) && !isOwnSurfaceDependency(ux, surfaceFile, dependency) && !isGeneratedPageDataDependency(ux, surface, dependency)) issues.push('ux:unauthorized-dependency')
+      if (!isGenericPageDependency(dependency) && !isOwnSurfaceDependency(ux, surfaceFile, dependency) && !isOwnControllerBindingDependency(ux, surface, dependency) && !isGeneratedPageDataDependency(ux, surface, dependency)) issues.push('ux:unauthorized-dependency')
     })
     const ownSurfaceDeps = deps.filter(function (dependency) { return isOwnSurfaceDependency(ux, surfaceFile, dependency) })
     if (ownSurfaceDeps.length !== 1) issues.push('ux:page-local-surface-dependency')
-    if (!/surfacePage\.bind\(\s*this\s*,\s*surface\s*\)/.test(source)) issues.push('ux:surface-object-binding')
+    if (surface && surface.controller) {
+      if (controllerDeps.length !== 1 || !controllerDeps.some(function (dependency) { return isOwnControllerBindingDependency(ux, surface, dependency) })) issues.push('ux:page-local-controller-binding')
+      if (!/\bimport\s+controllerBinding\s+from\s+['"]/.test(source)) issues.push('ux:controller-binding-import')
+      if (!/surfacePage\.bind\(\s*this\s*,\s*surface\s*,\s*controllerBinding\s*\)/.test(source)) issues.push('ux:surface-controller-binding')
+    } else {
+      if (controllerDeps.length !== 0) issues.push('ux:controller-free-route-imports-binding')
+      if (!/surfacePage\.bind\(\s*this\s*,\s*surface\s*\)/.test(source)) issues.push('ux:surface-object-binding')
+    }
     if (!/\b(?:var|const|let)\s+surface\s*=\s*require\(/.test(source)) issues.push('ux:surface-object-import')
     const template = (source.match(/<template>([\s\S]*?)<\/template>/) || [])[1] || ''
     if (/<(?:div|stack|scroll|text|image|slider|canvas|list|list-item|input|switch|button|progress|swiper)\b/.test(template)) issues.push('ux:handwritten-product-markup')
@@ -152,6 +177,18 @@ if (exists(path.join(productRoot, 'design', 'apps'))) globalIssues.push('page-sp
 filesUnder(pagesRoot, /\.ux$/, []).forEach(function (file) { if (!expectedUxFiles.has(path.resolve(file))) globalIssues.push('unrouted page UX: ' + relative(file)) })
 filesUnder(pagesRoot, /\.js$/, []).forEach(function (file) { globalIssues.push('page-local JS can hide a second frontend authority: ' + relative(file)) })
 filesUnder(surfacesRoot, /\.json$/, []).forEach(function (file) { if (!expectedSurfaceFiles.has(path.resolve(file))) globalIssues.push('unbound surface JSON: ' + relative(file)) })
+
+seenControllers.forEach(function (id) {
+  const file = path.join(controllerBindingsRoot, id + '.js')
+  if (!exists(file)) globalIssues.push('missing page-local controller binding: ' + relative(file))
+})
+filesUnder(controllerBindingsRoot, /\.js$/, []).forEach(function (file) {
+  if (path.basename(file) === 'shared.js') return
+  const id = path.basename(file, '.js')
+  if (!seenControllers.has(id)) globalIssues.push('unbound page-local controller binding: ' + relative(file))
+})
+const surfacePageFile = path.join(srcRoot, 'runtime', 'surface_page.js')
+if (exists(surfacePageFile) && /controller_registry/.test(read(surfacePageFile))) globalIssues.push('surface_page must not import the eager controller registry')
 
 const genericUx = [
   path.join(srcRoot, 'components', 'surface_host.ux'),
