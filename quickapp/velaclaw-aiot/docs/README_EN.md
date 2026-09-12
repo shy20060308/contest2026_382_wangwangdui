@@ -23,6 +23,21 @@ The project follows these principles:
 
 Together these principles aim for a codebase in which each change can be explained, verified, and extended safely despite constrained resources, materially different screen shapes, and uneven platform capability support.
 
+## Developer-friendly workflow
+
+Developer friendliness is treated as an architectural requirement rather than an extra layer of tooling. The source should make design intent understandable, editable, reviewable, and reversible without requiring every contributor to understand the whole runtime.
+
+- **Readable sources of design intent**: layout decisions are concentrated under `src/v2/design` and `src/v2/design/apps/<app>/layout.js` instead of being duplicated across page code. A contributor should be able to see why a form factor is arranged the way it is.
+- **Small changes produce small diffs**: shared values stay in the base configuration while Circle, Pill, and Rect keep only the deltas they need. Adjusting one form factor should not duplicate the full design or disturb unrelated targets.
+- **Tooling shares runtime semantics**: Layout Studio reuses the project Scene and Adapter model instead of maintaining a browser-only layout system. Preview shortens the feedback loop without becoming a second source of truth.
+- **Reuse before runtime expansion**: when existing primitives, Design Specs, and Design Views can express a new screen or watchface adjustment, contributors should not need to modify the generic runtime first. Lower layers are extended only when the current vocabulary is genuinely insufficient.
+- **Fail early during development**: linting, design contracts, Studio checks, text-fit checks, and bundle audits are intended to expose mistakes before runtime rather than relying on silent correction or accidental discovery on device.
+- **No hidden redesign at runtime**: safe-area logic, device profiles, and adapters may constrain valid geometry, but they should not silently turn an unsuitable design into a different composition. Material shape differences remain explicit in reviewable design sources.
+- **Visual work stays separated from business semantics**: changing hierarchy, density, geometry, or one form factor should not require editing health, workout, or persistence logic; changing business semantics should not implicitly redesign the surface.
+- **Reviewable and reversible by default**: a normal design adjustment should leave a clear source diff that can be reviewed and reverted with Git. Tool output must not introduce a second irreversible project format.
+
+The goal is not to make the framework automatically decide more. The goal is to make the set of things a developer must understand and edit smaller, clearer, and closer to the intended product result. Automation removes repetition and catches errors; authors retain explicit ownership of design decisions.
+
 ## Capabilities
 
 | Area | Implementation |
@@ -83,6 +98,7 @@ The project combines several ideas that are implemented in the repository rather
 - one semantic application core with shape-native visual composition;
 - explicit L1/L2/L3 design freedom instead of unlimited responsive exceptions;
 - Design Specs for geometry and Design Views for display-ready semantics;
+- a developer-friendly design workflow with centralized design sources, shape deltas, local diffs, and runtime-aligned visual tooling;
 - a local Layout Studio that reuses project Scene and Adapter logic;
 - provenance-aware health and workout heart-rate presentation;
 - explicit ownership and release of health, sensor, location, timer, and event resources;
