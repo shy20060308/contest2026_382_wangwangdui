@@ -12,6 +12,21 @@ var routeTiming = require('./route_timing')
 
 function noop() {}
 function emptyController() { return { start: noop, stop: noop, destroy: noop, action: noop } }
+function errorText(error) {
+  var value = error && error.message ? error.message : String(error || 'unknown')
+  return value.length > 120 ? value.slice(0, 120) : value
+}
+function boot(page, status, detail) {
+  if (!page) return
+  page.surfaceBootStatus = status || ''
+  page.surfaceBootDetail = detail || ''
+}
+function bootFailure(page, stage, error) {
+  if (!page || page._surfaceDestroyed) return
+  page.surfaceReady = false
+  boot(page, 'ERR:' + stage, errorText(error))
+  console.log('[V3_BOOT] ' + stage + ': ' + errorText(error))
+}
 
 function initialState(surface) {
   var source = surface && surface.initialState ? surface.initialState : {}
@@ -128,47 +143,75 @@ function bind(page, surface, controllerBinding) {
 
   page.surfaceReady = false
   page.surfacePlan = null
+  boot(page, 'BOOT:bind', '')
   page._surface = surface
   page._surfaceState = initialState(surface)
   page._surfaceVisible = false
   page._surfaceRenderSignature = null
   page._surfaceInteractionOwner = interactionOwner.create(surface.id)
-  page._surfaceController = createController(surface, controllerBinding, function (state) {
-    if (!current()) return
-    page._surfaceState = state || {}
-    if (page.surfaceReady && !page._surfaceVisible) {
-      performanceMetrics.recordSurfaceDeferredHidden()
-      return
-    }
-    rebuild(page)
-  }, { interactionOwner: page._surfaceInteractionOwner })
 
-  pageRuntime.bind(page, function (profile, scene, safe) {
-    if (!current()) return
-    page._surfaceProfile = profile
-    page._surfaceScene = scene
-    page._surfaceSafe = safe
-    rebuild(page)
-    if (page._surfaceController && typeof page._surfaceController.configure === 'function') {
-      var config = page.surfacePlan && page.surfacePlan.controllerConfig ? page.surfacePlan.controllerConfig : {}
-      page._surfaceController.configure(profile, scene, safe, config)
-    }
-    if (!current()) return
-    rebuild(page)
-    page.surfaceReady = true
-    if (page._surfaceVisible && page._surfaceController) page._surfaceController.start()
-    markRouteSurfaceReady(page)
-  }, current)
+  boot(page, 'BOOT:controller-create', '')
+  try {
+    page._surfaceController = createController(surface, controllerBinding, function (state) {
+      if (!current()) return
+      page._surfaceState = state || {}
+      if (page.surfaceReady && !page._surfaceVisible) {
+        performanceMetrics.recordSurfaceDeferredHidden()
+        return
+      }
+      try { rebuild(page) } catch (error) { bootFailure(page, 'controller-update', error) }
+    }, { interactionOwner: page._surfaceInteractionOwner })
+  } catch (error) {
+    bootFailure(page, 'controller-create', error)
+    return
+  }
+
+  boot(page, 'BOOT:device-profile', '')
+  try {
+    pageRuntime.bind(page, function (profile, scene, safe) {
+      if (!current()) return
+      try {
+        boot(page, 'BOOT:surface-resolve', profile && profile.formFactor ? profile.formFactor : '')
+        page._surfaceProfile = profile
+        page._surfaceScene = scene
+        page._surfaceSafe = safe
+        rebuild(page)
+        boot(page, 'BOOT:controller-configure', '')
+        if (page._surfaceController && typeof page._surfaceController.configure === 'function') {
+          var config = page.surfacePlan && page.surfacePlan.controllerConfig ? page.surfacePlan.controllerConfig : {}
+          page._surfaceController.configure(profile, scene, safe, config)
+        }
+        if (!current()) return
+        rebuild(page)
+        page.surfaceReady = true
+        boot(page, 'BOOT:controller-start', '')
+        if (page._surfaceVisible && page._surfaceController) page._surfaceController.start()
+        if (!current()) return
+        boot(page, 'BOOT:ready', '')
+        markRouteSurfaceReady(page)
+      } catch (error) {
+        bootFailure(page, 'surface-init', error)
+      }
+    }, current, function (error) {
+      bootFailure(page, 'device-profile', error)
+    })
+  } catch (error) {
+    bootFailure(page, 'page-runtime', error)
+  }
 }
 
 function show(page) {
   if (!page || page._surfaceDestroyed) return
   page._surfaceVisible = true
   if (page._surfaceInteractionOwner) page._surfaceInteractionOwner.activate()
-  if (page.surfaceReady) rebuild(page)
-  else syncPlanContext(page)
-  if (page.surfaceReady && page._surfaceController) page._surfaceController.start()
-  markRouteSurfaceReady(page)
+  try {
+    if (page.surfaceReady) rebuild(page)
+    else syncPlanContext(page)
+    if (page.surfaceReady && page._surfaceController) page._surfaceController.start()
+    markRouteSurfaceReady(page)
+  } catch (error) {
+    bootFailure(page, 'show', error)
+  }
 }
 
 function hide(page) {
@@ -201,6 +244,7 @@ function destroy(page) {
   page._surfaceRenderSignature = null
   page.surfacePlan = null
   page.surfaceReady = false
+  boot(page, '', '')
 }
 
 function actionName(event) {
