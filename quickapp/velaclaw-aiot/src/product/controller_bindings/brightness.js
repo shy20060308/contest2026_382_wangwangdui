@@ -1,7 +1,13 @@
-import { createBrightnessController } from '../features/settings/brightness_controller'
 import { noop } from './shared'
 
+function brightnessControllerFactory() {
+  var feature = require('../features/settings/brightness_controller')
+  if (!feature || typeof feature.createBrightnessController !== 'function') throw new Error('Brightness feature controller module unavailable')
+  return feature.createBrightnessController
+}
+
 function create(onChange) {
+  var createBrightnessController = brightnessControllerFactory()
   var controller = createBrightnessController(function (model) { if (typeof onChange === 'function') onChange(model || {}) })
   return {
     start: function () { controller.load() }, stop: noop, destroy: noop,
