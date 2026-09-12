@@ -87,6 +87,8 @@ jobs:
           architecture = Path('test/v2_architecture.test.js')
           source = architecture.read_text(encoding='utf-8')
           source = source.replace("const clockDesign = read('src/v2/design/apps/clock.js')", "const clockDesign = read('src/v2/design/apps/clock/layout.js')")
+          source = source.replace("faceIds = ['sport', 'simple', 'dashboard', 'mechanical']", "faceIds: ['sport', 'simple', 'dashboard', 'mechanical']")
+          source = source.replace("faceIds = ['sport', 'simple', 'dashboard', 'alpine']", "faceIds: ['sport', 'simple', 'dashboard', 'alpine']")
           marker = "  assert.ok(dependsOn(source, '/v2/'), relative + ' must enter the V2 application architecture')\n"
           guard = "  assert.ok(!dependsOn(source, '/design/specs/') && !dependsOn(source, '/design/views/'), relative + ' must import authoritative app-owned Design modules directly')\n"
           if guard not in source:
