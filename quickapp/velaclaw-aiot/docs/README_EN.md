@@ -6,6 +6,23 @@
 
 The application targets pill, circular, and rectangular wearable displays in one codebase. It is intended for contest demonstration, wearable UI research, and engineering practice. It is not medical software. Health values are shown as system-backed data only when trustworthy samples are available; missing samples remain visibly unavailable or pending.
 
+## Development philosophy
+
+`vela_band` is developed for the constraints of the Vela wearable runtime rather than for the appearance of architectural novelty. An abstraction is valuable only when it solves a concrete problem, protects an invariant, or makes ownership clearer. When a defect can be resolved by tightening a resource owner, correcting a data boundary, or changing one shape-specific Design Spec, the project avoids rewriting unrelated layers.
+
+The project follows these principles:
+
+- **Start from the real failure**: identify whether a problem belongs to layout, runtime behavior, a native capability, lifecycle ownership, persistence, or data provenance before choosing the fix.
+- **Use the minimum sufficient abstraction**: long-lived layers must remove duplication, protect a contract, or clarify responsibility. Directory symmetry and version naming are not reasons for source migration.
+- **Share semantics, design natively for shape**: business facts remain shared where possible, while Circle, Pill, and Rect may use different composition and interaction instead of being scaled copies.
+- **Keep data provenance explicit**: system samples, deterministic estimates, compatibility values, and simulated transports are different kinds of evidence and must stay distinguishable in code and UI.
+- **Treat lifecycle as product behavior**: health, location, sensor, timer, event, and haptic resources require a single owner and must start and stop with the corresponding product state.
+- **Prefer runtime facts to static assumptions**: Node.js tests protect logic and architecture contracts; simulator and device evidence validate geometry, gestures, native features, and lifecycle behavior. Neither class of evidence replaces the other.
+- **Evolve incrementally**: V2.5 improves the working V2.4 foundation by tightening boundaries and preserving lessons from real failures instead of making a broad rewrite the objective.
+- **Document the current system**: maintained documentation describes behavior that can be supported by source, tests, or runtime evidence and avoids temporary phase narratives.
+
+Together these principles aim for a codebase in which each change can be explained, verified, and extended safely despite constrained resources, materially different screen shapes, and uneven platform capability support.
+
 ## Capabilities
 
 | Area | Implementation |
