@@ -1,0 +1,54 @@
+<import name="surfacehost" src="./surface_host_stage.ux"></import>
+
+<template>
+  <stack class="surface-entry-stage">
+    <stack class="surface-boot" if="{{ !ready }}">
+      <text class="surface-boot-status">{{ bootStatus }}</text>
+      <text class="surface-boot-detail">{{ bootDetail }}</text>
+    </stack>
+    <surfacehost if="{{ ready }}" plan="{{ plan }}" @surfaceaction="forwardAction"></surfacehost>
+  </stack>
+</template>
+
+<script>
+export default {
+  props: ['ready', 'plan', 'bootStatus', 'bootDetail'],
+  forwardAction(event) {
+    if (!event) return
+    this.$emit('surfaceaction', event.detail !== undefined ? event.detail : event)
+  }
+}
+</script>
+
+<style>
+.surface-entry-stage {
+  width: 100%;
+  height: 100%;
+  background-color: black;
+}
+.surface-boot {
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: black;
+}
+.surface-boot-status {
+  width: 92%;
+  height: 28px;
+  line-height: 28px;
+  font-size: 12px;
+  text-align: center;
+  color: white;
+}
+.surface-boot-detail {
+  width: 92%;
+  height: 48px;
+  line-height: 16px;
+  margin-top: 8px;
+  font-size: 8px;
+  text-align: center;
+  color: gray;
+}
+</style>
