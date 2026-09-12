@@ -1,5 +1,10 @@
-import { createDiagnosticsController } from '../features/settings/diagnostics_controller'
 import { noop, copyState } from './shared'
+
+function diagnosticsControllerFactory() {
+  var feature = require('../features/settings/diagnostics_controller')
+  if (!feature || typeof feature.createDiagnosticsController !== 'function') throw new Error('Diagnostics feature controller module unavailable')
+  return feature.createDiagnosticsController
+}
 
 function create(onChange) {
   var configured = false
@@ -21,6 +26,7 @@ function create(onChange) {
     state.capabilityPage = capabilities.slice(capabilityPageIndex * pageSize, capabilityPageIndex * pageSize + pageSize)
     if (typeof onChange === 'function') onChange(state)
   }
+  var createDiagnosticsController = diagnosticsControllerFactory()
   var controller = createDiagnosticsController(emit)
   return {
     configure: function (profile, scene, safe, config) {
