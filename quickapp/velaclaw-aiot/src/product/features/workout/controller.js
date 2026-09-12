@@ -4,6 +4,7 @@ import workoutState from '../../../domain/workout/state_machine'
 import workoutRepository from '../../../domain/workout/repository'
 var distance = require('../../../domain/workout/distance')
 var healthMetrics = require('../../../domain/health/metrics')
+var finalizedPolicy = require('../../../domain/workout/finalized_commit_policy')
 
 function emitValue(onChange, session) {
   if (typeof onChange === 'function') onChange(session)
@@ -25,7 +26,7 @@ export function createWorkoutController(onChange) {
   function persist() { var active = workoutState.getActive(); if (active) workoutRepository.saveActive(active) }
   function isCurrent(generation) { return generation === lifecycleGeneration }
   function persisted(result) { return !!(result && result.persisted) }
-  function isFinalized(session) { return !!(session && session.finishedAt !== null && session.finishedAt !== undefined) }
+  function isFinalized(session) { return finalizedPolicy.isFinalized(session) }
 
   function stopLocation() {
     locationGeneration++
@@ -144,24 +145,17 @@ export function createWorkoutController(onChange) {
 
   function resumeFinalizedCommit(finalized, record, callback) {
     workoutRepository.loadActive(function (stored, persistence) {
-      if (persistence && persistence.status === 'io-error') return
-      if (stored === null) {
-        commitFinalized(record, callback)
+      var decision = finalizedPolicy.decide(stored, persistence, finalized)
+      if (decision.action === 'block') return
+      if (decision.action === 'corrupt') {
+        workoutRepository.markActiveCorrupt(new Error('Finalized workout persistence conflict: ' + decision.reason))
         return
       }
-      if (stored.id !== finalized.id) {
-        workoutRepository.markActiveCorrupt(new Error('Persisted active workout id changed during finalized retry'))
+      if (decision.action === 'persist') {
+        persistFinalizedIntent(finalized, function () { commitFinalized(record, callback) })
         return
       }
-      if (isFinalized(stored)) {
-        if (stored.finishedAt !== finalized.finishedAt) {
-          workoutRepository.markActiveCorrupt(new Error('Persisted active workout completion timestamp conflicts with finalized retry'))
-          return
-        }
-        commitFinalized(record, callback)
-        return
-      }
-      persistFinalizedIntent(finalized, function () { commitFinalized(record, callback) })
+      commitFinalized(record, callback)
     })
   }
 
