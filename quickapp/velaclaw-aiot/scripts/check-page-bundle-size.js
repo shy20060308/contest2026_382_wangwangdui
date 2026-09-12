@@ -2,12 +2,12 @@ const fs = require('fs')
 const path = require('path')
 
 const root = path.resolve(__dirname, '..')
-const hardLimit = 1024 * 1024
-const softLimit = 900 * 1024
 const candidates = [
   path.join(root, 'build', 'pages'),
-  path.join(path.dirname(root), '.temp_' + path.basename(root), 'build', 'pages')
+  path.join(root, '.temp_velaclaw-aiot', 'build', 'pages')
 ]
+const hardLimit = 1024 * 1024
+const softLimit = 900 * 1024
 
 function filesUnder(dir, out) {
   out = out || []
@@ -21,19 +21,19 @@ function filesUnder(dir, out) {
   return out
 }
 
-let pagesRoot = null
-let files = []
-for (let i = 0; i < candidates.length; i++) {
-  const current = filesUnder(candidates[i], [])
-  if (current.length) {
-    pagesRoot = candidates[i]
-    files = current
+var pagesRoot = null
+var files = []
+for (var index = 0; index < candidates.length; index++) {
+  var candidateFiles = filesUnder(candidates[index], [])
+  if (candidateFiles.length) {
+    pagesRoot = candidates[index]
+    files = candidateFiles
     break
   }
 }
 
-if (!pagesRoot || !files.length) {
-  console.error('Page bundle budget: no page JavaScript output found after aiot build')
+if (!files.length) {
+  console.error('Page bundle budget: no page JavaScript output found after AIoT compile')
   console.error('Checked:')
   candidates.forEach(function (candidate) { console.error('- ' + candidate) })
   process.exit(1)
@@ -44,11 +44,11 @@ const failures = []
 console.log('V3 page JavaScript bundle budget (hard limit 1024 KiB)')
 console.log('Bundle root: ' + pagesRoot)
 files.forEach(function (entry) {
-  const relative = path.relative(pagesRoot, entry.file).split(path.sep).join('/')
+  const relative = path.relative(root, entry.file).split(path.sep).join('/')
   const kib = (entry.size / 1024).toFixed(1)
   const label = entry.size > hardLimit ? 'FAIL' : (entry.size > softLimit ? 'WARN' : 'OK  ')
-  console.log(label + '  ' + kib + ' KiB  pages/' + relative)
-  if (entry.size > hardLimit) failures.push('pages/' + relative + ' = ' + entry.size + ' bytes')
+  console.log(label + '  ' + kib + ' KiB  ' + relative)
+  if (entry.size > hardLimit) failures.push(relative + ' = ' + entry.size + ' bytes')
 })
 
 if (failures.length) {
