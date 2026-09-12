@@ -12,16 +12,16 @@ function read(relative) {
 function resolved(app, profile) {
   const host = scene.resolve(profile)
   const safe = scene.safeForWidth(profile, app.contentWidth(profile))
-  return app.resolve(profile, host, safe)
+  return { safe, plan: app.resolve(profile, host, safe) }
 }
 
 const circle = { formFactor: 'circle', logicalHeight: 192, screenWidth: 466, screenHeight: 466 }
 const rect = { formFactor: 'rect', logicalHeight: 228, screenWidth: 432, screenHeight: 514 }
 const pill = { formFactor: 'pill', logicalHeight: 471, screenWidth: 212, screenHeight: 520 }
 
-const circleHistory = resolved(history, circle)
-const rectHistory = resolved(history, rect)
-const pillHistory = resolved(history, pill)
+const circleHistory = resolved(history, circle).plan
+const rectHistory = resolved(history, rect).plan
+const pillHistory = resolved(history, pill).plan
 assert.ok(circleHistory.insightHeight >= 38, 'Circle History insight cards must preserve three readable text lines')
 assert.ok(rectHistory.insightHeight >= 41, 'Rect History insight cards must preserve three readable text lines')
 assert.ok(pillHistory.insightHeight >= 42, 'Pill History insight cards must preserve three readable text lines')
@@ -45,6 +45,7 @@ assert.ok(simplePill.includes('.simple-step-value { font-size: 13px;'), 'Pill Si
 assert.ok(dashboardPill.includes('.dash-step-value { width: 86px; font-size: 16px;'), 'Pill Dashboard long step values must stay compact')
 
 const circleFaces = resolved(faces, circle)
-assert.strictEqual(circleFaces.header.top, 10, 'Circle watchface selector header must stay inside the visible mask')
+assert.strictEqual(faces.layout.circle.header.top, 10, 'Circle watchface selector recipe must keep the historical 10px safe-area offset')
+assert.strictEqual(circleFaces.plan.header.top - circleFaces.safe.top, 10, 'Circle watchface selector header must stay 10px below the safe-area cap')
 
 console.log('Text-fit regressions verified: readable History cards, compact corners and long-value-safe watchfaces')
