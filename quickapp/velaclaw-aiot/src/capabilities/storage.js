@@ -56,7 +56,7 @@ var adapter = {
         finishOperation(key)
         return
       }
-      if (persistedCache[key] === stringValue) {
+      if (stringValue !== undefined && persistedCache[key] === stringValue) {
         memoryCache[key] = stringValue
         if (callback) callback(makeResult(true, false))
         finishOperation(key)
@@ -188,7 +188,7 @@ var adapter = {
           finishOperation(key)
           return
         }
-        if (persistedCache[key] === stringValue) {
+        if (stringValue !== undefined && persistedCache[key] === stringValue) {
           memoryCache[key] = stringValue
           if (callback) callback(nextValue, makeResult(true, false))
           finishOperation(key)
