@@ -25,6 +25,7 @@ export function createWorkoutController(onChange) {
   function persist() { var active = workoutState.getActive(); if (active) workoutRepository.saveActive(active) }
   function isCurrent(generation) { return generation === lifecycleGeneration }
   function persisted(result) { return !!(result && result.persisted) }
+  function isFinalized(session) { return !!(session && session.finishedAt !== null && session.finishedAt !== undefined) }
 
   function stopLocation() {
     locationGeneration++
@@ -103,8 +104,9 @@ export function createWorkoutController(onChange) {
 
   function startRuntime() {
     if (runtimeActive) return
-    runtimeActive = true
     var active = workoutState.getActive()
+    if (isFinalized(active)) return
+    runtimeActive = true
     if (active && active.status === 'running') {
       ensureTimer()
       startLocation()
@@ -133,6 +135,36 @@ export function createWorkoutController(onChange) {
     })
   }
 
+  function persistFinalizedIntent(finalized, callback) {
+    workoutRepository.saveActive(finalized, function (finalizeResult) {
+      if (!persisted(finalizeResult)) return
+      callback()
+    })
+  }
+
+  function resumeFinalizedCommit(finalized, record, callback) {
+    workoutRepository.loadActive(function (stored, persistence) {
+      if (persistence && persistence.status === 'io-error') return
+      if (stored === null) {
+        commitFinalized(record, callback)
+        return
+      }
+      if (stored.id !== finalized.id) {
+        workoutRepository.markActiveCorrupt(new Error('Persisted active workout id changed during finalized retry'))
+        return
+      }
+      if (isFinalized(stored)) {
+        if (stored.finishedAt !== finalized.finishedAt) {
+          workoutRepository.markActiveCorrupt(new Error('Persisted active workout completion timestamp conflicts with finalized retry'))
+          return
+        }
+        commitFinalized(record, callback)
+        return
+      }
+      persistFinalizedIntent(finalized, function () { commitFinalized(record, callback) })
+    })
+  }
+
   return {
     loadActive: function (callback) {
       var generation = ++lifecycleGeneration
@@ -156,7 +188,7 @@ export function createWorkoutController(onChange) {
         }
         persistTicks = 0
         startRuntime()
-        persist()
+        if (!isFinalized(restored)) persist()
         emit(restored)
         if (callback) callback(restored)
       })
@@ -184,19 +216,16 @@ export function createWorkoutController(onChange) {
     finish: function (callback) {
       stopRuntime(false)
       var beforeFinish = workoutState.getActive()
-      var alreadyFinalized = !!(beforeFinish && beforeFinish.finishedAt !== null && beforeFinish.finishedAt !== undefined)
+      var retryingFinalized = isFinalized(beforeFinish)
       var record = workoutState.finish()
       if (!record) return
       var finalized = workoutState.getActive()
       emit(finalized)
-      if (alreadyFinalized) {
-        commitFinalized(record, callback)
+      if (retryingFinalized) {
+        resumeFinalizedCommit(finalized, record, callback)
         return
       }
-      workoutRepository.saveActive(finalized, function (finalizeResult) {
-        if (!persisted(finalizeResult)) return
-        commitFinalized(record, callback)
-      })
+      persistFinalizedIntent(finalized, function () { commitFinalized(record, callback) })
     },
     stop: function () { stopRuntime(true) }
   }
