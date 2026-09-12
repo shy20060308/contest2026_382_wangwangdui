@@ -23,9 +23,9 @@ export default {
 .vital-hour { width: 104px; height: 46px; font-size: 36px; font-weight: bold; color: #FF9F0A; text-align: center; margin-top: -4px; margin-right: 22px; }
 .vital-minute { width: 104px; height: 46px; font-size: 36px; font-weight: bold; text-align: center; margin-left: 22px; margin-bottom: -22px; opacity: 0.92; }
 .circle-goal { font-size: 8px; color: #8E8E93; margin-top: 2px; }
-.circle-metric-row { width: 108px; height: 29px; flex-direction: row; justify-content: space-between; margin-top: 3px; }
-.circle-metric { width: 34px; height: 29px; flex-direction: column; align-items: center; }
+.circle-metric-row { width: 136px; height: 29px; flex-direction: row; justify-content: space-between; margin-top: 3px; }
+.circle-metric { width: 44px; height: 29px; flex-direction: column; align-items: center; }
 .circle-metric-icon { width: 10px; height: 10px; }
-.circle-metric-value { width: 34px; font-size: 7px; font-weight: bold; text-align: center; margin-top: 1px; }
+.circle-metric-value { width: 44px; font-size: 7px; font-weight: bold; text-align: center; margin-top: 1px; lines: 1; }
 .heart-color { color: #FF375F; } .step-color { color: #FFD60A; }
 </style>
