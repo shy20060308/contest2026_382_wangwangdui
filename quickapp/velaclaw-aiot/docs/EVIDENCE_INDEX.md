@@ -11,21 +11,23 @@ This index separates repository evidence from simulator/device evidence. A green
 - **Simulator/device** — actual required image or hardware evidence.
 - **Companion/remote** — Android/peer protocol and business ACK evidence.
 
-## Current branch
+## Current branch / pre-simulator baseline
 
 - Base: `refactor/v3-native-product`
 - Audit branch: `audit/v3-native-performance-20260911`
 - PR: `#13` (Draft; do not merge only because CI is green)
 - Required contest emulator image: `vela-miwear-watch-5.0(开发者大赛)`
+- Latest code/docs/Skill baseline validated before this index-only update: `64d9462475194026954706391610ce012b93d7cd`
+- GitHub Actions: **V3 QuickApp Check run #356** (`34667326358`) — full contracts success + QuickApp build success.
 
-Update the current validated SHA and run only after both contracts and QuickApp build complete.
+The next acceptance boundary is the required-image install/launch smoke. Run #356 is repository/build evidence only.
 
 ## High-risk repair index
 
 | item | result | repository evidence | device/remote evidence still needed |
 |---|---|---|---|
 | F01 truthful Workout metrics | elapsed time no longer fabricates steps/calories/distance; unavailable stays null | `workout:truth`, `workout:experience` | real sensor/GPS behavior |
-| F02 Workout completion | stable `finishedAt`, finalized intent before record, idempotent record ID, finalized retry does not rewrite active intent | `workout:truth` plus crash-window fixtures | injected native storage ambiguity on contest image |
+| F02 Workout completion | stable `finishedAt`; first completion persists finalized intent before record; retries reuse identical record; an already-finalized retry never rewrites active intent and exposes `待保存 / 重试保存` instead of a fake resumable pause | `workout:truth`, `workout:experience`, crash-window/restart fixtures; run #356 | storage callback ambiguity sanity on contest image |
 | F03 corrupt persistence | structured missing/corrupt/I/O; five persistence domains visible in Diagnostics; explicit quarantine-before-reset | `storage:recovery-core`, Activity/Settings/History/Workout tests | actual storage failure behavior and recovery UI |
 | F04 Activity midnight | canonical store rolls business date before read/write and queued saves retain their own date | `activity:rollover` | system RTC behavior on target |
 | F05 History calendar window | real records only within today-6..today; missing today remains missing, no fake zero/today highlight | `history:calendar`, `history:truth` | visual/history scroll on device |
@@ -41,9 +43,20 @@ Update the current validated SHA and run only after both contracts and QuickApp 
 | F26 call demo truth | UI says local demo instead of remote hangup promise | `clock:notification` | no remote hangup claim unless companion protocol exists |
 | F35 schema truth | unsupported module/placement rejected at compile/check | `v3:schema`, strict frontend audit | generated resource availability on device |
 | F37/F38 duplicate authority | dead routes/catalog/state removed | truth/package/performance contracts | none beyond smoke regression |
+| F39 documentation truth | root/QuickApp/English README now describe 17 routes, current Surface architecture, form-factor launcher behavior, minAPI 2 and the exact contest image | `docs:check`, run #356 | final clean-environment/release README verification |
 | F40/F41/F43 geometry/readability | authored Circle/Rect call layout and mask/text stress checks | `design:visibility`, `clock:notification` | screenshots + hit tests |
 | F42 Watchface preview | previews generated from Clock Stage IR; selected state dynamic; Circle far previews gated | `watchface:preview` | three-shape visual match |
 | F47 copy ownership | weekday/loading display text owned by Surface JSON | `copy:ownership`, truth contracts | none beyond visual regression |
+
+## Parallel work products now present
+
+- `docs/DEVICE_ACCEPTANCE_CHECKLIST.md` — required-image install/launch, three-shape, touch, persistence, sensor, display and smoke gates.
+- `docs/PERFORMANCE_BASELINE_TEMPLATE.md` — same-environment cold launch, route p50/p95, native render/touch, memory/resource recovery and power template.
+- `docs/CAPABILITY_MATRIX.md` — separates manifest declaration, repository contract, simulator, hardware and remote evidence.
+- `skills/vela-surface-design/SKILL.md` + profile fixture/review checklist.
+- `skills/vela-runtime-refactor/SKILL.md` + failure-window checklist.
+
+The Skill files are useful project workflows but **are not yet contest-validity evidence by file existence alone**. They still require real task execution in a supported environment and recorded output/evidence.
 
 ## Performance evidence already available
 
@@ -76,10 +89,11 @@ These historical runs prove repository state at their associated heads; later he
 | #325 | Clock-critical corrupt-storage recovery + Diagnostics | contracts + build success |
 | #334 | History/Workout recovery and five-domain Diagnostics | contracts + build success |
 | #338 | stable finalized Workout record retry | contracts + build success |
+| **#356** | **pre-simulator baseline: F02 no-rewrite retry + explicit finalizing UI + docs/Skill/acceptance assets** | **contracts + QuickApp build success** |
 
 ## Open items that cannot be closed by current CI alone
 
-- required contest-image install → launch → verify custom RPK
+- **next gate:** required contest-image install → launch → verify custom RPK
 - F08 source-specific Health freshness thresholds
 - F10 post-first-fix GPS stale/long-gap/drift behavior
 - F16 touch/gesture hit propagation and cancellation
