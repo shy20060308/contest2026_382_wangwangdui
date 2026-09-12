@@ -21,8 +21,16 @@ const explicitLocal = core.make({ screenShape: 'circle' }, { screenWidth: 400, s
 assert.strictEqual(explicitLocal.formFactor, 'rect', 'explicit Host shape must outrank later capability metadata')
 
 const wrapper = read('src/runtime/device_profile.js')
-assert.ok(wrapper.includes('metadataWaiters.push(callback)'), 'pages using a provisional viewport profile must wait for metadata correction')
-assert.ok(wrapper.includes('cached = core.make(info, local || {})'), 'native metadata must rebuild the cached profile instead of only enriching labels')
-assert.ok(wrapper.includes('flush(metadataWaiters, cached)'), 'corrected profile must be re-emitted to currently alive pages')
+assert.ok(wrapper.includes('metadataWaiters.push(callback)'), 'pages using a provisional viewport profile may wait for a real layout correction')
+assert.ok(wrapper.includes('function sameLayout(a, b)'), 'device profile wrapper must distinguish metadata enrichment from layout correction')
+assert.ok(wrapper.includes('if (sameLayout(previous, corrected))'), 'unchanged layout metadata must not re-enter page initialization')
+assert.ok(wrapper.includes('metadataWaiters.length = 0'), 'same-layout metadata waiters must be discarded without a second callback')
+assert.ok(wrapper.includes('flush(metadataWaiters, corrected)'), 'a real form-factor/geometry correction must still reach live pages')
 
-console.log('Device profile shape correction verified: explicit shape overrides provisional ratio inference while Host geometry remains authoritative')
+const surfacePage = read('src/runtime/surface_page.js')
+assert.ok(surfacePage.includes('var reconfigure = !!page._surfaceController'), 'Surface Page must detect a repeated device-profile callback')
+assert.ok(surfacePage.includes('if (!reconfigure) {'), 'Surface Page must create its controller only on the first profile resolution')
+assert.ok(surfacePage.includes("controllerCall(page, 'controller-profile-stop', 'stop')"), 'live profile correction must stop the existing controller before reconfiguration')
+assert.ok(surfacePage.includes("'controller-reconfigure'"), 'profile correction must reconfigure the existing controller instead of constructing a second instance')
+
+console.log('Device profile shape correction verified: metadata enrichment does not duplicate page/controller initialization while real layout corrections reconfigure in place')
