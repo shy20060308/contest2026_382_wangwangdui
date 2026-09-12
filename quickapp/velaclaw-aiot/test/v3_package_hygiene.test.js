@@ -19,7 +19,9 @@ function surfaceFilename(route) { return route.replace(/^pages\//, '').replace(/
 
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
 assert.ok(pkg.scripts.clean === 'node scripts/clean-build.js', 'V3 must expose the deterministic build clean command')
-assert.ok(/^npm run clean && npm run surfaces:compile && aiot build\b/.test(pkg.scripts.build), 'build must clean output and validate JSON surfaces before aiot build')
+assert.ok(/^npm run clean && npm run surfaces:compile && aiot build && npm run bundle:pages$/.test(pkg.scripts['build:js-budget']), 'debug bundle budget must build non-JSC page JavaScript and measure it immediately')
+assert.ok(/^npm run build:js-budget && npm run clean && npm run surfaces:compile && aiot build --enable-jsc$/.test(pkg.scripts.build), 'build must gate simulator page JS size before a clean JSC production build')
+assert.ok(pkg.scripts['bundle:pages'] === 'node scripts/check-page-bundle-size.js', 'page bundle budget must use the tracked single-file size gate')
 assert.ok(/^npm run clean && npm run surfaces:compile && aiot release\b/.test(pkg.scripts.release), 'release must clean output and validate JSON surfaces before aiot release')
 assert.ok(/^npm run surfaces:compile && aiot start\b/.test(pkg.scripts.start), 'debug start must validate JSON surfaces before aiot start')
 
@@ -55,6 +57,7 @@ assert.deepStrictEqual(previewConsumers.map(function (file) { return path.relati
 const surfacePageSource = fs.readFileSync(path.join(sourceRoot, 'runtime', 'surface_page.js'), 'utf8')
 assert.ok(!surfacePageSource.includes('frontend/generated/surfaces'), 'runtime Surface Page must not import central Surface metadata')
 assert.ok(!surfacePageSource.includes('frontend/generated/watchface_previews'), 'shared Surface Page must not eagerly import Watchface preview data')
+assert.ok(!surfacePageSource.includes('controller_registry'), 'shared Surface Page must not pull the all-feature controller graph into every page bundle')
 
 const sourceFiles = filesUnder(sourceRoot, [])
 const authoredSourceFiles = sourceFiles.filter(function (file) { return !file.startsWith(generatedRoot + path.sep) })
@@ -74,4 +77,4 @@ authoredSourceFiles.forEach(function (file) {
   assert.ok(!/\.(?:bak|old|orig|rej|tmp|map)$/i.test(file), 'temporary/generated file must not live under authored src: ' + path.relative(root, file))
 })
 
-console.log('V3 package hygiene verified: page-local Surface loading, bounded generated Watchface preview data, clean packaging and referenced static assets only')
+console.log('V3 package hygiene verified: page-local Surface/controller loading, bounded generated preview data, debug bundle budget and clean packaging')
