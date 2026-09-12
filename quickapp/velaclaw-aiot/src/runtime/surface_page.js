@@ -27,6 +27,23 @@ function bootFailure(page, stage, error) {
   boot(page, 'ERR:' + stage, errorText(error))
   console.log('[V3_BOOT] ' + stage + ': ' + errorText(error))
 }
+function controllerFailure(page, stage, error) {
+  if (!page || page._surfaceDestroyed) return
+  page._surfaceControllerError = { stage: stage, detail: errorText(error) }
+  boot(page, 'ERR:' + stage, errorText(error))
+  console.log('[V3_CONTROLLER] ' + stage + ': ' + errorText(error))
+}
+function controllerCall(page, stage, method, args) {
+  var controller = page && page._surfaceController
+  if (!controller || typeof controller[method] !== 'function') return true
+  try {
+    controller[method].apply(controller, args || [])
+    return true
+  } catch (error) {
+    controllerFailure(page, stage, error)
+    return false
+  }
+}
 
 function initialState(surface) {
   var source = surface && surface.initialState ? surface.initialState : {}
@@ -148,50 +165,66 @@ function bind(page, surface, controllerBinding) {
   page._surfaceState = initialState(surface)
   page._surfaceVisible = false
   page._surfaceRenderSignature = null
+  page._surfaceController = null
+  page._surfaceControllerError = null
   page._surfaceInteractionOwner = interactionOwner.create(surface.id)
-
-  boot(page, 'BOOT:controller-create', '')
-  try {
-    page._surfaceController = createController(surface, controllerBinding, function (state) {
-      if (!current()) return
-      page._surfaceState = state || {}
-      if (page.surfaceReady && !page._surfaceVisible) {
-        performanceMetrics.recordSurfaceDeferredHidden()
-        return
-      }
-      try { rebuild(page) } catch (error) { bootFailure(page, 'controller-update', error) }
-    }, { interactionOwner: page._surfaceInteractionOwner })
-  } catch (error) {
-    bootFailure(page, 'controller-create', error)
-    return
-  }
 
   boot(page, 'BOOT:device-profile', '')
   try {
     pageRuntime.bind(page, function (profile, scene, safe) {
       if (!current()) return
+      page._surfaceProfile = profile
+      page._surfaceScene = scene
+      page._surfaceSafe = safe
+
       try {
         boot(page, 'BOOT:surface-resolve', profile && profile.formFactor ? profile.formFactor : '')
-        page._surfaceProfile = profile
-        page._surfaceScene = scene
-        page._surfaceSafe = safe
-        rebuild(page)
-        boot(page, 'BOOT:controller-configure', '')
-        if (page._surfaceController && typeof page._surfaceController.configure === 'function') {
-          var config = page.surfacePlan && page.surfacePlan.controllerConfig ? page.surfacePlan.controllerConfig : {}
-          page._surfaceController.configure(profile, scene, safe, config)
-        }
-        if (!current()) return
         rebuild(page)
         page.surfaceReady = true
-        boot(page, 'BOOT:controller-start', '')
-        if (page._surfaceVisible && page._surfaceController) page._surfaceController.start()
-        if (!current()) return
-        boot(page, 'BOOT:ready', '')
-        markRouteSurfaceReady(page)
       } catch (error) {
         bootFailure(page, 'surface-init', error)
+        return
       }
+
+      boot(page, 'BOOT:controller-create', '')
+      try {
+        page._surfaceController = createController(surface, controllerBinding, function (state) {
+          if (!current()) return
+          page._surfaceState = state || {}
+          if (page.surfaceReady && !page._surfaceVisible) {
+            performanceMetrics.recordSurfaceDeferredHidden()
+            return
+          }
+          try { rebuild(page) } catch (error) { bootFailure(page, 'controller-update', error) }
+        }, { interactionOwner: page._surfaceInteractionOwner })
+      } catch (error) {
+        controllerFailure(page, 'controller-create', error)
+        markRouteSurfaceReady(page)
+        return
+      }
+
+      boot(page, 'BOOT:controller-configure', '')
+      if (page._surfaceController && typeof page._surfaceController.configure === 'function') {
+        var config = page.surfacePlan && page.surfacePlan.controllerConfig ? page.surfacePlan.controllerConfig : {}
+        if (!controllerCall(page, 'controller-configure', 'configure', [profile, scene, safe, config])) {
+          markRouteSurfaceReady(page)
+          return
+        }
+      }
+
+      if (!current()) return
+      try { rebuild(page) } catch (error) { bootFailure(page, 'controller-configure-render', error); return }
+
+      if (page._surfaceVisible && page._surfaceController) {
+        boot(page, 'BOOT:controller-start', '')
+        if (!controllerCall(page, 'controller-start', 'start')) {
+          markRouteSurfaceReady(page)
+          return
+        }
+      }
+      if (!current()) return
+      boot(page, 'BOOT:ready', '')
+      markRouteSurfaceReady(page)
     }, current, function (error) {
       bootFailure(page, 'device-profile', error)
     })
@@ -207,11 +240,12 @@ function show(page) {
   try {
     if (page.surfaceReady) rebuild(page)
     else syncPlanContext(page)
-    if (page.surfaceReady && page._surfaceController) page._surfaceController.start()
-    markRouteSurfaceReady(page)
   } catch (error) {
-    bootFailure(page, 'show', error)
+    bootFailure(page, 'show-render', error)
+    return
   }
+  if (page.surfaceReady && page._surfaceController && !page._surfaceControllerError) controllerCall(page, 'controller-start', 'start')
+  markRouteSurfaceReady(page)
 }
 
 function hide(page) {
@@ -222,19 +256,22 @@ function hide(page) {
     page._surfaceInteractionOwner.deactivate()
   }
   syncPlanContext(page)
-  if (page._surfaceController) page._surfaceController.stop()
+  if (page._surfaceController) controllerCall(page, 'controller-stop', 'stop')
 }
 
 function destroy(page) {
   if (!page) return
+  if (page._surfaceController && typeof page._surfaceController.destroy === 'function') {
+    try { page._surfaceController.destroy() } catch (error) { console.log('[V3_CONTROLLER] controller-destroy: ' + errorText(error)) }
+  }
   pageGeneration.destroy(page)
   page._surfaceVisible = false
   if (page._surfaceInteractionOwner) {
     navigationContext.clear(page._surfaceInteractionOwner.key())
     page._surfaceInteractionOwner.deactivate()
   }
-  if (page._surfaceController) page._surfaceController.destroy()
   page._surfaceController = null
+  page._surfaceControllerError = null
   page._surfaceInteractionOwner = null
   page._surface = null
   page._surfaceState = null
@@ -265,8 +302,13 @@ function actionPayload(event) {
 function action(page, event) {
   var name = actionName(event)
   if (!name) return
-  if (!page || page._surfaceDestroyed || !page._surfaceVisible || !page._surfaceController || typeof page._surfaceController.action !== 'function') throw new Error('V3 Surface Page has no active action controller for ' + name)
-  page._surfaceController.action(name, actionPayload(event))
+  if (!page || page._surfaceDestroyed || !page._surfaceVisible) return
+  if (page._surfaceControllerError) {
+    console.log('[V3_CONTROLLER] action suppressed after ' + page._surfaceControllerError.stage + ': ' + name)
+    return
+  }
+  if (!page._surfaceController || typeof page._surfaceController.action !== 'function') return
+  try { page._surfaceController.action(name, actionPayload(event)) } catch (error) { controllerFailure(page, 'controller-action', error) }
 }
 
 function back(page) {
