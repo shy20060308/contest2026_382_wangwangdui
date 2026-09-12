@@ -120,4 +120,5 @@ const vibrationPage = fs.readFileSync(path.join(root, 'src/pages/settings/vibrat
 assert.ok(vibrationPage.includes('levelButtonWidth') && !vibrationPage.includes('width: 31%'))
 assert.ok(!vibrationPage.includes('applyShape(') && !vibrationPage.includes('shape-pill'))
 
+require('./settings_selector_compat.test')
 console.log('V2 visual contracts verified: declarative recipes, one L1 shell, local L2 expressions and intentional L3 surfaces')
