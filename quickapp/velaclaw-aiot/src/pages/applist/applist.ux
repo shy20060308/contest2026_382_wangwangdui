@@ -126,20 +126,23 @@ export default {
     if (!this.circleTouchActive || !event.touches || !event.touches[0]) return
     var p = event.touches[0]
     var now = Date.now()
-    var dx = p.pageX - this.touchLastX
-    var dy = p.pageY - this.touchLastY
+    var totalX = p.pageX - this.touchStartX
+    var totalY = p.pageY - this.touchStartY
+    var wasDragging = this.dragMoved
+    if (!this.dragMoved && (Math.abs(totalX) > honeycomb.DRAG_CAPTURE_DISTANCE || Math.abs(totalY) > honeycomb.DRAG_CAPTURE_DISTANCE)) this.dragMoved = true
+    if (!this.dragMoved) { this.touchLastX = p.pageX; this.touchLastY = p.pageY; this.touchLastAt = now; return }
+    if (event.preventDefault) event.preventDefault()
+    if (event.stopPropagation) event.stopPropagation()
+    var dx = wasDragging ? p.pageX - this.touchLastX : totalX
+    var dy = wasDragging ? p.pageY - this.touchLastY : totalY
     var dt = Math.max(8, now - (this.touchLastAt || now))
     this.touchLastX = p.pageX; this.touchLastY = p.pageY; this.touchLastAt = now
-    if (Math.abs(p.pageX - this.touchStartX) > 6 || Math.abs(p.pageY - this.touchStartY) > 6) this.dragMoved = true
-    if (this.dragMoved) {
-      if (event.preventDefault) event.preventDefault()
-      if (event.stopPropagation) event.stopPropagation()
-    }
     var pan = honeycomb.nextPan(this.circleSlots, this.circlePanX, this.circlePanY, dx, dy)
     this.circlePanX = pan.x; this.circlePanY = pan.y
     this.circleVelocityX = this.circleVelocityX * 0.45 + (dx / dt) * 0.55
     this.circleVelocityY = this.circleVelocityY * 0.45 + (dy / dt) * 0.55
-    this.scheduleHoneycombLayout()
+    if (!wasDragging) this.renderHoneycomb()
+    else this.scheduleHoneycombLayout()
   },
   onHoneyEnd(event) {
     if (!this.circleTouchActive) return

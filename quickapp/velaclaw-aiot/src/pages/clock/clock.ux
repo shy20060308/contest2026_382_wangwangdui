@@ -9,6 +9,7 @@
 <import name="sportrect" src="../../components/watchfaces/sport_rect.ux"></import>
 <import name="simplerect" src="../../components/watchfaces/simple_rect.ux"></import>
 <import name="dashboardrect" src="../../components/watchfaces/dashboard_rect.ux"></import>
+<import name="mechanicalrect" src="../../components/watchfaces/mechanical_rect.ux"></import>
 
 <template>
   <stack class="clock-root {{ viewportClass }}" style="position: {{ viewportPosition }}; left: {{ viewportLeft }}; top: {{ viewportTop }}; width: {{ viewportWidth }}; height: {{ viewportHeight }}; background-color: {{ faceBackground }};" @swipe="handleSwipe" @longpress="openFaceSelector" @touchstart="handleTouchStart" @touchmove="handleTouchMove" @touchend="handleTouchEnd">
@@ -24,6 +25,7 @@
         <sportrect if="{{ faceId === 'sport' }}" onopen-health="openHealth" onopen-steps="openSteps" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-minutes="{{ displayMinutes }}" display-hours="{{ displayHours }}" face-accent="{{ faceAccent }}" battery-percent="{{ batteryPercent }}" battery-width="{{ batteryWidth }}" battery-color="{{ batteryColor }}" current-heart-rate="{{ currentHeartRate }}" steps-text="{{ stepsText }}" steps-goal-text="{{ stepsGoalText }}"></sportrect>
         <simplerect if="{{ faceId === 'simple' }}" onopen-health="openHealth" onopen-steps="openSteps" display-week="{{ displayWeek }}" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-hours="{{ displayHours }}" display-minutes="{{ displayMinutes }}" face-accent="{{ faceAccent }}" goal-percent="{{ goalPercent }}" steps-text="{{ stepsText }}" current-heart-rate="{{ currentHeartRate }}" battery-percent="{{ batteryPercent }}" battery-color="{{ batteryColor }}"></simplerect>
         <dashboardrect if="{{ faceId === 'dashboard' }}" onopen-health="openHealth" onopen-steps="openSteps" display-week="{{ displayWeek }}" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" display-hours="{{ displayHours }}" display-minutes="{{ displayMinutes }}" face-accent="{{ faceAccent }}" steps-text="{{ stepsText }}" steps-goal-text="{{ stepsGoalText }}" steps-progress-width="{{ stepsProgressWidth }}" current-heart-rate="{{ currentHeartRate }}" heart-rate-data="{{ heartRateData }}" battery-percent="{{ batteryPercent }}" battery-width="{{ batteryWidth }}" battery-color="{{ batteryColor }}"></dashboardrect>
+        <mechanicalrect if="{{ faceId === 'mechanical' }}" onopen-today="openToday" onopen-health="openHealth" display-month="{{ displayMonth }}" display-date="{{ displayDate }}" battery-percent="{{ batteryPercent }}" current-heart-rate="{{ currentHeartRate }}" analog-ticks="{{ analogTicks }}" hour-hand-transform="{{ hourHandTransform }}" minute-hand-transform="{{ minuteHandTransform }}" second-hand-transform="{{ secondHandTransform }}"></mechanicalrect>
       </div>
 
       <div class="circle-stage" if="{{ isCircle && faceMounted }}">
