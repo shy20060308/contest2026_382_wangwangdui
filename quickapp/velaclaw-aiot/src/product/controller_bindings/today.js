@@ -1,5 +1,10 @@
-import { createTodayController } from '../features/today/controller'
 import { copyState } from './shared'
+
+function todayControllerFactory() {
+  var feature = require('../features/today/controller')
+  if (!feature || typeof feature.createTodayController !== 'function') throw new Error('Today feature controller module unavailable')
+  return feature.createTodayController
+}
 
 function create(onChange) {
   var calendarOpen = false
@@ -12,6 +17,7 @@ function create(onChange) {
     state.calendarCells = Array.isArray(latest.calendarCells) ? latest.calendarCells.slice() : []
     if (typeof onChange === 'function') onChange(state)
   }
+  var createTodayController = todayControllerFactory()
   var controller = createTodayController(emit)
   return {
     start: function () { controller.start() }, stop: function () { controller.stop() }, destroy: function () { controller.stop() },
