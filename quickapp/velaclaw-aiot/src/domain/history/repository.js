@@ -5,7 +5,6 @@ import recentHealth from '../health/recent'
 var HEALTH_HISTORY_KEY = 'health_history_7d'
 var HOURLY_HEART_RATE_KEY = 'hourly_heart_rate_24h'
 var HISTORY_DAYS = 7
-var HOURLY_LABELS = ['0', '3', '6', '9', '12', '15', '18', '21']
 var hourlyHeartRate = []
 
 function pad2(value) {
@@ -40,34 +39,8 @@ function todayRecord(activitySnapshot) {
   }
 }
 
-function makeDemoHistory() {
-  var result = []
-  var steps = [3800, 5200, 6100, 4500, 7200, 5600]
-  var calories = [146, 205, 242, 178, 288, 220]
-  var stand = [6, 8, 9, 7, 10, 8]
-  var heart = [78, 81, 84, 79, 86, 82]
-  var goals = [54, 74, 85, 64, 93, 78]
-  for (var i = HISTORY_DAYS - 1; i > 0; i--) {
-    var date = new Date()
-    date.setDate(date.getDate() - i)
-    var index = HISTORY_DAYS - 1 - i
-    result.push({
-      date: dateKey(date),
-      steps: steps[index],
-      calories: calories[index],
-      standHours: stand[index],
-      avgHeartRate: heart[index],
-      minHeartRate: heart[index] - 12,
-      maxHeartRate: heart[index] + 14,
-      goalPercent: goals[index]
-    })
-  }
-  result.push(todayRecord())
-  return result
-}
-
 function normalizeHistory(stored) {
-  return Array.isArray(stored) && stored.length ? stored : makeDemoHistory()
+  return Array.isArray(stored) ? stored : []
 }
 
 function upsertToday(history, activitySnapshot, restorePersistedTotals) {
@@ -110,31 +83,13 @@ function saveToday(activitySnapshot, callback) {
   }, [])
 }
 
-function makeDemoHourly() {
-  var raw = [
-    { min: 48, max: 72, avg: 60 },
-    { min: 51, max: 70, avg: 62 },
-    { min: 58, max: 88, avg: 72 },
-    { min: 68, max: 95, avg: 80 },
-    { min: 63, max: 88, avg: 76 },
-    { min: 66, max: 93, avg: 79 },
-    { min: 64, max: 91, avg: 77 },
-    { min: 55, max: 80, avg: 68 }
-  ]
-  var result = []
-  for (var i = 0; i < HOURLY_LABELS.length; i++) {
-    result.push({ label: HOURLY_LABELS[i], min: raw[i].min, max: raw[i].max, avg: raw[i].avg })
-  }
-  return result
-}
-
 export default {
   ensure: function () { loadHistory(function () {}) },
   saveToday: saveToday,
   getHistory: loadHistory,
 
   getHourlyHeartRate: function () {
-    return clone(hourlyHeartRate.length ? hourlyHeartRate : makeDemoHourly())
+    return clone(hourlyHeartRate)
   },
 
   loadHourlyHeartRate: function (callback) {
@@ -143,8 +98,7 @@ export default {
       return
     }
     storage.getJSON(HOURLY_HEART_RATE_KEY, function (stored) {
-      hourlyHeartRate = Array.isArray(stored) && stored.length ? stored : makeDemoHourly()
-      storage.set(HOURLY_HEART_RATE_KEY, hourlyHeartRate)
+      hourlyHeartRate = Array.isArray(stored) ? stored : []
       if (callback) callback(clone(hourlyHeartRate))
     }, [])
   },
