@@ -58,7 +58,7 @@ function dependencyJsPath(ux, dependency) {
 }
 function isGenericPageDependency(dependency) {
   const normalized = dependency.replace(/\\/g, '/')
-  return /(?:^|\/)components\/surface_host(?:_stage)?(?:\.ux)?$/.test(normalized) || /(?:^|\/)runtime\/surface_page$/.test(normalized)
+  return /(?:^|\/)components\/(?:surface_host(?:_stage)?|surface_collection)(?:\.ux)?$/.test(normalized) || /(?:^|\/)runtime\/surface_page$/.test(normalized)
 }
 function isOwnSurfaceDependency(ux, surfaceFile, dependency) {
   const target = resolvedDependency(ux, dependency)
@@ -140,7 +140,7 @@ routes.forEach(function (route) {
 
   if (exists(ux)) {
     const source = read(ux)
-    if (!/surface_host(?:_stage)?\.ux/.test(source)) issues.push('ux:not-thin-surface-host')
+    if (!/surface_(?:host(?:_stage)?|collection)\.ux/.test(source)) issues.push('ux:not-thin-surface-host')
     const deps = dependencies(source)
     const generatedDeps = deps.filter(function (dependency) { return isGeneratedPageDataDependency(ux, surface, dependency) })
     const controllerDeps = deps.filter(function (dependency) { return isAnyControllerBindingDependency(ux, dependency) })
