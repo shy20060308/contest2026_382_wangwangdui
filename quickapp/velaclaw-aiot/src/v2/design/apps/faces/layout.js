@@ -15,7 +15,7 @@ module.exports = {
     contentWidth: 148,
     surface: 'preview-swiper',
     faceIds: ['sport', 'simple', 'dashboard', 'mechanical'],
-    header: { top: 8, width: 124, height: 18, circleFit: 'edges' },
+    header: { top: 10, width: 124, height: 18, circleFit: 'edges' },
     preview: { top: 32, width: 136, height: 112, circleFit: 'center' },
     footer: { top: 148, width: 120, height: 16, circleFit: 'center' },
     titleSize: 10,
