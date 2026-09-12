@@ -60,6 +60,7 @@ assert.strictEqual(routes.length, 17, 'V3 product route count changed; update th
 assert.ok(!manifest.router.pages['pages/clock_guard'], 'Clock Guard must stay removed once direct clock entry is verified')
 
 const ids = new Set()
+const controllerIds = new Set()
 routes.forEach(function (route) {
   const component = manifest.router.pages[route].component
   const pageFile = 'src/' + route + '/' + component + '.ux'
@@ -76,16 +77,35 @@ routes.forEach(function (route) {
   ids.add(surface.id)
   assert.ok(source.includes('surface_host.ux'), pageFile + ' must render the generic Surface Host')
   assert.ok(source.includes("require('" + expectedDependency + "')") || source.includes('require("' + expectedDependency + '")'), pageFile + ' must require only its own Surface JSON')
-  assert.ok(source.includes('surfacePage.bind(this, surface)'), pageFile + ' must bind the page-local Surface object')
   const surfaceDependencies = relativeDependencies(source).filter(dep => dep.indexOf('/product/frontend/surfaces/') >= 0 && dep.endsWith('.json'))
   assert.deepStrictEqual(surfaceDependencies, [expectedDependency], pageFile + ' must not pull another page Surface into this route bundle')
+  const controllerDependencies = relativeDependencies(source).filter(dep => dep.indexOf('/product/controller_bindings/') >= 0)
+  if (surface.controller) {
+    controllerIds.add(surface.controller)
+    const controllerFile = 'src/product/controller_bindings/' + surface.controller + '.js'
+    const expectedControllerDependency = normalizedRelative(pageFile, controllerFile).replace(/\.js$/, '')
+    assert.ok(exists(controllerFile), surface.controller + ' must have a page-local controller binding')
+    assert.deepStrictEqual(controllerDependencies, [expectedControllerDependency], pageFile + ' must import only its Surface-declared controller binding')
+    assert.ok(source.includes('import controllerBinding from'), pageFile + ' must import the controller binding explicitly')
+    assert.ok(source.includes('surfacePage.bind(this, surface, controllerBinding)'), pageFile + ' must bind the page-local controller explicitly')
+  } else {
+    assert.deepStrictEqual(controllerDependencies, [], pageFile + ' must not import a controller binding when Surface controller is null')
+    assert.ok(source.includes('surfacePage.bind(this, surface)'), pageFile + ' must bind the page-local Surface object')
+  }
   assert.ok(!/(?:\.\.\/)+(?:v2|product\/design\/apps|product\/features|domain|capabilities)(?:\/|['"])/.test(source), pageFile + ' must not reach product implementation layers')
   assert.ok(!/<(?:div|stack|scroll|text|image|slider|canvas|list|button)\b/.test((source.match(/<template>([\s\S]*?)<\/template>/) || [])[1] || ''), pageFile + ' must not own product markup')
+})
+
+controllerIds.forEach(function (id) {
+  const binding = read('src/product/controller_bindings/' + id + '.js')
+  assert.ok(binding.includes("id: '" + id + "'"), id + ' binding must declare the same semantic controller id as Surface JSON')
 })
 
 const surfacePage = read('src/runtime/surface_page.js')
 assert.ok(!surfacePage.includes('frontend/generated/surfaces'), 'Surface Page must not import a central eager Surface registry')
 assert.ok(!surfacePage.includes('surfaces.byId'), 'Surface Page must consume the page-local Surface object directly')
+assert.ok(!surfacePage.includes('controller_registry'), 'Surface Page must not eagerly import the all-feature controller registry')
+assert.ok(surfacePage.includes('binding.id !== surface.controller'), 'Surface Page must reject a page-local controller binding that disagrees with Surface JSON')
 const generatedSurfaceMetadata = read('src/product/frontend/generated/surfaces.js')
 assert.ok(!/require\([^)]*surfaces\//.test(generatedSurfaceMetadata), 'generated Surface metadata must never eagerly require authored JSON')
 
@@ -121,4 +141,4 @@ assert.ok(pkg.scripts.check.includes('v3:frontend-contract'), 'strict frontend a
 assert.ok(!pkg.scripts.check.includes('v3:frontend-staged'), 'completed migration must not use the staged gate')
 assert.strictEqual(Object.keys(pkg.scripts).some(name => name.startsWith('v2:') || name === 'check:legacy'), false)
 
-console.log('V3 architecture verified: all ' + routes.length + ' routes own exactly one page-local Surface dependency with no eager cross-route registry')
+console.log('V3 architecture verified: all ' + routes.length + ' routes own one Surface dependency and only their declared controller binding')
