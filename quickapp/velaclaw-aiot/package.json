@@ -13,7 +13,7 @@
   "engines": { "node": ">=18" },
   "scripts": {
     "surfaces:compile": "node scripts/compile-v3-surfaces.js",
-    "start": "npm run surfaces:compile && aiot start --watch",
+    "start": "npm run clean && npm run surfaces:compile && aiot start --watch",
     "clean": "node scripts/clean-build.js",
     "build:js-budget": "npm run clean && npm run surfaces:compile && aiot build && npm run bundle:pages",
     "build": "npm run build:js-budget && npm run clean && npm run surfaces:compile && aiot build --enable-jsc",
