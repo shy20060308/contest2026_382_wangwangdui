@@ -10,17 +10,18 @@ assert.ok(surfacePage.indexOf('_surfaceRenderSignature') >= 0, 'Surface runtime 
 assert.ok(surfacePage.indexOf('recordSurfaceSkippedEqual') >= 0, 'Surface runtime must measure equal-state rebuild skips')
 assert.ok(surfacePage.indexOf('recordSurfaceSerialize') >= 0, 'Surface runtime must measure serialization/signature cost on every rebuild attempt')
 assert.ok(surfacePage.indexOf('resolveStartedAt') >= 0 && surfacePage.indexOf('decorateStartedAt') >= 0 && surfacePage.indexOf('contextStartedAt') >= 0, 'Surface runtime must split resolve, decorate and context-sync timing')
-assert.ok(surfacePage.indexOf('routeTiming.complete') >= 0, 'Target Surface ready+visible must settle route timing')
+assert.ok(surfacePage.indexOf('routeTiming.complete') >= 0, 'Target Surface ready+visible may settle route timing samples')
 assert.ok(surfacePage.indexOf('page.surfaceReady && !page._surfaceVisible') >= 0, 'Hidden ready pages must defer presentation rebuilds')
 assert.ok(surfacePage.indexOf('recordSurfaceDeferredHidden') >= 0, 'Hidden rebuild deferrals must be measurable')
 
 const navigation = read('src/runtime/navigation.js')
-const navigationCore = require('../src/runtime/navigation_core')
-assert.ok(navigationCore.DEFAULT_WINDOW_MS >= 200 && navigationCore.DEFAULT_WINDOW_MS <= 500, 'Duplicate navigation suppression should stay within a wearable tap-burst window')
-assert.ok(navigation.indexOf('recordNavigationSuppressed') >= 0, 'Suppressed navigation must be measurable')
-assert.ok(navigation.indexOf('navigationCore.create') >= 0, 'Navigation wrapper must delegate dedupe semantics to the testable core')
-assert.ok(navigation.indexOf("routeTiming.begin(path, 'push')") >= 0 && navigation.indexOf("routeTiming.begin(path, 'replace')") >= 0, 'push/replace must start route-to-Surface-ready timing')
-assert.ok(navigation.indexOf('routeTiming.confirm') >= 0, 'route timing must be confirmed only after router invocation returns')
+assert.ok(navigation.indexOf("import router from '@system.router'") >= 0, 'Navigation must use the official system router')
+assert.ok(navigation.indexOf('router.push({ uri: path, params: params || {} })') >= 0, 'push must invoke the native router directly')
+assert.ok(navigation.indexOf('router.replace({ uri: path, params: params || {} })') >= 0, 'replace must invoke the native router directly')
+assert.ok(navigation.indexOf('router.back()') >= 0, 'back must invoke the native router directly')
+assert.strictEqual(navigation.indexOf('navigationCore.create'), -1, 'interaction correctness must not depend on custom navigation dedupe')
+assert.strictEqual(navigation.indexOf('navigationContext'), -1, 'interaction correctness must not depend on a custom route permission context')
+assert.strictEqual(navigation.indexOf('recordNavigationSuppressed'), -1, 'native navigation must not be silently suppressed by performance instrumentation')
 
 const routeTimingCore = require('../src/runtime/route_timing_core')
 let routeNow = 100
@@ -31,14 +32,14 @@ const routeCore = routeTimingCore.create({
 })
 const earlyReady = routeCore.begin('/pages/steps', 'push')
 routeNow = 112
-assert.strictEqual(routeCore.complete('pages/steps'), false, 'target may become ready before router returns without producing an unconfirmed sample')
+assert.strictEqual(routeCore.complete('pages/steps'), false, 'target may become ready before confirmation without producing an unconfirmed sample')
 assert.strictEqual(routeObservations.length, 0)
 assert.strictEqual(routeCore.confirm(earlyReady), true, 'confirm must settle an already-ready target')
 assert.deepStrictEqual(routeObservations[0], { duration: 12, kind: 'push', route: 'pages/steps' })
 const failedAttempt = routeCore.begin('/pages/history', 'push')
 routeNow = 140
 routeCore.complete('/pages/history')
-assert.strictEqual(routeObservations.length, 1, 'unconfirmed router attempts must never become performance samples')
+assert.strictEqual(routeObservations.length, 1, 'unconfirmed attempts must never become performance samples')
 routeNow = 150
 const replacement = routeCore.begin('/pages/history', 'replace')
 routeCore.confirm(replacement)
@@ -121,4 +122,4 @@ assert.strictEqual(snapshot.motionUiPercent, 20)
 performanceMetrics.reset()
 assert.strictEqual(performanceMetrics.snapshot().routeSurfaceReadySamples, 0, 'performance reset must clear bounded route samples')
 
-console.log('V3 runtime performance verified: staged Surface JS timing, retry-safe route-to-Surface-ready samples, manifest-owned routes and diagnostics geometry contracts')
+console.log('V3 runtime performance verified: Surface timing remains measurable while user navigation stays on the native system-router path')
