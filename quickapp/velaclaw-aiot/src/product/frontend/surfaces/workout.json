@@ -18,7 +18,8 @@
         },
         "subtitleTrailingMap": {
           "running": { "text": "运动中", "color": "#30D158" },
-          "paused": { "text": "已暂停", "color": "#FFD60A" }
+          "paused": { "text": "已暂停", "color": "#FFD60A" },
+          "finalizing": { "text": "待保存", "color": "#FF9F0A" }
         }
       },
       "tokens": {
@@ -137,7 +138,8 @@
       "props": {
         "stateMap": {
           "running": { "text": "暂停", "color": "#FFFFFF", "background": "#2C2C2E" },
-          "paused": { "text": "继续", "color": "#061008", "background": "#30D158" }
+          "paused": { "text": "继续", "color": "#061008", "background": "#30D158" },
+          "finalizing": { "text": "已结束 · 待保存", "color": "#FFD60A", "background": "#241B10" }
         }
       },
       "actions": { "tap": "workout-toggle-pause" },
@@ -165,6 +167,14 @@
       "type": "button",
       "visibleWhen": "!confirming",
       "copy": { "title": "结束", "subtitle": "保存本次训练" },
+      "bind": { "state": "status" },
+      "props": {
+        "stateMap": {
+          "running": { "text": "结束", "color": "#FFFFFF", "background": "#C83245" },
+          "paused": { "text": "结束", "color": "#FFFFFF", "background": "#C83245" },
+          "finalizing": { "text": "重试保存", "color": "#111111", "background": "#FFD60A" }
+        }
+      },
       "actions": { "tap": "workout-request-finish" },
       "tokens": {
         "flow": true,
