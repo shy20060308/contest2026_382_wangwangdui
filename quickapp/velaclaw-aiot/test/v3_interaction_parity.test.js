@@ -22,7 +22,7 @@ const sliderUx = read('src/components/surface_slider.ux')
 const honeycomb = read('src/product/frontend/engines/honeycomb.js')
 const controllerRegistry = read('src/product/controller_registry.js')
 const surfacePage = read('src/runtime/surface_page.js')
-const designSkill = read('docs/VELA_WEARABLE_DESIGN_SKILL.md')
+const designSkill = read('skills/vela-surface-design/references/wearable-design-principles.md')
 
 assert.ok(appList.experience, 'AppList must declare interaction experience in JSON')
 assert.strictEqual(appList.experience.circle.collection.mode, 'honeycomb', 'Circle launcher must remain honeycomb')
@@ -157,5 +157,5 @@ assert.ok(!/var\s+FACE_IDS\s*=/.test(controllerRegistry), 'Controller registry m
 assert.ok(controllerRegistry.includes('navigation.back(ownerKey(owner))'), 'Selecting a watchface must preserve the accepted return-to-clock interaction')
 assert.ok(controllerRegistry.includes('ownerCurrent(owner, token)'), 'Async return-to-clock must not navigate after the selector page loses ownership')
 
-assert.ok(designSkill.includes('A migration is incomplete if functionality or interaction quality is reduced'), 'Wearable design contract must explicitly ban interaction regression')
+assert.ok(designSkill.includes('Accepted gestures and direct manipulation are part of the design contract'), 'Wearable design contract must explicitly ban interaction regression')
 console.log('V3 interaction parity verified: L1 direct manipulation/paging, L2 local expressions and L3 independent surfaces preserve accepted behavior')

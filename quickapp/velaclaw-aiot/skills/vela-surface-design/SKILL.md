@@ -5,41 +5,42 @@ description: Design or revise Vela wearable Surface JSON while preserving truthf
 
 # vela-surface-design
 
-Use this skill when the task is primarily presentation design: a new Vela page/watchface, visual hierarchy, Surface JSON, form-factor adaptation, readability, interaction placement, or a visual redesign that must preserve business facts.
+Use this skill for Vela page/watchface design, Surface JSON authoring, visual hierarchy, form-factor adaptation, readability, interaction placement and visual redesign.
 
-Do not use this skill as the primary workflow for persistence, sensor semantics, protocol design, lifecycle ownership, or unrelated runtime refactors. Those belong to `vela-runtime-refactor`.
+Do not use it as the primary workflow for persistence, sensor semantics, protocol design, lifecycle ownership or runtime correctness. Those tasks belong to `vela-runtime-refactor`.
 
 ## Required inputs
 
-Before editing, read the smallest relevant set of project truth sources:
+Read the smallest relevant set before editing:
 
 - `src/product/frontend/surface.schema.json`
-- target file under `src/product/frontend/surfaces/`
+- target `src/product/frontend/surfaces/*.json`
 - `src/product/frontend/adaptation-policy.json`
-- target controller action/state contract
-- generic renderer/runtime used by that Surface
-- `docs/VELA_WEARABLE_DESIGN_SKILL.md`
-- `docs/V3_FRONTEND_AUTHORITY.md`
-- current device/profile fixtures and geometry contracts
+- target controller state/action contract
+- generic runtime / component / engine used by the Surface
+- `references/wearable-design-principles.md`
+- `references/review-checklist.md`
+- relevant profile fixtures under `fixtures/`
+- current repository checks for geometry and interaction parity
 
-If the task depends on a capability that is not verified on the target image, mark that dependency as unverified. Do not design fake success data merely to make the screen look complete.
+If a capability is unavailable in the task environment, keep the formal UI state unavailable/error. Never invent a plausible health, workout, sensor or connection value for the product state.
 
 ## Non-negotiable invariants
 
-1. Surface JSON is the authored presentation source of truth for copy, layout, visual tokens, shape variants, and declared actions.
-2. Controllers output semantic state/actions; they do not own page colors, display strings, radii, or shape-specific layout.
-3. Generic UX/runtime code must not gain route-specific visual decisions.
-4. Real/unavailable/stale/error states remain distinguishable. Never replace unavailable measured data with a plausible-looking number.
-5. Circle, Pill, and Rect may use different compositions when the declared adaptation level requires it.
-6. Runtime must not silently clamp/fix authored geometry to make a broken design pass.
-7. Existing accepted gestures and direct manipulation are part of the design contract unless the redesign explicitly changes them.
-8. Static geometry/preview evidence must never be described as simulator/device visual acceptance.
+1. Surface JSON is the authored presentation source of truth for copy, layout, visual tokens, shape variants and declared actions.
+2. Controllers output semantic state/actions; they do not own page colors, display strings, radii or shape-specific layout.
+3. Generic UX/runtime code does not gain route-specific visual decisions.
+4. Real, unavailable, stale and error states remain distinguishable.
+5. Circle, Pill and Rect may use different compositions when the declared adaptation level requires it.
+6. Runtime does not silently clamp or repair authored geometry to make an invalid design pass.
+7. Accepted gestures and direct manipulation remain part of the design contract unless the requested redesign explicitly changes them.
+8. Geometry preview, repository tests and device evidence are reported as different evidence classes.
 
 ## Workflow
 
-### 1. State the user task and visual priority
+### 1. Define the product task
 
-Write down, briefly:
+Before choosing colors or moving boxes, state:
 
 - primary user task;
 - first-screen primary action;
@@ -48,21 +49,19 @@ Write down, briefly:
 - unavailable/error state;
 - gestures that must remain reachable.
 
-Do this before choosing colors or moving boxes.
+### 2. Choose adaptation depth
 
-### 2. Classify adaptation depth
+Use the lowest correct level for every meaningful difference:
 
-Choose the lowest correct level for each meaningful difference:
+- **L1 shared-expression** — same expression and interaction; geometry/density varies.
+- **L2 local-expression** — shared product/data/actions; selected module composition varies by shape.
+- **L3 independent-surface** — a form factor needs a genuinely different composition/interaction while JSON remains authority.
 
-- **L1 shared expression** — same composition and interaction; geometry/density varies.
-- **L2 local expression** — shared product model; selected module composition differs by shape.
-- **L3 independent surface** — form factor needs a genuinely different interaction/composition while JSON remains authority.
+Do not use L3 merely to avoid good shared variants. Do not flatten an accepted L3 interaction into a generic list.
 
-Do not use L3 merely to avoid writing a good shared variant. Do not flatten an accepted L3 interaction into a generic list for implementation convenience.
+### 3. Enumerate states
 
-### 3. Enumerate semantic states
-
-For every edited element, account for applicable states before styling:
+Account for applicable states before styling:
 
 - loading / ready;
 - unavailable / stale / error;
@@ -72,117 +71,108 @@ For every edited element, account for applicable states before styling:
 - overlay / normal;
 - long text / large number / null value.
 
-Use real or clearly marked demo fixtures. Do not use fabricated health/workout measurements as formal-state fixtures.
-
 ### 4. Edit authored JSON first
 
-Prefer existing schema concepts and generic primitives. Keep product decisions in the Surface JSON.
+Prefer existing schema concepts and generic primitives. Product decisions stay in Surface JSON.
 
-When the requested design cannot be represented:
+If the requested design cannot be represented:
 
-1. prove the missing concept is reusable, not route-specific;
-2. define the schema/runtime contract for the generic primitive;
-3. add cost/geometry tests;
-4. only then extend the renderer.
+1. prove the missing concept is reusable rather than route-specific;
+2. define the schema/runtime contract;
+3. add cost/geometry/interaction contracts;
+4. extend the generic renderer or engine;
+5. configure the product behavior from JSON.
 
-Never create a page-specific UX renderer as the shortcut.
+Never add a page-specific UX renderer as the shortcut.
 
-### 5. Check Circle/Pill/Rect separately
+### 5. Review Circle / Pill / Rect separately
 
-For each relevant profile, inspect:
+For each relevant profile inspect:
 
-- visible mask, not only rectangular bounds;
-- glyph/text stress values;
+- visible mask, not only the rectangular bounds;
+- glyph and long-text stress values;
 - complete tap target, not only text center;
 - top/bottom gesture areas;
 - scroll/paging reachability;
 - overlay priority;
-- long Chinese copy and large numeric values.
-
-For Clock/Watchface, preserve allowed face/shape combinations. Do not infer missing combinations as bugs without product evidence.
+- large numeric values and unavailable markers.
 
 ### 6. Preserve interaction semantics
 
-Confirm actions by interaction surface:
+Verify all relevant surfaces:
 
 - tap text/icon/card whitespace;
 - long press;
 - horizontal/vertical swipe;
 - drag/inertia/snap;
-- slider user-only change;
+- Slider user-only change;
 - back/route transition;
 - overlay interception.
 
-Changing the visual layout must not accidentally expose a forbidden Clock gesture through a notification/call overlay.
-
 ### 7. Run repository gates
 
-At minimum execute the relevant checks through the project `npm run check` path so the same compiler/schema contracts used by CI are exercised.
+Use the project `npm run check` path and `npm run build`. For visual work pay particular attention to:
 
-Pay special attention to:
+```text
+v3:design
+v3:adaptation
+v3:surfaces
+v3:schema
+v3:frontend-contract
+v3:interaction-parity
+design:visibility
+watchface:preview
+```
 
-- `v3:design`
-- `v3:adaptation`
-- `v3:surfaces`
-- `v3:schema`
-- strict frontend authority
-- interaction parity/ownership
-- `design:visibility`
-- `watchface:preview` when applicable
-- QuickApp build
+Do not weaken an ownership, schema or geometry contract to make a visual diff pass.
 
-Do not weaken a geometry or ownership contract merely to make a visual diff pass.
+### 8. Record evidence accurately
 
-### 8. Declare evidence level accurately
-
-Use one of these labels in the result:
+Use the correct evidence class:
 
 - authored JSON review;
 - deterministic geometry preview;
 - repository behavior/contract test;
 - QuickApp build;
-- simulator/device screenshot/hit test.
+- simulator/device screenshot or hit test.
 
-Only the last category proves native rendering/touch behavior.
+Target-device fields belong in `docs/DEVICE_ACCEPTANCE_CHECKLIST.md`; measured performance belongs in `docs/PERFORMANCE_BASELINE_TEMPLATE.md`.
 
-For contest device acceptance use the required image `vela-miwear-watch-5.0(开发者大赛)` and the project checklist in `docs/DEVICE_ACCEPTANCE_CHECKLIST.md`.
+## Output contract
 
-## Output format
-
-For a completed design task, report:
+For a completed design task report:
 
 1. user task and adaptation decision;
 2. authored Surface files changed;
 3. preserved actions/gestures;
-4. empty/unavailable/error handling;
-5. Circle/Pill/Rect design evidence;
+4. empty/unavailable/error behavior;
+5. Circle/Pill/Rect evidence;
 6. node/resource budget change when meaningful;
-7. repository checks/build result;
-8. exact items still requiring simulator/device validation.
+7. repository check/build result;
+8. device measurement fields produced by the task.
 
 ## Anti-patterns
 
-Reject or revise these approaches:
+Reject or revise:
 
-- hard-coded Chinese copy in generic formatter/runtime;
+- hard-coded product copy in generic formatter/runtime;
 - controller-generated colors or layout labels;
-- page-specific UX renderer for a single route;
-- runtime geometry clamp to hide authored overflow;
-- fixed fake `08:32` preview unrelated to the selected watchface;
-- making tiny text smaller to solve first-screen overflow;
+- page-specific UX renderer for one route;
+- runtime geometry clamp that hides authored overflow;
+- fixed fake watchface preview unrelated to selected design truth;
+- shrinking tiny text further just to solve first-screen overflow;
 - treating square bounding-box success as Circle-mask success;
-- removing gestures because buttons are easier to implement;
-- claiming simulator parity from Node plan output.
+- removing gestures because buttons are easier;
+- claiming native visual acceptance from Node geometry output.
 
-## Real project examples to study
+## Project patterns
 
-Use these as patterns, not copy/paste templates:
+Study these as patterns, not copy/paste templates:
 
 - Clock call overlay: authored shape-specific geometry plus first-screen/mask contracts.
-- Watchface selector: build-time preview IR derived from Clock Stage truth, with far Circle previews VDOM-gated.
-- Brightness: visual slider remains JSON-owned while controller state distinguishes desired/applied/error.
-- History: missing today remains missing; presentation must not convert the last available record into “today”.
+- Watchface selector: build-time preview IR derived from Clock Stage truth.
+- Brightness: JSON-owned Slider with semantic desired/applied/error state.
+- History: missing today remains missing instead of relabeling the latest available record as today.
+- AppList: L3 Circle Honeycomb, Pill paged list and Rect grid from one product authority.
 
-## Skill validation status
-
-This `SKILL.md` defines the executable workflow but is not yet sufficient evidence that the contest Skill requirement is fulfilled. Before final release, validate it on one fresh design task using only this skill plus repository truth sources, record the resulting JSON diff/check/build/device evidence, and add that run to `docs/EVIDENCE_INDEX.md`.
+The Skill is self-contained under `skills/vela-surface-design/`; its design rules and review material do not live in `docs/`.

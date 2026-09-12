@@ -1,154 +1,126 @@
-# V3 Simulator / Device Acceptance Checklist
+# V3 Simulator / Device Acceptance
 
-This checklist is the device-side gate for the V3 product branch. Repository contracts and QuickApp build success are necessary but do not count as simulator/device acceptance.
+本文定义 V3 在指定赛事镜像和目标设备上的验收路径。仓库 contract 与 QuickApp build 用于验证代码和架构；安装、原生触摸、传感器、渲染、内存与功耗数据记录在本文件对应证据位。
 
-## Environment record
+## 环境记录
 
-Record these values before testing so screenshots, logs and measurements can be tied to one environment.
+| 项目 | 记录 |
+|---|---|
+| Source commit SHA |  |
+| RPK path |  |
+| RPK SHA-256 |  |
+| Emulator image | `vela-miwear-watch-5.0(开发者大赛)` |
+| aiot-core version |  |
+| aiot-emulator version |  |
+| Host OS / IDE version |  |
+| Device / firmware |  |
+| Test date |  |
 
-- Source commit SHA: `TBD`
-- RPK path and SHA-256: `TBD`
-- Required emulator image: `vela-miwear-watch-5.0(开发者大赛)`
-- aiot-core version: `TBD` (contest plan requires 1.7.22+)
-- aiot-emulator version: `TBD` (contest plan requires 1.7.22+)
-- Host OS / IDE version: `TBD`
-- Device / firmware when hardware is used: `TBD`
-- Test date: `TBD`
+同一轮验收的截图、日志和性能数据必须对应同一个 source SHA 与 RPK。
 
-Do not substitute another image to make an install issue disappear. If installation or launch fails on the required contest image, record the failure as a release blocker.
+## 安装与启动
 
-## Gate A — install and launch
+验收路径：安装本次构建的 V3 RPK → 核对 package identity → 启动进入自定义 Clock → 冷启动再次进入同一应用。
 
-- [ ] Install the newly built V3 RPK, not the launcher/default application.
-- [ ] Confirm package identity shown by the tool matches the built artifact.
-- [ ] Launch into the custom Clock surface.
-- [ ] Cold restart and confirm the same custom application launches again.
-- [ ] Capture the install command/tool output and one Clock screenshot.
+| 证据 | 记录 |
+|---|---|
+| Install log |  |
+| Launch log |  |
+| Clock screenshot |  |
+| Cold restart result |  |
 
-Expected evidence: RPK hash, install log, launch log, screenshot, source SHA.
-
-## Gate B — three form factors and visual truth
-
-For every available contest profile, capture Clock and Watchface selector evidence. Geometry-preview tests are not substitutes for these screenshots.
+## 三形态视觉
 
 ### Circle
 
-- [ ] Simple / Sport / Dashboard / Mechanical render inside the visible circle.
-- [ ] Mechanical tick marks and hands match the selector preview.
-- [ ] Selected watchface indicator is visible and follows selection.
-- [ ] Long numbers (`99,999`, `100%`) are not clipped.
-- [ ] Call overlay primary actions are visible without scrolling.
+Simple / Sport / Dashboard / Mechanical 均位于可见圆形内；Mechanical 刻度与指针和 selector preview 一致；选中态清晰；`99,999`、`100%` 等长值不裁切；来电主动作首屏可达。
 
 ### Pill
 
-- [ ] Simple / Sport / Dashboard / Alpine render inside the visible mask.
-- [ ] Large time and five-digit step values are readable.
-- [ ] Watchface preview identity matches Clock.
-- [ ] Swipe / page controls remain reachable.
+Simple / Sport / Dashboard / Alpine 位于可见胶囊区域内；大时间与五位步数可读；selector preview 与 Clock 一致；分页与 swipe 操作可达。
 
-### Rect / contest board profile
+### Rect
 
-- [ ] 390×450-equivalent layout is usable.
-- [ ] Incoming-call actions remain first-screen reachable.
-- [ ] Header, bottom actions and gesture area do not overlap.
+390×450-equivalent 布局可用；来电动作首屏可达；header、底部动作和手势区域不重叠。
 
-## Gate C — touch and gesture propagation
+| Form factor | Screenshot / result |
+|---|---|
+| Circle |  |
+| Pill |  |
+| Rect |  |
 
-These cases specifically cover behavior that Node tests cannot prove.
+## 触摸与手势
 
-- [ ] Clock: tap metric text, icon and empty card area.
-- [ ] Clock: swipe up to launcher.
-- [ ] Clock: left/right watchface switch.
-- [ ] Clock: long press opens watchface selector.
-- [ ] Notification/call overlay blocks Clock-only gestures.
-- [ ] Collection: short drag, long drag and inertia do not produce an accidental tap.
-- [ ] Slider drag changes value only from user input and does not navigate.
-- [ ] Fast back / repeated tap does not create duplicate route transitions.
+设备验收覆盖：Clock 指标文字/图标/卡片空白点击；上滑启动器；左右切表盘；长按表盘；通知/来电 overlay 拦截 Clock-only gesture；Collection 短拖/长拖/惯性不误触；Slider 仅由用户输入提交；快速 back / repeated tap 不产生重复路由。
 
-Record any event-propagation difference between Circle, Pill and Rect.
+| 项目 | 结果 / 证据 |
+|---|---|
+| Clock gestures |  |
+| Overlay interception |  |
+| Collection drag / inertia |  |
+| Slider input |  |
+| Navigation dedupe |  |
 
-## Gate D — persistence and recovery
+## 持久化与恢复
 
-- [ ] Activity survives normal restart.
-- [ ] Settings survive normal restart.
-- [ ] Watchface selection survives normal restart.
-- [ ] Workout finalized record survives restart without duplication.
-- [ ] Diagnostics storage page shows Activity / History / Workout / Settings / Watchface status.
-- [ ] If a controlled corrupt-storage fixture is available, corrupt content is reported and not overwritten automatically.
-- [ ] Two-step recovery creates a quarantine backup before reset.
-- [ ] An I/O failure is reported without destructive recovery.
+Activity、Settings、Watchface 选择和 Workout 完成记录在正常重启后保持一致；Diagnostics 展示 Activity / History / Workout / Settings / Watchface 持久化状态。受控损坏数据进入 corrupt 状态，不被默认值自动覆盖；显式恢复先创建 quarantine，再 reset；I/O failure 不触发破坏性恢复。
 
-Never corrupt production/user data just to satisfy this checklist; use an isolated test profile or prepared fixture.
+| 项目 | 结果 / 证据 |
+|---|---|
+| Normal restart |  |
+| Corrupt fixture |  |
+| Quarantine / reset |  |
+| I/O failure |  |
 
-## Gate E — Health / Motion / Location / Workout
+## Health / Motion / Location / Workout
 
-- [ ] Missing health data displays unavailable state rather than fabricated values.
-- [ ] First live heart-rate sample appears once in the recent window.
-- [ ] Leaving and returning does not allow an old callback to overwrite a new subscription.
-- [ ] Motion sampling stops after the final consumer exits.
-- [ ] Workout GPS starts as locating; valid location updates distance from GPS only.
-- [ ] Pause/resume does not let an old GPS timeout mark the resumed session unavailable.
-- [ ] Finish → retry after an injected persistence failure creates one stable record only.
-- [ ] Leaving the app / hiding the workout follows the documented foreground-session policy once Step 10 is finalized.
+缺失健康数据保持 unavailable；第一条实时心率只进入 recent window 一次；旧订阅 callback 不覆盖新 owner；最后消费者退出后停止 Motion；Workout GPS 从 locating 进入有效定位；pause/resume 后旧 timeout 不影响新 session；完成记录在重试路径保持单一稳定记录。
 
-Health/GPS freshness thresholds remain a device-observed item until actual service timestamp cadence is recorded.
+| 项目 | 结果 / 证据 |
+|---|---|
+| Health cadence / freshness |  |
+| Motion ownership |  |
+| GPS freshness / drift |  |
+| Workout finish / retry |  |
 
-## Gate F — display and power behavior
+## 显示与 Power
 
-- [ ] Brightness UI distinguishes requested/applied/error when native callback fails.
-- [ ] Manual slider takeover from auto brightness behaves as documented.
-- [ ] Clock ACTIVE / DIM / ambient-like state transitions are reachable.
-- [ ] Opening Settings after a dim Clock does not leave an unintended brightness owner active.
-- [ ] The product never claims hardware sleep or power savings solely from the internal `SLEEP` name.
+Brightness 区分 requested / applied / error；手动 Slider 可接管 auto brightness；Clock ACTIVE / DIM / ambient-like 状态可达；从 dim Clock 进入 Settings 时显示 owner 正确移交。功耗结论只记录测量结果，不由内部状态名推导。
 
-Record actual screen behavior and firmware limitations. Do not infer power savings without measurement.
+| 项目 | 结果 / 证据 |
+|---|---|
+| Brightness apply |  |
+| Auto/manual ownership |  |
+| Display state transition |  |
+| Power measurement |  |
 
-## Gate G — performance baseline
+## 性能场景
 
-Run the fixed scenarios from `PERFORMANCE_BASELINE_TEMPLATE.md` on the same image/firmware. At minimum record:
+固定场景使用 [PERFORMANCE_BASELINE_TEMPLATE.md](PERFORMANCE_BASELINE_TEMPLATE.md) 记录：冷启动到可操作 Clock、route-to-Surface-ready p50/p95、Clock default/Mechanical、Honeycomb 连续拖动、Workout running/paused、最大 History、Sync retry、30 次页面往返与资源回稳。
 
-- [ ] cold launch to usable Clock
-- [ ] route-to-Surface-ready p50/p95
-- [ ] Clock default and Mechanical interaction
-- [ ] honeycomb continuous drag
-- [ ] Workout running / paused
-- [ ] maximum history view
-- [ ] sync failure / retry
-- [ ] 30 page round trips and resource/memory recovery
+## Release smoke
 
-JS-side metrics are supplementary; native render/touch, system memory and power require simulator/device tooling.
+固定路径：cold launch → switch watchface → launcher → health available/unavailable → start workout → pause/resume → finish → history → settings/diagnostics → Clock → notification/call demo → dismiss。
 
-## Gate H — release smoke path
+| 项目 | 结果 / 证据 |
+|---|---|
+| Smoke log |  |
+| Crash / stuck state |  |
+| Data truth |  |
+| Resource recovery |  |
 
-Run without developer intervention between steps:
+## 证据命名
 
-1. cold launch
-2. switch watchface
-3. open launcher
-4. open health with available/unavailable path
-5. start workout
-6. pause / resume
-7. finish workout
-8. open history
-9. open settings and diagnostics
-10. return to Clock
-11. show notification / call demo and dismiss it
+推荐使用：
 
-- [ ] No crash, stuck initialization or unexpected route jump.
-- [ ] No fabricated health/workout data.
-- [ ] No visible storage-recovery blocker in a clean profile.
-- [ ] Resource counts return toward baseline after leaving high-frequency pages.
+```text
+YYYYMMDD_<sha>_env.txt
+YYYYMMDD_<sha>_install.txt
+YYYYMMDD_<sha>_clock_circle.png
+YYYYMMDD_<sha>_clock_pill.png
+YYYYMMDD_<sha>_clock_rect.png
+YYYYMMDD_<sha>_performance.csv
+YYYYMMDD_<sha>_smoke.txt
+```
 
-## Evidence naming
-
-Use one directory outside generated/build outputs for captured evidence. Recommended names:
-
-- `YYYYMMDD_<sha>_env.txt`
-- `YYYYMMDD_<sha>_install.txt`
-- `YYYYMMDD_<sha>_clock_circle.png`
-- `YYYYMMDD_<sha>_clock_pill.png`
-- `YYYYMMDD_<sha>_clock_rect.png`
-- `YYYYMMDD_<sha>_performance.csv`
-- `YYYYMMDD_<sha>_smoke.txt`
-
-Only mark an item passed when the evidence points to the same source SHA and built RPK.
+只有与同一 source SHA 和 RPK 对应的设备数据进入最终验收记录。

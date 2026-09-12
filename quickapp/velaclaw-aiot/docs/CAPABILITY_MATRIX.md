@@ -1,98 +1,80 @@
 # V3 Capability / Environment Matrix
 
-This matrix keeps declarations, repository behavior, simulator observations and hardware observations separate. A manifest feature or mocked contract is not device proof.
+本文把 manifest 声明、仓库行为和目标环境实测记录分开。声明与 repository contract 描述代码当前具备的能力边界；模拟器、硬件与对端数据只填写实际观察结果。
 
-## Environment identity
+## 环境
 
-| field | repository/declaration | required/final evidence |
+| Field | Repository / declaration | Acceptance record |
 |---|---|---|
-| QuickApp version | 3.0.0 / versionCode 30 | freeze release value |
-| package | `com.application.watch.demo` | final package/signing identity TBD |
-| min API | `minAPILevel: 2` | confirm final toolchain compatibility |
-| min platform | `1000` | record actual image/firmware |
-| design width | 192 | confirm rendered target profiles |
-| entry route | `pages/clock` | install/launch evidence TBD |
-| manifest routes | 17 | smoke all release-critical routes |
-| contest emulator image | required: `vela-miwear-watch-5.0(开发者大赛)` | exact installed image/version TBD |
-| aiot-core / emulator | plan requires 1.7.22+ | exact versions TBD |
+| QuickApp version | `3.0.0` / versionCode `30` |  |
+| Package | `com.application.watch.demo` |  |
+| min API | `minAPILevel: 2` |  |
+| min platform | `1000` |  |
+| design width | `192` |  |
+| entry route | `pages/clock` |  |
+| manifest routes | `17` |  |
+| contest emulator image | `vela-miwear-watch-5.0(开发者大赛)` |  |
+| aiot-core / emulator | `1.7.22+` |  |
 
 ## Capability matrix
 
-Status vocabulary:
+| Capability | Manifest / permission | Repository behavior | Simulator evidence | Hardware / peer evidence |
+|---|---|---|---|---|
+| Router | `system.router` | owner-scoped, retry-safe navigation |  |  |
+| Device metadata | `system.device` | provisional profile is corrected by explicit native shape |  |  |
+| Battery | `system.battery` | semantic battery state with explicit unavailable handling |  |  |
+| Brightness | `system.brightness` | native success/fail drives applied/error; manual takeover from auto is explicit |  |  |
+| Sensor / motion | `system.sensor` | generation-owned subscribe/fail/unsubscribe and presentation throttling |  |  |
+| Geolocation | `system.geolocation`, LOCATION | generation-owned stream and first-fix timeout protection |  |  |
+| Vibrator | `system.vibrator` | semantic haptic patterns and runtime ownership |  |  |
+| Event | `system.event` | consumed system events flow through the capability boundary |  |  |
+| Interconnect | `system.interconnect` | connection, packetized transfer, progress, failure state and retry |  |  |
+| Storage | `system.storage` | keyed queue, watchdog, structured read and quarantine recovery |  |  |
+| Health | `service.health`, HEALTH | official sample provenance, timestamp ordering and recent-window dedupe |  |  |
 
-- **declared** — manifest contains feature/permission.
-- **repo-contract** — gateway/business behavior has deterministic repository tests.
-- **sim-TBD** — required contest-image evidence is still missing.
-- **device-TBD** — hardware/firmware evidence is still missing.
-- **remote-TBD** — companion/peer evidence is still missing.
+## Health data record
 
-| capability | manifest / permission | repository behavior | simulator | hardware / remote | release rule |
-|---|---|---|---|---|---|
-| Router | `system.router` | owner-scoped retry-safe navigation contracts | sim-TBD | device-TBD | route smoke + touch required |
-| Device metadata | `system.device` | provisional profile corrected by explicit native shape | sim-TBD | device-TBD | record model/shape/dimensions |
-| Battery | `system.battery` | Clock semantic state path exists | sim-TBD | device-TBD | unavailable must remain explicit |
-| Brightness | `system.brightness` | native success/fail drives applied/error; manual takeover from auto is explicit | sim-TBD | device-TBD | do not claim applied on invocation alone |
-| Sensor / motion | `system.sensor` | generation-owned subscribe/fail/unsubscribe; UI throttling | sim-TBD | device-TBD | verify native cadence + release |
-| Geolocation | `system.geolocation`, LOCATION permission | generation-owned stream + first-fix timeout protection | sim-TBD | device-TBD | post-first-fix freshness/drift still open |
-| Vibrator | `system.vibrator` | haptics contracts and semantic actions | sim-TBD | device-TBD | verify actual vibration behavior |
-| Event | `system.event` | product event paths only where consumed | sim-TBD | device-TBD | no assumption beyond observed events |
-| Interconnect | `system.interconnect` | connection/lazy packet foundation | sim-TBD | remote-TBD | local send success is not peer ACK |
-| Storage | `system.storage` | keyed queue, watchdog, structured read, quarantine recovery | sim-TBD | device-TBD | verify missing/corrupt/I/O behavior on image |
-| Health | `service.health`, HEALTH permission | official sample provenance, timestamp ordering, recent-window dedupe | sim-TBD | device-TBD | source-specific freshness cadence still open |
+实测时分别记录 measured timestamp、received time、更新 cadence 与最终采用的 stale threshold。缺少 source timestamp 时不伪造 measurement timestamp。
 
-## Health data truth
-
-For each type record actual service behavior before setting stale thresholds.
-
-| type | repository semantic state | measured timestamp source | observed update cadence | stale threshold | simulator evidence | hardware evidence |
+| Type | Repository semantic state | Timestamp source | Observed cadence | Stale threshold | Simulator evidence | Hardware evidence |
 |---|---|---|---|---|---|---|
-| heart rate | official live/recent/unavailable | TBD | TBD | TBD | TBD | TBD |
-| oxygen | official/unavailable | TBD | TBD | TBD | TBD | TBD |
-| stress | official/unavailable | TBD | TBD | TBD | TBD | TBD |
+| Heart rate | live / recent / unavailable |  |  |  |  |  |
+| Oxygen | live / recent / unavailable |  |  |  |  |  |
+| Stress | live / recent / unavailable |  |  |  |  |  |
 
-A missing source timestamp must not be rewritten as a fake measurement timestamp. Received time and measured time are different fields/meanings.
+## Form factors
 
-## Form-factor matrix
-
-| profile | repository fixture | authored coverage | required native evidence |
+| Profile | Repository fixture | Authored coverage | Native evidence |
 |---|---|---|---|
-| Circle | 466×466, circle mask | Clock/Watchface L3; Honeycomb launcher | font/mask screenshot + touch/hit |
-| Pill | 212×520, pill mask | Clock/Watchface L3; paged launcher | font/mask screenshot + swipe/touch |
-| Rect | 390×450 contest-board geometry fixture | Clock/Watchface; grid launcher | board/emulator screenshot + touch/hit |
+| Circle | 466×466, circle mask | Clock/Watchface L3; Honeycomb launcher |  |
+| Pill | 212×520, pill mask | Clock/Watchface L3; paged launcher |  |
+| Rect | 390×450 contest-board geometry fixture | Clock/Watchface; grid launcher |  |
 
-Repository geometry preview is intentionally conservative but still does not prove native font rasterization or event hit testing.
+Repository geometry preview用于确定性设计约束；原生字体、mask 与事件命中记录在设备证据列。
 
-## Display/power terminology
+## Display / Power
 
-| product term | repository meaning | device proof needed |
+| Product term | Repository meaning | Device evidence |
 |---|---|---|
-| ACTIVE | active Clock display policy | brightness/screen behavior |
-| DIM | temporary dim policy | actual native brightness + owner restore |
-| `SLEEP` | current ambient-like internal state with a reachable wake path | do not call hardware sleep or claim power savings without measurement |
+| ACTIVE | active Clock display policy |  |
+| DIM | temporary dim policy with owner restore |  |
+| `SLEEP` | ambient-like internal state with reachable wake path |  |
 
-## Sync/notification protocol scope
+硬件睡眠或功耗收益只使用实际测量数据描述。
 
-Current repository evidence supports local semantic notification/call demo behavior and lazy sync packet generation. It does **not** yet prove:
+## Sync / notification
 
-- Android companion package/signature compatibility;
-- peer persisted ACK;
-- record-version ACK marking;
-- packet MTU/UTF-8 byte budget;
-- lost/reordered/duplicated packet recovery;
-- remote phone hangup/control ACK.
+仓库中的 Sync 由 Interconnect capability、packet protocol、语义状态与 retry 路径组成；Notification / call demo 使用本地语义动作与 overlay ownership。Android/peer 侧结果、业务确认、包序与传输环境数据记录在下表。
 
-Release copy must either close these with companion evidence or explicitly keep the corresponding feature in demo/unsupported scope.
+| Item | Evidence |
+|---|---|
+| Companion package / signature |  |
+| Peer business acknowledgement |  |
+| Record-version acknowledgement |  |
+| UTF-8 / transport payload budget |  |
+| Loss / reorder / duplicate behavior |  |
+| Remote control behavior |  |
 
-## Evidence update rule
+## Evidence identity
 
-When a simulator/device result is obtained, record:
-
-1. exact source SHA;
-2. RPK hash;
-3. image/firmware/tool version;
-4. action performed;
-5. observed result;
-6. log/screenshot/sample path;
-7. whether it changes a release claim.
-
-Do not overwrite `TBD` with an assumption based on another firmware, old branch or mock.
+每条 simulator / device / peer 结果至少绑定：source SHA、RPK SHA-256、image/firmware/tool version、操作步骤、观察结果和日志/截图/样本路径。跨版本数据不混写为同一验收结果。
