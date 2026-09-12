@@ -18,7 +18,7 @@ module.exports = {
   },
   rect: {
     contentWidth: 164,
-    surface: 'calendar-dashboard',
-    requiredHeights: { dashboard: 211 }
+    surface: 'summary-calendar-pages',
+    requiredHeights: { summary: 176, calendar: 176 }
   }
 }

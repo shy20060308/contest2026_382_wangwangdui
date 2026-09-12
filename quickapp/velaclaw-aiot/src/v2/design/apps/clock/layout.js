@@ -23,6 +23,7 @@ module.exports = {
     }
   },
   rect: {
-    surface: 'rect-face-stage'
+    surface: 'rect-face-stage',
+    faceIds: ['sport', 'simple', 'dashboard', 'mechanical']
   }
 }

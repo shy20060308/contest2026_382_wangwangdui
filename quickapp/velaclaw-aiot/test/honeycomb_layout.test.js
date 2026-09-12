@@ -118,6 +118,7 @@ test('frame cadence 和惯性参数保持 wearable 级限幅', function () {
   assert.ok(honeycomb.INERTIA_DECAY > 0.75 && honeycomb.INERTIA_DECAY < 0.95)
   assert.ok(honeycomb.MAGNET_DISTANCE <= honeycomb.SPACING / 2)
   assert.ok(honeycomb.ELASTIC_RANGE <= 0.1)
+  assert.ok(honeycomb.DRAG_CAPTURE_DISTANCE <= 4)
 })
 
 test('焦点图标完整落在圆屏可视范围内', function () {
