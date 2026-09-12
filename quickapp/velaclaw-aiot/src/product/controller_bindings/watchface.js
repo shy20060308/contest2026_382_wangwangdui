@@ -1,11 +1,17 @@
 import navigation from '../../runtime/navigation'
-import { createWatchfaceController } from '../features/watchface/controller'
 import { noop, interactionOwner, ownerToken, ownerCurrent, ownerKey, configuredFaceIds } from './shared'
+
+function watchfaceControllerFactory() {
+  var feature = require('../features/watchface/controller')
+  if (!feature || typeof feature.createWatchfaceController !== 'function') throw new Error('Watchface feature controller module unavailable')
+  return feature.createWatchfaceController
+}
 
 function create(onChange, context) {
   var owner = interactionOwner(context)
   var configured = false
   var faceIds = []
+  var createWatchfaceController = watchfaceControllerFactory()
   var controller = createWatchfaceController(function (model) {
     var state = model || {}
     if (typeof onChange === 'function') onChange({ selectedId: state.selectedId || '', selectedIndex: state.selectedIndex || 0 })
