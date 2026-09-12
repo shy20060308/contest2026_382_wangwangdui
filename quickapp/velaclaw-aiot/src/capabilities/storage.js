@@ -1,6 +1,7 @@
 import storage from '@system.storage'
 
 var memoryCache = {}
+var persistedCache = {}
 var operationQueues = {}
 
 function parseStorageValue(data) {
@@ -39,6 +40,19 @@ function makeResult(persisted, memoryOnly, error) {
   return { persisted: persisted, memoryOnly: memoryOnly, error: error || null }
 }
 
+function rememberPersisted(key, value) {
+  memoryCache[key] = value
+  persistedCache[key] = value
+}
+
+function finishDedupedWrite(key, stringValue, callback, value) {
+  if (persistedCache[key] !== stringValue) return false
+  memoryCache[key] = stringValue
+  if (callback) callback(value !== undefined ? value : makeResult(true, false), value !== undefined ? makeResult(true, false) : undefined)
+  finishOperation(key)
+  return true
+}
+
 var adapter = {
   set: function (key, value, callback) {
     enqueueOperation(key, function () {
@@ -50,6 +64,12 @@ var adapter = {
         finishOperation(key)
         return
       }
+      if (persistedCache[key] === stringValue) {
+        memoryCache[key] = stringValue
+        if (callback) callback(makeResult(true, false))
+        finishOperation(key)
+        return
+      }
       memoryCache[key] = stringValue
       try {
         if (storage && storage.set) {
@@ -57,6 +77,7 @@ var adapter = {
             key: key,
             value: stringValue,
             success: function () {
+              persistedCache[key] = stringValue
               if (callback) callback(makeResult(true, false))
               finishOperation(key)
             },
@@ -90,7 +111,7 @@ var adapter = {
           key: key,
           success: function (data) {
             var value = parseStorageValue(data)
-            if (value !== '' && value !== undefined) memoryCache[key] = value
+            if (value !== '' && value !== undefined) rememberPersisted(key, value)
             callback(value)
           },
           fail: function () {
@@ -114,7 +135,7 @@ var adapter = {
         }
         var value = parseStorageValue(raw)
         if (value !== '' && value !== undefined) {
-          memoryCache[key] = value
+          rememberPersisted(key, value)
           return value
         }
       }
@@ -135,6 +156,7 @@ var adapter = {
   delete: function (key, callback) {
     enqueueOperation(key, function () {
       delete memoryCache[key]
+      delete persistedCache[key]
       try {
         if (storage && storage.delete) {
           storage.delete({
@@ -174,6 +196,12 @@ var adapter = {
           finishOperation(key)
           return
         }
+        if (persistedCache[key] === stringValue) {
+          memoryCache[key] = stringValue
+          if (callback) callback(nextValue, makeResult(true, false))
+          finishOperation(key)
+          return
+        }
         memoryCache[key] = stringValue
         try {
           if (storage && storage.set) {
@@ -181,6 +209,7 @@ var adapter = {
               key: key,
               value: stringValue,
               success: function () {
+                persistedCache[key] = stringValue
                 if (callback) callback(nextValue, makeResult(true, false))
                 finishOperation(key)
               },
@@ -203,7 +232,7 @@ var adapter = {
     })
   },
 
-  clearCache: function () { memoryCache = {} }
+  clearCache: function () { memoryCache = {}; persistedCache = {} }
 }
 
 export default adapter
