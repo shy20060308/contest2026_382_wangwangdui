@@ -1,7 +1,32 @@
 <import name="surfacecollection" src="../../components/surface_collection.ux"></import>
-<template><surfacecollection if="{{ surfaceReady && surfacePlan && surfacePlan.collection }}" model="{{ surfacePlan.collection }}" @surfaceaction="onSurfaceAction"></surfacecollection></template>
+<template><surfacecollection if="{{ surfaceReady && surfacePlan && surfacePlan.collection }}" model="{{ surfacePlan.collection }}" onsurfaceaction="onSurfaceAction"></surfacecollection></template>
 <script>
 import surfacePage from '../../runtime/surface_page'
+import navigation from '../../runtime/navigation'
 var surface = require('../../product/frontend/surfaces/applist.json')
-export default { private: { surfaceReady: false, surfacePlan: null }, onInit() { surfacePage.bind(this, surface) }, onShow() { surfacePage.show(this) }, onHide() { surfacePage.hide(this) }, onDestroy() { surfacePage.destroy(this) }, onBackPress() { return surfacePage.back(this) }, onSurfaceAction(event) { surfacePage.action(this, event) } }
+
+function actionName(event) {
+  if (!event) return ''
+  if (typeof event.action === 'string') return event.action
+  if (event.detail && typeof event.detail.action === 'string') return event.detail.action
+  if (event.detail && typeof event.detail === 'string') return event.detail
+  return ''
+}
+
+export default {
+  private: { surfaceReady: false, surfacePlan: null },
+  onInit() { surfacePage.bind(this, surface) },
+  onShow() { surfacePage.show(this) },
+  onHide() { surfacePage.hide(this) },
+  onDestroy() { surfacePage.destroy(this) },
+  onBackPress() { navigation.back(); return true },
+  onSurfaceAction(event) {
+    var action = actionName(event)
+    if (!action) return
+    console.log('[V3_APPLIST] action ' + action)
+    if (action === '$back') { navigation.back(); return }
+    if (String(action).charAt(0) === '/') { navigation.push(action); return }
+    surfacePage.action(this, event)
+  }
+}
 </script>
