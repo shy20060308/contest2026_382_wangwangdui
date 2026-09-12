@@ -1,6 +1,5 @@
 import pageRuntime from './page_runtime'
 import navigation from './navigation'
-import controllerRegistry from '../product/controller_registry'
 
 var surfaceRuntime = require('../product/frontend/runtime/surface_runtime')
 var experienceRuntime = require('../product/frontend/runtime/experience_runtime')
@@ -10,6 +9,9 @@ var pageGeneration = require('./page_generation')
 var interactionOwner = require('./interaction_owner')
 var navigationContext = require('./navigation_context')
 var routeTiming = require('./route_timing')
+
+function noop() {}
+function emptyController() { return { start: noop, stop: noop, destroy: noop, action: noop } }
 
 function initialState(surface) {
   var source = surface && surface.initialState ? surface.initialState : {}
@@ -28,6 +30,16 @@ function requireSurface(surface) {
   if (!surface || typeof surface !== 'object' || Array.isArray(surface)) throw new Error('V3 Surface Page requires a page-local Surface JSON object')
   if (!surface.id || !surface.route || surface.renderer !== 'surface-v1') throw new Error('Invalid page-local V3 Surface')
   return surface
+}
+
+function createController(surface, binding, onChange, context) {
+  if (!surface.controller) {
+    if (binding) throw new Error('Controller-free Surface must not import a page controller binding: ' + surface.id)
+    return emptyController()
+  }
+  if (!binding || typeof binding.create !== 'function') throw new Error('Surface requires a page-local controller binding: ' + surface.controller)
+  if (binding.id !== surface.controller) throw new Error('Surface/controller binding mismatch: ' + surface.controller + ' != ' + binding.id)
+  return binding.create(onChange, context)
 }
 
 function renderSignature(page) {
@@ -108,7 +120,7 @@ function rebuild(page) {
   return true
 }
 
-function bind(page, surface) {
+function bind(page, surface, controllerBinding) {
   if (!page) throw new Error('V3 Surface Page requires a page instance')
   surface = requireSurface(surface)
   var generation = pageGeneration.begin(page)
@@ -121,7 +133,7 @@ function bind(page, surface) {
   page._surfaceVisible = false
   page._surfaceRenderSignature = null
   page._surfaceInteractionOwner = interactionOwner.create(surface.id)
-  page._surfaceController = controllerRegistry.create(surface.controller, function (state) {
+  page._surfaceController = createController(surface, controllerBinding, function (state) {
     if (!current()) return
     page._surfaceState = state || {}
     if (page.surfaceReady && !page._surfaceVisible) {
