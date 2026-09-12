@@ -92,15 +92,12 @@
 </template>
 
 <script>
-import navigation from '../runtime/navigation'
 var sliderInput = require('../product/frontend/runtime/slider_input')
 
 export default {
   props: ['plan'],
   activate(action, payload) {
     if (!action) return
-    if (action === '$back') { navigation.back(); return }
-    if (String(action).charAt(0) === '/') { navigation.push(action); return }
     var event = { action: action }
     var source = payload || {}
     for (var key in source) if (key !== 'action') event[key] = source[key]
