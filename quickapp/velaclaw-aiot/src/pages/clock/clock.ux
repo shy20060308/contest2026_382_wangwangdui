@@ -1,8 +1,8 @@
-<import name="surfacehost" src="../../components/surface_host_stage.ux"></import>
-<template><surfacehost if="{{ surfaceReady }}" plan="{{ surfacePlan }}" @surfaceaction="onSurfaceAction"></surfacehost></template>
+<import name="surfaceentry" src="../../components/surface_entry_stage.ux"></import>
+<template><surfaceentry ready="{{ surfaceReady }}" plan="{{ surfacePlan }}" boot-status="{{ surfaceBootStatus }}" boot-detail="{{ surfaceBootDetail }}" @surfaceaction="onSurfaceAction"></surfaceentry></template>
 <script>
 import surfacePage from '../../runtime/surface_page'
 import controllerBinding from '../../product/controller_bindings/clock'
 var surface = require('../../product/frontend/surfaces/clock.json')
-export default { private: { surfaceReady: false, surfacePlan: null }, onInit() { surfacePage.bind(this, surface, controllerBinding) }, onShow() { surfacePage.show(this) }, onHide() { surfacePage.hide(this) }, onDestroy() { surfacePage.destroy(this) }, onBackPress() { return true }, onSurfaceAction(event) { surfacePage.action(this, event) } }
+export default { private: { surfaceReady: false, surfacePlan: null, surfaceBootStatus: 'BOOT:page', surfaceBootDetail: '' }, onInit() { surfacePage.bind(this, surface, controllerBinding) }, onShow() { surfacePage.show(this) }, onHide() { surfacePage.hide(this) }, onDestroy() { surfacePage.destroy(this) }, onBackPress() { return true }, onSurfaceAction(event) { surfacePage.action(this, event) } }
 </script>
