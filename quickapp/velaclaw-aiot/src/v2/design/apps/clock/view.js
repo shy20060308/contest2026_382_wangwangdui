@@ -47,7 +47,7 @@ function project(model) {
     batteryWidth: battery.width,
     batteryColor: battery.color,
     currentHeartRate: Math.round(Number(source.currentHeartRate) || 0),
-    heartRateData: Array.isArray(source.heartRateValues) ? source.heartRateValues.slice() : [],
+    heartRateData: Array.isArray(source.heartRateValues) ? source.heartRateValues : [],
     stepsText: formatNumber(source.steps),
     stepsGoalText: formatNumber(source.stepsGoal),
     goalPercent: goalPercent,
