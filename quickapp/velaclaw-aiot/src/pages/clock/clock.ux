@@ -3,6 +3,13 @@
 <template>
   <stack class="stage-probe">
     <surfacehost if="{{ stageReady }}" plan="{{ stagePlan }}"></surfacehost>
+
+    <div class="direct-model" if="{{ stageModelPresent }}">
+      <text class="direct-model-title">MODEL OK</text>
+      <text class="direct-model-text">{{ firstStageText }}</text>
+      <text class="direct-model-counts">{{ stageCounts }}</text>
+    </div>
+
     <div class="probe-banner">
       <text class="probe-title">{{ probeStatus }}</text>
       <text class="probe-detail">{{ probeDetail }}</text>
@@ -19,6 +26,9 @@ export default {
   private: {
     stageReady: false,
     stagePlan: null,
+    stageModelPresent: false,
+    firstStageText: '',
+    stageCounts: '',
     probeStatus: 'STAGE PROBE:init',
     probeDetail: 'fixed rect profile; no device/controller'
   },
@@ -55,12 +65,26 @@ export default {
       var plan = surfaceRuntime.resolve(surface, profile, scene, safe, state)
       this.probeStatus = 'STAGE PROBE:decorate'
       this.stagePlan = experienceRuntime.decorate(plan, surface, profile, scene, safe, state)
+      var stage = this.stagePlan && this.stagePlan.stage ? this.stagePlan.stage : null
+      this.stageModelPresent = !!stage
+      if (stage) {
+        var textCount = stage.texts ? stage.texts.length : 0
+        var metricCount = stage.metrics ? stage.metrics.length : 0
+        var progressCount = stage.progresses ? stage.progresses.length : 0
+        var panelCount = stage.panels ? stage.panels.length : 0
+        this.stageCounts = 't' + textCount + ' m' + metricCount + ' p' + progressCount + ' b' + panelCount
+        this.firstStageText = textCount ? String(stage.texts[0].text || '') : '(no stage text)'
+      } else {
+        this.stageCounts = 'stage=null'
+        this.firstStageText = '(no stage model)'
+      }
       this.stageReady = true
       this.probeStatus = 'STAGE PROBE:ready'
-      this.probeDetail = 'surface + runtime + stage renderer OK'
-      console.log('STAGE PROBE:ready')
+      this.probeDetail = this.stageModelPresent ? 'model generated; nested renderer below' : 'decorate returned no stage'
+      console.log('STAGE PROBE:ready ' + this.stageCounts + ' first=' + this.firstStageText)
     } catch (error) {
       this.stageReady = false
+      this.stageModelPresent = false
       this.probeStatus = 'STAGE PROBE:error'
       this.probeDetail = error && error.message ? error.message : String(error)
       console.log('STAGE PROBE:error ' + this.probeDetail)
@@ -74,6 +98,42 @@ export default {
   width: 192px;
   height: 275px;
   background-color: #000000;
+}
+.direct-model {
+  position: absolute;
+  left: 18px;
+  top: 72px;
+  width: 156px;
+  height: 84px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background-color: #17324D;
+}
+.direct-model-title {
+  width: 150px;
+  height: 22px;
+  line-height: 22px;
+  font-size: 10px;
+  text-align: center;
+  color: #64D2FF;
+}
+.direct-model-text {
+  width: 150px;
+  height: 24px;
+  line-height: 24px;
+  font-size: 10px;
+  text-align: center;
+  color: #FFFFFF;
+}
+.direct-model-counts {
+  width: 150px;
+  height: 20px;
+  line-height: 20px;
+  font-size: 8px;
+  text-align: center;
+  color: #B8DFFF;
 }
 .probe-banner {
   position: absolute;
