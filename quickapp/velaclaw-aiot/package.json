@@ -13,8 +13,9 @@
   "engines": { "node": ">=18" },
   "scripts": {
     "start": "aiot start --watch",
-    "build": "aiot build --enable-jsc",
+    "build": "aiot build --enable-jsc && npm run bundle:check",
     "release": "aiot release --enable-jsc",
+    "bundle:check": "node scripts/check-page-bundle-size.js",
     "lint": "node scripts/lint.js",
     "docs:check": "node scripts/check-docs.js",
     "studio": "node tools/layout-studio/server.js",
