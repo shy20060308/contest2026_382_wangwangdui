@@ -38,5 +38,8 @@ module.exports = {
     descSize: 8,
     previewWidth: 64
   },
-  rect: { contentWidth: 164 }
+  rect: {
+    contentWidth: 164,
+    faceIds: ['sport', 'simple', 'dashboard', 'mechanical']
+  }
 }
