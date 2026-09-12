@@ -20,6 +20,18 @@ function flush(list, profile) {
   list.length = 0
   for (var i = 0; i < current.length; i++) current[i](profile)
 }
+function flushPending(profile) {
+  var current = pending.slice()
+  pending.length = 0
+  for (var i = 0; i < current.length; i++) current[i].success(profile)
+}
+function failPending(error) {
+  var current = pending.slice()
+  pending.length = 0
+  for (var i = 0; i < current.length; i++) {
+    if (typeof current[i].fail === 'function') current[i].fail(error)
+  }
+}
 function requestMetadata(local) {
   if (metadataRequested) return
   metadataRequested = true
@@ -31,11 +43,16 @@ function requestMetadata(local) {
       metadataWaiters.length = 0
       return
     }
-    cached = core.make(info, local || {})
-    flush(metadataWaiters, cached)
+    try {
+      cached = core.make(info, local || {})
+      flush(metadataWaiters, cached)
+    } catch (error) {
+      metadataWaiters.length = 0
+      console.log('[V3_BOOT] device-profile metadata correction failed: ' + (error && error.message ? error.message : error))
+    }
   })
 }
-function resolve(context, callback) {
+function resolve(context, callback, onError) {
   if (typeof callback !== 'function') return
   var local = contextDevice(context)
 
@@ -46,22 +63,32 @@ function resolve(context, callback) {
   }
 
   if (hasHostViewport(local)) {
-    cached = core.make({}, local)
+    try {
+      cached = core.make({}, local)
+    } catch (error) {
+      if (typeof onError === 'function') onError(error)
+      return
+    }
     callback(cached)
     metadataWaiters.push(callback)
     requestMetadata(local)
     return
   }
 
-  pending.push(callback)
+  pending.push({ success: callback, fail: onError })
   if (loading) return
   loading = true
   metadataRequested = true
   device.get(function (info) {
     loading = false
     metadataReady = true
-    try { cached = core.make(info || {}, local) } catch (error) { pending = []; throw error }
-    flush(pending, cached)
+    try {
+      cached = core.make(info || {}, local)
+    } catch (error) {
+      failPending(error)
+      return
+    }
+    flushPending(cached)
   })
 }
 
