@@ -67,4 +67,5 @@ assert.ok(page.includes('.heart-value { width: 58px; color: #FFFFFF; }'), 'Unifi
 assert.ok(page.includes('line-height: {{ metaLineHeight }}px'), 'Health metadata must use explicit glyph-safe line boxes')
 assert.ok(page.includes('padding-bottom: {{ scrollPaddingBottom }}px'), 'Round scrolling must leave enough tail space to center the final detail card')
 
+require('./history_real_data.test')
 console.log('Health official-data contracts verified')
