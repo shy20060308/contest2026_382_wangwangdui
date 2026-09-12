@@ -173,51 +173,60 @@ function bind(page, surface, controllerBinding) {
   try {
     pageRuntime.bind(page, function (profile, scene, safe) {
       if (!current()) return
+      var reconfigure = !!page._surfaceController
+      if (reconfigure && page._surfaceVisible) controllerCall(page, 'controller-profile-stop', 'stop')
+
       page._surfaceProfile = profile
       page._surfaceScene = scene
       page._surfaceSafe = safe
+      page._surfaceRenderSignature = null
 
       try {
-        boot(page, 'BOOT:surface-resolve', profile && profile.formFactor ? profile.formFactor : '')
+        boot(page, reconfigure ? 'BOOT:surface-profile-update' : 'BOOT:surface-resolve', profile && profile.formFactor ? profile.formFactor : '')
         rebuild(page)
         page.surfaceReady = true
       } catch (error) {
-        bootFailure(page, 'surface-init', error)
+        bootFailure(page, reconfigure ? 'surface-profile-update' : 'surface-init', error)
         return
       }
 
-      boot(page, 'BOOT:controller-create', '')
-      try {
-        page._surfaceController = createController(surface, controllerBinding, function (state) {
-          if (!current()) return
-          page._surfaceState = state || {}
-          if (page.surfaceReady && !page._surfaceVisible) {
-            performanceMetrics.recordSurfaceDeferredHidden()
-            return
-          }
-          try { rebuild(page) } catch (error) { bootFailure(page, 'controller-update', error) }
-        }, { interactionOwner: page._surfaceInteractionOwner })
-      } catch (error) {
-        controllerFailure(page, 'controller-create', error)
-        markRouteSurfaceReady(page)
-        return
+      if (!reconfigure) {
+        boot(page, 'BOOT:controller-create', '')
+        try {
+          page._surfaceController = createController(surface, controllerBinding, function (state) {
+            if (!current()) return
+            page._surfaceState = state || {}
+            if (page.surfaceReady && !page._surfaceVisible) {
+              performanceMetrics.recordSurfaceDeferredHidden()
+              return
+            }
+            try { rebuild(page) } catch (error) { bootFailure(page, 'controller-update', error) }
+          }, { interactionOwner: page._surfaceInteractionOwner })
+        } catch (error) {
+          controllerFailure(page, 'controller-create', error)
+          markRouteSurfaceReady(page)
+          return
+        }
+      } else {
+        page._surfaceControllerError = null
+        console.log('[V3_DEVICE] reconfigure surface ' + surface.id + ' for ' + (profile && profile.formFactor ? profile.formFactor : 'unknown'))
       }
 
-      boot(page, 'BOOT:controller-configure', '')
+      boot(page, reconfigure ? 'BOOT:controller-reconfigure' : 'BOOT:controller-configure', '')
       if (page._surfaceController && typeof page._surfaceController.configure === 'function') {
         var config = page.surfacePlan && page.surfacePlan.controllerConfig ? page.surfacePlan.controllerConfig : {}
-        if (!controllerCall(page, 'controller-configure', 'configure', [profile, scene, safe, config])) {
+        if (!controllerCall(page, reconfigure ? 'controller-reconfigure' : 'controller-configure', 'configure', [profile, scene, safe, config])) {
           markRouteSurfaceReady(page)
           return
         }
       }
 
       if (!current()) return
-      try { rebuild(page) } catch (error) { bootFailure(page, 'controller-configure-render', error); return }
+      try { rebuild(page) } catch (error) { bootFailure(page, reconfigure ? 'controller-reconfigure-render' : 'controller-configure-render', error); return }
 
       if (page._surfaceVisible && page._surfaceController) {
-        boot(page, 'BOOT:controller-start', '')
-        if (!controllerCall(page, 'controller-start', 'start')) {
+        boot(page, reconfigure ? 'BOOT:controller-restart' : 'BOOT:controller-start', '')
+        if (!controllerCall(page, reconfigure ? 'controller-restart' : 'controller-start', 'start')) {
           markRouteSurfaceReady(page)
           return
         }
