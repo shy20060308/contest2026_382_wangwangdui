@@ -22,9 +22,9 @@ export default {
 .simple-circle-arc { width: 122px; height: 122px; stroke-width: 5px; layer-color: #20242B; start-angle: 0deg; total-angle: 360deg; center-x: 61px; center-y: 61px; radius: 55px; }
 .simple-circle-center { width: 122px; height: 122px; flex-direction: column; align-items: center; justify-content: center; }
 .simple-circle-label { font-size: 8px; font-weight: bold; margin-top: 5px; }
-.simple-circle-footer { width: 108px; height: 29px; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 3px; }
-.simple-circle-metric { width: 34px; height: 29px; flex-direction: column; align-items: center; }
+.simple-circle-footer { width: 136px; height: 29px; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 3px; }
+.simple-circle-metric { width: 44px; height: 29px; flex-direction: column; align-items: center; }
 .simple-circle-icon { width: 10px; height: 10px; }
-.simple-circle-stat { width: 34px; font-size: 7px; font-weight: bold; text-align: center; margin-top: 1px; }
+.simple-circle-stat { width: 44px; font-size: 7px; font-weight: bold; text-align: center; margin-top: 1px; lines: 1; }
 .heart-color { color: #FF375F; } .step-color { color: #FFD60A; }
 </style>
