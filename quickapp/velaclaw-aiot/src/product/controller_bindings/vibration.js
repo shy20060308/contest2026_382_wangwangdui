@@ -1,5 +1,10 @@
-import { createVibrationController } from '../features/settings/vibration_controller'
 import { copyState } from './shared'
+
+function vibrationControllerFactory() {
+  var feature = require('../features/settings/vibration_controller')
+  if (!feature || typeof feature.createVibrationController !== 'function') throw new Error('Vibration feature controller module unavailable')
+  return feature.createVibrationController
+}
 
 function create(onChange) {
   var page = 'controls'
@@ -12,6 +17,7 @@ function create(onChange) {
     state.pageCode = page
     if (typeof onChange === 'function') onChange(state)
   }
+  var createVibrationController = vibrationControllerFactory()
   var controller = createVibrationController(emit)
   return {
     start: function () { controller.load() }, stop: function () { controller.stop() }, destroy: function () { controller.stop() },
