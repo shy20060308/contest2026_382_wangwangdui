@@ -50,7 +50,8 @@ assert.strictEqual(faces.freedomLevel, freedom.FREE)
 const circleHeart = resolved(heart, profiles[0]).plan
 assert.strictEqual(circleHeart.stream.width, 136)
 assert.strictEqual(circleHeart.cardWidth + circleHeart.cardPaddingX * 2, circleHeart.stream.width)
-assert.strictEqual(circleHeart.miniWidth + circleHeart.cardPaddingX * 2, circleHeart.miniOuterWidth)
+assert.strictEqual(circleHeart.miniWidth + circleHeart.miniPaddingX * 2, circleHeart.miniOuterWidth)
+assert.ok(circleHeart.miniPaddingX < circleHeart.cardPaddingX, 'Health mini cards keep an independent compact padding contract')
 assert.ok(circleHeart.metaLineHeight > circleHeart.metaSize)
 
 const circleHistory = resolved(history, profiles[0]).plan
