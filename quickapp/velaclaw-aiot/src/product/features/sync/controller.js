@@ -15,7 +15,6 @@ export function createSyncController(onChange) {
     progress: 0,
     phase: 'idle',
     lastSyncAt: 0,
-    packetCount: 0,
     payloadChars: 0,
     packetSent: 0,
     packetTotal: 0,
@@ -42,7 +41,6 @@ export function createSyncController(onChange) {
 
   function resetTransfer() {
     state.progress = 0
-    state.packetCount = 0
     state.payloadChars = 0
     state.packetSent = 0
     state.packetTotal = 0
@@ -70,19 +68,19 @@ export function createSyncController(onChange) {
     function done() {
       pending--
       if (pending > 0 || !isLive(epoch)) return
-      var health = healthStore.getSnapshot()
       state.todaySteps = activity.steps
       state.historyCount = history.length
       state.workoutCount = workouts.length
-      var payload = {
+      emit()
+      if (!callback) return
+      var health = healthStore.getSnapshot()
+      callback({
         version: protocol.VERSION,
         syncedAt: Date.now(),
         health: { steps: activity.steps, calories: activity.calories, standHours: activity.standHours, heartRate: health.heartRate },
         history: history,
         workouts: workouts
-      }
-      emit()
-      if (callback) callback(payload)
+      })
     }
     activityStore.hydrate(function (value) {
       if (!isLive(epoch)) return
@@ -138,22 +136,23 @@ export function createSyncController(onChange) {
     return emit()
   }
 
-  function sendPackets(packets, epoch, success, fail) {
+  function sendTransfer(transfer, epoch, success, fail) {
     var index = 0
-    state.packetTotal = packets.length
+    var total = transfer.packetTotal
+    state.packetTotal = total
     function next() {
       if (!isLive(epoch) || !state.syncing) return
-      if (index >= packets.length) {
+      if (index >= total) {
         success()
         return
       }
-      var packet = packets[index]
+      var packet = transfer.packetAt(index)
       interconnect.send(packet, {
         success: function () {
           if (!isLive(epoch) || !state.syncing) return
           index++
           state.packetSent = index
-          state.progress = Math.round((index / packets.length) * 100)
+          state.progress = Math.round((index / total) * 100)
           state.phase = 'sending'
           emit()
           next()
@@ -178,22 +177,19 @@ export function createSyncController(onChange) {
     emit()
     collect(function (payload) {
       if (!isLive(epoch) || !state.syncing) return
-      var transfer = protocol.encode(payload, 96)
-      state.packetCount = transfer.packets.length
+      var transfer = protocol.createTransfer(payload, 96)
       state.payloadChars = transfer.bytesText
-      state.packetTotal = transfer.packets.length
+      state.packetTotal = transfer.packetTotal
       state.phase = 'sending'
       emit()
-      sendPackets(transfer.packets, epoch, function () {
+      sendTransfer(transfer, epoch, function () {
         if (!isLive(epoch) || !state.syncing) return
         state.syncing = false
         state.progress = 100
         state.phase = 'completed'
         state.lastSyncAt = Date.now()
         settingsStore.update('lastSyncAt', state.lastSyncAt)
-        workoutRepository.markAllSynced(function () {
-          if (isLive(epoch)) collect(null, epoch)
-        })
+        workoutRepository.markAllSynced()
         emit()
       }, function () {
         if (!isLive(epoch) || !state.syncing) return

@@ -44,13 +44,12 @@ function formatDistance(value) {
   var meters = Math.max(0, Math.round(Number(value) || 0))
   return meters >= 1000 ? (meters / 1000).toFixed(2) + ' km' : meters + ' m'
 }
-function weekday(value) {
+function weekdayIndex(value) {
   if (!value) return '--'
   var parts = String(value).split('-')
   if (parts.length !== 3) return String(value)
   var date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
-  var labels = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-  return labels[date.getDay()]
+  return String(date.getDay())
 }
 
 function formatValue(value, format, nullText) {
@@ -64,8 +63,7 @@ function formatValue(value, format, nullText) {
   if (format === 'duration-seconds') return formatDurationSeconds(value)
   if (format === 'duration-ms') return formatDurationMs(value)
   if (format === 'distance') return formatDistance(value)
-  if (format === 'weekday') return weekday(value)
-  if (format === 'weekday-short') return weekday(value).replace('周', '')
+  if (format === 'weekday-index') return weekdayIndex(value)
   if (String(format).indexOf('suffix:') === 0) return formatNumber(value) + String(format).slice(7)
   throw new Error('Unknown V3 surface format: ' + format)
 }
@@ -80,6 +78,13 @@ function fill(template, values) {
 function mappedStatus(map, key, label) {
   if (!map || !map[key]) throw new Error('V3 surface has no JSON status mapping for ' + label + ': ' + key)
   return { text: String(map[key].text || ''), color: String(map[key].color || ''), background: String(map[key].background || '') }
+}
+
+function mappedText(map, key, label) {
+  if (!map || map[key] === undefined) throw new Error('V3 surface has no JSON text mapping for ' + label + ': ' + key)
+  var value = map[key]
+  if (value && typeof value === 'object') return String(value.text || '')
+  return String(value)
 }
 
 function visible(expression, state) {
@@ -364,6 +369,10 @@ function chartFooter(module, values) {
   var valuesForCopy = { min: formatNumber(range.min), max: formatNumber(range.max), avg: formatNumber(range.avg), unit: copy.unit || '' }
   return range.min === range.max ? fill(copy.rangeSingle || '', valuesForCopy) : fill(copy.rangeSpan || '', valuesForCopy)
 }
+function chartLabel(module, item, props, labelField) {
+  var label = formatValue(itemValue(item, labelField), props.labelFormat || 'raw', '--')
+  return props.labelMap ? mappedText(props.labelMap, label, module.id + '.label') : label
+}
 
 function chartCardData(module, tokens, frame, state) {
   var raw = valueAt(state, module.bind && module.bind.items) || []
@@ -395,7 +404,7 @@ function chartCardData(module, tokens, frame, state) {
     for (var i = 0; i < raw.length; i++) {
       var rowItem = raw[i], rowValue = Number(itemValue(rowItem, valueField)) || 0
       var rowRatio = chartRatio(rowValue, values, props, tokens), isLastRow = i === raw.length - 1
-      var label = isLastRow && module.copy && module.copy.todayLabel ? module.copy.todayLabel : formatValue(itemValue(rowItem, labelField), props.labelFormat, '--')
+      var label = isLastRow && module.copy && module.copy.todayLabel ? module.copy.todayLabel : chartLabel(module, rowItem, props, labelField)
       var fillWidth = Math.round((tokens.rowMinWidth || 0) + rowRatio * ((tokens.rowMaxWidth || trackWidth) - (tokens.rowMinWidth || 0)))
       rows.push({
         id: module.id + '-row-' + i, top: chartTop + i * (tokens.rowHeight || 0), height: tokens.rowHeight || 0,
@@ -412,7 +421,7 @@ function chartCardData(module, tokens, frame, state) {
       var item = raw[columnIndex], value = Number(itemValue(item, valueField)) || 0
       var ratio = chartRatio(value, values, props, tokens), isLast = columnIndex === raw.length - 1
       var height = Math.max(tokens.barMinHeight || 0, Math.round(ratio * (tokens.chartHeight || 0)))
-      var compactLabel = labelField ? (isLast && module.copy && module.copy.todayCompactLabel ? module.copy.todayCompactLabel : formatValue(itemValue(item, labelField), props.labelFormat || 'raw', '--')) : ''
+      var compactLabel = labelField ? (isLast && module.copy && module.copy.todayCompactLabel ? module.copy.todayCompactLabel : chartLabel(module, item, props, labelField)) : ''
       columns.push({
         id: module.id + '-column-' + columnIndex,
         barLeft: contentLeft + columnIndex * cellWidth + Math.round((cellWidth - (tokens.barWidth || 0)) / 2),

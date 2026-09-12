@@ -1,15 +1,9 @@
 import storage from '@system.storage'
 
+var STORAGE_OPERATION_TIMEOUT_MS = 8000
+var queue = require('./internal/operation_queue').createQueue({ timeoutMs: STORAGE_OPERATION_TIMEOUT_MS })
+var readResult = require('./internal/storage_read_result')
 var memoryCache = {}
-var operationQueues = {}
-
-function parseJson(key, value) {
-  try {
-    return JSON.parse(value)
-  } catch (error) {
-    throw new Error('Invalid persisted JSON for ' + key)
-  }
-}
 
 function storageFailure(action, key, data, code) {
   var error = data instanceof Error ? data : new Error('storage.' + action + ' failed for ' + key)
@@ -17,21 +11,10 @@ function storageFailure(action, key, data, code) {
   return error
 }
 
-function finishOperation(key) {
-  var queue = operationQueues[key]
-  if (!queue) return
-  queue.shift()
-  if (queue.length === 0) {
-    delete operationQueues[key]
-    return
-  }
-  queue[0]()
-}
-
-function enqueueOperation(key, operation) {
-  if (!operationQueues[key]) operationQueues[key] = []
-  operationQueues[key].push(operation)
-  if (operationQueues[key].length === 1) operation()
+function storageTimeout(action, key) {
+  var error = new Error('storage.' + action + ' timed out for ' + key)
+  error.code = 'ETIMEDOUT'
+  return error
 }
 
 function makeResult(persisted, memoryOnly, error) {
@@ -82,18 +65,22 @@ function readString(key, success, fail) {
   }
 }
 
-function readJSON(key, fallback, success, fail) {
+function readStructured(key, fallback, classifier, callback) {
   readString(key, function (value) {
-    if (value === '' || value === undefined || value === null) {
-      success(fallback !== undefined ? fallback : null)
-      return
-    }
-    try {
-      success(parseJson(key, value))
-    } catch (error) {
-      fail(error)
-    }
-  }, fail)
+    var classified = classifier(key, value, fallback)
+    callback(classified.value, classified.result)
+  }, function (error) {
+    var failed = readResult.io(fallback, error)
+    callback(failed.value, failed.result)
+  })
+}
+
+function classifyRaw(key, value, fallback) {
+  return readResult.raw(value, fallback)
+}
+
+function classifyJson(key, value, fallback) {
+  return readResult.json(key, value, fallback)
 }
 
 var adapter = {
@@ -102,80 +89,131 @@ var adapter = {
   },
 
   set: function (key, value, callback) {
-    enqueueOperation(key, function () {
+    var memoryWritten = false
+    queue.enqueue(key, function (token) {
       var stringValue
       try {
         stringValue = typeof value === 'string' ? value : JSON.stringify(value)
       } catch (error) {
-        if (callback) callback(makeResult(false, false, error))
-        finishOperation(key)
+        queue.complete(key, token, callback, [makeResult(false, false, error)])
         return
       }
+      memoryWritten = true
       persistString(key, stringValue, function (result) {
-        if (callback) callback(result)
-        finishOperation(key)
+        queue.complete(key, token, callback, [result])
       })
+    }, function () {
+      if (callback) callback(makeResult(false, memoryWritten, storageTimeout('set', key)))
     })
+  },
+
+  getResult: function (key, callback, fallback) {
+    if (!callback) return
+    readStructured(key, fallback, classifyRaw, callback)
+  },
+
+  getJSONResult: function (key, callback, fallback) {
+    if (!callback) return
+    readStructured(key, fallback, classifyJson, callback)
   },
 
   get: function (key, callback) {
     if (!callback) return
-    readString(key, callback, function (error) { throw error })
+    adapter.getResult(key, function (value, result) {
+      if (!result.ok) throw result.error
+      callback(value)
+    })
   },
 
   getJSON: function (key, callback, fallback) {
-    readJSON(key, fallback, callback, function (error) { throw error })
+    if (!callback) return
+    adapter.getJSONResult(key, function (value, result) {
+      if (!result.ok) throw result.error
+      callback(value)
+    }, fallback)
   },
 
   delete: function (key, callback) {
-    enqueueOperation(key, function () {
+    var memoryDeleted = false
+    queue.enqueue(key, function (token) {
       delete memoryCache[key]
+      memoryDeleted = true
       try {
         if (storage && storage.delete) {
           storage.delete({
             key: key,
             success: function () {
-              if (callback) callback(makeResult(true, false))
-              finishOperation(key)
+              queue.complete(key, token, callback, [makeResult(true, false)])
             },
             fail: function (data, code) {
-              if (callback) callback(makeResult(false, true, storageFailure('delete', key, data, code)))
-              finishOperation(key)
+              queue.complete(key, token, callback, [makeResult(false, true, storageFailure('delete', key, data, code))])
             }
           })
           return
         }
       } catch (error) {
-        if (callback) callback(makeResult(false, true, error))
-        finishOperation(key)
+        queue.complete(key, token, callback, [makeResult(false, true, error)])
         return
       }
-      if (callback) callback(makeResult(false, true, new Error('storage.delete unavailable')))
-      finishOperation(key)
+      queue.complete(key, token, callback, [makeResult(false, true, new Error('storage.delete unavailable'))])
+    }, function () {
+      if (callback) callback(makeResult(false, memoryDeleted, storageTimeout('delete', key)))
+    })
+  },
+
+  quarantine: function (key, callback) {
+    readString(key, function (raw) {
+      if (raw === '' || raw === undefined || raw === null) {
+        if (callback) callback({ ok: false, status: 'missing', backupKey: '', error: null })
+        return
+      }
+      var backupKey = key + '__corrupt_backup'
+      var envelope = { sourceKey: key, quarantinedAt: Date.now(), raw: raw }
+      adapter.set(backupKey, envelope, function (backupResult) {
+        if (!backupResult || !backupResult.persisted) {
+          if (callback) callback({ ok: false, status: 'io-error', backupKey: backupKey, error: backupResult && backupResult.error ? backupResult.error : new Error('storage quarantine backup failed') })
+          return
+        }
+        adapter.delete(key, function (deleteResult) {
+          if (!deleteResult || !deleteResult.persisted) {
+            if (callback) callback({ ok: false, status: 'io-error', backupKey: backupKey, error: deleteResult && deleteResult.error ? deleteResult.error : new Error('storage quarantine delete failed') })
+            return
+          }
+          if (callback) callback({ ok: true, status: 'quarantined', backupKey: backupKey, error: null })
+        })
+      })
+    }, function (error) {
+      if (callback) callback({ ok: false, status: 'io-error', backupKey: '', error: error })
     })
   },
 
   updateJSON: function (key, fallback, updater, callback) {
-    enqueueOperation(key, function () {
-      readJSON(key, fallback, function (current) {
+    var timeoutValue = null
+    var memoryUpdated = false
+    queue.enqueue(key, function (token) {
+      adapter.getJSONResult(key, function (current, readState) {
+        if (!queue.isActive(key, token)) return
+        if (!readState.ok) {
+          queue.complete(key, token, callback, [null, makeResult(false, false, readState.error)])
+          return
+        }
         var nextValue
         var stringValue
         try {
           nextValue = updater(current)
           stringValue = JSON.stringify(nextValue)
         } catch (error) {
-          if (callback) callback(current, makeResult(false, false, error))
-          finishOperation(key)
+          queue.complete(key, token, callback, [current, makeResult(false, false, error)])
           return
         }
+        timeoutValue = nextValue
+        memoryUpdated = true
         persistString(key, stringValue, function (result) {
-          if (callback) callback(nextValue, result)
-          finishOperation(key)
+          queue.complete(key, token, callback, [nextValue, result])
         })
-      }, function (error) {
-        if (callback) callback(null, makeResult(false, false, error))
-        finishOperation(key)
-      })
+      }, fallback)
+    }, function () {
+      if (callback) callback(timeoutValue, makeResult(false, memoryUpdated, storageTimeout('update', key)))
     })
   }
 }

@@ -17,7 +17,6 @@ function requireAllowedFace(faceIds, id) {
 export function createClockController(onChange, onNotification) {
   var faceIds = []
   var selectedFaceId = ''
-  var heartValues = []
   var started = false
   var lifecycleGeneration = 0
   var powerRuntime = null
@@ -26,12 +25,10 @@ export function createClockController(onChange, onNotification) {
     if (typeof onNotification === 'function') onNotification(state)
   })
   var state = {
-    faceIndex: 0,
     faceId: '',
     timestamp: Date.now(),
     batteryPercent: null,
     currentHeartRate: null,
-    heartRateValues: [],
     steps: 0,
     stepsGoal: 0,
     goalPercent: 0,
@@ -41,12 +38,10 @@ export function createClockController(onChange, onNotification) {
 
   function snapshot() {
     return {
-      faceIndex: state.faceIndex,
       faceId: state.faceId,
       timestamp: state.timestamp,
       batteryPercent: state.batteryPercent,
       currentHeartRate: state.currentHeartRate,
-      heartRateValues: state.heartRateValues.slice(),
       steps: state.steps,
       stepsGoal: state.stepsGoal,
       goalPercent: state.goalPercent,
@@ -64,7 +59,6 @@ export function createClockController(onChange, onNotification) {
   function applyFace(id) {
     selectedFaceId = requireAllowedFace(faceIds, id)
     state.faceId = selectedFaceId
-    state.faceIndex = faceIds.indexOf(selectedFaceId)
   }
 
   function applyActivity(activity) {
@@ -87,9 +81,6 @@ export function createClockController(onChange, onNotification) {
 
   function onHeartRate(sample) {
     state.currentHeartRate = sample.value
-    heartValues.push(sample.value)
-    if (heartValues.length > 10) heartValues.shift()
-    state.heartRateValues = heartValues.slice()
     emit()
   }
 

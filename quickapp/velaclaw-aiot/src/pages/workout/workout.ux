@@ -2,6 +2,7 @@
 <template><surfacehost if="{{ surfaceReady }}" plan="{{ surfacePlan }}" @surfaceaction="onSurfaceAction"></surfacehost></template>
 <script>
 import surfacePage from '../../runtime/surface_page'
+import controllerBinding from '../../product/controller_bindings/workout'
 var surface = require('../../product/frontend/surfaces/workout.json')
-export default { private: { surfaceReady: false, surfacePlan: null }, onInit() { surfacePage.bind(this, surface) }, onShow() { surfacePage.show(this) }, onHide() { surfacePage.hide(this) }, onDestroy() { surfacePage.destroy(this) }, onBackPress() { return surfacePage.back(this) }, onSurfaceAction(event) { surfacePage.action(this, event) } }
+export default { private: { surfaceReady: false, surfacePlan: null }, onInit() { surfacePage.bind(this, surface, controllerBinding) }, onShow() { surfacePage.show(this) }, onHide() { surfacePage.hide(this) }, onDestroy() { surfacePage.destroy(this) }, onBackPress() { return surfacePage.back(this) }, onSurfaceAction(event) { surfacePage.action(this, event) } }
 </script>

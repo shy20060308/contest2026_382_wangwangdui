@@ -4,12 +4,22 @@
   "route": "pages/settings/diagnostics",
   "renderer": "surface-v1",
   "controller": "diagnostics",
-  "initialState": { "ready": false, "deviceOpen": false, "capabilitiesOpen": false, "pageText": "读取中" },
+  "initialState": {
+    "ready": false,
+    "deviceOpen": false,
+    "storageOpen": false,
+    "capabilitiesOpen": false,
+    "pageText": "读取中",
+    "storageItems": [],
+    "storageRecoveryState": "idle",
+    "storageRecoveryRequestVisible": false,
+    "storageRecoveryConfirmVisible": false
+  },
   "modules": [
     {
       "id": "head",
       "type": "header",
-      "copy": { "title": "设备自检", "subtitle": "设备档案与系统能力" },
+      "copy": { "title": "设备自检", "subtitle": "设备档案、存储与系统能力" },
       "bind": { "trailing": "pageText" },
       "props": { "trailingNullText": "读取中" },
       "tokens": { "flow": true, "height": 28, "titleWidth": 100, "trailingWidth": 56, "subtitleWidth": 156, "subtitleTrailingWidth": 0, "titleSize": 13, "subtitleSize": 6, "trailingSize": 7, "subtitleTrailingSize": 0, "titleLineHeight": 17, "subtitleLineHeight": 10, "titleColor": "#64D2FF", "subtitleColor": "#8E8E93", "trailingColor": "#8E8E93", "subtitleTrailingColor": "#8E8E93", "titleWeight": "bold", "trailingWeight": "bold" }
@@ -26,7 +36,8 @@
           { "id": "screenH", "bind": { "value": "device.screenHeight" }, "props": { "valueFormat": "suffix: px" }, "copy": { "label": "物理高度" }, "tokens": { "accent": "#FFFFFF" } },
           { "id": "hostW", "bind": { "value": "host.width" }, "props": { "valueFormat": "suffix: px" }, "copy": { "label": "Host 宽度" }, "tokens": { "accent": "#30D158" } },
           { "id": "hostH", "bind": { "value": "host.height" }, "props": { "valueFormat": "suffix: px" }, "copy": { "label": "Host 高度" }, "tokens": { "accent": "#30D158" } },
-          { "id": "platform", "bind": { "value": "device.platformVersionCode" }, "props": { "valueFormat": "number", "valueNullText": "--" }, "copy": { "label": "平台版本" }, "tokens": { "accent": "#FFD60A" } }
+          { "id": "platform", "bind": { "value": "device.platformVersionCode" }, "props": { "valueFormat": "number", "valueNullText": "--" }, "copy": { "label": "平台版本" }, "tokens": { "accent": "#FFD60A" } },
+          { "id": "surfaceAvg", "bind": { "value": "performance.surfaceRebuildAvgMs" }, "props": { "valueFormat": "suffix: ms", "valueNullText": "--" }, "copy": { "label": "Surface 均耗" }, "tokens": { "accent": "#BF5AF2" } }
         ]
       },
       "tokens": { "flow": true, "marginTop": 6, "height": 108, "columns": 2, "gap": 5, "rowGap": 4, "itemHeight": 24, "itemRadius": 10, "itemPaddingX": 6, "itemPaddingY": 4, "itemBackground": "#111820", "labelSize": 5, "labelColor": "#8E8E93", "valueSize": 8, "valueTop": 2, "valueWeight": "bold", "valueColor": "#FFFFFF", "detailSize": 0, "detailTop": 0, "detailColor": "#8E8E93" }
@@ -35,8 +46,87 @@
       "id": "deviceTip",
       "type": "text",
       "visibleWhen": "deviceOpen",
-      "copy": { "text": "第 1 页显示运行时档案；左右滑或使用底部分页键查看 Capability。" },
+      "copy": { "text": "第 1 页显示运行时档案与 Surface 平均构建耗时；左右滑继续查看。" },
       "tokens": { "flow": true, "marginTop": 5, "height": 18, "fontSize": 5, "lineHeight": 9, "foreground": "#6E7681", "textAlign": "center" }
+    },
+    {
+      "id": "storageHead",
+      "type": "header",
+      "visibleWhen": "storageOpen",
+      "copy": { "title": "持久化状态", "subtitle": "异常内容不会自动覆盖" },
+      "bind": { "trailing": "storageRecoveryState" },
+      "props": {
+        "trailingMap": {
+          "idle": { "text": "状态", "color": "#8E8E93" },
+          "confirming": { "text": "待确认", "color": "#FFD60A" },
+          "recovering": { "text": "处理中", "color": "#64D2FF" },
+          "done": { "text": "已恢复", "color": "#30D158" },
+          "error": { "text": "恢复失败", "color": "#FF453A" }
+        }
+      },
+      "tokens": { "flow": true, "marginTop": 5, "height": 28, "titleWidth": 96, "trailingWidth": 60, "subtitleWidth": 156, "subtitleTrailingWidth": 0, "titleSize": 10, "subtitleSize": 6, "trailingSize": 7, "subtitleTrailingSize": 0, "titleLineHeight": 16, "subtitleLineHeight": 10, "titleColor": "#FFFFFF", "subtitleColor": "#8E8E93", "trailingColor": "#8E8E93", "subtitleTrailingColor": "#8E8E93", "titleWeight": "bold", "trailingWeight": "bold" }
+    },
+    {
+      "id": "storageStatus",
+      "type": "metric-grid",
+      "visibleWhen": "storageOpen",
+      "bind": { "items": "storageItems" },
+      "props": {
+        "fields": {
+          "label": {
+            "path": "id",
+            "map": {
+              "activity": { "text": "活动数据", "color": "#FFFFFF" },
+              "history": { "text": "活动历史", "color": "#FFFFFF" },
+              "workout": { "text": "运动数据", "color": "#FFFFFF" },
+              "settings": { "text": "设备设置", "color": "#FFFFFF" },
+              "watchface": { "text": "表盘选择", "color": "#FFFFFF" }
+            }
+          },
+          "value": {
+            "path": "status",
+            "map": {
+              "loading": { "text": "读取中", "color": "#8E8E93" },
+              "ok": { "text": "正常", "color": "#30D158" },
+              "missing": { "text": "未创建", "color": "#8E8E93" },
+              "corrupt": { "text": "已损坏", "color": "#FF453A" },
+              "io-error": { "text": "读取失败", "color": "#FF9F0A" },
+              "recovering": { "text": "恢复中", "color": "#64D2FF" },
+              "unavailable": { "text": "未接入", "color": "#8E8E93" }
+            }
+          },
+          "detail": { "path": "errorCode", "nullText": "" }
+        },
+        "styleRules": [
+          { "path": "status", "equals": "corrupt", "tokens": { "itemBackground": "#251316" } },
+          { "path": "status", "equals": "io-error", "tokens": { "itemBackground": "#241B10" } },
+          { "path": "status", "equals": "ok", "tokens": { "itemBackground": "#102019" } }
+        ]
+      },
+      "tokens": { "flow": true, "marginTop": 5, "height": 82, "columns": 2, "gap": 5, "rowGap": 4, "itemHeight": 24, "itemRadius": 10, "itemPaddingX": 7, "itemPaddingY": 4, "itemBackground": "#11151B", "labelSize": 6, "labelColor": "#FFFFFF", "valueSize": 8, "valueTop": 2, "valueWeight": "bold", "valueColor": "#FFFFFF", "detailSize": 4, "detailTop": 1, "detailColor": "#777D87" }
+    },
+    {
+      "id": "storageTip",
+      "type": "text",
+      "visibleWhen": "storageOpen",
+      "copy": { "text": "损坏数据仅在确认后恢复：先备份原内容，再重置。I/O 失败不会执行删除。" },
+      "tokens": { "flow": true, "marginTop": 5, "height": 22, "fontSize": 5, "lineHeight": 9, "foreground": "#8E8E93", "textAlign": "center" }
+    },
+    {
+      "id": "storageRecover",
+      "type": "button",
+      "visibleWhen": "storageRecoveryRequestVisible",
+      "copy": { "title": "恢复异常存储", "subtitle": "仅处理可备份的损坏数据" },
+      "actions": { "tap": "diagnostics-storage:request" },
+      "tokens": { "flow": true, "marginTop": 5, "height": 30, "radius": 11, "paddingX": 9, "background": "#211C0E", "titleSize": 8, "titleColor": "#FFD60A", "titleWeight": "bold", "subtitleSize": 5, "subtitleTop": 2, "subtitleColor": "#8E8E93", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
+    },
+    {
+      "id": "storageConfirm",
+      "type": "button",
+      "visibleWhen": "storageRecoveryConfirmVisible",
+      "copy": { "title": "确认隔离并重置", "subtitle": "先保存原始备份，再写入默认值" },
+      "actions": { "tap": "diagnostics-storage:confirm" },
+      "tokens": { "flow": true, "marginTop": 5, "height": 30, "radius": 11, "paddingX": 9, "background": "#251316", "titleSize": 8, "titleColor": "#FF453A", "titleWeight": "bold", "subtitleSize": 5, "subtitleTop": 2, "subtitleColor": "#8E8E93", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
     },
     {
       "id": "capabilityHead",
@@ -98,8 +188,38 @@
   },
   "variants": {
     "base": {},
-    "circle": { "tokens": { "stream": { "top": 14, "width": 148, "height": 132 }, "streamPaddingBottom": 2 }, "modules": { "head": { "height": 24, "titleSize": 10, "subtitleSize": 5, "trailingSize": 6, "titleLineHeight": 14, "subtitleLineHeight": 9 }, "device": { "height": 96, "gap": 4, "rowGap": 3, "itemHeight": 21, "itemRadius": 9, "labelSize": 4, "valueSize": 7 }, "deviceTip": { "height": 16, "fontSize": 4, "lineHeight": 8 }, "capabilityHead": { "height": 24, "titleSize": 9, "subtitleSize": 5 }, "capabilities": { "height": 86, "gap": 5, "rowGap": 5, "itemHeight": 40, "itemRadius": 10, "labelSize": 5, "valueSize": 7, "detailSize": 4 }, "capabilityTip": { "height": 16, "fontSize": 4, "lineHeight": 8 } } },
-    "pill": { "tokens": { "stream": { "top": 0, "width": 168, "height": 286 }, "streamPaddingBottom": 4 }, "modules": { "head": { "height": 38, "titleSize": 16, "subtitleSize": 8, "trailingSize": 9, "titleLineHeight": 23, "subtitleLineHeight": 14 }, "device": { "height": 210, "gap": 8, "rowGap": 6, "itemHeight": 48, "itemRadius": 11, "labelSize": 7, "valueSize": 12, "itemPaddingX": 8, "itemPaddingY": 6 }, "deviceTip": { "height": 24, "fontSize": 6, "lineHeight": 12 }, "capabilityHead": { "height": 40, "titleSize": 13, "subtitleSize": 8, "titleLineHeight": 23, "subtitleLineHeight": 14 }, "capabilities": { "height": 152, "gap": 8, "rowGap": 8, "itemHeight": 72, "itemRadius": 11, "labelSize": 8, "valueSize": 11, "detailSize": 5 }, "capabilityTip": { "height": 24, "fontSize": 6, "lineHeight": 12 } } },
+    "circle": {
+      "tokens": { "stream": { "top": 14, "width": 148, "height": 132 }, "streamPaddingBottom": 2 },
+      "modules": {
+        "head": { "height": 24, "titleSize": 10, "subtitleSize": 5, "trailingSize": 6, "titleLineHeight": 14, "subtitleLineHeight": 9 },
+        "device": { "height": 96, "gap": 4, "rowGap": 3, "itemHeight": 21, "itemRadius": 9, "labelSize": 4, "valueSize": 7 },
+        "deviceTip": { "height": 16, "fontSize": 4, "lineHeight": 8 },
+        "storageHead": { "height": 24, "titleSize": 9, "subtitleSize": 5, "trailingSize": 6 },
+        "storageStatus": { "height": 76, "rowGap": 3, "itemHeight": 22, "itemRadius": 9, "labelSize": 5, "valueSize": 7, "detailSize": 4 },
+        "storageTip": { "height": 20, "fontSize": 4, "lineHeight": 8 },
+        "storageRecover": { "height": 28, "radius": 10, "titleSize": 7, "subtitleSize": 4 },
+        "storageConfirm": { "height": 28, "radius": 10, "titleSize": 7, "subtitleSize": 4 },
+        "capabilityHead": { "height": 24, "titleSize": 9, "subtitleSize": 5 },
+        "capabilities": { "height": 86, "gap": 5, "rowGap": 5, "itemHeight": 40, "itemRadius": 10, "labelSize": 5, "valueSize": 7, "detailSize": 4 },
+        "capabilityTip": { "height": 16, "fontSize": 4, "lineHeight": 8 }
+      }
+    },
+    "pill": {
+      "tokens": { "stream": { "top": 0, "width": 168, "height": 286 }, "streamPaddingBottom": 4 },
+      "modules": {
+        "head": { "height": 38, "titleSize": 16, "subtitleSize": 8, "trailingSize": 9, "titleLineHeight": 23, "subtitleLineHeight": 14 },
+        "device": { "height": 210, "gap": 8, "rowGap": 6, "itemHeight": 48, "itemRadius": 11, "labelSize": 7, "valueSize": 12, "itemPaddingX": 8, "itemPaddingY": 6 },
+        "deviceTip": { "height": 24, "fontSize": 6, "lineHeight": 12 },
+        "storageHead": { "height": 40, "titleSize": 13, "subtitleSize": 8, "trailingSize": 9, "titleLineHeight": 22, "subtitleLineHeight": 13 },
+        "storageStatus": { "height": 132, "rowGap": 7, "itemHeight": 38, "itemRadius": 11, "labelSize": 8, "valueSize": 11, "detailSize": 5, "itemPaddingX": 8, "itemPaddingY": 6 },
+        "storageTip": { "height": 30, "fontSize": 6, "lineHeight": 12 },
+        "storageRecover": { "height": 44, "radius": 11, "titleSize": 11, "subtitleSize": 7 },
+        "storageConfirm": { "height": 44, "radius": 11, "titleSize": 11, "subtitleSize": 7 },
+        "capabilityHead": { "height": 40, "titleSize": 13, "subtitleSize": 8, "titleLineHeight": 23, "subtitleLineHeight": 14 },
+        "capabilities": { "height": 152, "gap": 8, "rowGap": 8, "itemHeight": 72, "itemRadius": 11, "labelSize": 8, "valueSize": 11, "detailSize": 5 },
+        "capabilityTip": { "height": 24, "fontSize": 6, "lineHeight": 12 }
+      }
+    },
     "rect": {}
   }
 }

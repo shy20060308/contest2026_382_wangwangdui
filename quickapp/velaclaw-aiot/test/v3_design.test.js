@@ -93,8 +93,9 @@ Object.keys(profiles).forEach(function (shape) {
   const notificationHome = resolve(surface('pages/notification_demo'), profile, { homeVisible: true, appVisible: false, callVisible: false, hangupVisible: false })
   assert.deepStrictEqual(notificationHome.flowButtons.slice(0, 3).map(item => item.action), ['notification-demo:sms', 'notification-demo:call', 'notification-demo:app'])
 
-  const brightness = resolve(surface('pages/settings/brightness'), profile, { brightnessValue: 128, autoBrightness: false, raiseWakeEnabled: true, lowPowerEnabled: false })
+  const brightness = resolve(surface('pages/settings/brightness'), profile, { brightnessValue: 128, autoBrightness: false, raiseWakeEnabled: true, lowPowerEnabled: false, displayApplyState: 'applied' })
   assert.strictEqual(brightness.flowHeaders[0].trailing, '手动')
+  assert.strictEqual(brightness.flowHeaders[0].subtitleTrailing, '已应用')
   assert.ok(brightness.flowButtons.some(item => item.action === 'brightness-toggle-low-power'))
   assert.ok(brightness.sliders && brightness.sliders.length === 1, 'Brightness must resolve the declarative direct-manipulation slider')
 

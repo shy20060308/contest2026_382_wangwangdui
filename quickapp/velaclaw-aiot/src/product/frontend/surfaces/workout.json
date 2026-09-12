@@ -18,7 +18,8 @@
         },
         "subtitleTrailingMap": {
           "running": { "text": "运动中", "color": "#30D158" },
-          "paused": { "text": "已暂停", "color": "#FFD60A" }
+          "paused": { "text": "已暂停", "color": "#FFD60A" },
+          "finalizing": { "text": "待保存", "color": "#FF9F0A" }
         }
       },
       "tokens": {
@@ -70,7 +71,7 @@
         "stateMap": {
           "locating": { "text": "正在定位", "color": "#8E8E93", "background": "#10151A" },
           "active": { "text": "GPS 已定位", "color": "#64D2FF", "background": "#10151A" },
-          "unavailable": { "text": "GPS 不可用 · 步幅估算", "color": "#FF9F0A", "background": "#10151A" },
+          "unavailable": { "text": "GPS 不可用 · 距离暂无", "color": "#FF9F0A", "background": "#10151A" },
           "paused": { "text": "GPS 已暂停", "color": "#8E8E93", "background": "#19170F" }
         }
       },
@@ -137,7 +138,8 @@
       "props": {
         "stateMap": {
           "running": { "text": "暂停", "color": "#FFFFFF", "background": "#2C2C2E" },
-          "paused": { "text": "继续", "color": "#061008", "background": "#30D158" }
+          "paused": { "text": "继续", "color": "#061008", "background": "#30D158" },
+          "finalizing": { "text": "已结束 · 待保存", "color": "#FFD60A", "background": "#241B10" }
         }
       },
       "actions": { "tap": "workout-toggle-pause" },
@@ -165,6 +167,14 @@
       "type": "button",
       "visibleWhen": "!confirming",
       "copy": { "title": "结束", "subtitle": "保存本次训练" },
+      "bind": { "state": "status" },
+      "props": {
+        "stateMap": {
+          "running": { "text": "结束", "color": "#FFFFFF", "background": "#C83245" },
+          "paused": { "text": "结束", "color": "#FFFFFF", "background": "#C83245" },
+          "finalizing": { "text": "重试保存", "color": "#111111", "background": "#FFD60A" }
+        }
+      },
       "actions": { "tap": "workout-request-finish" },
       "tokens": {
         "flow": true,
@@ -189,7 +199,7 @@
       "id": "confirmCard",
       "type": "button",
       "visibleWhen": "confirming",
-      "copy": { "title": "结束本次运动？", "subtitle": "记录会保存并计入今日活动和 7 日趋势。" },
+      "copy": { "title": "结束本次运动？", "subtitle": "保存可确认的数据；未接入的指标会显示为暂无。" },
       "tokens": {
         "flow": true,
         "marginTop": 34,

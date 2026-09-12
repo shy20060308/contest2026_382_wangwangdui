@@ -17,6 +17,10 @@ import { createClockController } from './features/clock/controller'
 
 function noop() {}
 function copyState(source) { var result = {}; for (var key in (source || {})) result[key] = source[key]; return result }
+function interactionOwner(context) { return context && context.interactionOwner ? context.interactionOwner : null }
+function ownerToken(owner) { return owner ? owner.capture() : null }
+function ownerCurrent(owner, token) { return !owner || owner.isCurrent(token) }
+function ownerKey(owner) { return owner ? owner.key() : '' }
 
 function configuredFaceIds(config, label) {
   var source = config && Array.isArray(config.faceIds) ? config.faceIds : []
@@ -48,18 +52,22 @@ function health(onChange) {
   return { start: function () { controller.start() }, stop: function () { controller.stop() }, destroy: function () { controller.stop() }, action: noop }
 }
 
-function workoutSelection(onChange) {
+function workoutSelection(onChange, context) {
+  var owner = interactionOwner(context)
   var state = { modeTypes: workoutSelectionFeature.getModeTypes(), hasActive: false }
   function emit() { if (typeof onChange === 'function') onChange({ modeTypes: state.modeTypes.slice(), hasActive: state.hasActive }) }
   function refresh() { workoutSelectionFeature.hasActive(function (active) { state.hasActive = active; emit() }) }
   return {
     start: function () { emit(); refresh() }, stop: noop, destroy: noop,
     action: function (name) {
-      if (name === 'workout-continue') { navigation.push('/pages/workout'); return }
+      if (name === 'workout-continue') { navigation.push('/pages/workout', null, ownerKey(owner)); return }
       if (String(name).indexOf('workout-select:') === 0) {
         var type = String(name).slice('workout-select:'.length)
         if (state.modeTypes.indexOf(type) < 0) throw new Error('Unsupported workout selection action: ' + type)
-        workoutSelectionFeature.create(type, function () { navigation.push('/pages/workout') })
+        var token = ownerToken(owner)
+        workoutSelectionFeature.create(type, function () {
+          if (ownerCurrent(owner, token)) navigation.push('/pages/workout', null, ownerKey(owner))
+        })
         return
       }
       throw new Error('Unknown workout selection action: ' + name)
@@ -68,34 +76,58 @@ function workoutSelection(onChange) {
 }
 
 function workoutState(session, confirming) {
-  if (!session) return { hasSession: false, confirming: !!confirming }
+  if (!session) return { hasSession: false, confirming: !!confirming, finalized: false }
+  var finalized = session.finishedAt !== null && session.finishedAt !== undefined
   return {
-    hasSession: true, confirming: !!confirming, type: session.type, status: session.status,
+    hasSession: true, confirming: !!confirming, finalized: finalized, type: session.type,
+    status: finalized ? 'finalizing' : session.status,
     durationMs: session.durationMs, steps: session.steps, calories: session.calories,
     distanceMeters: session.distanceMeters, currentHeartRate: session.currentHeartRate,
     gpsStatus: session.gpsStatus, gpsDistanceMeters: session.gpsDistanceMeters
   }
 }
 
-function workout(onChange) {
+function workout(onChange, context) {
+  var owner = interactionOwner(context)
   var current = null
   var confirming = false
   function emit() { if (typeof onChange === 'function') onChange(workoutState(current, confirming)) }
+  function isFinalized() { return !!(current && current.finishedAt !== null && current.finishedAt !== undefined) }
+  function finishAndNavigate() {
+    confirming = false
+    var token = ownerToken(owner)
+    controller.finish(function () {
+      if (ownerCurrent(owner, token)) navigation.replace('/pages/workout_history', null, ownerKey(owner))
+    })
+  }
   var controller = createWorkoutController(function (session) { current = session; emit() })
   return {
-    start: function () { controller.loadActive(function (session) { if (!session) { navigation.back(); return }; current = session; emit() }) },
+    start: function () {
+      var token = ownerToken(owner)
+      controller.loadActive(function (session) {
+        if (!ownerCurrent(owner, token)) return
+        if (!session) { navigation.back(ownerKey(owner)); return }
+        current = session
+        emit()
+      })
+    },
     stop: function () { controller.stop() }, destroy: function () { controller.stop() },
     action: function (name) {
       if (name === 'workout-toggle-pause') {
-        if (!current) return
+        if (!current || isFinalized()) return
         if (current.status === 'running') controller.pause()
         else if (current.status === 'paused') controller.resume()
         else throw new Error('Unsupported workout state: ' + current.status)
         return
       }
-      if (name === 'workout-request-finish') { confirming = true; emit(); return }
+      if (name === 'workout-request-finish') {
+        if (isFinalized()) { finishAndNavigate(); return }
+        confirming = true
+        emit()
+        return
+      }
       if (name === 'workout-cancel-finish') { confirming = false; emit(); return }
-      if (name === 'workout-confirm-finish') { confirming = false; controller.finish(function () { navigation.replace('/pages/workout_history') }); return }
+      if (name === 'workout-confirm-finish') { finishAndNavigate(); return }
       throw new Error('Unknown workout action: ' + name)
     }
   }
@@ -118,7 +150,6 @@ function today(onChange) {
     var state = copyState(latest)
     state.calendarOpen = calendarOpen
     state.summaryOpen = !calendarOpen
-    state.calendarMonthNumber = latest.calendarMonth === undefined ? null : latest.calendarMonth + 1
     state.calendarCells = Array.isArray(latest.calendarCells) ? latest.calendarCells.slice() : []
     if (typeof onChange === 'function') onChange(state)
   }
@@ -209,14 +240,15 @@ function diagnostics(onChange) {
   function emit(model) {
     if (model) latest = model
     var capabilities = Array.isArray(latest.capabilities) ? latest.capabilities : []
-    var pageCount = 1 + Math.max(1, Math.ceil(capabilities.length / pageSize))
+    var pageCount = 2 + Math.max(1, Math.ceil(capabilities.length / pageSize))
     pageIndex = Math.max(0, Math.min(pageCount - 1, pageIndex))
     var state = copyState(latest)
     state.ready = configured && !!latest.device && !!latest.host
     state.deviceOpen = state.ready && pageIndex === 0
-    state.capabilitiesOpen = state.ready && pageIndex > 0
-    state.pageText = state.ready ? ((pageIndex + 1) + ' / ' + pageCount) : '读取中'
-    var capabilityPageIndex = Math.max(0, pageIndex - 1)
+    state.storageOpen = state.ready && pageIndex === 1
+    state.capabilitiesOpen = state.ready && pageIndex > 1
+    state.pageText = state.ready ? ((pageIndex + 1) + ' / ' + pageCount) : ''
+    var capabilityPageIndex = Math.max(0, pageIndex - 2)
     state.capabilityPage = capabilities.slice(capabilityPageIndex * pageSize, capabilityPageIndex * pageSize + pageSize)
     if (typeof onChange === 'function') onChange(state)
   }
@@ -235,6 +267,9 @@ function diagnostics(onChange) {
     action: function (name) {
       if (name === 'diagnostics-page:previous') { pageIndex -= 1; emit(); return }
       if (name === 'diagnostics-page:next') { pageIndex += 1; emit(); return }
+      if (name === 'diagnostics-storage:request') { controller.requestStorageRecovery(); return }
+      if (name === 'diagnostics-storage:confirm') { controller.confirmStorageRecovery(); return }
+      if (name === 'diagnostics-storage:cancel') { controller.cancelStorageRecovery(); return }
       throw new Error('Unknown diagnostics action: ' + name)
     }
   }
@@ -275,7 +310,8 @@ function notification(onChange) {
   }
 }
 
-function watchface(onChange) {
+function watchface(onChange, context) {
+  var owner = interactionOwner(context)
   var configured = false
   var faceIds = []
   var controller = createWatchfaceController(function (model) { var state = model || {}; if (typeof onChange === 'function') onChange({ selectedId: state.selectedId || '', selectedIndex: state.selectedIndex || 0 }) })
@@ -284,7 +320,14 @@ function watchface(onChange) {
     configure: function (profile, scene, safe, config) { faceIds = configuredFaceIds(config, 'Watchface'); configured = false },
     start: function () { ensureConfigured(); controller.load() }, stop: noop, destroy: noop,
     action: function (name) {
-      if (String(name).indexOf('watchface-select:') === 0) { ensureConfigured(); controller.select(String(name).slice(17), function () { navigation.back() }); return }
+      if (String(name).indexOf('watchface-select:') === 0) {
+        ensureConfigured()
+        var token = ownerToken(owner)
+        controller.select(String(name).slice(17), function () {
+          if (ownerCurrent(owner, token)) navigation.back(ownerKey(owner))
+        })
+        return
+      }
       throw new Error('Unknown watchface action: ' + name)
     }
   }
@@ -300,11 +343,6 @@ function clock(onChange) {
     for (var key in notificationState) if (key !== 'visible' && key !== 'type') state[key] = notificationState[key]
     var visible = !!notificationState.visible
     var type = notificationState.type || ''
-    state.faceSport = state.faceId === 'sport' && !visible && state.powerMode !== 'SLEEP'
-    state.faceSimple = state.faceId === 'simple' && !visible && state.powerMode !== 'SLEEP'
-    state.faceDashboard = state.faceId === 'dashboard' && !visible && state.powerMode !== 'SLEEP'
-    state.faceMechanical = state.faceId === 'mechanical' && !visible && state.powerMode !== 'SLEEP'
-    state.faceAlpine = state.faceId === 'alpine' && !visible && state.powerMode !== 'SLEEP'
     state.clockVisible = !visible && state.powerMode !== 'SLEEP'
     state.sleepVisible = !visible && state.powerMode === 'SLEEP'
     state.notificationAppVisible = visible && type !== 'call'
@@ -318,8 +356,8 @@ function clock(onChange) {
     start: function () { ensureConfigured(); controller.start() }, stop: function () { controller.stop() }, destroy: function () { controller.stop() },
     action: function (name) {
       ensureConfigured(); controller.markActive('surface-action')
-      if (name === 'clock-prev-face') { controller.switchFace(-1); return }
-      if (name === 'clock-next-face') { controller.switchFace(1); return }
+      if (name === 'clock-prev-face') { if (notificationState.visible || clockState.powerMode === 'SLEEP') return; controller.switchFace(-1); return }
+      if (name === 'clock-next-face') { if (notificationState.visible || clockState.powerMode === 'SLEEP') return; controller.switchFace(1); return }
       if (name === 'clock-wake') { controller.wake('surface-wake'); return }
       if (name === 'clock-dismiss-notification') { controller.dismissNotification(); return }
       if (name === 'clock-hangup-notification') { controller.hangUpNotification(); return }
@@ -328,12 +366,12 @@ function clock(onChange) {
   }
 }
 
-function create(id, onChange) {
+function create(id, onChange, context) {
   if (id === 'activity') return activity(onChange)
   if (id === 'history') return history(onChange)
   if (id === 'health') return health(onChange)
-  if (id === 'workout-selection') return workoutSelection(onChange)
-  if (id === 'workout') return workout(onChange)
+  if (id === 'workout-selection') return workoutSelection(onChange, context)
+  if (id === 'workout') return workout(onChange, context)
   if (id === 'workout-history') return workoutHistory(onChange)
   if (id === 'today') return today(onChange)
   if (id === 'brightness') return brightness(onChange)
@@ -342,7 +380,7 @@ function create(id, onChange) {
   if (id === 'diagnostics') return diagnostics(onChange)
   if (id === 'sync') return sync(onChange)
   if (id === 'notification') return notification(onChange)
-  if (id === 'watchface') return watchface(onChange)
+  if (id === 'watchface') return watchface(onChange, context)
   if (id === 'clock') return clock(onChange)
   if (id === null || id === undefined || id === '') return { start: noop, stop: noop, destroy: noop, action: noop }
   throw new Error('Unknown V3 surface controller: ' + id)

@@ -4,14 +4,34 @@
   "route": "pages/settings/brightness",
   "renderer": "surface-v1",
   "controller": "brightness",
+  "initialState": {
+    "brightnessValue": null,
+    "autoBrightness": "loading",
+    "raiseWakeEnabled": "loading",
+    "lowPowerEnabled": "loading",
+    "displayApplyState": "loading"
+  },
   "modules": [
     {
       "id": "head",
       "type": "header",
       "copy": { "title": "亮度与省电", "subtitle": "屏幕与唤醒策略" },
-      "bind": { "trailing": "autoBrightness" },
-      "props": { "trailingMap": { "true": { "text": "自动", "color": "#30D158" }, "false": { "text": "手动", "color": "#FFD60A" } } },
-      "tokens": { "flow": true, "height": 30, "titleWidth": 106, "trailingWidth": 50, "subtitleWidth": 150, "subtitleTrailingWidth": 0, "titleSize": 14, "subtitleSize": 7, "trailingSize": 9, "subtitleTrailingSize": 0, "titleLineHeight": 17, "subtitleLineHeight": 10, "titleColor": "#FFD60A", "subtitleColor": "#8E8E93", "trailingColor": "#8E8E93", "subtitleTrailingColor": "#8E8E93", "titleWeight": "bold", "trailingWeight": "bold" }
+      "bind": { "trailing": "autoBrightness", "subtitleTrailing": "displayApplyState" },
+      "props": {
+        "trailingMap": {
+          "true": { "text": "自动", "color": "#30D158" },
+          "false": { "text": "手动", "color": "#FFD60A" },
+          "loading": { "text": "读取中", "color": "#8E8E93" }
+        },
+        "subtitleTrailingMap": {
+          "loading": { "text": "读取中", "color": "#8E8E93" },
+          "pending": { "text": "待应用", "color": "#FFD60A" },
+          "applying": { "text": "应用中", "color": "#64D2FF" },
+          "applied": { "text": "已应用", "color": "#30D158" },
+          "error": { "text": "应用失败", "color": "#FF453A" }
+        }
+      },
+      "tokens": { "flow": true, "height": 30, "titleWidth": 106, "trailingWidth": 50, "subtitleWidth": 90, "subtitleTrailingWidth": 66, "titleSize": 14, "subtitleSize": 7, "trailingSize": 9, "subtitleTrailingSize": 7, "titleLineHeight": 17, "subtitleLineHeight": 10, "titleColor": "#FFD60A", "subtitleColor": "#8E8E93", "trailingColor": "#8E8E93", "subtitleTrailingColor": "#8E8E93", "titleWeight": "bold", "trailingWeight": "bold" }
     },
     {
       "id": "value",
@@ -26,7 +46,7 @@
       "type": "button",
       "copy": { "title": "自动亮度", "subtitle": "根据系统场景调节" },
       "bind": { "state": "autoBrightness" },
-      "props": { "stateMap": { "true": { "text": "自动亮度 · 开", "color": "#30D158", "background": "#102018" }, "false": { "text": "自动亮度 · 关", "color": "#FFFFFF", "background": "#111317" } } },
+      "props": { "stateMap": { "true": { "text": "自动亮度 · 开", "color": "#30D158", "background": "#102018" }, "false": { "text": "自动亮度 · 关", "color": "#FFFFFF", "background": "#111317" }, "loading": { "text": "自动亮度 · 读取中", "color": "#8E8E93", "background": "#111317" } } },
       "actions": { "tap": "brightness-toggle-auto" },
       "tokens": { "flow": true, "marginTop": 104, "height": 54, "radius": 14, "paddingX": 12, "background": "#111317", "titleSize": 11, "titleColor": "#FFFFFF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 3, "subtitleColor": "#8E8E93", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
     },
@@ -35,7 +55,7 @@
       "type": "button",
       "copy": { "title": "抬腕亮屏", "subtitle": "息屏后动作唤醒" },
       "bind": { "state": "raiseWakeEnabled" },
-      "props": { "stateMap": { "true": { "text": "抬腕亮屏 · 开", "color": "#30D158", "background": "#102018" }, "false": { "text": "抬腕亮屏 · 关", "color": "#FFFFFF", "background": "#111317" } } },
+      "props": { "stateMap": { "true": { "text": "抬腕亮屏 · 开", "color": "#30D158", "background": "#102018" }, "false": { "text": "抬腕亮屏 · 关", "color": "#FFFFFF", "background": "#111317" }, "loading": { "text": "抬腕亮屏 · 读取中", "color": "#8E8E93", "background": "#111317" } } },
       "actions": { "tap": "brightness-toggle-raise" },
       "tokens": { "flow": true, "marginTop": 7, "height": 54, "radius": 14, "paddingX": 12, "background": "#111317", "titleSize": 11, "titleColor": "#FFFFFF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 3, "subtitleColor": "#8E8E93", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
     },
@@ -44,7 +64,7 @@
       "type": "button",
       "copy": { "title": "低功耗模式", "subtitle": "暗屏、息屏与降刷新率" },
       "bind": { "state": "lowPowerEnabled" },
-      "props": { "stateMap": { "true": { "text": "低功耗模式 · 开", "color": "#30D158", "background": "#102018" }, "false": { "text": "低功耗模式 · 关", "color": "#FFFFFF", "background": "#111317" } } },
+      "props": { "stateMap": { "true": { "text": "低功耗模式 · 开", "color": "#30D158", "background": "#102018" }, "false": { "text": "低功耗模式 · 关", "color": "#FFFFFF", "background": "#111317" }, "loading": { "text": "低功耗模式 · 读取中", "color": "#8E8E93", "background": "#111317" } } },
       "actions": { "tap": "brightness-toggle-low-power" },
       "tokens": { "flow": true, "marginTop": 7, "height": 54, "radius": 14, "paddingX": 12, "background": "#111317", "titleSize": 11, "titleColor": "#FFFFFF", "titleWeight": "bold", "subtitleSize": 7, "subtitleTop": 3, "subtitleColor": "#8E8E93", "chevronWidth": 0, "chevronSize": 0, "chevronColor": "#000000", "chevronText": "" }
     }
@@ -98,8 +118,8 @@
   },
   "variants": {
     "base": {},
-    "circle": { "tokens": { "stream": { "top": 14, "width": 148, "heightMode": "scene-bottom" }, "streamPaddingBottom": 20 }, "modules": { "head": { "height": 26, "titleSize": 12 }, "value": { "height": 48, "fontSize": 18, "lineHeight": 48 }, "auto": { "height": 44, "radius": 13, "titleSize": 9, "subtitleSize": 6 }, "raise": { "height": 44, "radius": 13, "titleSize": 9, "subtitleSize": 6 }, "lowPower": { "height": 44, "radius": 13, "titleSize": 9, "subtitleSize": 6 } } },
-    "pill": { "tokens": { "stream": { "top": 0, "width": 168, "heightMode": "scene-bottom" }, "streamPaddingBottom": 52 }, "modules": { "head": { "height": 34, "titleSize": 16, "subtitleSize": 9, "trailingSize": 10, "titleLineHeight": 20, "subtitleLineHeight": 13 }, "value": { "height": 72, "fontSize": 24, "lineHeight": 72 }, "auto": { "height": 62, "radius": 12, "titleSize": 13, "subtitleSize": 8 }, "raise": { "height": 62, "radius": 12, "titleSize": 13, "subtitleSize": 8 }, "lowPower": { "height": 62, "radius": 12, "titleSize": 13, "subtitleSize": 8 } } },
+    "circle": { "tokens": { "stream": { "top": 14, "width": 148, "heightMode": "scene-bottom" }, "streamPaddingBottom": 20 }, "modules": { "head": { "height": 26, "titleWidth": 88, "trailingWidth": 50, "subtitleWidth": 78, "subtitleTrailingWidth": 62, "titleSize": 12, "subtitleTrailingSize": 6 }, "value": { "height": 48, "fontSize": 18, "lineHeight": 48 }, "auto": { "height": 44, "radius": 13, "titleSize": 9, "subtitleSize": 6 }, "raise": { "height": 44, "radius": 13, "titleSize": 9, "subtitleSize": 6 }, "lowPower": { "height": 44, "radius": 13, "titleSize": 9, "subtitleSize": 6 } } },
+    "pill": { "tokens": { "stream": { "top": 0, "width": 168, "heightMode": "scene-bottom" }, "streamPaddingBottom": 52 }, "modules": { "head": { "height": 34, "titleWidth": 106, "trailingWidth": 50, "subtitleWidth": 94, "subtitleTrailingWidth": 66, "titleSize": 16, "subtitleSize": 9, "trailingSize": 10, "subtitleTrailingSize": 8, "titleLineHeight": 20, "subtitleLineHeight": 13 }, "value": { "height": 72, "fontSize": 24, "lineHeight": 72 }, "auto": { "height": 62, "radius": 12, "titleSize": 13, "subtitleSize": 8 }, "raise": { "height": 62, "radius": 12, "titleSize": 13, "subtitleSize": 8 }, "lowPower": { "height": 62, "radius": 12, "titleSize": 13, "subtitleSize": 8 } } },
     "rect": {}
   }
 }

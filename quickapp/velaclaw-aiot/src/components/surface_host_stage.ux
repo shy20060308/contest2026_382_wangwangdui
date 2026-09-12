@@ -1,0 +1,89 @@
+<template>
+  <stack class="surface-host" style="width: {{ plan.sceneWidth }}px; height: {{ plan.sceneHeight }}px; background-color: {{ plan.background }};" @swipe="onSwipe" @longpress="onLongPress">
+    <stack class="surface-scene" style="width: {{ plan.sceneWidth }}px; height: {{ plan.sceneHeight }}px; background-color: {{ plan.background }};">
+      <text class="surface-header" for="{{ plan.headers }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; line-height: {{ $item.frame.height }}px; font-size: {{ $item.tokens.fontSize }}px; color: {{ $item.tokens.foreground }}; font-weight: {{ $item.tokens.fontWeight }}; text-align: {{ $item.tokens.textAlign }};">{{ $item.copy.text }}</text>
+
+      <text class="surface-text" for="{{ plan.texts }}" tid="id" @click="activate($item.action)" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; line-height: {{ $item.tokens.lineHeight }}px; font-size: {{ $item.tokens.fontSize }}px; color: {{ $item.tokens.foreground }}; font-weight: {{ $item.tokens.fontWeight }}; text-align: {{ $item.tokens.textAlign }};">{{ $item.text }}</text>
+
+      <div class="surface-button" for="{{ plan.buttons }}" tid="id" @click="activate($item.action)" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.radius }}px; padding-left: {{ $item.tokens.paddingX }}px; padding-right: {{ $item.tokens.paddingX }}px; background-color: {{ $item.tokens.background }};">
+        <text class="surface-button-title" style="font-size: {{ $item.tokens.titleSize }}px; color: {{ $item.tokens.titleColor }}; font-weight: {{ $item.tokens.titleWeight }};">{{ $item.copy.title }}</text>
+        <text class="surface-button-subtitle" style="font-size: {{ $item.tokens.subtitleSize }}px; margin-top: {{ $item.tokens.subtitleTop }}px; color: {{ $item.tokens.subtitleColor }};">{{ $item.copy.subtitle }}</text>
+      </div>
+
+      <scroll class="surface-flow" if="{{ plan.stream }}" scroll-y="true" style="left: {{ plan.stream.left }}px; top: {{ plan.stream.top }}px; width: {{ plan.stream.width }}px; height: {{ plan.stream.height }}px;">
+        <stack class="surface-flow-content" style="width: {{ plan.stream.width }}px; height: {{ plan.flowContentHeight }}px;">
+          <div class="flow-header" for="{{ plan.flowHeaders }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px;">
+            <div class="flow-header-row" style="height: {{ $item.tokens.titleLineHeight }}px;">
+              <text class="flow-header-title" style="width: {{ $item.tokens.titleWidth }}px; height: {{ $item.tokens.titleLineHeight }}px; line-height: {{ $item.tokens.titleLineHeight }}px; font-size: {{ $item.tokens.titleSize }}px; color: {{ $item.tokens.titleColor }}; font-weight: {{ $item.tokens.titleWeight }};">{{ $item.title }}</text>
+              <text class="flow-header-trailing" style="width: {{ $item.tokens.trailingWidth }}px; height: {{ $item.tokens.titleLineHeight }}px; line-height: {{ $item.tokens.titleLineHeight }}px; font-size: {{ $item.tokens.trailingSize }}px; color: {{ $item.trailingColor }}; font-weight: {{ $item.tokens.trailingWeight }}; text-align: right;">{{ $item.trailing }}</text>
+            </div>
+            <div class="flow-header-row" style="height: {{ $item.tokens.subtitleLineHeight }}px;">
+              <text class="flow-header-subtitle" style="width: {{ $item.tokens.subtitleWidth }}px; height: {{ $item.tokens.subtitleLineHeight }}px; line-height: {{ $item.tokens.subtitleLineHeight }}px; font-size: {{ $item.tokens.subtitleSize }}px; color: {{ $item.tokens.subtitleColor }};">{{ $item.subtitle }}</text>
+              <text class="flow-header-subtitle-trailing" style="width: {{ $item.tokens.subtitleTrailingWidth }}px; height: {{ $item.tokens.subtitleLineHeight }}px; line-height: {{ $item.tokens.subtitleLineHeight }}px; font-size: {{ $item.tokens.subtitleTrailingSize }}px; color: {{ $item.subtitleTrailingColor }}; text-align: right;">{{ $item.subtitleTrailing }}</text>
+            </div>
+          </div>
+
+          <text class="flow-text" for="{{ plan.flowTexts }}" tid="id" @click="activate($item.action)" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; line-height: {{ $item.tokens.lineHeight }}px; font-size: {{ $item.tokens.fontSize }}px; color: {{ $item.tokens.foreground }}; text-align: {{ $item.tokens.textAlign }};">{{ $item.text }}</text>
+
+          <div class="flow-button" for="{{ plan.flowButtons }}" tid="id" @click="activate($item.action)" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.radius }}px; padding-left: {{ $item.tokens.paddingX }}px; padding-right: {{ $item.tokens.paddingX }}px; background-color: {{ $item.tokens.background }};">
+            <div class="flow-button-copy">
+              <text class="flow-button-title" style="font-size: {{ $item.tokens.titleSize }}px; color: {{ $item.tokens.titleColor }}; font-weight: {{ $item.tokens.titleWeight }};">{{ $item.copy.title }}</text>
+              <text class="flow-button-subtitle" style="font-size: {{ $item.tokens.subtitleSize }}px; margin-top: {{ $item.tokens.subtitleTop }}px; color: {{ $item.tokens.subtitleColor }};">{{ $item.copy.subtitle }}</text>
+            </div>
+            <text class="flow-chevron" style="width: {{ $item.tokens.chevronWidth }}px; font-size: {{ $item.tokens.chevronSize }}px; color: {{ $item.tokens.chevronColor }}; text-align: right;">{{ $item.tokens.chevronText }}</text>
+          </div>
+        </stack>
+      </scroll>
+
+      <stack class="stage-root" if="{{ plan.stage }}" style="left: {{ plan.stage.frame.left }}px; top: {{ plan.stage.frame.top }}px; width: {{ plan.stage.frame.width }}px; height: {{ plan.stage.frame.height }}px; background-color: {{ plan.stage.background }};">
+        <div class="stage-analog-dial" for="{{ plan.stage.analogDials }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.radius }}px; border-width: {{ $item.tokens.borderWidth }}px; border-color: {{ $item.tokens.borderColor }}; background-color: {{ $item.tokens.background }};"></div>
+        <div class="stage-analog-tick" for="{{ plan.stage.analogTicks }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; transform-origin: {{ $item.originX }}px {{ $item.originY }}px; transform: {{ $item.transform }}; background-color: {{ $item.color }};"></div>
+        <div class="stage-panel" for="{{ plan.stage.panels }}" tid="id" @click="activate($item.action)" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.radius }}px; border-width: {{ $item.tokens.borderWidth }}px; border-color: {{ $item.tokens.borderColor }}; background-color: {{ $item.tokens.background }};"></div>
+        <div class="stage-progress" for="{{ plan.stage.progresses }}" tid="id" @click="activate($item.action)" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.radius }}px; background-color: {{ $item.tokens.trackColor }};">
+          <div class="stage-progress-fill" style="width: {{ $item.fillWidth }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.radius }}px; background-color: {{ $item.tokens.fillColor }};"></div>
+        </div>
+        <div class="stage-metric" for="{{ plan.stage.metrics }}" tid="id" @click="activate($item.action)" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.tokens.radius }}px; border-width: {{ $item.tokens.borderWidth }}px; border-color: {{ $item.tokens.borderColor }}; padding: {{ $item.tokens.padding }}px; background-color: {{ $item.tokens.background }};">
+          <text class="stage-metric-label" style="width: 100%; height: {{ $item.tokens.labelHeight }}px; line-height: {{ $item.tokens.labelHeight }}px; font-size: {{ $item.tokens.labelSize }}px; color: {{ $item.tokens.labelColor }}; font-weight: {{ $item.tokens.labelWeight }}; text-align: {{ $item.tokens.textAlign }};">{{ $item.label }}</text>
+          <text class="stage-metric-value" style="width: 100%; height: {{ $item.tokens.valueHeight }}px; line-height: {{ $item.tokens.valueHeight }}px; margin-top: {{ $item.tokens.valueTop }}px; font-size: {{ $item.tokens.valueSize }}px; color: {{ $item.tokens.valueColor }}; font-weight: {{ $item.tokens.valueWeight }}; text-align: {{ $item.tokens.textAlign }};">{{ $item.value }}</text>
+          <text class="stage-metric-detail" if="{{ $item.detail }}" style="width: 100%; height: {{ $item.tokens.detailHeight }}px; line-height: {{ $item.tokens.detailHeight }}px; margin-top: {{ $item.tokens.detailTop }}px; font-size: {{ $item.tokens.detailSize }}px; color: {{ $item.tokens.detailColor }}; text-align: {{ $item.tokens.textAlign }};">{{ $item.detail }}</text>
+        </div>
+        <text class="stage-text" for="{{ plan.stage.texts }}" tid="id" @click="activate($item.action)" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; line-height: {{ $item.tokens.lineHeight }}px; font-size: {{ $item.tokens.fontSize }}px; color: {{ $item.tokens.color }}; font-weight: {{ $item.tokens.fontWeight }}; text-align: {{ $item.tokens.textAlign }}; letter-spacing: {{ $item.tokens.letterSpacing }}px;">{{ $item.text }}</text>
+        <div class="stage-analog-hand" for="{{ plan.stage.analogHands }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.radius }}px; transform-origin: {{ $item.originX }}px {{ $item.originY }}px; transform: {{ $item.transform }}; background-color: {{ $item.color }};"></div>
+        <div class="stage-analog-pin" for="{{ plan.stage.analogPins }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.radius }}px; background-color: {{ $item.color }};"></div>
+      </stack>
+    </stack>
+  </stack>
+</template>
+
+<script>
+export default {
+  props: ['plan'],
+  activate(action, payload) {
+    if (!action) return
+    var event = { action: action }
+    var source = payload || {}
+    for (var key in source) if (key !== 'action') event[key] = source[key]
+    this.$emit('surfaceaction', event)
+  },
+  onSwipe(event) {
+    if (!this.plan || !this.plan.gestures) return
+    var direction = event && (event.direction || (event.detail && event.detail.direction))
+    if (direction && this.plan.gestures[direction]) this.activate(this.plan.gestures[direction])
+  },
+  onLongPress() {
+    if (this.plan && this.plan.gestures && this.plan.gestures.longpress) this.activate(this.plan.gestures.longpress)
+  }
+}
+</script>
+
+<style>
+.surface-host, .surface-scene, .stage-root, .stage-analog-dial, .stage-analog-tick, .stage-panel, .stage-progress, .stage-metric, .stage-text, .stage-analog-hand, .stage-analog-pin, .surface-header, .surface-text, .surface-button, .surface-flow, .surface-flow-content, .flow-header, .flow-text, .flow-button { position: absolute; }
+.surface-host, .surface-scene { overflow: hidden; }
+.surface-flow { overflow: hidden; }
+.flow-header, .flow-button { flex-direction: column; }
+.flow-header-row { width: 100%; flex-direction: row; justify-content: space-between; }
+.flow-button { flex-direction: row; align-items: center; justify-content: space-between; }
+.flow-button-copy { flex: 1; flex-direction: column; }
+.stage-progress { overflow: hidden; flex-direction: row; align-items: center; }
+.stage-metric { flex-direction: column; }
+</style>

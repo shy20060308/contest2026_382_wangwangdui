@@ -10,7 +10,7 @@
       "type": "header",
       "copy": { "title": "7日趋势", "subtitle": "活动与健康摘要" },
       "bind": { "trailing": "goalPercent" },
-      "props": { "trailingFormat": "percent", "trailingNullText": "0%" },
+      "props": { "trailingFormat": "percent", "trailingNullText": "--" },
       "tokens": {
         "flow": true,
         "width": 156,
@@ -39,7 +39,7 @@
       "props": {
         "items": [
           { "id": "today", "bind": { "value": "todaySteps" }, "props": { "valueFormat": "number" }, "copy": { "label": "今日步数" }, "tokens": { "accent": "#FFD60A" } },
-          { "id": "average", "bind": { "value": "avgSteps" }, "props": { "valueFormat": "number" }, "copy": { "label": "日均步数" }, "tokens": { "accent": "#64D2FF" } }
+          { "id": "average", "bind": { "value": "avgSteps" }, "props": { "valueFormat": "number" }, "copy": { "label": "有记录均值" }, "tokens": { "accent": "#64D2FF" } }
         ]
       },
       "tokens": {
@@ -67,9 +67,15 @@
     {
       "id": "trend",
       "type": "chart-card",
-      "copy": { "title": "步数趋势", "caption": "近7日", "todayCompactLabel": "今", "todayLabel": "今天" },
+      "copy": { "title": "步数趋势", "caption": "近7日记录" },
       "bind": { "items": "records" },
-      "props": { "valueField": "steps", "labelField": "date", "valueFormat": "number", "labelFormat": "weekday-short" },
+      "props": {
+        "valueField": "steps",
+        "labelField": "date",
+        "valueFormat": "number",
+        "labelFormat": "weekday-index",
+        "labelMap": { "0": "日", "1": "一", "2": "二", "3": "三", "4": "四", "5": "五", "6": "六" }
+      },
       "tokens": {
         "flow": true,
         "marginTop": 6,
@@ -97,8 +103,8 @@
         "labelLineHeight": 9,
         "labelColor": "#8E8E93",
         "labelWeight": "normal",
-        "activeWeight": "bold",
-        "activeColor": "#FFD60A",
+        "activeWeight": "normal",
+        "activeColor": "#4C7CF3",
         "inactiveColor": "#4C7CF3",
         "valueColor": "#FFFFFF",
         "trackBackground": "#24262C"
@@ -110,8 +116,8 @@
       "props": {
         "items": [
           { "id": "best", "bind": { "value": "bestSteps", "detail": "bestDate" }, "props": { "valueFormat": "number", "detailFormat": "date-short" }, "copy": { "label": "最佳" }, "tokens": { "accent": "#FFFFFF" } },
-          { "id": "heart", "bind": { "value": "avgHeartRate" }, "props": { "valueFormat": "suffix: bpm", "valueNullText": "--" }, "copy": { "label": "平均心率", "detail": "7日" }, "tokens": { "accent": "#FF375F" } },
-          { "id": "goal", "bind": { "value": "goalPercent" }, "props": { "valueFormat": "percent", "valueNullText": "0%" }, "copy": { "label": "今日达成", "detail": "目标" }, "tokens": { "accent": "#FFD60A" } }
+          { "id": "heart", "bind": { "value": "avgHeartRate" }, "props": { "valueFormat": "suffix: bpm", "valueNullText": "--" }, "copy": { "label": "平均心率", "detail": "记录" }, "tokens": { "accent": "#FF375F" } },
+          { "id": "goal", "bind": { "value": "goalPercent" }, "props": { "valueFormat": "percent", "valueNullText": "--" }, "copy": { "label": "今日达成", "detail": "目标" }, "tokens": { "accent": "#FFD60A" } }
         ]
       },
       "tokens": {

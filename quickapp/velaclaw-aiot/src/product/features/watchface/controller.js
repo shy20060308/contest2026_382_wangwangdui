@@ -1,5 +1,4 @@
 import watchfaceStore from '../../../domain/watchface/store'
-import faceCatalog from '../../../domain/watchface/catalog'
 
 function requireFaceIds(faceIds) {
   if (!Array.isArray(faceIds) || !faceIds.length) throw new Error('Watchface controller requires Surface faceIds')
@@ -17,9 +16,9 @@ export function createWatchfaceController(onChange) {
 
   function snapshot() {
     if (!ids.length || !selectedId) throw new Error('Watchface controller must be configured before use')
-    var faces = faceCatalog.list(ids)
-    var selectedIndex = faceCatalog.indexOf(ids, selectedId)
-    return { selectedId: selectedId, selectedIndex: selectedIndex, faces: faces }
+    var selectedIndex = ids.indexOf(selectedId)
+    if (selectedIndex < 0) throw new Error('Selected watchface is not allowed by current Surface configuration: ' + selectedId)
+    return { selectedId: selectedId, selectedIndex: selectedIndex }
   }
 
   function emit() {

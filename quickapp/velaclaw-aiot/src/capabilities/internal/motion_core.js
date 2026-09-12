@@ -1,0 +1,126 @@
+function createMotion(sensor) {
+  var consumers = []
+  var active = false
+  var activeInterval = ''
+  var generation = 0
+
+  function requireInterval(interval) {
+    if (interval !== 'normal' && interval !== 'ui' && interval !== 'game') throw new Error('Unknown accelerometer interval: ' + interval)
+    return interval
+  }
+
+  function intervalRank(interval) {
+    if (interval === 'game') return 3
+    if (interval === 'ui') return 2
+    return 1
+  }
+
+  function desiredInterval() {
+    var selected = 'normal'
+    for (var i = 0; i < consumers.length; i++) {
+      if (intervalRank(consumers[i].interval) > intervalRank(selected)) selected = consumers[i].interval
+    }
+    return selected
+  }
+
+  function emitError(code) {
+    var current = consumers.slice()
+    for (var i = 0; i < current.length; i++) if (typeof current[i].fail === 'function') current[i].fail(code)
+  }
+
+  function handle(data, owner) {
+    if (owner !== generation || !active) return
+    if (!data || typeof data.x !== 'number' || !isFinite(data.x) || typeof data.y !== 'number' || !isFinite(data.y) || typeof data.z !== 'number' || !isFinite(data.z)) return
+    var sample = { x: data.x, y: data.y, z: data.z, timestamp: Date.now() }
+    var current = consumers.slice()
+    for (var i = 0; i < current.length; i++) current[i].listener({ x: sample.x, y: sample.y, z: sample.z, timestamp: sample.timestamp })
+  }
+
+  function stopNative() {
+    generation++
+    var shouldStop = active
+    active = false
+    activeInterval = ''
+    if (!shouldStop) return
+    try {
+      if (sensor && sensor.unsubscribeAccelerometer) sensor.unsubscribeAccelerometer()
+    } catch (error) {}
+  }
+
+  function startNative(interval) {
+    if (consumers.length === 0 || !sensor || !sensor.subscribeAccelerometer) return false
+    var owner = ++generation
+    try {
+      active = true
+      activeInterval = interval
+      sensor.subscribeAccelerometer({
+        interval: interval,
+        callback: function (data) { handle(data, owner) },
+        fail: function (data, code) {
+          if (owner !== generation || !active) return
+          active = false
+          activeInterval = ''
+          generation++
+          emitError(code === undefined ? null : code)
+        }
+      })
+      return true
+    } catch (error) {
+      if (owner !== generation) return false
+      active = false
+      activeInterval = ''
+      generation++
+      return false
+    }
+  }
+
+  function reconcile() {
+    if (consumers.length === 0) {
+      stopNative()
+      return false
+    }
+    var interval = desiredInterval()
+    if (active && activeInterval === interval) return true
+    if (active) stopNative()
+    return startNative(interval)
+  }
+
+  function removeConsumer(listener) {
+    var next = []
+    for (var i = 0; i < consumers.length; i++) if (consumers[i].listener !== listener) next.push(consumers[i])
+    consumers = next
+  }
+
+  return {
+    subscribe: function (listener, options) {
+      if (typeof listener !== 'function') throw new Error('Motion subscribe requires a listener')
+      var interval = requireInterval(options && options.interval)
+      var fail = options && options.fail
+      for (var i = 0; i < consumers.length; i++) {
+        if (consumers[i].listener === listener) {
+          var previousInterval = consumers[i].interval
+          var previousFail = consumers[i].fail
+          consumers[i].interval = interval
+          consumers[i].fail = fail
+          if (reconcile()) return true
+          consumers[i].interval = previousInterval
+          consumers[i].fail = previousFail
+          reconcile()
+          return false
+        }
+      }
+      consumers.push({ listener: listener, interval: interval, fail: fail })
+      if (reconcile()) return true
+      removeConsumer(listener)
+      reconcile()
+      return false
+    },
+    unsubscribe: function (listener) {
+      removeConsumer(listener)
+      reconcile()
+    },
+    isAvailable: function () { return !!(sensor && sensor.subscribeAccelerometer) }
+  }
+}
+
+module.exports = { createMotion: createMotion }

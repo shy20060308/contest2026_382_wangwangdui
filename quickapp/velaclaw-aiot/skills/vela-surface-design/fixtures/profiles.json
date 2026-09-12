@@ -1,0 +1,20 @@
+{
+  "circle": {
+    "formFactor": "circle",
+    "screenWidth": 466,
+    "screenHeight": 466,
+    "safeInsets": { "left": 0, "top": 10, "right": 0, "bottom": 10, "gestureBar": 0 }
+  },
+  "pill": {
+    "formFactor": "pill",
+    "screenWidth": 212,
+    "screenHeight": 520,
+    "safeInsets": { "left": 0, "top": 52, "right": 0, "bottom": 52, "gestureBar": 36 }
+  },
+  "rect": {
+    "formFactor": "rect",
+    "screenWidth": 390,
+    "screenHeight": 450,
+    "safeInsets": { "left": 0, "top": 2, "right": 0, "bottom": 2, "gestureBar": 0 }
+  }
+}

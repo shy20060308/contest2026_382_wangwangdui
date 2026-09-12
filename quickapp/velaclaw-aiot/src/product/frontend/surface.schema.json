@@ -35,11 +35,7 @@
       "properties": {
         "id": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9-]*$" },
         "type": {
-          "enum": [
-            "header", "text", "metric-card", "metric-pair", "metric-grid", "metric-list", "chart-card",
-            "progress-card", "list", "grid", "calendar", "button", "slider", "status", "dialog",
-            "image", "watchface-preview", "honeycomb", "spacer"
-          ]
+          "enum": ["header", "text", "button", "metric-list", "metric-grid", "chart-card", "list"]
         },
         "copy": { "type": "object", "additionalProperties": { "type": "string" } },
         "bind": { "type": "object", "additionalProperties": { "type": "string" } },

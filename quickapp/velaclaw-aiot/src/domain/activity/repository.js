@@ -1,14 +1,7 @@
 import storage from '../../capabilities/storage'
+var dayWindow = require('../calendar/day_window')
 
-var ACTIVITY_KEY = 'activity_today_v3'
-
-function pad2(value) {
-  return value < 10 ? '0' + value : '' + value
-}
-
-function dateKey(date) {
-  return date.getFullYear() + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate())
-}
+var ACTIVITY_KEY = 'activity_today_v4'
 
 function clone(value) {
   return value ? JSON.parse(JSON.stringify(value)) : value
@@ -21,14 +14,15 @@ function requireInteger(record, key, minimum) {
 }
 
 function requireDate(value) {
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new Error('Invalid Activity record date')
+  if (!dayWindow.parseDateKey(value)) throw new Error('Invalid Activity record date')
   return value
 }
 
-function normalize(record) {
+function normalize(record, expectedDate) {
   if (record === null || record === undefined) return null
   if (typeof record !== 'object' || Array.isArray(record)) throw new Error('Invalid Activity record')
-  if (requireDate(record.date) !== dateKey(new Date())) return null
+  var targetDate = expectedDate || dayWindow.dateKey(new Date())
+  if (requireDate(record.date) !== targetDate) return null
   return {
     steps: requireInteger(record, 'steps', 0),
     stepsGoal: requireInteger(record, 'stepsGoal', 1),
@@ -39,9 +33,11 @@ function normalize(record) {
   }
 }
 
-function payload(snapshot) {
+function payload(snapshot, date) {
+  var targetDate = date || dayWindow.dateKey(new Date())
+  if (!dayWindow.parseDateKey(targetDate)) throw new Error('Invalid Activity persistence date')
   return {
-    date: dateKey(new Date()),
+    date: targetDate,
     steps: snapshot.steps,
     stepsGoal: snapshot.stepsGoal,
     calories: snapshot.calories,
@@ -51,16 +47,41 @@ function payload(snapshot) {
   }
 }
 
+function corruptResult(error) {
+  return { ok: false, status: 'corrupt', error: error }
+}
+
+function loadResult(callback, expectedDate) {
+  storage.getJSONResult(ACTIVITY_KEY, function (record, result) {
+    if (!result || !result.ok) {
+      if (callback) callback(null, result || corruptResult(new Error('Activity persistence read failed')))
+      return
+    }
+    try {
+      if (callback) callback(normalize(record, expectedDate), result)
+    } catch (error) {
+      if (callback) callback(null, corruptResult(error))
+    }
+  }, null)
+}
+
 export default {
-  load: function (callback) {
-    storage.getJSON(ACTIVITY_KEY, function (record) {
-      if (callback) callback(normalize(record))
-    }, null)
+  loadResult: loadResult,
+
+  load: function (callback, expectedDate) {
+    loadResult(function (record, result) {
+      if (!result || !result.ok) throw result && result.error ? result.error : new Error('Activity persistence read failed')
+      if (callback) callback(record)
+    }, expectedDate)
   },
 
-  save: function (snapshot, callback) {
-    storage.set(ACTIVITY_KEY, payload(snapshot), function (result) {
+  save: function (snapshot, callback, date) {
+    storage.set(ACTIVITY_KEY, payload(snapshot, date), function (result) {
       if (callback) callback(clone(snapshot), result)
     })
+  },
+
+  quarantine: function (callback) {
+    storage.quarantine(ACTIVITY_KEY, callback)
   }
 }

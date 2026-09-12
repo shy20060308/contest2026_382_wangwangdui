@@ -4,7 +4,6 @@ var calendar = require('../../../domain/calendar')
 
 function copy(state) {
   return {
-    currentYear: state.currentYear,
     currentMonth: state.currentMonth,
     currentDay: state.currentDay,
     currentWeekday: state.currentWeekday,
@@ -23,7 +22,6 @@ function copy(state) {
 export function createTodayController(onChange) {
   var now = new Date()
   var state = {
-    currentYear: now.getFullYear(),
     currentMonth: now.getMonth(),
     currentDay: now.getDate(),
     currentWeekday: now.getDay(),
@@ -52,7 +50,6 @@ export function createTodayController(onChange) {
 
   function refreshDate() {
     var date = new Date()
-    state.currentYear = date.getFullYear()
     state.currentMonth = date.getMonth()
     state.currentDay = date.getDate()
     state.currentWeekday = date.getDay()

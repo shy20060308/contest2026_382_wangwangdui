@@ -44,10 +44,12 @@ assert.ok(pageRuntime.includes("require('../product/design/scene')"), 'Page Runt
 assert.ok(!pageRuntime.includes('../v2/'), 'Page Runtime must not restore a retired namespace')
 
 const deviceProfile = read('src/runtime/device_profile.js')
-assert.ok(!deviceProfile.includes('isBetaPillViewport'), 'Device Profile must not restore beta-emulator compatibility state')
-assert.ok(!deviceProfile.includes('width = 192; height = 490'), 'Device Profile must not fabricate Band dimensions')
-assert.ok(!deviceProfile.includes('logicalHeight'), 'Device Profile must not duplicate Scene-owned projection')
-assert.ok(deviceProfile.includes('var ratio = width / height'), 'Device Profile must normalize missing screen shape from physical geometry')
+const deviceProfileCore = read('src/runtime/device_profile_core.js')
+assert.ok(!deviceProfile.includes('isBetaPillViewport') && !deviceProfileCore.includes('isBetaPillViewport'), 'Device Profile must not restore beta-emulator compatibility state')
+assert.ok(!deviceProfile.includes('width = 192; height = 490') && !deviceProfileCore.includes('width = 192; height = 490'), 'Device Profile must not fabricate Band dimensions')
+assert.ok(!deviceProfile.includes('logicalHeight') && !deviceProfileCore.includes('logicalHeight'), 'Device Profile must not duplicate Scene-owned projection')
+assert.ok(deviceProfile.includes("require('./device_profile_core')"), 'Device Profile wrapper must delegate shape normalization to the single testable core')
+assert.ok(deviceProfileCore.includes('var ratio = width / height'), 'Device Profile core must normalize missing screen shape from physical geometry')
 
 const sceneRuntime = read('src/product/design/scene.js')
 assert.ok(!sceneRuntime.includes('shapeOf('), 'Scene must trust validated Device Profile shape')

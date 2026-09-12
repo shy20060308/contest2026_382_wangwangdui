@@ -1,0 +1,14 @@
+<template>
+  <stack class="preview-root" if="{{ model }}" style="width: {{ model.width }}px; height: {{ model.height }}px; background-color: {{ model.background }};">
+    <div class="preview-box" for="{{ model.boxes }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; border-radius: {{ $item.radius }}px; border-width: {{ $item.borderWidth }}px; border-color: {{ $item.borderColor }}; background-color: {{ $item.background }}; transform-origin: {{ $item.originX }}px {{ $item.originY }}px; transform: {{ $item.transform }};"></div>
+    <text class="preview-text" for="{{ model.texts }}" tid="id" style="left: {{ $item.frame.left }}px; top: {{ $item.frame.top }}px; width: {{ $item.frame.width }}px; height: {{ $item.frame.height }}px; line-height: {{ $item.lineHeight }}px; font-size: {{ $item.fontSize }}px; color: {{ $item.color }}; font-weight: {{ $item.fontWeight }}; text-align: {{ $item.textAlign }}; letter-spacing: {{ $item.letterSpacing }}px;">{{ $item.text }}</text>
+  </stack>
+</template>
+
+<script>
+export default { props: ['model'] }
+</script>
+
+<style>
+.preview-root, .preview-box, .preview-text { position: absolute; }
+</style>

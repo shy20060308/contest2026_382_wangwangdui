@@ -1,5 +1,5 @@
-<import name="surfacehost" src="../../components/surface_host.ux"></import>
-<template><surfacehost if="{{ surfaceReady }}" plan="{{ surfacePlan }}" @surfaceaction="onSurfaceAction"></surfacehost></template>
+<import name="surfacecollection" src="../../components/surface_collection.ux"></import>
+<template><surfacecollection if="{{ surfaceReady && surfacePlan && surfacePlan.collection }}" model="{{ surfacePlan.collection }}" @surfaceaction="onSurfaceAction"></surfacecollection></template>
 <script>
 import surfacePage from '../../runtime/surface_page'
 var surface = require('../../product/frontend/surfaces/applist.json')

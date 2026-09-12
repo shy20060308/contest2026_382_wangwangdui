@@ -78,7 +78,7 @@ const history = resolveSurface(historySurface, profiles.pill, historyState)
 assert.deepStrictEqual(history.modules.map(function (module) { return module.id }), ['head', 'summary', 'trend', 'insights'])
 assert.strictEqual(history.flowHeaders[0].title, '7日趋势')
 assert.strictEqual(history.flowHeaders[0].trailing, '86%')
-assert.deepStrictEqual(history.flowMetricItems.map(function (item) { return item.label }), ['今日步数', '日均步数', '最佳', '平均心率', '今日达成'])
+assert.deepStrictEqual(history.flowMetricItems.map(function (item) { return item.label }), ['今日步数', '有记录均值', '最佳', '平均心率', '今日达成'])
 assert.strictEqual(history.flowChartCards[0].mode, 'rows', 'Pill chart mode must come only from JSON variant')
 assert.ok(history.flowChartCards[0].frame.height < historySurface.variants.pill.modules.trend.maxHeight, 'row chart must derive compact height from data count and JSON row geometry')
 

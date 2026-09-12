@@ -1,9 +1,12 @@
 import motion from '../../../capabilities/motion'
 import haptics from '../../../runtime/haptics'
 var metrics = require('../../../domain/motion/metrics')
+var performanceMetrics = require('../../../runtime/performance_metrics')
 
 var HAPTIC_OWNER = 'motion-diagnostics'
 var MEASURE_DURATION_MS = 3000
+var UI_SAMPLE_INTERVAL_MS = 100
+var MEASURE_RENDER_INTERVAL_MS = 250
 
 export function createMotionController(onChange) {
   var state = metrics.createState()
@@ -17,6 +20,8 @@ export function createMotionController(onChange) {
   var measureIntensityKey = 'stable'
   var remainingMs = MEASURE_DURATION_MS
   var timer = null
+  var sampleEmitTimer = null
+  var lastSampleEmitAt = 0
 
   function snapshot() {
     return {
@@ -48,6 +53,30 @@ export function createMotionController(onChange) {
     timer = null
   }
 
+  function stopSampleEmitTimer() {
+    if (sampleEmitTimer !== null) clearTimeout(sampleEmitTimer)
+    sampleEmitTimer = null
+  }
+
+  function emitSampleUi() {
+    sampleEmitTimer = null
+    lastSampleEmitAt = Date.now()
+    performanceMetrics.recordMotionUiEmit()
+    emit()
+  }
+
+  function scheduleSampleUi() {
+    var now = Date.now()
+    var remaining = UI_SAMPLE_INTERVAL_MS - (now - lastSampleEmitAt)
+    if (remaining <= 0) {
+      stopSampleEmitTimer()
+      emitSampleUi()
+      return
+    }
+    if (sampleEmitTimer !== null) return
+    sampleEmitTimer = setTimeout(emitSampleUi, remaining)
+  }
+
   function resetMeasureState() {
     measureActive = false
     measureStartSamples = state.sampleCount
@@ -65,6 +94,7 @@ export function createMotionController(onChange) {
   }
 
   function onSensorFailure() {
+    stopSampleEmitTimer()
     sensorActive = false
     sensorStatus = 'unavailable'
     if (measureActive) {
@@ -79,10 +109,11 @@ export function createMotionController(onChange) {
   }
 
   function onSample(sample) {
+    performanceMetrics.recordMotionSample()
     state = metrics.applySample(state, sample)
     sensorStatus = 'streaming'
     if (measureActive && state.score > measurePeak) measurePeak = state.score
-    emit()
+    scheduleSampleUi()
   }
 
   function startSensor(emitChange) {
@@ -95,6 +126,7 @@ export function createMotionController(onChange) {
 
   function stopSensor() {
     if (measureActive) cancelMeasure()
+    stopSampleEmitTimer()
     motion.unsubscribe(onSample)
     sensorActive = false
     sensorStatus = 'stopped'
@@ -118,6 +150,7 @@ export function createMotionController(onChange) {
     refresh: emit,
     toggleSensor: function () { if (sensorActive) stopSensor(); else startSensor(true) },
     reset: function () {
+      stopSampleEmitTimer()
       cancelMeasure()
       state = metrics.createState()
       measureStartSamples = 0
@@ -140,10 +173,11 @@ export function createMotionController(onChange) {
         remainingMs = Math.max(0, measureEndsAt - Date.now())
         emit()
         if (remainingMs <= 0) finishMeasure()
-      }, 100)
+      }, MEASURE_RENDER_INTERVAL_MS)
       return emit()
     },
     stop: function () {
+      stopSampleEmitTimer()
       cancelMeasure()
       motion.unsubscribe(onSample)
       sensorActive = false

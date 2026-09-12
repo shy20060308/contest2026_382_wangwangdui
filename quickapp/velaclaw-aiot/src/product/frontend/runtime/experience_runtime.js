@@ -49,7 +49,45 @@ function resolveFrame(scene, safe, spec) {
   })
 }
 
-function collectionItem(item, index, selectedId, idleBorderColor) {
+function previewForItem(item, formFactor, selected, tokens) {
+  var source = item.previews && item.previews[formFactor] ? item.previews[formFactor] : null
+  if (!source) return null
+  var preview = {}
+  for (var key in source) preview[key] = source[key]
+  preview.boxes = Array.isArray(source.boxes) ? source.boxes.slice() : []
+  preview.texts = Array.isArray(source.texts) ? source.texts.slice() : []
+  if (!selected) return preview
+
+  var width = Number(tokens.selectedLineWidth)
+  var height = Number(tokens.selectedLineHeight)
+  if (!isFinite(width) || !isFinite(height) || width <= 0 || height <= 0) return preview
+  var left = Number(tokens.selectedLineLeft)
+  var bottom = Number(tokens.selectedLineBottom)
+  var previewWidth = Number(preview.width)
+  var previewHeight = Number(preview.height)
+  if (!isFinite(left)) left = isFinite(previewWidth) ? (previewWidth - width) / 2 : 0
+  if (!isFinite(bottom)) bottom = 0
+  var top = isFinite(previewHeight) ? previewHeight - bottom - height : 0
+  preview.boxes.push({
+    id: 'selection-indicator',
+    frame: {
+      left: Math.round(left),
+      top: Math.max(0, Math.round(top)),
+      width: Math.round(width),
+      height: Math.round(height)
+    },
+    radius: Math.max(0, Number(tokens.selectedLineRadius) || 0),
+    borderWidth: 0,
+    borderColor: '',
+    background: item.accent || '',
+    originX: 0,
+    originY: 0,
+    transform: ''
+  })
+  return preview
+}
+
+function collectionItem(item, index, selectedId, idleBorderColor, formFactor, tokens) {
   var id = item.id || String(index)
   var selected = selectedId !== undefined && selectedId !== null && String(selectedId) === String(id)
   return {
@@ -62,19 +100,20 @@ function collectionItem(item, index, selectedId, idleBorderColor) {
     background: item.background || '',
     accent: item.accent || '',
     action: item.action || '',
+    preview: previewForItem(item, formFactor, selected, tokens || {}),
     selected: selected,
     borderColor: selected ? (item.accent || idleBorderColor) : idleBorderColor
   }
 }
 
-function collection(spec, scene, safe, state) {
+function collection(spec, scene, safe, state, formFactor) {
   if (!spec || !visible(spec.visibleWhen, state || {})) return null
   var source = Array.isArray(spec.items) ? spec.items : []
   var tokens = adapter.merge({}, spec.tokens || {})
   var selectedId = valueAt(state || {}, spec.bind && spec.bind.selectedId)
   var idleBorderColor = tokens.idleBorderColor || ''
   var allItems = source.map(function (item, index) {
-    return collectionItem(item || {}, index, selectedId, idleBorderColor)
+    return collectionItem(item || {}, index, selectedId, idleBorderColor, formFactor, tokens)
   })
   var items = allItems
   if (Array.isArray(spec.itemIds) && spec.itemIds.length) {
@@ -140,6 +179,12 @@ function numberText(value) {
   if (value === undefined || value === null || value === '') return '--'
   return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
+function mappedText(map, key, label) {
+  if (!map || map[key] === undefined) throw new Error('V3 stage has no JSON value mapping for ' + label + ': ' + key)
+  var value = map[key]
+  if (value && typeof value === 'object') return String(value.text || '')
+  return String(value)
+}
 function stageFormat(value, format, nullText) {
   if (value === undefined || value === null || value === '') return nullText === undefined ? '--' : String(nullText)
   if (!format || format === 'raw') return String(value)
@@ -153,10 +198,7 @@ function stageFormat(value, format, nullText) {
   if (format === 'minute') return pad2(new Date(value).getMinutes())
   if (format === 'day') return pad2(new Date(value).getDate())
   if (format === 'month') return pad2(new Date(value).getMonth() + 1)
-  if (format === 'weekday') {
-    var labels = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-    return labels[new Date(value).getDay()]
-  }
+  if (format === 'weekday-index') return String(new Date(value).getDay())
   if (String(format).indexOf('suffix:') === 0) return numberText(value) + String(format).slice(7)
   throw new Error('Unknown V3 stage format: ' + format)
 }
@@ -181,12 +223,16 @@ function localFrame(spec) {
 function elementAction(element) {
   return element && element.actions && element.actions.tap ? element.actions.tap : ''
 }
-function resolveStageText(element, state) {
+function resolveStageText(element, state, valueMaps) {
   var raw = element.bind && element.bind.value ? valueAt(state, element.bind.value) : undefined
   var props = element.props || {}
   var value = raw === undefined && element.copy && element.copy.text !== undefined
     ? String(element.copy.text)
     : stageFormat(raw, props.valueFormat || props.format, props.valueNullText)
+  if (props.valueMap) {
+    var map = typeof props.valueMap === 'string' ? valueMaps[props.valueMap] : props.valueMap
+    value = mappedText(map, value, element.id + '.value')
+  }
   var text = element.copy && element.copy.template ? fill(element.copy.template, { value: value }) : value
   return { id: element.id, frame: localFrame(element.frame), text: text, action: elementAction(element), tokens: adapter.merge({}, element.tokens || {}) }
 }
@@ -297,13 +343,14 @@ function resolveStage(spec, scene, safe, state) {
     panels: [], texts: [], metrics: [], progresses: [], analogDials: [], analogTicks: [], analogHands: [], analogPins: []
   }
   var elements = Array.isArray(definition.elements) ? definition.elements : []
+  var valueMaps = spec.valueMaps || {}
   for (var i = 0; i < elements.length; i++) {
     var element = elements[i]
     if (!element || !stageVisible(element.visibleWhen, state || {})) continue
     if (element.type === 'panel') {
       model.panels.push({ id: element.id, frame: localFrame(element.frame), action: elementAction(element), tokens: adapter.merge({}, element.tokens || {}) })
     } else if (element.type === 'text') {
-      model.texts.push(resolveStageText(element, state || {}))
+      model.texts.push(resolveStageText(element, state || {}, valueMaps))
     } else if (element.type === 'metric') {
       model.metrics.push(resolveStageMetric(element, state || {}))
     } else if (element.type === 'progress') {
@@ -320,7 +367,7 @@ function resolveStage(spec, scene, safe, state) {
 function decorate(plan, surface, profile, scene, safe, state) {
   var result = plan || {}
   var selected = select(surface, profile)
-  result.collection = collection(selected.collection, scene, safe, state)
+  result.collection = collection(selected.collection, scene, safe, state, profile.formFactor)
   result.sliders = sliders(selected.sliders, scene, safe, state)
   result.stage = resolveStage(selected.stage, scene, safe, state)
   result.gestures = adapter.merge({}, selected.gestures || {})

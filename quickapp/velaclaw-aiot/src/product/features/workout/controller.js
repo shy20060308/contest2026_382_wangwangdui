@@ -2,10 +2,9 @@ import location from '../../../capabilities/location'
 import heartRate from '../../../capabilities/heart_rate'
 import workoutState from '../../../domain/workout/state_machine'
 import workoutRepository from '../../../domain/workout/repository'
-import activityStore from '../../../domain/activity/store'
-import historyRepository from '../../../domain/history/repository'
 var distance = require('../../../domain/workout/distance')
 var healthMetrics = require('../../../domain/health/metrics')
+var finalizedPolicy = require('../../../domain/workout/finalized_commit_policy')
 
 function emitValue(onChange, session) {
   if (typeof onChange === 'function') onChange(session)
@@ -15,6 +14,7 @@ function emitValue(onChange, session) {
 export function createWorkoutController(onChange) {
   var timer = null
   var locationTimeout = null
+  var locationGeneration = 0
   var lastPoint = null
   var gpsDistance = 0
   var persistTicks = 0
@@ -25,8 +25,11 @@ export function createWorkoutController(onChange) {
   function emit(session) { return emitValue(onChange, session) }
   function persist() { var active = workoutState.getActive(); if (active) workoutRepository.saveActive(active) }
   function isCurrent(generation) { return generation === lifecycleGeneration }
+  function persisted(result) { return !!(result && result.persisted) }
+  function isFinalized(session) { return finalizedPolicy.isFinalized(session) }
 
   function stopLocation() {
+    locationGeneration++
     clearTimeout(locationTimeout)
     locationTimeout = null
     location.unsubscribe(onLocation)
@@ -49,13 +52,14 @@ export function createWorkoutController(onChange) {
     var active = workoutState.getActive()
     if (!active || active.status !== 'running') return
     gpsDistance = active.gpsDistanceMeters
+    var generation = locationGeneration
     var subscribed = location.subscribe(onLocation)
     if (!subscribed) {
       emit(workoutState.updateGps({ status: 'unavailable' }))
       return
     }
     locationTimeout = setTimeout(function () {
-      if (!runtimeActive) return
+      if (generation !== locationGeneration || !runtimeActive) return
       var current = workoutState.getActive()
       if (current && current.status === 'running' && !lastPoint) emit(workoutState.updateGps({ status: 'unavailable' }))
     }, 6000)
@@ -101,8 +105,9 @@ export function createWorkoutController(onChange) {
 
   function startRuntime() {
     if (runtimeActive) return
-    runtimeActive = true
     var active = workoutState.getActive()
+    if (isFinalized(active)) return
+    runtimeActive = true
     if (active && active.status === 'running') {
       ensureTimer()
       startLocation()
@@ -118,6 +123,40 @@ export function createWorkoutController(onChange) {
     stopLocation()
     stopHeartRate()
     if (wasActive && shouldPersist !== false) persist()
+  }
+
+  function commitFinalized(record, callback) {
+    workoutRepository.saveRecord(record, function (savedRecord, saveResult) {
+      if (!persisted(saveResult)) return
+      workoutRepository.clearActive(function (clearResult) {
+        if (!persisted(clearResult)) return
+        workoutState.complete(record.id)
+        if (callback) callback(savedRecord)
+      })
+    })
+  }
+
+  function persistFinalizedIntent(finalized, callback) {
+    workoutRepository.saveActive(finalized, function (finalizeResult) {
+      if (!persisted(finalizeResult)) return
+      callback()
+    })
+  }
+
+  function resumeFinalizedCommit(finalized, record, callback) {
+    workoutRepository.loadActive(function (stored, persistence) {
+      var decision = finalizedPolicy.decide(stored, persistence, finalized)
+      if (decision.action === 'block') return
+      if (decision.action === 'corrupt') {
+        workoutRepository.markActiveCorrupt(new Error('Finalized workout persistence conflict: ' + decision.reason))
+        return
+      }
+      if (decision.action === 'persist') {
+        persistFinalizedIntent(finalized, function () { commitFinalized(record, callback) })
+        return
+      }
+      commitFinalized(record, callback)
+    })
   }
 
   return {
@@ -137,13 +176,13 @@ export function createWorkoutController(onChange) {
         if (stored === null) { if (callback) callback(null); return }
         var restored = workoutState.restore(stored)
         if (!restored) {
-          workoutRepository.clearActive()
+          workoutRepository.markActiveCorrupt(new Error('Invalid active workout persistence'))
           if (callback) callback(null)
           return
         }
         persistTicks = 0
         startRuntime()
-        persist()
+        if (!isFinalized(restored)) persist()
         emit(restored)
         if (callback) callback(restored)
       })
@@ -170,16 +209,17 @@ export function createWorkoutController(onChange) {
     },
     finish: function (callback) {
       stopRuntime(false)
+      var beforeFinish = workoutState.getActive()
+      var retryingFinalized = isFinalized(beforeFinish)
       var record = workoutState.finish()
-      workoutRepository.clearActive()
-      if (!record) { if (callback) callback(null); return }
-      activityStore.addAndPersist(record.steps, record.calories, function (activitySnapshot) {
-        var pending = 2
-        var savedRecord = record
-        function done() { pending--; if (pending === 0 && callback) callback(savedRecord) }
-        historyRepository.saveToday(activitySnapshot, done)
-        workoutRepository.saveRecord(record, function (saved) { savedRecord = saved; done() })
-      })
+      if (!record) return
+      var finalized = workoutState.getActive()
+      emit(finalized)
+      if (retryingFinalized) {
+        resumeFinalizedCommit(finalized, record, callback)
+        return
+      }
+      persistFinalizedIntent(finalized, function () { commitFinalized(record, callback) })
     },
     stop: function () { stopRuntime(true) }
   }

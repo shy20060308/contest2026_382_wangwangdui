@@ -60,6 +60,7 @@ assert.strictEqual(routes.length, 17, 'V3 product route count changed; update th
 assert.ok(!manifest.router.pages['pages/clock_guard'], 'Clock Guard must stay removed once direct clock entry is verified')
 
 const ids = new Set()
+const controllerIds = new Set()
 routes.forEach(function (route) {
   const component = manifest.router.pages[route].component
   const pageFile = 'src/' + route + '/' + component + '.ux'
@@ -74,18 +75,45 @@ routes.forEach(function (route) {
   assert.strictEqual(surface.renderer, 'surface-v1')
   assert.ok(surface.id && !ids.has(surface.id), route + ' must own a unique Surface id')
   ids.add(surface.id)
-  assert.ok(source.includes('surface_host.ux'), pageFile + ' must render the generic Surface Host')
+  assert.ok(/surface_(?:host(?:_stage)?|collection)\.ux/.test(source), pageFile + ' must render an audited generic Surface renderer')
+  if (route === 'pages/clock') assert.ok(source.includes('surface_host_stage.ux'), 'Clock must use the isolated Stage host directly')
+  else if (route === 'pages/applist' || route === 'pages/watchface') assert.ok(source.includes('surface_collection.ux') && !source.includes('surface_host.ux'), route + ' must mount Collection at the page boundary to avoid nested custom-component rendering')
+  else assert.ok(source.includes('surface_host.ux'), pageFile + ' must use the direct generic flow Surface Host')
   assert.ok(source.includes("require('" + expectedDependency + "')") || source.includes('require("' + expectedDependency + '")'), pageFile + ' must require only its own Surface JSON')
-  assert.ok(source.includes('surfacePage.bind(this, surface)'), pageFile + ' must bind the page-local Surface object')
   const surfaceDependencies = relativeDependencies(source).filter(dep => dep.indexOf('/product/frontend/surfaces/') >= 0 && dep.endsWith('.json'))
   assert.deepStrictEqual(surfaceDependencies, [expectedDependency], pageFile + ' must not pull another page Surface into this route bundle')
+  const controllerDependencies = relativeDependencies(source).filter(dep => dep.indexOf('/product/controller_bindings/') >= 0)
+  if (surface.controller) {
+    controllerIds.add(surface.controller)
+    const controllerFile = 'src/product/controller_bindings/' + surface.controller + '.js'
+    const expectedControllerDependency = normalizedRelative(pageFile, controllerFile).replace(/\.js$/, '')
+    assert.ok(exists(controllerFile), surface.controller + ' must have a page-local controller binding')
+    assert.deepStrictEqual(controllerDependencies, [expectedControllerDependency], pageFile + ' must import only its Surface-declared controller binding')
+    assert.ok(source.includes('import controllerBinding from'), pageFile + ' must import the controller binding explicitly')
+    assert.ok(source.includes('surfacePage.bind(this, surface, controllerBinding)'), pageFile + ' must bind the page-local controller explicitly')
+  } else {
+    assert.deepStrictEqual(controllerDependencies, [], pageFile + ' must not import a controller binding when Surface controller is null')
+    assert.ok(source.includes('surfacePage.bind(this, surface)'), pageFile + ' must bind the page-local Surface object')
+  }
   assert.ok(!/(?:\.\.\/)+(?:v2|product\/design\/apps|product\/features|domain|capabilities)(?:\/|['"])/.test(source), pageFile + ' must not reach product implementation layers')
   assert.ok(!/<(?:div|stack|scroll|text|image|slider|canvas|list|button)\b/.test((source.match(/<template>([\s\S]*?)<\/template>/) || [])[1] || ''), pageFile + ' must not own product markup')
+})
+
+controllerIds.forEach(function (id) {
+  const binding = read('src/product/controller_bindings/' + id + '.js')
+  assert.ok(binding.includes("id: '" + id + "'"), id + ' binding must declare the same semantic controller id as Surface JSON')
+  assert.ok(!/\bimport\b[^\n]*\bfrom\s+['"]\.\.\/features\//.test(binding), id + ' binding must not execute its feature module while the page script is loading')
+  assert.ok(/\brequire\(\s*['"]\.\.\/features\//.test(binding), id + ' binding must defer its feature module until controller creation')
 })
 
 const surfacePage = read('src/runtime/surface_page.js')
 assert.ok(!surfacePage.includes('frontend/generated/surfaces'), 'Surface Page must not import a central eager Surface registry')
 assert.ok(!surfacePage.includes('surfaces.byId'), 'Surface Page must consume the page-local Surface object directly')
+assert.ok(!surfacePage.includes('controller_registry'), 'Surface Page must not eagerly import the all-feature controller registry')
+assert.ok(surfacePage.includes('binding.id !== surface.controller'), 'Surface Page must reject a page-local controller binding that disagrees with Surface JSON')
+assert.ok(surfacePage.indexOf("boot(page, 'BOOT:surface-resolve'") < surfacePage.indexOf("boot(page, 'BOOT:controller-create'"), 'Surface Page must make the static Surface renderable before executing a feature controller')
+assert.ok(surfacePage.includes("controllerCall(page, 'controller-stop', 'stop')"), 'Surface Page must isolate controller stop failures so navigation can finish')
+assert.ok(surfacePage.includes("name === '$back'") && surfacePage.includes("String(name).charAt(0) === '/'"), 'Surface Page must route generic direct-renderer navigation actions before semantic controller actions')
 const generatedSurfaceMetadata = read('src/product/frontend/generated/surfaces.js')
 assert.ok(!/require\([^)]*surfaces\//.test(generatedSurfaceMetadata), 'generated Surface metadata must never eagerly require authored JSON')
 
@@ -94,6 +122,15 @@ assert.strictEqual(exists('src/product/design/apps'), false, 'page-specific visu
 assert.strictEqual(exists('src/components/watchfaces'), false, 'specialized watchface UX must not survive the Surface migration')
 assert.strictEqual(exists('src/pages/clock_guard/clock_guard.ux'), false, 'obsolete routing guard page must stay deleted')
 assert.strictEqual(exists('src/product/frontend/surfaces/clock_guard.json'), false, 'obsolete routing guard Surface must stay deleted')
+assert.strictEqual(exists('src/components/surface_entry_stage.ux'), false, 'temporary Clock boot wrapper must not survive simulator diagnosis')
+const stageHost = read('src/components/surface_host_stage.ux')
+assert.ok(!stageHost.includes('surface_stage.ux'), 'Clock Stage host must not nest the Stage renderer custom component on Vela')
+assert.ok(!/<surfacestage\b/.test(stageHost), 'Clock Stage host must render Stage primitives directly')
+assert.ok(stageHost.includes('plan.stage.texts') && stageHost.includes('plan.stage.metrics') && stageHost.includes('plan.stage.progresses'), 'Clock Stage host must inline the resolved Stage primitive collections')
+const flowHost = read('src/components/surface_host.ux')
+assert.ok(!/surface_(?:collection|slider|stage)\.ux/.test(flowHost), 'Generic flow host must not import nested custom renderers on Vela')
+assert.ok(!/<(?:surfacecollection|surfaceslider|surfacestage)\b/.test(flowHost), 'Generic flow host must not mount nested custom renderers on Vela')
+assert.ok(flowHost.includes('plan.sliders[0]') && flowHost.includes('sliderInput.value'), 'Generic flow host must render the single Slider primitive directly')
 
 const pageRuntime = read('src/runtime/page_runtime.js')
 assert.ok(pageRuntime.includes("require('../product/design/scene')"), 'Page Runtime must consume the single current Scene implementation')
@@ -105,8 +142,10 @@ assert.ok(!adapter.includes('circleChord') && !adapter.includes('circleBand'), '
 assert.ok(!adapter.includes('safeForWidth'), 'Safe area must not depend on component width')
 
 const deviceProfile = read('src/runtime/device_profile.js')
-assert.ok(deviceProfile.includes("viewportPick(local, info, 'screenWidth')"), 'layout projection must prefer the actual host viewport over system metadata')
-assert.ok(deviceProfile.includes("viewportPick(local, info, 'screenHeight')"), 'layout projection must prefer the actual host viewport height')
+const deviceProfileCore = read('src/runtime/device_profile_core.js')
+assert.ok(deviceProfile.includes("require('./device_profile_core')"), 'Device Profile wrapper must delegate viewport/shape projection to the single core')
+assert.ok(deviceProfileCore.includes("viewportPick(local, info, 'screenWidth')"), 'layout projection must prefer the actual host viewport over system metadata')
+assert.ok(deviceProfileCore.includes("viewportPick(local, info, 'screenHeight')"), 'layout projection must prefer the actual host viewport height')
 
 const registry = read('src/product/controller_registry.js')
 assert.ok(!/function clockGuard\(/.test(registry), 'obsolete Clock Guard controller must stay deleted')
@@ -119,4 +158,4 @@ assert.ok(pkg.scripts.check.includes('v3:frontend-contract'), 'strict frontend a
 assert.ok(!pkg.scripts.check.includes('v3:frontend-staged'), 'completed migration must not use the staged gate')
 assert.strictEqual(Object.keys(pkg.scripts).some(name => name.startsWith('v2:') || name === 'check:legacy'), false)
 
-console.log('V3 architecture verified: all ' + routes.length + ' routes own exactly one page-local Surface dependency with no eager cross-route registry')
+console.log('V3 architecture verified: all ' + routes.length + ' routes own one Surface dependency and only their declared controller binding')
