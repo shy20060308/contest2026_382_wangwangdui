@@ -35,8 +35,8 @@ for (const file of distFiles.concat(buildFiles)) {
   assert.ok(size > 0, relative(file) + ' must not be empty')
 }
 
-const debugRpks = distFiles.filter(file => /\.debug\.rpk$/i.test(file))
-assert.ok(debugRpks.length > 0, 'aiot build must generate at least one dist/*.debug.rpk')
+const debugRpks = distFiles.filter(file => /\.debug(?:\.[^/\\]+)*\.rpk$/i.test(file))
+assert.ok(debugRpks.length > 0, 'aiot build must generate at least one versioned debug RPK in dist/')
 
 for (const file of debugRpks) {
   const size = fs.statSync(file).size
