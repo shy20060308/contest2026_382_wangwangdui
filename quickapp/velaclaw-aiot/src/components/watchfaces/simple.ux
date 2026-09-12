@@ -6,7 +6,7 @@
       <div class="simple-dial-center"><text class="simple-time">{{ displayHours }}:{{ displayMinutes }}</text><text class="simple-goal" style="color: {{ faceAccent }}">目标 {{ goalPercent }}%</text></div>
     </stack>
     <div class="simple-metrics">
-      <div class="simple-metric" @click="openSteps"><text class="simple-metric-value" style="color: #FFD60A">{{ stepsText }}</text><text class="simple-metric-label">步数</text></div>
+      <div class="simple-metric" @click="openSteps"><text class="simple-metric-value simple-step-value" style="color: #FFD60A">{{ stepsText }}</text><text class="simple-metric-label">步数</text></div>
       <div class="simple-metric" @click="openHealth"><text class="simple-metric-value" style="color: #FF375F">{{ currentHeartRate }}</text><text class="simple-metric-label">心率</text></div>
       <div class="simple-metric"><text class="simple-metric-value" style="color: {{ batteryColor }}">{{ batteryPercent }}%</text><text class="simple-metric-label">电量</text></div>
     </div>
@@ -33,6 +33,7 @@ export default {
 .simple-goal { font-size: 13px; font-weight: bold; margin-top: 7px; }
 .simple-metrics { flex-direction: row; justify-content: space-between; width: 168px; margin-top: 30px; }
 .simple-metric { flex-direction: column; align-items: center; width: 52px; height: 58px; background-color: #12161D; border-radius: 12px; padding-top: 9px; }
-.simple-metric-value { font-size: 17px; font-weight: bold; text-align: center; }
+.simple-metric-value { width: 48px; font-size: 17px; font-weight: bold; text-align: center; lines: 1; }
+.simple-step-value { font-size: 13px; }
 .simple-metric-label { font-size: 11px; color: #8E8E93; margin-top: 4px; }
 </style>
