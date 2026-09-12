@@ -27,6 +27,15 @@ assert.ok(pkg.scripts['bundle:pages'] === 'node scripts/check-page-bundle-size.j
 assert.ok(/^npm run clean && npm run surfaces:compile && aiot release\b/.test(pkg.scripts.release), 'release must clean output and validate JSON surfaces before aiot release')
 assert.ok(/^npm run clean && npm run surfaces:compile && aiot start\b/.test(pkg.scripts.start), 'debug start must cold-clean AIoT staging and validate JSON surfaces before watch mode')
 
+const quickappConfig = require(path.join(root, 'quickapp.config.js'))
+assert.ok(quickappConfig && typeof quickappConfig.postHook === 'function', 'AIoT debug configuration must expose a postHook')
+const debugWebpackConfig = { mode: 'development', devtool: 'inline-source-map' }
+quickappConfig.postHook(debugWebpackConfig)
+assert.strictEqual(debugWebpackConfig.devtool, 'source-map', 'development/watch bundles must externalize source maps instead of embedding base64 maps into page JavaScript')
+const productionWebpackConfig = { mode: 'production', devtool: false }
+quickappConfig.postHook(productionWebpackConfig)
+assert.strictEqual(productionWebpackConfig.devtool, false, 'release configuration must not enable debug source maps')
+
 const gitignore = fs.readFileSync(path.join(root, '.gitignore'), 'utf8')
 assert.ok(!gitignore.includes('/src/product/frontend/generated/'), 'generated Surface metadata must be available to every AIoT staging mode')
 
@@ -79,4 +88,4 @@ authoredSourceFiles.forEach(function (file) {
   assert.ok(!/\.(?:bak|old|orig|rej|tmp|map)$/i.test(file), 'temporary/generated file must not live under authored src: ' + path.relative(root, file))
 })
 
-console.log('V3 package hygiene verified: page-local Surface/controller loading, cold debug staging, bounded generated preview data and clean packaging')
+console.log('V3 package hygiene verified: page-local Surface/controller loading, external debug source maps, cold staging, bounded generated preview data and clean packaging')
