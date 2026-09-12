@@ -1,5 +1,10 @@
-import { createClockController } from '../features/clock/controller'
 import { copyState, configuredFaceIds } from './shared'
+
+function clockControllerFactory() {
+  var feature = require('../features/clock/controller')
+  if (!feature || typeof feature.createClockController !== 'function') throw new Error('Clock feature controller module unavailable')
+  return feature.createClockController
+}
 
 function create(onChange) {
   var configured = false
@@ -17,6 +22,7 @@ function create(onChange) {
     state.notificationCallVisible = visible && type === 'call'
     if (typeof onChange === 'function') onChange(state)
   }
+  var createClockController = clockControllerFactory()
   var controller = createClockController(function (model) { clockState = model || {}; emit() }, function (model) { notificationState = model || { visible: false }; emit() })
   function ensureConfigured() {
     if (configured) return
